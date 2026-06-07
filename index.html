@@ -298,42 +298,70 @@
     </div>
     <div class="section">
       <div class="field-group">
-        <label>Cliente *</label>
+        <label>Nombre *</label>
         <input type="text" id="np-cliente" placeholder="Nombre del deudor" oninput="calcPreview()">
       </div>
       <div class="field-group">
         <label>Monto *</label>
         <input type="number" id="np-monto" placeholder="0" oninput="calcPreview()">
       </div>
-      <div style="display:flex;gap:12px;margin-bottom:14px">
-        <div style="flex:1">
-          <div style="font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:5px">Monto total</div>
-          <span class="vbox" id="np-monto-total">₡0</span>
+      <div style="display:flex;gap:8px;margin-bottom:14px;align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:1;min-width:80px">
+          <div style="font-size:11px;font-weight:500;color:var(--text-muted);text-transform:uppercase;margin-bottom:5px">Monto total</div>
+          <span class="vbox" id="np-monto-total" style="font-size:12px;padding:6px 10px">₡0</span>
         </div>
-        <div style="flex:1">
-          <div style="font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:5px">Intereses</div>
-          <span class="vbox" id="np-intereses">₡0</span>
+        <div style="flex:1;min-width:80px">
+          <div style="font-size:11px;font-weight:500;color:var(--text-muted);text-transform:uppercase;margin-bottom:5px">Intereses</div>
+          <span class="vbox" id="np-intereses" style="font-size:12px;padding:6px 10px">₡0</span>
         </div>
-      </div>
-      <div class="field-group">
-        <label>Porcentaje de interés % *</label>
-        <input type="number" id="np-tasa" placeholder="20" value="20" oninput="calcPreview()">
+        <div style="min-width:70px">
+          <div style="font-size:11px;font-weight:500;color:var(--text-muted);text-transform:uppercase;margin-bottom:5px">% Interés</div>
+          <input type="number" id="np-tasa" value="20" oninput="calcPreview()" style="width:70px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;outline:none;text-align:center">
+        </div>
       </div>
       <div class="field-group">
         <label>Tipo *</label>
-        <div class="radio-grid">
-          <label class="radio-label"><input type="radio" name="np-tipo" value="Diario"> Diario</label>
-          <label class="radio-label"><input type="radio" name="np-tipo" value="Semanal"> Semanal</label>
-          <label class="radio-label"><input type="radio" name="np-tipo" value="Quincenal" checked> Quincenal</label>
-          <label class="radio-label"><input type="radio" name="np-tipo" value="Mensual"> Mensual</label>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+          <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-diario">
+            <input type="radio" name="np-tipo" value="Diario" onchange="onTipoChange()" style="accent-color:var(--cyan)"> Diario
+          </label>
+          <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-semanal">
+            <input type="radio" name="np-tipo" value="Semanal" onchange="onTipoChange()" style="accent-color:var(--cyan)"> Semanal
+          </label>
+          <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--cyan);background:#f0f9ff;border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-quincenal">
+            <input type="radio" name="np-tipo" value="Quincenal" checked onchange="onTipoChange()" style="accent-color:var(--cyan)"> Quincenal
+          </label>
+          <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-mensual">
+            <input type="radio" name="np-tipo" value="Mensual" onchange="onTipoChange()" style="accent-color:var(--cyan)"> Mensual
+          </label>
+        </div>
+        <!-- Sub-opciones Semanal -->
+        <div id="sub-semanal" style="display:none;margin-top:8px">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Seleccione período:</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <label style="display:flex;align-items:center;gap:6px;padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500" id="lbl-s5">
+              <input type="radio" name="np-semanas" value="5" checked onchange="calcPreview()" style="accent-color:var(--cyan)"> 5 semanas
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500" id="lbl-s6">
+              <input type="radio" name="np-semanas" value="6" onchange="calcPreview()" style="accent-color:var(--cyan)"> 6 semanas
+            </label>
+          </div>
+        </div>
+        <!-- Sub-opciones Quincenal -->
+        <div id="sub-quincenal" style="margin-top:8px">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Seleccione período:</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <label style="display:flex;align-items:center;gap:6px;padding:9px 10px;border:1.5px solid var(--cyan);background:#f0f9ff;border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500" id="lbl-q2">
+              <input type="radio" name="np-quincenas" value="2" checked onchange="calcPreview()" style="accent-color:var(--cyan)"> 2 quincenas
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500" id="lbl-q3">
+              <input type="radio" name="np-quincenas" value="3" onchange="calcPreview()" style="accent-color:var(--cyan)"> 3 quincenas
+            </label>
+          </div>
         </div>
       </div>
-      <div class="field-group">
-        <label>Cantidad de cuotas *</label>
-        <input type="number" id="np-cuotas" placeholder="6" value="6" oninput="calcPreview()">
-      </div>
       <div style="margin-bottom:14px">
-        <div style="font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:5px">Cuota</div>
+        <div style="font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;margin-bottom:5px">Cuota diaria</div>
         <span class="vbox" id="np-cuota-val">₡0</span>
       </div>
       <div class="field-group">
@@ -510,7 +538,7 @@ if(localStorage.getItem('fjd_session')==='1'){
 var prestamos = [];
 var pagos = [];
 var currentId = null;
-var historial = ['screen-home'];
+var historial = ['screen-cobros'];
 
 function fmt(n){
   return Number(n).toLocaleString('es-CR',{minimumFractionDigits:0,maximumFractionDigits:0});
@@ -535,7 +563,7 @@ function goTo(id){
 
 function goBack(){
   if(historial.length>1) historial.pop();
-  var prev=historial[historial.length-1]||'screen-home';
+  var prev=historial[historial.length-1]||'screen-cobros';
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.getElementById(prev).classList.add('active');
   window.scrollTo(0,0);
@@ -557,14 +585,47 @@ document.addEventListener('click',function(e){
   }
 });
 
+function onTipoChange(){
+  var tipo=document.querySelector('input[name="np-tipo"]:checked').value;
+  document.getElementById('sub-semanal').style.display=tipo==='Semanal'?'block':'none';
+  document.getElementById('sub-quincenal').style.display=tipo==='Quincenal'?'block':'none';
+  // resaltar label seleccionado
+  ['diario','semanal','quincenal','mensual'].forEach(function(t){
+    var lbl=document.getElementById('lbl-'+t);
+    var sel=tipo.toLowerCase()===t;
+    lbl.style.borderColor=sel?'var(--cyan)':'var(--border)';
+    lbl.style.background=sel?'#f0f9ff':'';
+  });
+  calcPreview();
+}
+
+function getCuotasYDias(){
+  var tipo=document.querySelector('input[name="np-tipo"]:checked').value;
+  var cuotas, diasPorCuota;
+  if(tipo==='Diario'){
+    cuotas=30; diasPorCuota=1;
+  } else if(tipo==='Semanal'){
+    var semanas=parseInt(document.querySelector('input[name="np-semanas"]:checked').value)||5;
+    cuotas=semanas;
+    diasPorCuota=Math.round(30/semanas); // 5sem=6dias, 6sem=5dias
+  } else if(tipo==='Quincenal'){
+    var quincenas=parseInt(document.querySelector('input[name="np-quincenas"]:checked').value)||2;
+    cuotas=quincenas;
+    diasPorCuota=15;
+  } else { // Mensual
+    cuotas=1; diasPorCuota=30;
+  }
+  return {cuotas:cuotas, diasPorCuota:diasPorCuota, tipo:tipo};
+}
+
 function calcPreview(){
   var monto=parseFloat(document.getElementById('np-monto').value)||0;
   var tasa=parseFloat(document.getElementById('np-tasa').value)||0;
-  var cuotas=parseInt(document.getElementById('np-cuotas').value)||1;
   var tasaDec=tasa/100;
   var intereses=Math.round(monto*tasaDec);
   var totalCobrar=monto+intereses;
-  var cuotaVal=cuotas>0?Math.round(totalCobrar/cuotas):0;
+  var cd=getCuotasYDias();
+  var cuotaVal=cd.cuotas>0?Math.round(totalCobrar/cd.cuotas):0;
   document.getElementById('np-monto-total').textContent='₡'+fmt(totalCobrar);
   document.getElementById('np-intereses').textContent='₡'+fmt(intereses);
   document.getElementById('np-cuota-val').textContent='₡'+fmt(cuotaVal);
@@ -575,21 +636,22 @@ function guardarPrestamo(){
   var cliente=document.getElementById('np-cliente').value.trim();
   var monto=parseFloat(document.getElementById('np-monto').value)||0;
   var tasa=parseFloat(document.getElementById('np-tasa').value)||0;
-  var cuotas=parseInt(document.getElementById('np-cuotas').value)||1;
   var fecha=document.getElementById('np-fecha').value||new Date().toISOString().split('T')[0];
-  if(!cliente){toast('⚠ Ingrese el nombre del cliente');return;}
-  if(!monto){toast('⚠ Ingrese el monto del préstamo');return;}
+  if(!cliente){toast('⚠ Ingrese el nombre');return;}
+  if(!monto){toast('⚠ Ingrese el monto');return;}
   var tasaDec=tasa/100;
   var intereses=Math.round(monto*tasaDec);
   var totalCobrar=monto+intereses;
-  var cuotaVal=cuotas>0?Math.round(totalCobrar/cuotas):0;
-  var id=Date.now().toString();
+  var cd=getCuotasYDias();
+  var cuotaVal=cd.cuotas>0?Math.round(totalCobrar/cd.cuotas):0;
   prestamos.push({
-    id:id,
+    id:Date.now().toString(),
     cliente:cliente,
     montoPrestado:monto,
     tasaInteres:tasaDec,
-    cantidadDeQuincenas:cuotas,
+    cantidadDeQuincenas:cd.cuotas,
+    diasPorCuota:cd.diasPorCuota,
+    tipo:cd.tipo,
     fechaInicio:fecha,
     estado:'Activo',
     Cuota_Quincenal:cuotaVal,
@@ -599,7 +661,6 @@ function guardarPrestamo(){
   document.getElementById('np-cliente').value='';
   document.getElementById('np-monto').value='';
   document.getElementById('np-tasa').value='20';
-  document.getElementById('np-cuotas').value='6';
   document.getElementById('np-fecha').value=new Date().toISOString().split('T')[0];
   calcPreview();
   toast('✓ Préstamo guardado: '+cliente);
