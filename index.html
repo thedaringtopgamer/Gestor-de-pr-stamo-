@@ -618,7 +618,13 @@
       <!-- Cliente -->
       <div class="card" style="margin-bottom:12px">
         <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:500;margin-bottom:4px">Cliente</div>
-        <div style="font-size:16px;font-weight:700" id="ren-cliente-nombre"></div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:10px" id="ren-cliente-nombre"></div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Progreso</div>
+            <span id="ren-progreso" style="display:inline-block;background:var(--cyan);color:#fff;border-radius:8px;padding:6px 14px;font-size:20px;font-weight:700;letter-spacing:1px">0/30</span>
+          </div>
+        </div>
       </div>
 
       <!-- Tipo -->
@@ -1199,6 +1205,9 @@ function abrirRenovar(){
   // Cobro admin = 4% del monto prestado (₡2,000 por cada ₡50,000)
   var cobroAdmin=Math.round(p.montoPrestado*0.04);
   document.getElementById('ren-cliente-nombre').textContent=p.cliente;
+  var cuotaDiariaRen=p.Total_A_Cobrar>0?p.Total_A_Cobrar/30:0;
+  var diasPagadosRen=cuotaDiariaRen>0?Math.min(30,Math.floor(d.totalPagado/cuotaDiariaRen)):0;
+  document.getElementById('ren-progreso').textContent=diasPagadosRen+'/30';
   document.getElementById('ren-saldo-viejo').textContent='₡'+fmt(d.saldoPendiente);
   document.getElementById('ren-monto').value=fmt(p.montoPrestado);
   document.getElementById('ren-tasa').value=Math.round((p.tasaInteres||0.20)*100);
