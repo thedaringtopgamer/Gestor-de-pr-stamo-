@@ -856,8 +856,7 @@ function renderCobros(filtro){
       +'<div style="flex:1;padding-left:10px;min-width:0">'
         +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+'</div>'
         +'<div style="font-size:11px;margin-top:1px">Cuota: ₡'+fmt(p.Cuota_Quincenal)+'&nbsp;&nbsp;<span style="background:'+colorEtiqueta+';color:#fff;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:600">'+etiqueta+'</span></div>'
-        +'<div class="progress-bg" style="margin-top:5px"><div class="progress-fill" style="width:'+Math.round(d.progreso*100)+'%"></div></div>'
-        +'<div style="font-size:10px;color:var(--text-muted);margin-top:2px">'+Math.round(d.progreso*100)+'% pagado</div>'
+        +'<div style="font-size:10px;color:var(--text-muted);margin-top:3px">'+Math.min(30,Math.floor(d.totalPagado/(p.Total_A_Cobrar/30)))+'/30 días</div>'
       +'</div>'
     +'</div>';
   }
