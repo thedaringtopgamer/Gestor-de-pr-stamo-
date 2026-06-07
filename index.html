@@ -112,6 +112,10 @@
   .cuota-paid{background:var(--green)}
   .cuota-unpaid{background:var(--red)}
 
+  /* TIPO BTN (renovar) */
+  .tipo-btn{text-align:center;padding:10px 6px;border-radius:var(--radius);border:2px solid var(--border);font-size:13px;font-weight:600;color:var(--text-muted);background:var(--surface);transition:all 0.15s;cursor:pointer}
+  input[type=radio]:checked+.tipo-btn{background:var(--red,#dc2626);color:#fff;border-color:var(--red,#dc2626)}
+
   /* TABS */
   .tabs{display:flex;gap:8px;margin-bottom:12px}
   .tab{flex:1;padding:9px;border-radius:var(--radius);text-align:center;font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:background 0.15s,color 0.15s}
@@ -544,7 +548,7 @@
         <button class="btn btn-blue btn-full" style="padding:12px" onclick="registrarAbono()">✓ Abonar</button>
       </div>
 
-      <button class="btn btn-cyan btn-full" style="padding:12px;margin-top:4px">🔄 Renovar</button>
+      <button class="btn btn-cyan btn-full" style="padding:12px;margin-top:4px" onclick="abrirRenovar()">🔄 Renovar</button>
       <button class="btn btn-red btn-full" style="padding:11px;margin-top:8px" onclick="eliminarPrestamo()">🗑 Eliminar préstamo</button>
 
       <!-- Cuotas — al final -->
@@ -610,6 +614,108 @@
           <div id="docs-coord-trabajo" style="font-size:13px">—</div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ==================== RENOVAR ==================== -->
+  <div id="screen-renovar" class="screen">
+    <div class="navbar">
+      <button class="btn btn-cyan btn-sm" onclick="goBack()">← Volver</button>
+      <span class="navbar-title">Renovar Préstamo</span>
+      <div style="width:70px"></div>
+    </div>
+    <div class="section">
+
+      <!-- Cliente -->
+      <div class="card" style="margin-bottom:12px">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:500;margin-bottom:4px">Cliente</div>
+        <div style="font-size:16px;font-weight:700" id="ren-cliente-nombre"></div>
+      </div>
+
+      <!-- Tipo -->
+      <div class="card" style="margin-bottom:12px">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:500;margin-bottom:10px">Tipo de préstamo</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+          <label style="flex:1;min-width:70px"><input type="radio" name="ren-tipo" value="Diario" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rtipo-Diario">Diario</div></label>
+          <label style="flex:1;min-width:70px"><input type="radio" name="ren-tipo" value="Semanal" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rtipo-Semanal">Semanal</div></label>
+          <label style="flex:1;min-width:70px"><input type="radio" name="ren-tipo" value="Quincenal" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rtipo-Quincenal">Quincenal</div></label>
+          <label style="flex:1;min-width:70px"><input type="radio" name="ren-tipo" value="Mensual" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rtipo-Mensual">Mensual</div></label>
+        </div>
+        <!-- Sub opciones Semanal -->
+        <div id="ren-sub-semanal" style="display:none;margin-bottom:10px">
+          <div style="display:flex;gap:6px">
+            <label style="flex:1"><input type="radio" name="ren-sem" value="6" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rsem-6">6 sem</div></label>
+            <label style="flex:1"><input type="radio" name="ren-sem" value="5" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rsem-5">5 sem</div></label>
+          </div>
+        </div>
+        <!-- Sub opciones Quincenal -->
+        <div id="ren-sub-quincenal" style="display:none;margin-bottom:10px">
+          <div style="display:flex;gap:6px">
+            <label style="flex:1"><input type="radio" name="ren-quin" value="2" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rquin-2">2 quincenas</div></label>
+            <label style="flex:1"><input type="radio" name="ren-quin" value="3" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rquin-3">3 quincenas</div></label>
+          </div>
+        </div>
+        <!-- Día cobro -->
+        <div id="ren-dia-cobro" style="display:none;background:var(--amber,#f59e0b);color:#fff;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;display:inline-block"></div>
+      </div>
+
+      <!-- Monto nuevo -->
+      <div class="card" style="margin-bottom:12px">
+        <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px">
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:500;margin-bottom:4px">Monto *</div>
+            <input type="text" inputmode="numeric" id="ren-monto" placeholder="0" oninput="fmtMoneyInput(this);calcRenovar()" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;font-weight:600;box-sizing:border-box">
+          </div>
+          <div style="min-width:60px">
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:500;margin-bottom:4px">% Interés</div>
+            <input type="number" id="ren-tasa" value="20" min="0" max="100" oninput="calcRenovar()" style="width:64px;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;text-align:center">
+          </div>
+        </div>
+        <!-- Cuota calculada -->
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Cuota *</div>
+            <span id="ren-cuota-display" style="display:inline-block;background:#1f2937;color:#fff;border-radius:8px;padding:8px 16px;font-size:18px;font-weight:700">—</span>
+          </div>
+          <div id="ren-digitar-wrap" style="flex:1">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted);cursor:pointer">
+              <input type="checkbox" id="ren-digitar-check" onchange="toggleDigitarCuota()" style="-webkit-user-select:auto;user-select:auto"> Digitar cuota
+            </label>
+            <input type="text" inputmode="numeric" id="ren-cuota-manual" placeholder="Cuota manual" oninput="fmtMoneyInput(this)" style="display:none;margin-top:6px;width:100%;padding:8px 10px;border:1.5px solid var(--cyan);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+          </div>
+        </div>
+      </div>
+
+      <!-- Fecha y Recolector -->
+      <div class="card" style="margin-bottom:12px">
+        <div class="field-group">
+          <label>Fecha Inicio *</label>
+          <input type="date" id="ren-fecha" oninput="calcRenovar()">
+        </div>
+        <div class="field-group" style="margin-bottom:0">
+          <label>Recolector *</label>
+          <input type="text" id="ren-recolector" value="BOMBI" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+        </div>
+      </div>
+
+      <!-- Cálculo -->
+      <div class="card" style="margin-bottom:12px">
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:500;margin-bottom:4px">Saldo Préstamo anterior</div>
+          <span id="ren-saldo-viejo" style="display:inline-block;background:#dc2626;color:#fff;border-radius:8px;padding:8px 16px;font-size:18px;font-weight:700">₡0</span>
+        </div>
+        <div class="field-group">
+          <label>Cobro Administrativo</label>
+          <input type="text" inputmode="numeric" id="ren-cobro-admin" placeholder="0" oninput="fmtMoneyInput(this);calcRenovar()" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:500;margin-bottom:4px">Entregar al cliente</div>
+          <span id="ren-entregar" style="display:inline-block;background:#1f2937;color:#fff;border-radius:8px;padding:8px 16px;font-size:18px;font-weight:700">—</span>
+        </div>
+      </div>
+
+      <button class="btn btn-cyan btn-full" style="padding:14px;font-size:16px" onclick="confirmarRenovacion()">✓ Confirmar Renovación</button>
+      <button class="btn btn-gray btn-full" style="padding:12px;margin-top:8px" onclick="goBack()">Cancelar</button>
     </div>
   </div>
 
@@ -1084,6 +1190,129 @@ function registrarAbono(){
   document.getElementById('abonar-monto').value='';
   toast('✓ Abono registrado: ₡'+fmt(monto));
   verDetalle(currentId);
+}
+
+function abrirRenovar(){
+  if(!currentId) return;
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  var d=calcDerived(p);
+  document.getElementById('ren-cliente-nombre').textContent=p.cliente;
+  document.getElementById('ren-saldo-viejo').textContent='₡'+fmt(d.saldoPendiente);
+  document.getElementById('ren-monto').value=fmt(p.montoPrestado);
+  document.getElementById('ren-tasa').value=Math.round((p.tasaInteres||0.20)*100);
+  document.getElementById('ren-fecha').value=new Date().toISOString().split('T')[0];
+  document.getElementById('ren-cobro-admin').value='';
+  document.getElementById('ren-entregar').textContent='—';
+  document.getElementById('ren-cuota-manual').style.display='none';
+  document.getElementById('ren-digitar-check').checked=false;
+  // Seleccionar mismo tipo que préstamo actual
+  var tipo=p.tipo||'Quincenal';
+  var radioTipo=document.querySelector('input[name="ren-tipo"][value="'+tipo+'"]');
+  if(radioTipo) radioTipo.checked=true;
+  actualizarSubTiposRen(tipo);
+  if(tipo==='Semanal'){
+    var semVal=p.cantidadDeQuincenas===6?'6':'5';
+    var rs=document.querySelector('input[name="ren-sem"][value="'+semVal+'"]');
+    if(rs) rs.checked=true;
+  } else if(tipo==='Quincenal'){
+    var qVal=p.cantidadDeQuincenas===3?'3':'2';
+    var rq=document.querySelector('input[name="ren-quin"][value="'+qVal+'"]');
+    if(rq) rq.checked=true;
+  }
+  calcRenovar();
+  goTo('screen-renovar');
+}
+
+function actualizarSubTiposRen(tipo){
+  document.getElementById('ren-sub-semanal').style.display=tipo==='Semanal'?'block':'none';
+  document.getElementById('ren-sub-quincenal').style.display=tipo==='Quincenal'?'block':'none';
+}
+
+function toggleDigitarCuota(){
+  var checked=document.getElementById('ren-digitar-check').checked;
+  document.getElementById('ren-cuota-manual').style.display=checked?'block':'none';
+}
+
+function calcRenovar(){
+  var tipoEl=document.querySelector('input[name="ren-tipo"]:checked');
+  var tipo=tipoEl?tipoEl.value:'Quincenal';
+  actualizarSubTiposRen(tipo);
+  var cuotas=1,diasPorCuota=30;
+  if(tipo==='Diario'){cuotas=30;diasPorCuota=1;}
+  else if(tipo==='Semanal'){
+    var sem=document.querySelector('input[name="ren-sem"]:checked');
+    var semVal=sem?parseInt(sem.value):6;
+    cuotas=semVal; diasPorCuota=Math.round(30/semVal);
+  } else if(tipo==='Quincenal'){
+    var quin=document.querySelector('input[name="ren-quin"]:checked');
+    cuotas=quin?parseInt(quin.value):2; diasPorCuota=15;
+  } else if(tipo==='Mensual'){cuotas=1;diasPorCuota=30;}
+  // Día cobro
+  var fechaStr=document.getElementById('ren-fecha').value;
+  var diaCobro='';
+  if(fechaStr){
+    var dias=['DOMINGO','LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO'];
+    var fd=parseLocalDate(fechaStr);
+    if(tipo==='Semanal') diaCobro='Día cobro: '+dias[fd.getDay()];
+    var dcEl=document.getElementById('ren-dia-cobro');
+    dcEl.textContent=diaCobro;
+    dcEl.style.display=diaCobro?'inline-block':'none';
+  }
+  // Calcular cuota
+  var monto=readMoneyInput('ren-monto');
+  var tasa=(parseFloat(document.getElementById('ren-tasa').value)||20)/100;
+  var total=Math.round(monto*(1+tasa));
+  var cuotaVal=cuotas>0?Math.round(total/cuotas):0;
+  document.getElementById('ren-cuota-display').textContent=cuotaVal>0?'₡'+fmt(cuotaVal):'—';
+  // Entregar
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  var saldo=p?calcDerived(p).saldoPendiente:0;
+  var admin=readMoneyInput('ren-cobro-admin');
+  var entregar=monto-saldo-admin;
+  var eEl=document.getElementById('ren-entregar');
+  eEl.textContent=(entregar>=0?'₡':'-₡')+fmt(Math.abs(entregar));
+  eEl.style.background=entregar>=0?'#1f2937':'#dc2626';
+}
+
+function confirmarRenovacion(){
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  var tipoEl=document.querySelector('input[name="ren-tipo"]:checked');
+  if(!tipoEl){toast('⚠ Seleccione el tipo de préstamo');return;}
+  var tipo=tipoEl.value;
+  var monto=readMoneyInput('ren-monto');
+  if(!monto){toast('⚠ Ingrese el monto');return;}
+  var tasa=(parseFloat(document.getElementById('ren-tasa').value)||20)/100;
+  var fecha=document.getElementById('ren-fecha').value||new Date().toISOString().split('T')[0];
+  var cuotas=1,diasPorCuota=30;
+  if(tipo==='Diario'){cuotas=30;diasPorCuota=1;}
+  else if(tipo==='Semanal'){var sem=document.querySelector('input[name="ren-sem"]:checked');var sv=sem?parseInt(sem.value):6;cuotas=sv;diasPorCuota=Math.round(30/sv);}
+  else if(tipo==='Quincenal'){var quin=document.querySelector('input[name="ren-quin"]:checked');cuotas=quin?parseInt(quin.value):2;diasPorCuota=15;}
+  var total=Math.round(monto*(1+tasa));
+  var intereses=total-monto;
+  var digitar=document.getElementById('ren-digitar-check').checked;
+  var cuotaVal=digitar?readMoneyInput('ren-cuota-manual'):Math.round(total/cuotas);
+  if(!cuotaVal){toast('⚠ Ingrese la cuota manual');return;}
+  var d=calcDerived(p);
+  // Cancelar préstamo viejo
+  p.estado='Cancelado';
+  // Crear préstamo nuevo (mismos datos de cliente)
+  var nuevo={
+    id:Date.now().toString(),
+    cliente:p.cliente,cedula:p.cedula||'',telefono:p.telefono||'',
+    ruta:p.ruta||'',subruta:p.subruta||'',
+    coordCasa:p.coordCasa||'',coordTrabajo:p.coordTrabajo||'',fotos:p.fotos||{},
+    montoPrestado:monto,tasaInteres:tasa,cantidadDeQuincenas:cuotas,
+    diasPorCuota:diasPorCuota,tipo:tipo,fechaInicio:fecha,estado:'Activo',
+    Cuota_Quincenal:cuotaVal,Total_Intereses:intereses,Total_A_Cobrar:total,
+    renovadoDe:p.id
+  };
+  prestamos.push(nuevo);
+  guardarDatos();
+  currentId=nuevo.id;
+  toast('✓ Préstamo renovado correctamente');
+  goTo('screen-cobros');
 }
 
 function eliminarPrestamo(){
