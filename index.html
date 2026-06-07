@@ -482,7 +482,18 @@
       <!-- Encabezado cliente -->
       <div class="card" style="margin-bottom:12px">
         <div style="font-size:11px;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:0.04em">Cliente *</div>
-        <div style="font-size:16px;font-weight:600;margin:2px 0 10px" id="det-cliente"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:2px 0 10px;gap:8px">
+          <div style="font-size:16px;font-weight:600" id="det-cliente"></div>
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0" id="det-tel-display">
+            <span style="font-size:12px;color:var(--text-muted)" id="det-telefono-txt"></span>
+            <button onclick="editarTelefonoInline()" style="background:none;border:none;cursor:pointer;color:#2563eb;font-size:14px;padding:2px 4px;line-height:1">✏</button>
+          </div>
+          <div style="display:none;align-items:center;gap:4px;flex-shrink:0" id="det-tel-edit">
+            <input type="tel" id="det-tel-input" style="width:110px;padding:4px 8px;border:1.5px solid var(--cyan);border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none">
+            <button onclick="guardarTelefonoInline()" style="background:var(--cyan);color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;font-weight:600">✓</button>
+            <button onclick="cancelarTelefonoInline()" style="background:#e5e7eb;color:#374151;border:none;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer">✕</button>
+          </div>
+        </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
           <div>
             <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Monto *</div>
@@ -572,37 +583,53 @@
       <div style="width:70px"></div>
     </div>
     <div class="section">
-      <div class="card">
+      <!-- Datos básicos -->
+      <div class="card" style="margin-bottom:12px">
         <p style="font-size:13px;font-weight:600;margin-bottom:12px" id="docs-nombre-cliente"></p>
         <div class="field-group">
           <label>Cédula</label>
-          <div style="font-size:14px;font-weight:500" id="docs-cedula">—</div>
+          <div style="font-size:14px;font-weight:500;color:#374151" id="docs-cedula">—</div>
         </div>
         <div class="field-group">
           <label>Teléfono</label>
-          <div style="font-size:14px;font-weight:500" id="docs-telefono">—</div>
+          <input type="tel" id="docs-edit-telefono" placeholder="Número de teléfono" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
         </div>
         <div class="field-group">
-          <label>Ruta · SubRuta</label>
-          <div style="font-size:14px;font-weight:500" id="docs-ruta">—</div>
+          <label>Ruta</label>
+          <select id="docs-edit-ruta" onchange="onRutaDocsChange()" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;background:#fff;box-sizing:border-box">
+            <option value="">-- Seleccione ruta --</option>
+            <option value="Heredia">Heredia</option>
+            <option value="Alajuela">Alajuela</option>
+            <option value="San Ramón">San Ramón</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>SubRuta</label>
+          <select id="docs-edit-subruta" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;background:#fff;box-sizing:border-box">
+            <option value="">-- Seleccione subruta --</option>
+          </select>
         </div>
       </div>
-      <div class="card">
-        <p style="font-size:13px;font-weight:600;margin-bottom:12px">📷 Fotos</p>
-        <div id="docs-fotos-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
-        <p id="docs-fotos-vacio" style="font-size:13px;color:var(--text-muted);display:none">Sin fotos guardadas</p>
-      </div>
-      <div class="card">
+      <!-- Ubicaciones -->
+      <div class="card" style="margin-bottom:12px">
         <p style="font-size:13px;font-weight:600;margin-bottom:12px">📍 Ubicaciones</p>
         <div class="field-group">
-          <label>Casa</label>
-          <div id="docs-coord-casa" style="font-size:13px">—</div>
+          <label>Coordenadas Casa</label>
+          <input type="text" id="docs-edit-coord-casa" placeholder="lat, lng (ej: 9.9281, -84.0907)" oninput="previewCoordDocs('casa')" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+          <div id="docs-link-casa" style="display:none;margin-top:6px"><a id="docs-link-casa-a" target="_blank" style="color:#2563eb;font-size:12px;text-decoration:none"></a></div>
         </div>
         <div class="field-group">
-          <label>Trabajo</label>
-          <div id="docs-coord-trabajo" style="font-size:13px">—</div>
+          <label>Coordenadas Trabajo</label>
+          <input type="text" id="docs-edit-coord-trabajo" placeholder="lat, lng (ej: 9.9281, -84.0907)" oninput="previewCoordDocs('trabajo')" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+          <div id="docs-link-trabajo" style="display:none;margin-top:6px"><a id="docs-link-trabajo-a" target="_blank" style="color:#2563eb;font-size:12px;text-decoration:none"></a></div>
         </div>
       </div>
+      <!-- Fotos -->
+      <div class="card" style="margin-bottom:12px">
+        <p style="font-size:13px;font-weight:600;margin-bottom:12px">📷 Fotos</p>
+        <div id="docs-fotos-edit"></div>
+      </div>
+      <button class="btn btn-blue btn-full" style="padding:12px;margin-bottom:16px" onclick="guardarDocsCliente()">💾 Guardar cambios</button>
     </div>
   </div>
 
@@ -1061,6 +1088,9 @@ function verDetalle(id){
   if(!p) return;
   var d=calcDerived(p);
   document.getElementById('det-cliente').textContent=p.cliente;
+  document.getElementById('det-telefono-txt').textContent=p.telefono||'';
+  document.getElementById('det-tel-display').style.display='flex';
+  document.getElementById('det-tel-edit').style.display='none';
   document.getElementById('det-monto').textContent='₡'+fmt(p.montoPrestado);
   document.getElementById('det-total-cobrar').textContent='₡'+fmt(p.Total_A_Cobrar);
   document.getElementById('det-cuota').textContent='₡'+fmt(p.Cuota_Quincenal);
@@ -1467,34 +1497,126 @@ function guardarDocumentos(){
   });
 }
 
+function editarTelefonoInline(){
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  document.getElementById('det-tel-input').value=p?p.telefono||'':'';
+  document.getElementById('det-tel-display').style.display='none';
+  document.getElementById('det-tel-edit').style.display='flex';
+  document.getElementById('det-tel-input').focus();
+}
+function cancelarTelefonoInline(){
+  document.getElementById('det-tel-display').style.display='flex';
+  document.getElementById('det-tel-edit').style.display='none';
+}
+function guardarTelefonoInline(){
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  p.telefono=document.getElementById('det-tel-input').value.trim();
+  guardarDatos();
+  document.getElementById('det-telefono-txt').textContent=p.telefono||'';
+  document.getElementById('det-tel-display').style.display='flex';
+  document.getElementById('det-tel-edit').style.display='none';
+  toast('✓ Teléfono actualizado');
+}
+
+function onRutaDocsChange(){
+  var ruta=document.getElementById('docs-edit-ruta').value;
+  var sel=document.getElementById('docs-edit-subruta');
+  sel.innerHTML='<option value="">-- Seleccione subruta --</option>';
+  if(ruta && rutasData[ruta]){
+    rutasData[ruta].forEach(function(sr){
+      var o=document.createElement('option'); o.value=sr; o.textContent=sr; sel.appendChild(o);
+    });
+  }
+}
+
+function previewCoordDocs(tipo){
+  var val=document.getElementById('docs-edit-coord-'+tipo).value.trim();
+  var linkDiv=document.getElementById('docs-link-'+tipo);
+  var linkA=document.getElementById('docs-link-'+tipo+'-a');
+  var match=val.match(/^(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)$/);
+  if(match){
+    linkA.href='https://www.google.com/maps?q='+match[1]+','+match[2];
+    linkA.textContent='📍 '+val+' — Ver en Google Maps';
+    linkDiv.style.display='block';
+  } else { linkDiv.style.display='none'; }
+}
+
 function verDocsCliente(){
   var p=prestamos.find(function(x){return x.id===currentId;});
   if(!p) return;
   document.getElementById('docs-nombre-cliente').textContent='👤 '+p.cliente;
   document.getElementById('docs-cedula').textContent=p.cedula||'—';
-  document.getElementById('docs-telefono').textContent=p.telefono||'—';
-  document.getElementById('docs-ruta').textContent=(p.ruta&&p.subruta)?p.ruta+' · '+p.subruta:(p.ruta||'—');
-  function coordLink(coord, elId){
-    var el=document.getElementById(elId);
-    var match=coord&&coord.match(/^(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)$/);
-    if(match){
-      el.innerHTML='<a href="https://www.google.com/maps?q='+match[1]+','+match[2]+'" target="_blank" style="color:#2563eb;text-decoration:none;font-size:13px">📍 '+coord+' — Ver en Google Maps</a>';
-    } else {
-      el.textContent=coord||'—';
-    }
-  }
-  coordLink(p.coordCasa,'docs-coord-casa');
-  coordLink(p.coordTrabajo,'docs-coord-trabajo');
-  var grid=document.getElementById('docs-fotos-grid');
+  document.getElementById('docs-edit-telefono').value=p.telefono||'';
+  // Ruta
+  var rutaSel=document.getElementById('docs-edit-ruta');
+  rutaSel.value=p.ruta||'';
+  onRutaDocsChange();
+  document.getElementById('docs-edit-subruta').value=p.subruta||'';
+  // Coordenadas
+  document.getElementById('docs-edit-coord-casa').value=p.coordCasa||'';
+  document.getElementById('docs-edit-coord-trabajo').value=p.coordTrabajo||'';
+  previewCoordDocs('casa');
+  previewCoordDocs('trabajo');
+  // Fotos editables
   var fotos=p.fotos||{};
-  var labels={'cedula-frente':'Cédula frente','cedula-detras':'Cédula detrás','foto-cliente':'Cliente','foto-casa':'Casa','foto-trabajo':'Trabajo'};
-  var fotosHtml='';
+  var labels={'cedula-frente':'Cédula frente','cedula-detras':'Cédula detrás','foto-cliente':'Foto cliente','foto-casa':'Foto casa','foto-trabajo':'Foto trabajo'};
+  var html='<div style="display:flex;flex-direction:column;gap:14px">';
   Object.keys(labels).forEach(function(k){
-    if(fotos[k]) fotosHtml+='<div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px">'+labels[k]+'</div><img src="'+fotos[k]+'" style="width:100%;border-radius:var(--radius);object-fit:cover;aspect-ratio:4/3"></div>';
+    var src=fotos[k]||'';
+    html+='<div>'
+      +'<div style="font-size:11px;color:var(--text-muted);font-weight:500;text-transform:uppercase;margin-bottom:5px">'+labels[k]+'</div>'
+      +(src?'<img src="'+src+'" style="width:100%;border-radius:var(--radius);object-fit:cover;aspect-ratio:4/3;margin-bottom:6px">':'<div style="width:100%;aspect-ratio:4/3;background:#f3f4f6;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;margin-bottom:6px;color:var(--text-muted);font-size:12px">Sin foto</div>')
+      +'<label style="display:inline-flex;align-items:center;gap:6px;background:#f3f4f6;border:1.5px solid var(--border);border-radius:var(--radius);padding:6px 12px;font-size:12px;cursor:pointer;color:#374151">📷 '+(src?'Cambiar foto':'Agregar foto')+'<input type="file" accept="image/*" data-key="'+k+'" onchange="onDocsFotoChange(this)" style="display:none"></label>'
+      +'</div>';
   });
-  grid.innerHTML=fotosHtml;
-  document.getElementById('docs-fotos-vacio').style.display=fotosHtml?'none':'block';
+  html+='</div>';
+  document.getElementById('docs-fotos-edit').innerHTML=html;
   goTo('screen-docs-cliente');
+}
+
+var _docsNewFotos={};
+function onDocsFotoChange(input){
+  var k=input.getAttribute('data-key');
+  var file=input.files&&input.files[0];
+  if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    _docsNewFotos[k]=e.target.result;
+    // Actualizar preview: el contenedor del ítem es input.closest('label').closest('div')
+    var itemDiv=input.closest('label').parentElement;
+    var existing=itemDiv.querySelector('img');
+    if(existing){
+      existing.src=e.target.result;
+    } else {
+      var placeholder=itemDiv.querySelector('div[style*="aspect-ratio"]');
+      if(placeholder){
+        var newImg=document.createElement('img');
+        newImg.src=e.target.result;
+        newImg.setAttribute('style','width:100%;border-radius:var(--radius);object-fit:cover;aspect-ratio:4/3;margin-bottom:6px');
+        placeholder.replaceWith(newImg);
+      }
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function guardarDocsCliente(){
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  p.telefono=document.getElementById('docs-edit-telefono').value.trim();
+  p.ruta=document.getElementById('docs-edit-ruta').value;
+  p.subruta=document.getElementById('docs-edit-subruta').value;
+  p.coordCasa=document.getElementById('docs-edit-coord-casa').value.trim();
+  p.coordTrabajo=document.getElementById('docs-edit-coord-trabajo').value.trim();
+  // Fotos nuevas
+  if(!p.fotos) p.fotos={};
+  Object.keys(_docsNewFotos).forEach(function(k){ p.fotos[k]=_docsNewFotos[k]; });
+  _docsNewFotos={};
+  guardarDatos();
+  // Actualizar teléfono en pantalla de detalle si está visible
+  document.getElementById('det-telefono-txt').textContent=p.telefono||'';
+  toast('✓ Datos del cliente actualizados');
 }
 
 // ----- INIT -----
