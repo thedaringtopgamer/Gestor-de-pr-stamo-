@@ -527,15 +527,15 @@
       <!-- Abonar -->
       <div class="card">
         <p style="font-size:14px;font-weight:600;margin-bottom:12px">💰 Abonar Monto</p>
-        <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
+        <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:14px">
           <div>
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Cobro a hoy</div>
-            <span class="vbox-red" id="abonar-cuota" style="font-size:13px;padding:6px 12px"></span>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;font-weight:500">Cobro</div>
+            <span class="vbox-red" id="abonar-cuota" style="font-size:13px;padding:6px 12px;white-space:nowrap"></span>
           </div>
-        </div>
-        <div class="field-group">
-          <label>Monto a abonar</label>
-          <input type="text" inputmode="numeric" id="abonar-monto" placeholder="0" oninput="fmtMoneyInput(this)">
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;font-weight:500">Monto a abonar</div>
+            <input type="text" inputmode="numeric" id="abonar-monto" placeholder="0" oninput="fmtMoneyInput(this)" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+          </div>
         </div>
         <div class="field-group">
           <label>Fecha de pago</label>
