@@ -23,7 +23,8 @@
     --radius-lg:14px;
   }
   html,body{height:100%;background:#d1d5db;font-family:'DM Sans',sans-serif;color:var(--text);font-size:14px;line-height:1.5;display:flex;justify-content:center}
-  .app{width:390px;max-width:100%;min-height:100vh;background:var(--bg);position:relative;box-shadow:0 0 40px rgba(0,0,0,0.18)}
+  .app{width:390px;max-width:100%;min-height:100vh;background:var(--bg);position:relative;box-shadow:0 0 40px rgba(0,0,0,0.18);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  .app input,.app textarea,.app select{-webkit-user-select:text;user-select:text}
 
   /* NAVBAR */
   .navbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
