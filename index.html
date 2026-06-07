@@ -652,36 +652,139 @@
     </div>
     <div class="section">
       <!-- Fecha -->
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-        <span style="font-size:13px;color:var(--text-muted)">Fecha:</span>
-        <input type="date" id="panel-fecha" onchange="renderPanelRecolector()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:13px;color:var(--text-muted);font-weight:500">Fecha:</span>
+        <input type="date" id="panel-fecha" onchange="renderPanelRecolector()" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
       </div>
-      <!-- Resumen dinero -->
+      <!-- Acciones rápidas -->
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="btn btn-green btn-full" style="padding:12px;font-size:14px" onclick="goTo('screen-nuevo-cliente')">➕ Nuevo Préstamo</button>
+        <button class="btn btn-outline btn-full" style="padding:12px;font-size:14px" onclick="abrirNuevoGasto()">💸 Nuevo Gasto</button>
+      </div>
+      <!-- Tarjetas de estadísticas -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-        <div class="summary-card" style="background:#dcfce7;border-radius:12px;padding:14px;text-align:center">
-          <div style="font-size:11px;color:#166534;font-weight:600;text-transform:uppercase;margin-bottom:4px">Total Cobrado</div>
-          <div style="font-size:20px;font-weight:700;color:#166534" id="panel-total-cobrado">₡0</div>
+        <div onclick="togglePanelSec('gastos')" style="background:#fef3c7;border-radius:12px;padding:14px;text-align:center;cursor:pointer;border:2px solid transparent" id="pcard-gastos">
+          <div style="font-size:11px;color:#92400e;font-weight:600;text-transform:uppercase;margin-bottom:4px">Gastos</div>
+          <div style="font-size:22px;font-weight:700;color:#92400e" id="panel-stat-gastos">₡0</div>
         </div>
-        <div class="summary-card" style="background:#dbeafe;border-radius:12px;padding:14px;text-align:center">
-          <div style="font-size:11px;color:#1e40af;font-weight:600;text-transform:uppercase;margin-bottom:4px">Cobros Admin</div>
-          <div style="font-size:20px;font-weight:700;color:#1e40af" id="panel-total-admin">₡0</div>
+        <div onclick="togglePanelSec('nuevos')" style="background:#dbeafe;border-radius:12px;padding:14px;text-align:center;cursor:pointer;border:2px solid transparent" id="pcard-nuevos">
+          <div style="font-size:11px;color:#1e40af;font-weight:600;text-transform:uppercase;margin-bottom:4px">Préstamos nuevos</div>
+          <div style="font-size:22px;font-weight:700;color:#1e40af" id="panel-stat-nuevos">0</div>
+        </div>
+        <div onclick="togglePanelSec('cobros')" style="background:#dcfce7;border-radius:12px;padding:14px;text-align:center;cursor:pointer;border:2px solid transparent" id="pcard-cobros">
+          <div style="font-size:11px;color:#166534;font-weight:600;text-transform:uppercase;margin-bottom:4px">Cobros realizados</div>
+          <div style="font-size:22px;font-weight:700;color:#166534" id="panel-stat-cobros">0</div>
+        </div>
+        <div onclick="togglePanelSec('admin')" style="background:#ede9fe;border-radius:12px;padding:14px;text-align:center;cursor:pointer;border:2px solid transparent" id="pcard-admin">
+          <div style="font-size:11px;color:#5b21b6;font-weight:600;text-transform:uppercase;margin-bottom:4px">Cobros admin</div>
+          <div style="font-size:22px;font-weight:700;color:#5b21b6" id="panel-stat-admin">₡0</div>
         </div>
       </div>
-      <!-- Cobros del día -->
-      <div class="card" style="margin-bottom:12px">
-        <p style="font-size:13px;font-weight:600;margin-bottom:10px" id="panel-cobros-titulo">💰 Cobros del día (0)</p>
-        <div id="panel-cobros-lista"></div>
+      <!-- Sección Gastos -->
+      <div id="panel-sec-gastos" style="display:none;margin-bottom:12px">
+        <div class="card">
+          <p style="font-size:13px;font-weight:600;margin-bottom:10px">💸 Gastos del día</p>
+          <div id="panel-gastos-lista"></div>
+        </div>
       </div>
-      <!-- Nuevos préstamos -->
-      <div class="card" style="margin-bottom:12px">
-        <p style="font-size:13px;font-weight:600;margin-bottom:10px" id="panel-nuevos-titulo">📄 Nuevos préstamos (0)</p>
-        <div id="panel-nuevos-lista"></div>
+      <!-- Sección Préstamos nuevos -->
+      <div id="panel-sec-nuevos" style="display:none;margin-bottom:12px">
+        <div class="card">
+          <p style="font-size:13px;font-weight:600;margin-bottom:10px">📄 Préstamos nuevos</p>
+          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead><tr style="border-bottom:2px solid var(--border)">
+              <th style="padding:6px 4px;text-align:left;color:var(--text-muted);font-weight:600">Cliente</th>
+              <th style="padding:6px 4px;text-align:right;color:var(--text-muted);font-weight:600">Monto</th>
+              <th style="padding:6px 4px;text-align:center;color:var(--text-muted);font-weight:600"></th>
+            </tr></thead>
+            <tbody id="panel-nuevos-body"></tbody>
+          </table></div>
+        </div>
       </div>
-      <!-- Cobros administrativos -->
-      <div class="card" style="margin-bottom:12px">
-        <p style="font-size:13px;font-weight:600;margin-bottom:10px" id="panel-admin-titulo">🏦 Cobros administrativos (0)</p>
-        <div id="panel-admin-lista"></div>
+      <!-- Sección Cobros realizados -->
+      <div id="panel-sec-cobros" style="display:none;margin-bottom:12px">
+        <div class="card">
+          <p style="font-size:13px;font-weight:600;margin-bottom:10px">💰 Cobros realizados</p>
+          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead><tr style="border-bottom:2px solid var(--border)">
+              <th style="padding:6px 4px;text-align:left;color:var(--text-muted);font-weight:600">Cliente</th>
+              <th style="padding:6px 4px;text-align:right;color:var(--text-muted);font-weight:600">Cobro</th>
+              <th style="padding:6px 4px;text-align:center;color:var(--text-muted);font-weight:600"></th>
+            </tr></thead>
+            <tbody id="panel-cobros-body"></tbody>
+          </table></div>
+        </div>
       </div>
+      <!-- Sección Cobros admin -->
+      <div id="panel-sec-admin" style="display:none;margin-bottom:12px">
+        <div class="card">
+          <p style="font-size:13px;font-weight:600;margin-bottom:10px">🏦 Cobros administrativos</p>
+          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead><tr style="border-bottom:2px solid var(--border)">
+              <th style="padding:6px 4px;text-align:left;color:var(--text-muted);font-weight:600">Cliente</th>
+              <th style="padding:6px 4px;text-align:right;color:var(--text-muted);font-weight:600">Cobro Adm.</th>
+              <th style="padding:6px 4px;text-align:right;color:var(--text-muted);font-weight:600">Monto</th>
+              <th style="padding:6px 4px;text-align:center;color:var(--text-muted);font-weight:600"></th>
+            </tr></thead>
+            <tbody id="panel-admin-body"></tbody>
+          </table></div>
+        </div>
+      </div>
+      <!-- Resumen Caja -->
+      <button class="btn btn-blue btn-full" style="padding:13px;font-size:15px;margin-bottom:16px" onclick="mostrarResumenCaja()">🗂 Resumen Caja</button>
+    </div>
+  </div>
+
+  <!-- MODAL NUEVO GASTO -->
+  <div id="gasto-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:8500;align-items:flex-end;justify-content:center" onclick="cerrarGastoModal()">
+    <div style="background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:390px" onclick="event.stopPropagation()">
+      <p style="font-size:16px;font-weight:700;margin-bottom:16px">💸 Nuevo Gasto</p>
+      <div class="field-group"><label>Monto *</label>
+        <input type="text" inputmode="numeric" id="gasto-monto" placeholder="0" oninput="fmtMoneyInput(this)" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;font-weight:600">
+      </div>
+      <div class="field-group"><label>Tipo</label>
+        <input type="text" id="gasto-tipo" placeholder="Ej: GASOLINA, COMIDA..." style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;text-transform:uppercase">
+      </div>
+      <div class="field-group"><label>Observación</label>
+        <input type="text" id="gasto-obs" placeholder="Detalle del gasto..." style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+      </div>
+      <button class="btn btn-green btn-full" style="padding:13px;margin-top:8px" onclick="guardarGasto()">✓ Guardar gasto</button>
+      <button onclick="cerrarGastoModal()" style="width:100%;padding:12px;background:#f3f4f6;color:#374151;border:none;border-radius:12px;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:8px">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- MODAL RESUMEN CAJA -->
+  <div id="caja-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:8500;align-items:flex-end;justify-content:center" onclick="cerrarCajaModal()">
+    <div style="background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:390px" onclick="event.stopPropagation()">
+      <p style="font-size:16px;font-weight:700;margin-bottom:4px">🗂 Resumen Caja</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px" id="caja-fecha-txt"></p>
+      <div class="field-group"><label>Base (efectivo inicial)</label>
+        <input type="text" inputmode="numeric" id="caja-base" placeholder="0" oninput="fmtMoneyInput(this);calcCaja()" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;font-weight:600">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin:16px 0">
+        <div style="display:flex;justify-content:space-between;padding:10px 12px;background:#f9fafb;border-radius:8px">
+          <span style="font-size:14px;color:#374151">Recogida</span>
+          <span style="font-size:14px;font-weight:600" id="caja-recogida">₡0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:10px 12px;background:#f9fafb;border-radius:8px">
+          <span style="font-size:14px;color:#374151">Base</span>
+          <span style="font-size:14px;font-weight:600" id="caja-base-display">₡0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:10px 12px;background:#fee2e2;border-radius:8px">
+          <span style="font-size:14px;color:#991b1b">Préstamos realizados</span>
+          <span style="font-size:14px;font-weight:600;color:#991b1b" id="caja-prestamos">₡0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:10px 12px;background:#fee2e2;border-radius:8px">
+          <span style="font-size:14px;color:#991b1b">Gastos</span>
+          <span style="font-size:14px;font-weight:600;color:#991b1b" id="caja-gastos">₡0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:14px 16px;background:#166534;border-radius:10px">
+          <span style="font-size:16px;font-weight:700;color:#fff">Caja</span>
+          <span style="font-size:20px;font-weight:700;color:#fff" id="caja-total">₡0</span>
+        </div>
+        <p style="font-size:11px;color:var(--text-muted);text-align:center">(Recogida + Base − Préstamos − Gastos)</p>
+      </div>
+      <button onclick="cerrarCajaModal()" style="width:100%;padding:12px;background:#f3f4f6;color:#374151;border:none;border-radius:12px;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer">Cerrar</button>
     </div>
   </div>
 
@@ -824,6 +927,7 @@ function cerrarSesion(){
 var prestamos = [];
 var pagos = [];
 var cobrosAdmin = [];
+var gastos = [];
 var currentId = null;
 var historial = ['screen-cobros'];
 
@@ -832,6 +936,7 @@ function guardarDatos(){
     localStorage.setItem('fjd_prestamos',JSON.stringify(prestamos));
     localStorage.setItem('fjd_pagos',JSON.stringify(pagos));
     localStorage.setItem('fjd_cobrosadmin',JSON.stringify(cobrosAdmin));
+    localStorage.setItem('fjd_gastos',JSON.stringify(gastos));
   }catch(e){
     toast('⚠ Espacio lleno: fotos muy pesadas');
   }
@@ -845,6 +950,8 @@ function cargarDatos(){
     if(sg) pagos=JSON.parse(sg);
     var sc=localStorage.getItem('fjd_cobrosadmin');
     if(sc) cobrosAdmin=JSON.parse(sc);
+    var sg2=localStorage.getItem('fjd_gastos');
+    if(sg2) gastos=JSON.parse(sg2);
   }catch(e){}
 }
 
@@ -1736,57 +1843,136 @@ function guardarDocsCliente(){
   toast('✓ Datos del cliente actualizados');
 }
 
+var _panelSecAbierta=null;
+function togglePanelSec(sec){
+  var secs=['gastos','nuevos','cobros','admin'];
+  if(_panelSecAbierta===sec){
+    document.getElementById('panel-sec-'+sec).style.display='none';
+    document.getElementById('pcard-'+sec).style.border='2px solid transparent';
+    _panelSecAbierta=null;
+  } else {
+    secs.forEach(function(s){
+      document.getElementById('panel-sec-'+s).style.display='none';
+      document.getElementById('pcard-'+s).style.border='2px solid transparent';
+    });
+    document.getElementById('panel-sec-'+sec).style.display='block';
+    document.getElementById('pcard-'+sec).style.border='2px solid #374151';
+    _panelSecAbierta=sec;
+  }
+}
+
 function renderPanelRecolector(){
   var fechaEl=document.getElementById('panel-fecha');
   if(!fechaEl.value) fechaEl.value=new Date().toISOString().split('T')[0];
   var fecha=fechaEl.value;
 
-  // Cobros realizados en esa fecha
-  var pagosHoy=pagos.filter(function(x){return x.fechaPago===fecha;});
-  var totalCobrado=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
-  document.getElementById('panel-total-cobrado').textContent='₡'+fmt(totalCobrado);
+  // Gastos
+  var gastosHoy=gastos.filter(function(x){return x.fecha===fecha;});
+  var totalGastos=gastosHoy.reduce(function(s,x){return s+x.monto;},0);
+  document.getElementById('panel-stat-gastos').textContent='₡'+fmt(totalGastos);
+  var gastosHtml=gastosHoy.length
+    ?gastosHoy.map(function(g){
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">'
+        +'<div><div style="font-size:13px;font-weight:600">'+g.tipo+'</div><div style="font-size:11px;color:var(--text-muted)">'+g.obs+'</div></div>'
+        +'<span style="font-size:14px;font-weight:700;color:#92400e">₡'+fmt(g.monto)+'</span>'
+        +'</div>';
+    }).join('')
+    :'<p style="font-size:13px;color:var(--text-muted)">Sin gastos registrados</p>';
+  document.getElementById('panel-gastos-lista').innerHTML=gastosHtml;
 
-  // Lista de cobros del día (clientes que pagaron)
-  var cobrosList=pagosHoy.map(function(pg){
-    var p=prestamos.find(function(x){return x.id===pg.id_prestamo;});
-    return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">'
-      +'<span style="font-size:13px">'+(p?p.cliente:pg.id_prestamo)+'</span>'
-      +'<span style="font-size:13px;font-weight:600;color:#166534">₡'+fmt(pg.montoAbonado)+'</span>'
-      +'</div>';
-  });
-  document.getElementById('panel-cobros-titulo').textContent='💰 Cobros del día ('+pagosHoy.length+')';
-  document.getElementById('panel-cobros-lista').innerHTML=cobrosList.length
-    ?cobrosList.join('')
-    :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros en esta fecha</p>';
-
-  // Nuevos préstamos creados en esa fecha
+  // Préstamos nuevos
   var nuevos=prestamos.filter(function(p){return p.fechaInicio===fecha;});
-  var nuevosList=nuevos.map(function(p){
-    return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">'
-      +'<span style="font-size:13px">'+p.cliente+'</span>'
-      +'<span style="font-size:13px;font-weight:600;color:#2563eb">₡'+fmt(p.montoPrestado)+'</span>'
-      +'</div>';
-  });
-  document.getElementById('panel-nuevos-titulo').textContent='📄 Nuevos préstamos ('+nuevos.length+')';
-  document.getElementById('panel-nuevos-lista').innerHTML=nuevosList.length
-    ?nuevosList.join('')
-    :'<p style="font-size:13px;color:var(--text-muted)">Sin préstamos nuevos en esta fecha</p>';
+  document.getElementById('panel-stat-nuevos').textContent=nuevos.length;
+  document.getElementById('panel-nuevos-body').innerHTML=nuevos.length
+    ?nuevos.map(function(p){
+      return '<tr style="border-bottom:1px solid var(--border)">'
+        +'<td style="padding:7px 4px;font-size:12px">'+p.cliente+'</td>'
+        +'<td style="padding:7px 4px;font-size:12px;text-align:right;font-weight:600;color:#2563eb">₡'+fmt(p.montoPrestado)+'</td>'
+        +'<td style="padding:7px 4px;text-align:center"><button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button></td>'
+        +'</tr>';
+    }).join('')
+    :'<tr><td colspan="3" style="padding:10px 4px;font-size:13px;color:var(--text-muted)">Sin préstamos nuevos</td></tr>';
 
-  // Cobros administrativos (renovaciones)
+  // Cobros realizados
+  var pagosHoy=pagos.filter(function(x){return x.fechaPago===fecha;});
+  document.getElementById('panel-stat-cobros').textContent=pagosHoy.length;
+  document.getElementById('panel-cobros-body').innerHTML=pagosHoy.length
+    ?pagosHoy.map(function(pg){
+      var p=prestamos.find(function(x){return x.id===pg.id_prestamo;});
+      return '<tr style="border-bottom:1px solid var(--border)">'
+        +'<td style="padding:7px 4px;font-size:12px">'+(p?p.cliente:'—')+'</td>'
+        +'<td style="padding:7px 4px;font-size:12px;text-align:right;font-weight:600;color:#166534">₡'+fmt(pg.montoAbonado)+'</td>'
+        +'<td style="padding:7px 4px;text-align:center">'+(p?'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button>':'')+'</td>'
+        +'</tr>';
+    }).join('')
+    :'<tr><td colspan="3" style="padding:10px 4px;font-size:13px;color:var(--text-muted)">Sin cobros</td></tr>';
+
+  // Cobros admin
   var adminHoy=cobrosAdmin.filter(function(x){return x.fecha===fecha;});
   var totalAdmin=adminHoy.reduce(function(s,x){return s+x.monto;},0);
-  document.getElementById('panel-total-admin').textContent='₡'+fmt(totalAdmin);
-  var adminList=adminHoy.map(function(ca){
-    return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">'
-      +'<span style="font-size:13px">'+ca.cliente+'</span>'
-      +'<span style="font-size:13px;font-weight:600;color:#1e40af">₡'+fmt(ca.monto)+'</span>'
-      +'</div>';
-  });
-  document.getElementById('panel-admin-titulo').textContent='🏦 Cobros administrativos ('+adminHoy.length+')';
-  document.getElementById('panel-admin-lista').innerHTML=adminList.length
-    ?adminList.join('')
-    :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros administrativos en esta fecha</p>';
+  document.getElementById('panel-stat-admin').textContent='₡'+fmt(totalAdmin);
+  document.getElementById('panel-admin-body').innerHTML=adminHoy.length
+    ?adminHoy.map(function(ca){
+      var p=prestamos.find(function(x){return x.id===ca.id_prestamo;});
+      return '<tr style="border-bottom:1px solid var(--border)">'
+        +'<td style="padding:7px 4px;font-size:12px">'+ca.cliente+'</td>'
+        +'<td style="padding:7px 4px;font-size:12px;text-align:right;font-weight:600;color:#5b21b6">₡'+fmt(ca.monto)+'</td>'
+        +'<td style="padding:7px 4px;font-size:12px;text-align:right;color:var(--text-muted)">₡'+fmt(p?p.montoPrestado:0)+'</td>'
+        +'<td style="padding:7px 4px;text-align:center">'+(p?'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button>':'')+'</td>'
+        +'</tr>';
+    }).join('')
+    :'<tr><td colspan="4" style="padding:10px 4px;font-size:13px;color:var(--text-muted)">Sin cobros administrativos</td></tr>';
 }
+
+function abrirNuevoGasto(){
+  document.getElementById('gasto-monto').value='';
+  document.getElementById('gasto-tipo').value='';
+  document.getElementById('gasto-obs').value='';
+  document.getElementById('gasto-modal').style.display='flex';
+}
+function cerrarGastoModal(){ document.getElementById('gasto-modal').style.display='none'; }
+function guardarGasto(){
+  var monto=readMoneyInput('gasto-monto');
+  if(!monto){toast('⚠ Ingrese el monto');return;}
+  var tipo=(document.getElementById('gasto-tipo').value.trim()||'OTRO').toUpperCase();
+  var obs=document.getElementById('gasto-obs').value.trim();
+  var fechaPanel=document.getElementById('panel-fecha').value||new Date().toISOString().split('T')[0];
+  gastos.push({id:Date.now().toString(),fecha:fechaPanel,monto:monto,tipo:tipo,obs:obs});
+  guardarDatos();
+  cerrarGastoModal();
+  toast('✓ Gasto registrado: ₡'+fmt(monto));
+  renderPanelRecolector();
+}
+
+function mostrarResumenCaja(){
+  var fecha=document.getElementById('panel-fecha').value||new Date().toISOString().split('T')[0];
+  var parts=fecha.split('-');
+  document.getElementById('caja-fecha-txt').textContent=parseInt(parts[2])+'/'+parseInt(parts[1])+'/'+parts[0];
+  var recogida=pagos.filter(function(x){return x.fechaPago===fecha;}).reduce(function(s,x){return s+x.montoAbonado;},0);
+  var prestamosHoy=prestamos.filter(function(p){return p.fechaInicio===fecha;}).reduce(function(s,p){return s+p.montoPrestado;},0);
+  var totalGastos=gastos.filter(function(x){return x.fecha===fecha;}).reduce(function(s,x){return s+x.monto;},0);
+  var baseKey='fjd_base_'+fecha;
+  var baseGuardada=parseInt(localStorage.getItem(baseKey)||'0',10)||0;
+  document.getElementById('caja-base').value=baseGuardada>0?fmt(baseGuardada):'';
+  document.getElementById('caja-recogida').textContent='₡'+fmt(recogida);
+  document.getElementById('caja-prestamos').textContent='₡'+fmt(prestamosHoy);
+  document.getElementById('caja-gastos').textContent='₡'+fmt(totalGastos);
+  var base=baseGuardada;
+  document.getElementById('caja-base-display').textContent='₡'+fmt(base);
+  document.getElementById('caja-total').textContent='₡'+fmt(recogida+base-prestamosHoy-totalGastos);
+  document.getElementById('caja-modal').style.display='flex';
+}
+function calcCaja(){
+  var fecha=document.getElementById('panel-fecha').value||new Date().toISOString().split('T')[0];
+  var base=readMoneyInput('caja-base');
+  localStorage.setItem('fjd_base_'+fecha,base);
+  var recogida=pagos.filter(function(x){return x.fechaPago===fecha;}).reduce(function(s,x){return s+x.montoAbonado;},0);
+  var prestamosHoy=prestamos.filter(function(p){return p.fechaInicio===fecha;}).reduce(function(s,p){return s+p.montoPrestado;},0);
+  var totalGastos=gastos.filter(function(x){return x.fecha===fecha;}).reduce(function(s,x){return s+x.monto;},0);
+  document.getElementById('caja-base-display').textContent='₡'+fmt(base);
+  document.getElementById('caja-total').textContent='₡'+fmt(recogida+base-prestamosHoy-totalGastos);
+}
+function cerrarCajaModal(){ document.getElementById('caja-modal').style.display='none'; }
 
 // ----- INIT -----
 var hoy=new Date();
