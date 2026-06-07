@@ -933,10 +933,12 @@ function calcDerived(p){
   var totalPagado=pagosP.reduce(function(s,x){return s+x.montoAbonado;},0);
   var saldoPendiente=Math.max(0,p.Total_A_Cobrar-totalPagado);
   var cuotasPagadas=Math.min(p.cantidadDeQuincenas,Math.floor(totalPagado/p.Cuota_Quincenal));
+  var adelanto=totalPagado-(cuotasPagadas*p.Cuota_Quincenal); // pagado de más hacia próxima cuota
+  var pendienteProxima=saldoPendiente>0?Math.max(0,p.Cuota_Quincenal-adelanto):0;
   var progreso=p.Total_A_Cobrar>0?Math.min(1,totalPagado/p.Total_A_Cobrar):0;
   var estado=p.estado;
   if(saldoPendiente<=0) estado='Cancelado';
-  return {totalPagado:totalPagado,saldoPendiente:saldoPendiente,cuotasPagadas:cuotasPagadas,progreso:progreso,estado:estado};
+  return {totalPagado:totalPagado,saldoPendiente:saldoPendiente,cuotasPagadas:cuotasPagadas,adelanto:adelanto,pendienteProxima:pendienteProxima,progreso:progreso,estado:estado};
 }
 
 function estadoTag(estado){
@@ -1000,10 +1002,10 @@ function renderCobros(filtro){
     return '<div class="loan-row">'
       +'<button class="icon-btn icon-btn-blue" onclick="verDetalle(\''+p.id+'\')" title="Ver detalle">✓</button>'
       +btnRenovar
-      +'<button class="icon-btn icon-btn-green" onclick="abonoRapido(\''+p.id+'\',\''+p.cliente+'\','+p.Cuota_Quincenal+')" title="Abonar cuota">🐷</button>'
+      +'<button class="icon-btn icon-btn-green" onclick="abonoRapido(\''+p.id+'\',\''+p.cliente+'\','+d.pendienteProxima+')" title="Abonar cuota">🐷</button>'
       +'<div style="flex:1;padding-left:10px;min-width:0">'
         +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+'</div>'
-        +'<div style="font-size:11px;margin-top:1px">Cuota: ₡'+fmt(p.Cuota_Quincenal)+'&nbsp;&nbsp;<span style="background:'+colorEtiqueta+';color:#fff;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:600">'+etiqueta+'</span></div>'
+        +'<div style="font-size:11px;margin-top:1px">Cuota: ₡'+fmt(d.pendienteProxima)+'&nbsp;&nbsp;<span style="background:'+colorEtiqueta+';color:#fff;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:600">'+etiqueta+'</span></div>'
         +'<div style="font-size:10px;color:var(--text-muted);margin-top:3px">'+Math.min(30,Math.floor(d.totalPagado/(p.Total_A_Cobrar/30)))+'/30 días</div>'
       +'</div>'
     +'</div>';
@@ -1068,7 +1070,7 @@ function verDetalle(id){
   var cuotaDiaria=p.Total_A_Cobrar/30;
   var diasPagados=cuotaDiaria>0?Math.min(30,Math.floor(d.totalPagado/cuotaDiaria)):0;
   document.getElementById('det-progress-txt').textContent=diasPagados+'/30';
-  document.getElementById('abonar-cuota').textContent='₡'+fmt(p.Cuota_Quincenal);
+  document.getElementById('abonar-cuota').textContent='₡'+fmt(d.pendienteProxima);
   document.getElementById('abonar-fecha').value=new Date().toISOString().split('T')[0];
   document.getElementById('abonar-monto').value='';
   renderCuotasGrid(p,d);
