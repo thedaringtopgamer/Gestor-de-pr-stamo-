@@ -193,7 +193,7 @@
   <div class="menu-dropdown" id="menu-dropdown">
     <div class="menu-item" onclick="goTo('screen-cobros');closeMenu()">📋 Cobros</div>
     <div class="menu-item" onclick="goTo('screen-tarjetas');closeMenu()">🃏 Tarjetas</div>
-    <div class="menu-item" onclick="goTo('screen-nuevo-prestamo');closeMenu()">➕ Nuevo Préstamo</div>
+    <div class="menu-item" onclick="goTo('screen-nuevo-cliente');closeMenu()">➕ Nuevo Cliente</div>
     <div class="menu-item" onclick="cerrarSesion()" style="color:var(--red)">🔒 Cerrar sesión</div>
     <div class="menu-item" onclick="closeMenu()" style="color:var(--gray)">✕ Cerrar menú</div>
   </div>
@@ -211,7 +211,7 @@
     <div class="section">
       <div style="display:flex;gap:10px;margin-bottom:20px">
         <button class="btn btn-blue" style="flex:1" onclick="goTo('screen-tarjetas')">Ver Tarjetas</button>
-        <button class="btn btn-green" style="flex:1" onclick="goTo('screen-nuevo-prestamo')">Nuevo Préstamo</button>
+        <button class="btn btn-green" style="flex:1" onclick="goTo('screen-nuevo-cliente')">Nuevo Cliente</button>
       </div>
       <div class="summary-grid" id="home-summary">
         <div class="summary-card">
@@ -244,7 +244,7 @@
     <div class="section">
       <div class="section-header">
         <button class="btn btn-blue" style="flex:1" onclick="goTo('screen-tarjetas')">Ver Tarjetas</button>
-        <button class="btn btn-green" style="flex:1" onclick="goTo('screen-nuevo-prestamo')">Nuevo Préstamo</button>
+        <button class="btn btn-green" style="flex:1" onclick="goTo('screen-nuevo-cliente')">Nuevo Cliente</button>
       </div>
       <p style="font-size:18px;font-weight:600;margin-bottom:10px" id="cobros-titulo">Listado de cobros (0)</p>
       <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
@@ -271,7 +271,7 @@
     <div class="section">
       <div class="section-header">
         <button class="btn btn-blue" style="flex:1" onclick="goTo('screen-cobros')">Ver Cobros</button>
-        <button class="btn btn-green" style="flex:1" onclick="goTo('screen-nuevo-prestamo')">Nuevo Préstamo</button>
+        <button class="btn btn-green" style="flex:1" onclick="goTo('screen-nuevo-cliente')">Nuevo Cliente</button>
       </div>
       <p style="font-size:18px;font-weight:600;margin-bottom:10px" id="tarjetas-titulo">Listado de tarjetas (0)</p>
       <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
@@ -289,17 +289,83 @@
     <div style="text-align:center;padding:12px;font-size:12px;color:var(--text-muted)">Usuario: BOMBI &nbsp;·&nbsp; © 2026</div>
   </div>
 
+  <!-- ==================== NUEVO CLIENTE PASO 1 ==================== -->
+  <div id="screen-nuevo-cliente" class="screen">
+    <div class="navbar">
+      <button class="btn btn-cyan btn-sm" onclick="goBack()">← Volver</button>
+      <span class="navbar-title">Nuevo Cliente</span>
+      <div style="width:70px"></div>
+    </div>
+    <div class="section">
+      <div style="background:#dbeafe;border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;font-size:13px;color:#1e40af;font-weight:500">📋 Paso 1 de 3 — Datos personales</div>
+      <div class="field-group"><label>Nombre completo *</label><input type="text" id="nc-nombre" placeholder="Nombre del cliente"></div>
+      <div class="field-group"><label>Cédula *</label><input type="text" id="nc-cedula" placeholder="0-0000-0000"></div>
+      <div class="field-group"><label>Teléfono *</label><input type="tel" id="nc-telefono" placeholder="0000-0000"></div>
+      <div class="field-group">
+        <label>Ruta *</label>
+        <select id="nc-ruta" onchange="onRutaChange()" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none">
+          <option value="">-- Seleccione ruta --</option>
+          <option value="Heredia">Heredia</option>
+          <option value="Alajuela">Alajuela</option>
+          <option value="San Ramón">San Ramón</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>SubRuta *</label>
+        <select id="nc-subruta" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none">
+          <option value="">-- Seleccione primero la ruta --</option>
+        </select>
+      </div>
+      <div class="divider"></div>
+      <button class="btn btn-cyan btn-full" style="padding:13px;margin-top:8px" onclick="guardarCliente()">Continuar →</button>
+      <button class="btn btn-gray btn-full" style="margin-top:8px" onclick="goBack()">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- ==================== NUEVO CLIENTE PASO 2 - DOCUMENTOS ==================== -->
+  <div id="screen-documentos" class="screen">
+    <div class="navbar">
+      <button class="btn btn-cyan btn-sm" onclick="goBack()">← Volver</button>
+      <span class="navbar-title">Documentos</span>
+      <div style="width:70px"></div>
+    </div>
+    <div class="section">
+      <div style="background:#dbeafe;border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;font-size:13px;color:#1e40af;font-weight:500">📷 Paso 2 de 3 — Documentos y fotos</div>
+      <div class="card">
+        <p style="font-size:13px;font-weight:600;margin-bottom:12px">📄 Cédula</p>
+        <div class="field-group"><label>Cédula — Frente</label><input type="file" accept="image/*" capture="environment" id="doc-cedula-frente" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
+        <div class="field-group"><label>Cédula — Detrás</label><input type="file" accept="image/*" capture="environment" id="doc-cedula-detras" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
+      </div>
+      <div class="card">
+        <p style="font-size:13px;font-weight:600;margin-bottom:12px">📸 Fotos</p>
+        <div class="field-group"><label>Foto del cliente</label><input type="file" accept="image/*" capture="user" id="doc-foto-cliente" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
+        <div class="field-group"><label>Foto de la casa</label><input type="file" accept="image/*" capture="environment" id="doc-foto-casa" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
+        <div class="field-group"><label>Foto del trabajo</label><input type="file" accept="image/*" capture="environment" id="doc-foto-trabajo" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
+      </div>
+      <div class="card">
+        <p style="font-size:13px;font-weight:600;margin-bottom:12px">📍 Ubicaciones</p>
+        <div class="field-group"><label>Dirección de la casa</label><input type="text" id="doc-dir-casa" placeholder="Ej: 200m norte del parque" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none"></div>
+        <div class="field-group"><label>Dirección del trabajo</label><input type="text" id="doc-dir-trabajo" placeholder="Ej: frente al banco" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none"></div>
+      </div>
+      <div class="divider"></div>
+      <button class="btn btn-cyan btn-full" style="padding:13px;margin-top:8px" onclick="goTo('screen-nuevo-prestamo')">Continuar →</button>
+      <button class="btn btn-gray btn-full" style="margin-top:8px" onclick="goBack()">Volver</button>
+    </div>
+  </div>
+
   <!-- ==================== NUEVO PRÉSTAMO ==================== -->
   <div id="screen-nuevo-prestamo" class="screen">
     <div class="navbar">
       <button class="btn btn-cyan btn-sm" onclick="goBack()">← Volver</button>
-      <span class="navbar-title">Nuevo Préstamo</span>
+      <span class="navbar-title">Datos del Préstamo</span>
       <div style="width:70px"></div>
     </div>
     <div class="section">
+      <div style="background:#dbeafe;border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;font-size:13px;color:#1e40af;font-weight:500">💰 Paso 3 de 3 — Datos del préstamo</div>
       <div class="field-group">
-        <label>Nombre *</label>
-        <input type="text" id="np-cliente" placeholder="Nombre del deudor" oninput="calcPreview()">
+        <label>Cliente</label>
+        <div style="padding:10px 12px;background:#f3f4f6;border-radius:var(--radius);font-size:14px;font-weight:600" id="np-cliente-display">—</div>
+        <input type="hidden" id="np-cliente">
       </div>
       <div class="field-group">
         <label>Monto *</label>
@@ -559,6 +625,10 @@ function goTo(id){
   if(id==='screen-cobros') renderCobros();
   if(id==='screen-tarjetas') renderTarjetas();
   if(id==='screen-home') updateHome();
+  if(id==='screen-nuevo-prestamo' && clienteTemporal.nombre){
+    document.getElementById('np-cliente').value=clienteTemporal.nombre;
+    document.getElementById('np-cliente-display').textContent=clienteTemporal.nombre+(clienteTemporal.subruta?' · '+clienteTemporal.subruta:'');
+  }
 }
 
 function goBack(){
@@ -633,11 +703,11 @@ function calcPreview(){
 }
 
 function guardarPrestamo(){
-  var cliente=document.getElementById('np-cliente').value.trim();
+  var nombre=clienteTemporal.nombre||document.getElementById('np-cliente').value.trim();
   var monto=parseFloat(document.getElementById('np-monto').value)||0;
   var tasa=parseFloat(document.getElementById('np-tasa').value)||0;
   var fecha=document.getElementById('np-fecha').value||new Date().toISOString().split('T')[0];
-  if(!cliente){toast('⚠ Ingrese el nombre');return;}
+  if(!nombre){toast('⚠ Falta nombre del cliente');return;}
   if(!monto){toast('⚠ Ingrese el monto');return;}
   var tasaDec=tasa/100;
   var intereses=Math.round(monto*tasaDec);
@@ -646,7 +716,11 @@ function guardarPrestamo(){
   var cuotaVal=cd.cuotas>0?Math.round(totalCobrar/cd.cuotas):0;
   prestamos.push({
     id:Date.now().toString(),
-    cliente:cliente,
+    cliente:nombre,
+    cedula:clienteTemporal.cedula||'',
+    telefono:clienteTemporal.telefono||'',
+    ruta:clienteTemporal.ruta||'',
+    subruta:clienteTemporal.subruta||'',
     montoPrestado:monto,
     tasaInteres:tasaDec,
     cantidadDeQuincenas:cd.cuotas,
@@ -658,12 +732,19 @@ function guardarPrestamo(){
     Total_Intereses:intereses,
     Total_A_Cobrar:totalCobrar
   });
+  clienteTemporal={};
+  document.getElementById('nc-nombre').value='';
+  document.getElementById('nc-cedula').value='';
+  document.getElementById('nc-telefono').value='';
+  document.getElementById('nc-ruta').value='';
+  document.getElementById('nc-subruta').innerHTML='<option value="">-- Seleccione primero la ruta --</option>';
   document.getElementById('np-cliente').value='';
+  document.getElementById('np-cliente-display').textContent='—';
   document.getElementById('np-monto').value='';
   document.getElementById('np-tasa').value='20';
   document.getElementById('np-fecha').value=new Date().toISOString().split('T')[0];
   calcPreview();
-  toast('✓ Préstamo guardado: '+cliente);
+  toast('✓ Cliente guardado: '+nombre);
   goTo('screen-cobros');
 }
 
@@ -894,32 +975,72 @@ function updateHome(){
   document.getElementById('home-cobros-dia').textContent=activos.length;
 }
 
+// ----- RUTAS Y SUBRUTAS -----
+var rutasData = {
+  'Heredia': ['Heredia Centro','Barva','Santo Domingo','Santa Bárbara','San Rafael','San Isidro','Belén','Flores','San Pablo','Sarapiquí'],
+  'Alajuela': ['Alajuela Centro','Grecia','San Mateo','Atenas','Naranjo','Palmares','Poás','Orotina','San Carlos','Zarcero','Upala','Los Chiles','Guatuso'],
+  'San Ramón': ['San Ramón Centro','Santiago','San Juan','Piedades Norte','Piedades Sur','San Rafael','San Isidro','Ángeles','Alfaro','Volio','Concepción','Zapotal','Peñas Blancas','La Angostura']
+};
+
+function onRutaChange(){
+  var ruta=document.getElementById('nc-ruta').value;
+  var sel=document.getElementById('nc-subruta');
+  sel.innerHTML='<option value="">-- Seleccione subruta --</option>';
+  if(ruta && rutasData[ruta]){
+    rutasData[ruta].forEach(function(sr){
+      var o=document.createElement('option');
+      o.value=sr; o.textContent=sr;
+      sel.appendChild(o);
+    });
+  }
+}
+
+var clienteTemporal = {};
+
+function guardarCliente(){
+  var nombre=document.getElementById('nc-nombre').value.trim();
+  var cedula=document.getElementById('nc-cedula').value.trim();
+  var tel=document.getElementById('nc-telefono').value.trim();
+  var ruta=document.getElementById('nc-ruta').value;
+  var subruta=document.getElementById('nc-subruta').value;
+  if(!nombre){toast('⚠ Ingrese el nombre');return;}
+  if(!cedula){toast('⚠ Ingrese la cédula');return;}
+  if(!ruta){toast('⚠ Seleccione la ruta');return;}
+  if(!subruta){toast('⚠ Seleccione la subruta');return;}
+  clienteTemporal={nombre:nombre,cedula:cedula,telefono:tel,ruta:ruta,subruta:subruta};
+  goTo('screen-documentos');
+}
+
+// Botón atrás del teléfono
+history.pushState(null,'',location.href);
+window.addEventListener('popstate',function(){
+  history.pushState(null,'',location.href);
+  goBack();
+});
+
 // ----- DATOS DE DEMO -----
-prestamos.push({
-  id:'demo1',cliente:'Denia Guarda Cenada H',
-  montoPrestado:75000,tasaInteres:0.20,cantidadDeQuincenas:6,
-  fechaInicio:'2026-05-01',estado:'Activo',
-  Cuota_Quincenal:15000,Total_Intereses:15000,Total_A_Cobrar:90000
-});
-prestamos.push({
-  id:'demo2',cliente:'Jairo Cenada H',
-  montoPrestado:100000,tasaInteres:0.20,cantidadDeQuincenas:6,
-  fechaInicio:'2026-05-21',estado:'Activo',
-  Cuota_Quincenal:20000,Total_Intereses:20000,Total_A_Cobrar:120000
-});
-prestamos.push({
-  id:'demo3',cliente:'Karen Lotería H',
-  montoPrestado:100000,tasaInteres:0.20,cantidadDeQuincenas:6,
-  fechaInicio:'2026-05-27',estado:'Activo',
-  Cuota_Quincenal:20000,Total_Intereses:20000,Total_A_Cobrar:120000
-});
-pagos.push({id_pago:'p1',id_prestamo:'demo2',fechaPago:'2026-05-27',montoAbonado:20000});
-pagos.push({id_pago:'p2',id_prestamo:'demo2',fechaPago:'2026-06-03',montoAbonado:20000});
-pagos.push({id_pago:'p3',id_prestamo:'demo2',fechaPago:'2026-06-06',montoAbonado:20000});
-pagos.push({id_pago:'p4',id_prestamo:'demo2',fechaPago:'2026-06-06',montoAbonado:20000});
-pagos.push({id_pago:'p5',id_prestamo:'demo2',fechaPago:'2026-06-06',montoAbonado:20000});
-pagos.push({id_pago:'p6',id_prestamo:'demo3',fechaPago:'2026-05-27',montoAbonado:20000});
-pagos.push({id_pago:'p7',id_prestamo:'demo3',fechaPago:'2026-06-03',montoAbonado:20000});
+var hoy=new Date();
+function fechaOffset(dias){
+  var d=new Date(hoy);
+  d.setDate(d.getDate()+dias);
+  return d.toISOString().split('T')[0];
+}
+function mkPrestamo(id,nombre,monto,ruta,subruta,offsetDias,cuotas){
+  var tasa=0.20,intereses=Math.round(monto*tasa),total=monto+intereses,cuota=Math.round(total/cuotas);
+  return {id:id,cliente:nombre,ruta:ruta,subruta:subruta,montoPrestado:monto,tasaInteres:tasa,cantidadDeQuincenas:cuotas,diasPorCuota:15,tipo:'Quincenal',fechaInicio:fechaOffset(offsetDias),estado:'Activo',Cuota_Quincenal:cuota,Total_Intereses:intereses,Total_A_Cobrar:total};
+}
+prestamos.push(mkPrestamo('d1','Ana García Mora',50000,'Heredia','Santo Domingo',-35,2));
+prestamos.push(mkPrestamo('d2','Carlos Mora Vega',75000,'Heredia','San Rafael',-20,2));
+prestamos.push(mkPrestamo('d3','María Jiménez Solís',100000,'Alajuela','Grecia',-15,2));
+prestamos.push(mkPrestamo('d4','Luis Rodríguez Pérez',125000,'San Ramón','San Ramón Centro',0,2));
+prestamos.push(mkPrestamo('d5','Andrea Solís Ulate',150000,'Heredia','Barva',0,3));
+prestamos.push(mkPrestamo('d6','Roberto Vargas Cruz',200000,'Alajuela','Naranjo',5,3));
+prestamos.push(mkPrestamo('d7','Patricia Núñez Díaz',250000,'San Ramón','Piedades Norte',10,3));
+prestamos.push(mkPrestamo('d8','Diego Madrigal León',300000,'Heredia','Heredia Centro',15,3));
+
+// Algunos pagos parciales
+pagos.push({id_pago:'p1',id_prestamo:'d2',fechaPago:fechaOffset(-5),montoAbonado:prestamos.find(function(x){return x.id==='d2';}).Cuota_Quincenal});
+pagos.push({id_pago:'p2',id_prestamo:'d3',fechaPago:fechaOffset(-15),montoAbonado:prestamos.find(function(x){return x.id==='d3';}).Cuota_Quincenal});
 
 document.getElementById('np-fecha').value=new Date().toISOString().split('T')[0];
 calcPreview();
