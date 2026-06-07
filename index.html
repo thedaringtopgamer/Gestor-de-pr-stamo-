@@ -529,6 +529,10 @@
             <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Progreso</div>
             <span class="vbox" style="font-size:18px;font-weight:700;padding:8px 14px;letter-spacing:1px" id="det-progress-txt">0/30</span>
           </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Modalidad</div>
+            <span id="det-modalidad" style="display:inline-block;background:#f3f4f6;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;color:#1f2937;line-height:1.3"></span>
+          </div>
         </div>
       </div>
 
@@ -1106,6 +1110,14 @@ function verDetalle(id){
   var cuotaDiaria=p.Total_A_Cobrar/30;
   var diasPagados=cuotaDiaria>0?Math.min(30,Math.floor(d.totalPagado/cuotaDiaria)):0;
   document.getElementById('det-progress-txt').textContent=diasPagados+'/30';
+  var tipo=p.tipo||'Quincenal';
+  var n=p.cantidadDeQuincenas||1;
+  var linea1=tipo;
+  var linea2='';
+  if(tipo==='Quincenal') linea2=n+(n===1?' quincena':' quincenas');
+  else if(tipo==='Semanal') linea2=n+(n===1?' semana':' semanas');
+  else if(tipo==='Diario') linea2='30 días';
+  document.getElementById('det-modalidad').innerHTML=linea1+(linea2?'<br><span style="font-size:11px;font-weight:500;color:#6b7280">'+linea2+'</span>':'');
   document.getElementById('abonar-cuota').textContent='₡'+fmt(d.pendienteProxima);
   document.getElementById('abonar-fecha').value=new Date().toISOString().split('T')[0];
   document.getElementById('abonar-monto').value='';
