@@ -637,14 +637,11 @@ var historial = ['screen-cobros'];
 
 function guardarDatos(){
   try{
-    var guardable=prestamos.map(function(p){
-      var c=Object.assign({},p);
-      c.fotos={};
-      return c;
-    });
-    localStorage.setItem('fjd_prestamos',JSON.stringify(guardable));
+    localStorage.setItem('fjd_prestamos',JSON.stringify(prestamos));
     localStorage.setItem('fjd_pagos',JSON.stringify(pagos));
-  }catch(e){}
+  }catch(e){
+    toast('⚠ Espacio lleno: fotos muy pesadas');
+  }
 }
 
 function cargarDatos(){
@@ -1084,17 +1081,35 @@ window.addEventListener('popstate',function(){
 function guardarDocumentos(){
   var coordCasa=document.getElementById('doc-coord-casa').value.trim();
   var coordTrabajo=document.getElementById('doc-coord-trabajo').value.trim();
-  var fotos={};
-  ['cedula-frente','cedula-detras','foto-cliente','foto-casa','foto-trabajo'].forEach(function(k){
+  var claves=['cedula-frente','cedula-detras','foto-cliente','foto-casa','foto-trabajo'];
+  var archivos=claves.map(function(k){
     var el=document.getElementById('doc-'+k);
-    if(el && el.files && el.files[0]){
-      fotos[k]=URL.createObjectURL(el.files[0]);
-    }
+    return (el&&el.files&&el.files[0])?el.files[0]:null;
   });
-  clienteTemporal.coordCasa=coordCasa;
-  clienteTemporal.coordTrabajo=coordTrabajo;
-  clienteTemporal.fotos=fotos;
-  goTo('screen-nuevo-prestamo');
+  var fotos={};
+  var pendientes=archivos.filter(function(f){return f;}).length;
+  if(pendientes===0){
+    clienteTemporal.coordCasa=coordCasa;
+    clienteTemporal.coordTrabajo=coordTrabajo;
+    clienteTemporal.fotos=fotos;
+    goTo('screen-nuevo-prestamo');
+    return;
+  }
+  archivos.forEach(function(file,i){
+    if(!file) return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      fotos[claves[i]]=e.target.result;
+      pendientes--;
+      if(pendientes===0){
+        clienteTemporal.coordCasa=coordCasa;
+        clienteTemporal.coordTrabajo=coordTrabajo;
+        clienteTemporal.fotos=fotos;
+        goTo('screen-nuevo-prestamo');
+      }
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function verDocsCliente(){
