@@ -360,7 +360,7 @@
         </div>
       </div>
       <div class="divider"></div>
-      <button class="btn btn-cyan btn-full" style="padding:13px;margin-top:8px" onclick="goTo('screen-nuevo-prestamo')">Continuar →</button>
+      <button class="btn btn-cyan btn-full" style="padding:13px;margin-top:8px" onclick="guardarDocumentos()">Continuar →</button>
       <button class="btn btn-gray btn-full" style="margin-top:8px" onclick="goBack()">Volver</button>
     </div>
   </div>
@@ -509,30 +509,8 @@
         </div>
       </div>
 
-      <!-- Desglose financiero -->
-      <div class="card">
-        <p style="font-size:14px;font-weight:600;margin-bottom:10px">📊 Desglose financiero</p>
-        <div class="detail-row">
-          <span style="font-size:13px;color:var(--text-muted)">Total de Intereses</span>
-          <span class="vbox" id="det-intereses" style="font-size:12px;padding:5px 10px"></span>
-        </div>
-        <div class="detail-row">
-          <span style="font-size:13px;color:var(--text-muted)">Total a Cobrar</span>
-          <span class="vbox" id="det-total-cobrar2" style="font-size:12px;padding:5px 10px"></span>
-        </div>
-        <div class="detail-row">
-          <span style="font-size:13px;color:var(--text-muted)">Total Pagado</span>
-          <span class="vbox-green" id="det-pagado" style="font-size:12px;padding:5px 10px"></span>
-        </div>
-        <div class="detail-row">
-          <span style="font-size:13px;color:var(--text-muted)">Saldo Pendiente</span>
-          <span class="vbox-red" id="det-pendiente" style="font-size:12px;padding:5px 10px"></span>
-        </div>
-        <div class="detail-row">
-          <span style="font-size:13px;color:var(--text-muted)">Estado Actual</span>
-          <span id="det-estado2" class="tag"></span>
-        </div>
-      </div>
+      <!-- Ver documentos -->
+      <button class="btn btn-outline btn-full" style="padding:12px;margin-bottom:4px" onclick="verDocsCliente()">📁 Ver documentos del cliente</button>
 
       <!-- Cuotas -->
       <div class="card">
@@ -574,6 +552,48 @@
       <button class="btn btn-red btn-full" style="padding:11px;margin-top:8px" onclick="eliminarPrestamo()">🗑 Eliminar préstamo</button>
     </div>
     <div style="text-align:center;padding:12px;font-size:12px;color:var(--text-muted)">Usuario: BOMBI &nbsp;·&nbsp; © 2026</div>
+  </div>
+
+  <!-- ==================== DOCS CLIENTE ==================== -->
+  <div id="screen-docs-cliente" class="screen">
+    <div class="navbar">
+      <button class="btn btn-cyan btn-sm" onclick="goBack()">← Volver</button>
+      <span class="navbar-title">Documentos del Cliente</span>
+      <div style="width:70px"></div>
+    </div>
+    <div class="section">
+      <div class="card">
+        <p style="font-size:13px;font-weight:600;margin-bottom:12px" id="docs-nombre-cliente"></p>
+        <div class="field-group">
+          <label>Cédula</label>
+          <div style="font-size:14px;font-weight:500" id="docs-cedula">—</div>
+        </div>
+        <div class="field-group">
+          <label>Teléfono</label>
+          <div style="font-size:14px;font-weight:500" id="docs-telefono">—</div>
+        </div>
+        <div class="field-group">
+          <label>Ruta · SubRuta</label>
+          <div style="font-size:14px;font-weight:500" id="docs-ruta">—</div>
+        </div>
+      </div>
+      <div class="card">
+        <p style="font-size:13px;font-weight:600;margin-bottom:12px">📷 Fotos</p>
+        <div id="docs-fotos-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+        <p id="docs-fotos-vacio" style="font-size:13px;color:var(--text-muted);display:none">Sin fotos guardadas</p>
+      </div>
+      <div class="card">
+        <p style="font-size:13px;font-weight:600;margin-bottom:12px">📍 Ubicaciones</p>
+        <div class="field-group">
+          <label>Casa</label>
+          <div id="docs-coord-casa" style="font-size:13px">—</div>
+        </div>
+        <div class="field-group">
+          <label>Trabajo</label>
+          <div id="docs-coord-trabajo" style="font-size:13px">—</div>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div><!-- /app -->
@@ -733,6 +753,9 @@ function guardarPrestamo(){
     telefono:clienteTemporal.telefono||'',
     ruta:clienteTemporal.ruta||'',
     subruta:clienteTemporal.subruta||'',
+    coordCasa:clienteTemporal.coordCasa||'',
+    coordTrabajo:clienteTemporal.coordTrabajo||'',
+    fotos:clienteTemporal.fotos||{},
     montoPrestado:monto,
     tasaInteres:tasaDec,
     cantidadDeQuincenas:cd.cuotas,
@@ -780,15 +803,15 @@ function estadoTag(estado){
   return '<span class="tag '+cls+'">'+estado+'</span>';
 }
 
+function parseLocalDate(str){
+  var p=str.split('-');
+  return new Date(+p[0],+p[1]-1,+p[2]);
+}
+
 function getCuotaVencimiento(p, numCuota){
-  var fecha = new Date(p.fechaInicio);
-  var tipo = p.tipo || 'Quincenal';
-  for(var i=1;i<numCuota;i++){
-    if(tipo==='Diario') fecha.setDate(fecha.getDate()+1);
-    else if(tipo==='Semanal') fecha.setDate(fecha.getDate()+7);
-    else if(tipo==='Mensual') fecha.setMonth(fecha.getMonth()+1);
-    else fecha.setDate(fecha.getDate()+15); // Quincenal
-  }
+  var fecha = parseLocalDate(p.fechaInicio);
+  var dias = p.diasPorCuota || 15;
+  fecha.setDate(fecha.getDate() + dias * (numCuota - 1));
   return fecha;
 }
 
@@ -892,18 +915,20 @@ function verDetalle(id){
   document.getElementById('det-total-cobrar').textContent='₡'+fmt(p.Total_A_Cobrar);
   document.getElementById('det-cuota').textContent='₡'+fmt(p.Cuota_Quincenal);
   document.getElementById('det-saldo').textContent='₡'+fmt(d.saldoPendiente);
-  document.getElementById('det-intereses').textContent='₡'+fmt(p.Total_Intereses);
-  document.getElementById('det-total-cobrar2').textContent='₡'+fmt(p.Total_A_Cobrar);
-  document.getElementById('det-pagado').textContent='₡'+fmt(d.totalPagado);
-  document.getElementById('det-pendiente').textContent='₡'+fmt(d.saldoPendiente);
   var estadoEl=document.getElementById('det-estado');
-  var estadoEl2=document.getElementById('det-estado2');
   estadoEl.innerHTML=estadoTag(d.estado);
-  estadoEl2.innerHTML='';
-  var inner=estadoEl.querySelector('.tag');
-  if(inner) estadoEl2.appendChild(inner.cloneNode(true));
   document.getElementById('det-progress').style.width=Math.round(d.progreso*100)+'%';
-  document.getElementById('det-progress-txt').textContent=Math.round(d.progreso*100)+'% pagado · '+d.cuotasPagadas+'/'+p.cantidadDeQuincenas+' cuotas completadas';
+  var dias=p.diasPorCuota||15;
+  var totalCuotas=p.cantidadDeQuincenas;
+  var diasPagados=d.cuotasPagadas*dias;
+  var totalDias=totalCuotas*dias;
+  var progTexto;
+  if(p.tipo==='Quincenal' && totalCuotas===3){
+    progTexto=d.cuotasPagadas+' de '+totalCuotas+' cuotas';
+  } else {
+    progTexto=diasPagados+' de '+totalDias+' días';
+  }
+  document.getElementById('det-progress-txt').textContent=Math.round(d.progreso*100)+'% pagado · '+progTexto;
   document.getElementById('abonar-cuota').textContent='₡'+fmt(p.Cuota_Quincenal);
   document.getElementById('abonar-fecha').value=new Date().toISOString().split('T')[0];
   document.getElementById('abonar-monto').value='';
@@ -917,7 +942,9 @@ function renderCuotasGrid(p,d){
   var grid=document.getElementById('cuotas-grid');
   var total=p.cantidadDeQuincenas;
   var pagadas=d.cuotasPagadas;
-  document.getElementById('cuotas-counter').textContent='Préstamo Cuotas '+pagadas+'/'+total;
+  var dias=p.diasPorCuota||15;
+  var cntTxt=(p.tipo==='Quincenal'&&total===3)?(pagadas+'/'+total+' cuotas'):(pagadas*dias+'/'+(total*dias)+' días');
+  document.getElementById('cuotas-counter').textContent='Progreso: '+cntTxt;
   var html='';
   for(var i=1;i<=total;i++){
     var n=i<10?'0'+i:''+i;
@@ -1044,6 +1071,52 @@ window.addEventListener('popstate',function(){
   history.pushState(null,'',location.href);
   goBack();
 });
+
+function guardarDocumentos(){
+  var coordCasa=document.getElementById('doc-coord-casa').value.trim();
+  var coordTrabajo=document.getElementById('doc-coord-trabajo').value.trim();
+  var fotos={};
+  ['cedula-frente','cedula-detras','foto-cliente','foto-casa','foto-trabajo'].forEach(function(k){
+    var el=document.getElementById('doc-'+k);
+    if(el && el.files && el.files[0]){
+      fotos[k]=URL.createObjectURL(el.files[0]);
+    }
+  });
+  clienteTemporal.coordCasa=coordCasa;
+  clienteTemporal.coordTrabajo=coordTrabajo;
+  clienteTemporal.fotos=fotos;
+  goTo('screen-nuevo-prestamo');
+}
+
+function verDocsCliente(){
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  document.getElementById('docs-nombre-cliente').textContent='👤 '+p.cliente;
+  document.getElementById('docs-cedula').textContent=p.cedula||'—';
+  document.getElementById('docs-telefono').textContent=p.telefono||'—';
+  document.getElementById('docs-ruta').textContent=(p.ruta&&p.subruta)?p.ruta+' · '+p.subruta:(p.ruta||'—');
+  function coordLink(coord, elId){
+    var el=document.getElementById(elId);
+    var match=coord&&coord.match(/^(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)$/);
+    if(match){
+      el.innerHTML='<a href="https://www.google.com/maps?q='+match[1]+','+match[2]+'" target="_blank" style="color:#2563eb;text-decoration:none;font-size:13px">📍 '+coord+' — Ver en Google Maps</a>';
+    } else {
+      el.textContent=coord||'—';
+    }
+  }
+  coordLink(p.coordCasa,'docs-coord-casa');
+  coordLink(p.coordTrabajo,'docs-coord-trabajo');
+  var grid=document.getElementById('docs-fotos-grid');
+  var fotos=p.fotos||{};
+  var labels={'cedula-frente':'Cédula frente','cedula-detras':'Cédula detrás','foto-cliente':'Cliente','foto-casa':'Casa','foto-trabajo':'Trabajo'};
+  var fotosHtml='';
+  Object.keys(labels).forEach(function(k){
+    if(fotos[k]) fotosHtml+='<div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px">'+labels[k]+'</div><img src="'+fotos[k]+'" style="width:100%;border-radius:var(--radius);object-fit:cover;aspect-ratio:4/3"></div>';
+  });
+  grid.innerHTML=fotosHtml;
+  document.getElementById('docs-fotos-vacio').style.display=fotosHtml?'none':'block';
+  goTo('screen-docs-cliente');
+}
 
 // ----- DATOS DE DEMO -----
 var hoy=new Date();
