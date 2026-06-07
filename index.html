@@ -461,13 +461,6 @@
         <label>Fecha inicio *</label>
         <input type="date" id="np-fecha">
       </div>
-      <div class="field-group">
-        <label>Recolector *</label>
-        <select id="np-recolector">
-          <option>BOMBI</option>
-          <option>OTRO</option>
-        </select>
-      </div>
       <div style="display:flex;gap:12px;margin-bottom:6px">
         <div>
           <div style="font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:5px">Saldo Préstamo</div>
@@ -686,15 +679,11 @@
         </div>
       </div>
 
-      <!-- Fecha y Recolector -->
+      <!-- Fecha -->
       <div class="card" style="margin-bottom:12px">
-        <div class="field-group">
+        <div class="field-group" style="margin-bottom:0">
           <label>Fecha Inicio *</label>
           <input type="date" id="ren-fecha" oninput="calcRenovar()">
-        </div>
-        <div class="field-group" style="margin-bottom:0">
-          <label>Recolector *</label>
-          <input type="text" id="ren-recolector" value="BOMBI" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
         </div>
       </div>
 
@@ -1004,7 +993,7 @@ function renderCobros(filtro){
     var d=calcDerived(p);
     return '<div class="loan-row">'
       +'<button class="icon-btn icon-btn-blue" onclick="verDetalle(\''+p.id+'\')" title="Ver detalle">✓</button>'
-      +'<button class="icon-btn icon-btn-cyan" onclick="verDetalle(\''+p.id+'\')" title="Actualizar">↻</button>'
+      +'<button class="icon-btn icon-btn-cyan" onclick="renovarDesdeLista(\''+p.id+'\')" title="Renovar">↻</button>'
       +'<button class="icon-btn icon-btn-green" onclick="abonoRapido(\''+p.id+'\',\''+p.cliente+'\','+p.Cuota_Quincenal+')" title="Abonar cuota">🐷</button>'
       +'<div style="flex:1;padding-left:10px;min-width:0">'
         +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+'</div>'
@@ -1190,6 +1179,11 @@ function registrarAbono(){
   document.getElementById('abonar-monto').value='';
   toast('✓ Abono registrado: ₡'+fmt(monto));
   verDetalle(currentId);
+}
+
+function renovarDesdeLista(id){
+  currentId=id;
+  abrirRenovar();
 }
 
 function abrirRenovar(){
