@@ -889,7 +889,7 @@ function renderCobros(filtro){
     return '<div class="loan-row">'
       +'<button class="icon-btn icon-btn-blue" onclick="verDetalle(\''+p.id+'\')" title="Ver detalle">✓</button>'
       +'<button class="icon-btn icon-btn-cyan" onclick="verDetalle(\''+p.id+'\')" title="Actualizar">↻</button>'
-      +'<button class="icon-btn icon-btn-green" onclick="verDetalle(\''+p.id+'\')" title="Abonar">🐷</button>'
+      +'<button class="icon-btn icon-btn-green" onclick="abonoRapido(\''+p.id+'\',\''+p.cliente+'\','+p.Cuota_Quincenal+')" title="Abonar cuota">🐷</button>'
       +'<div style="flex:1;padding-left:10px;min-width:0">'
         +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+'</div>'
         +'<div style="font-size:11px;margin-top:1px">Cuota: ₡'+fmt(p.Cuota_Quincenal)+'&nbsp;&nbsp;<span style="background:'+colorEtiqueta+';color:#fff;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:600">'+etiqueta+'</span></div>'
@@ -1030,6 +1030,19 @@ function switchTab(tab){
   document.getElementById('tab-listado').className='tab '+(tab==='listado'?'active':'inactive');
   document.getElementById('view-tarjeta').style.display=tab==='tarjeta'?'block':'none';
   document.getElementById('view-listado').style.display=tab==='listado'?'block':'none';
+}
+
+function abonoRapido(id,nombre,cuota){
+  if(!confirm('¿Abonar ₡'+fmt(cuota)+' a '+nombre+'?')) return;
+  pagos.push({
+    id_pago:Date.now().toString(),
+    id_prestamo:id,
+    fechaPago:new Date().toISOString().split('T')[0],
+    montoAbonado:cuota
+  });
+  guardarDatos();
+  toast('✓ Abono de ₡'+fmt(cuota)+' registrado a '+nombre);
+  renderCobros();
 }
 
 function registrarAbono(){
