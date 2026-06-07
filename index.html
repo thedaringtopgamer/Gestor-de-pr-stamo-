@@ -1012,12 +1012,10 @@ function getCuotaVencimiento(p, numCuota){
   var fecha = parseLocalDate(p.fechaInicio);
   var tipo = p.tipo||'Quincenal';
   var diasPorCuota = p.diasPorCuota||15;
-  // Normalizar inicio al primer día hábil siempre
-  var inicio = siguienteDiaHabil(fecha);
   if(tipo==='Diario'){
-    // Cuota 1 = inicio, cuota 2 = inicio + 1 día hábil, etc.
-    if(numCuota<=1) return inicio;
-    return addDiasHabiles(inicio, numCuota-1);
+    // fechaInicio siempre es día hábil (nunca se presta en fin de semana)
+    if(numCuota<=1) return fecha;
+    return addDiasHabiles(fecha, numCuota-1);
   } else {
     // Semanal, Quincenal, Mensual: días calendario desde fechaInicio + saltar fin de semana
     var d=new Date(fecha);
