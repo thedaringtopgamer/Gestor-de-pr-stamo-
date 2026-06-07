@@ -502,10 +502,11 @@
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Estado</div>
           <span id="det-estado" class="tag"></span>
         </div>
-        <div style="margin-top:12px">
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Progreso de pago</div>
-          <div class="progress-bg"><div class="progress-fill" id="det-progress" style="width:0%"></div></div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:3px" id="det-progress-txt"></div>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:12px">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Progreso</div>
+            <span class="vbox" style="font-size:18px;font-weight:700;padding:8px 14px;letter-spacing:1px" id="det-progress-txt">0/30</span>
+          </div>
         </div>
       </div>
 
@@ -917,18 +918,9 @@ function verDetalle(id){
   document.getElementById('det-saldo').textContent='₡'+fmt(d.saldoPendiente);
   var estadoEl=document.getElementById('det-estado');
   estadoEl.innerHTML=estadoTag(d.estado);
-  document.getElementById('det-progress').style.width=Math.round(d.progreso*100)+'%';
-  var dias=p.diasPorCuota||15;
-  var totalCuotas=p.cantidadDeQuincenas;
-  var diasPagados=d.cuotasPagadas*dias;
-  var totalDias=totalCuotas*dias;
-  var progTexto;
-  if(p.tipo==='Quincenal' && totalCuotas===3){
-    progTexto=d.cuotasPagadas+' de '+totalCuotas+' cuotas';
-  } else {
-    progTexto=diasPagados+' de '+totalDias+' días';
-  }
-  document.getElementById('det-progress-txt').textContent=Math.round(d.progreso*100)+'% pagado · '+progTexto;
+  var cuotaDiaria=p.Total_A_Cobrar/30;
+  var diasPagados=cuotaDiaria>0?Math.min(30,Math.floor(d.totalPagado/cuotaDiaria)):0;
+  document.getElementById('det-progress-txt').textContent=diasPagados+'/30';
   document.getElementById('abonar-cuota').textContent='₡'+fmt(p.Cuota_Quincenal);
   document.getElementById('abonar-fecha').value=new Date().toISOString().split('T')[0];
   document.getElementById('abonar-monto').value='';
@@ -940,15 +932,13 @@ function verDetalle(id){
 
 function renderCuotasGrid(p,d){
   var grid=document.getElementById('cuotas-grid');
-  var total=p.cantidadDeQuincenas;
-  var pagadas=d.cuotasPagadas;
-  var dias=p.diasPorCuota||15;
-  var cntTxt=(p.tipo==='Quincenal'&&total===3)?(pagadas+'/'+total+' cuotas'):(pagadas*dias+'/'+(total*dias)+' días');
-  document.getElementById('cuotas-counter').textContent='Progreso: '+cntTxt;
+  var cuotaDiaria=p.Total_A_Cobrar/30;
+  var diasPagados=cuotaDiaria>0?Math.min(30,Math.floor(d.totalPagado/cuotaDiaria)):0;
+  document.getElementById('cuotas-counter').textContent=diasPagados+'/30 días';
   var html='';
-  for(var i=1;i<=total;i++){
+  for(var i=1;i<=30;i++){
     var n=i<10?'0'+i:''+i;
-    html+='<div class="cuota-cell '+(i<=pagadas?'cuota-paid':'cuota-unpaid')+'">'+n+'</div>';
+    html+='<div class="cuota-cell '+(i<=diasPagados?'cuota-paid':'cuota-unpaid')+'">'+n+'</div>';
   }
   grid.innerHTML=html;
 }
