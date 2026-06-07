@@ -635,9 +635,25 @@ var pagos = [];
 var currentId = null;
 var historial = ['screen-cobros'];
 
-// Verificar sesión guardada
-if(localStorage.getItem('fjd_session')==='1'){
-  mostrarApp();
+function guardarDatos(){
+  try{
+    var guardable=prestamos.map(function(p){
+      var c=Object.assign({},p);
+      c.fotos={};
+      return c;
+    });
+    localStorage.setItem('fjd_prestamos',JSON.stringify(guardable));
+    localStorage.setItem('fjd_pagos',JSON.stringify(pagos));
+  }catch(e){}
+}
+
+function cargarDatos(){
+  try{
+    var sp=localStorage.getItem('fjd_prestamos');
+    var sg=localStorage.getItem('fjd_pagos');
+    if(sp) prestamos=JSON.parse(sp);
+    if(sg) pagos=JSON.parse(sg);
+  }catch(e){}
 }
 
 function fmt(n){
@@ -769,6 +785,7 @@ function guardarPrestamo(){
     Total_Intereses:intereses,
     Total_A_Cobrar:totalCobrar
   });
+  guardarDatos();
   clienteTemporal={};
   document.getElementById('nc-nombre').value='';
   document.getElementById('nc-cedula').value='';
@@ -977,6 +994,7 @@ function registrarAbono(){
     fechaPago:fecha,
     montoAbonado:monto
   });
+  guardarDatos();
   document.getElementById('abonar-monto').value='';
   toast('✓ Abono registrado: ₡'+fmt(monto));
   verDetalle(currentId);
@@ -989,6 +1007,7 @@ function eliminarPrestamo(){
   if(!confirm('¿Eliminar el préstamo de '+p.cliente+'?')) return;
   prestamos=prestamos.filter(function(x){return x.id!==currentId;});
   pagos=pagos.filter(function(x){return x.id_prestamo!==currentId;});
+  guardarDatos();
   currentId=null;
   toast('Préstamo eliminado');
   goTo('screen-cobros');
@@ -1108,33 +1127,43 @@ function verDocsCliente(){
   goTo('screen-docs-cliente');
 }
 
-// ----- DATOS DE DEMO -----
+// ----- INIT -----
 var hoy=new Date();
 function fechaOffset(dias){
-  var d=new Date(hoy);
+  var d=new Date();
   d.setDate(d.getDate()+dias);
   return d.toISOString().split('T')[0];
 }
-function mkPrestamo(id,nombre,monto,ruta,subruta,offsetDias,cuotas){
-  var tasa=0.20,intereses=Math.round(monto*tasa),total=monto+intereses,cuota=Math.round(total/cuotas);
-  return {id:id,cliente:nombre,ruta:ruta,subruta:subruta,montoPrestado:monto,tasaInteres:tasa,cantidadDeQuincenas:cuotas,diasPorCuota:15,tipo:'Quincenal',fechaInicio:fechaOffset(offsetDias),estado:'Activo',Cuota_Quincenal:cuota,Total_Intereses:intereses,Total_A_Cobrar:total};
-}
-prestamos.push(mkPrestamo('d1','Ana García Mora',50000,'Heredia','Santo Domingo',-35,2));
-prestamos.push(mkPrestamo('d2','Carlos Mora Vega',75000,'Heredia','San Rafael',-20,2));
-prestamos.push(mkPrestamo('d3','María Jiménez Solís',100000,'Alajuela','Grecia',-15,2));
-prestamos.push(mkPrestamo('d4','Luis Rodríguez Pérez',125000,'San Ramón','San Ramón Centro',0,2));
-prestamos.push(mkPrestamo('d5','Andrea Solís Ulate',150000,'Heredia','Barva',0,3));
-prestamos.push(mkPrestamo('d6','Roberto Vargas Cruz',200000,'Alajuela','Naranjo',5,3));
-prestamos.push(mkPrestamo('d7','Patricia Núñez Díaz',250000,'San Ramón','Piedades Norte',10,3));
-prestamos.push(mkPrestamo('d8','Diego Madrigal León',300000,'Heredia','Heredia Centro',15,3));
 
-// Algunos pagos parciales
-pagos.push({id_pago:'p1',id_prestamo:'d2',fechaPago:fechaOffset(-5),montoAbonado:prestamos.find(function(x){return x.id==='d2';}).Cuota_Quincenal});
-pagos.push({id_pago:'p2',id_prestamo:'d3',fechaPago:fechaOffset(-15),montoAbonado:prestamos.find(function(x){return x.id==='d3';}).Cuota_Quincenal});
+cargarDatos();
+
+// Demo: solo si no hay datos guardados
+if(prestamos.length===0){
+  function mkPrestamo(id,nombre,monto,ruta,subruta,offsetDias,cuotas){
+    var tasa=0.20,intereses=Math.round(monto*tasa),total=monto+intereses,cuota=Math.round(total/cuotas);
+    return {id:id,cliente:nombre,ruta:ruta,subruta:subruta,montoPrestado:monto,tasaInteres:tasa,cantidadDeQuincenas:cuotas,diasPorCuota:15,tipo:'Quincenal',fechaInicio:fechaOffset(offsetDias),estado:'Activo',Cuota_Quincenal:cuota,Total_Intereses:intereses,Total_A_Cobrar:total,coordCasa:'',coordTrabajo:'',fotos:{}};
+  }
+  prestamos.push(mkPrestamo('d1','Ana García Mora',50000,'Heredia','Santo Domingo',-35,2));
+  prestamos.push(mkPrestamo('d2','Carlos Mora Vega',75000,'Heredia','San Rafael',-20,2));
+  prestamos.push(mkPrestamo('d3','María Jiménez Solís',100000,'Alajuela','Grecia',-15,2));
+  prestamos.push(mkPrestamo('d4','Luis Rodríguez Pérez',125000,'San Ramón','San Ramón Centro',0,2));
+  prestamos.push(mkPrestamo('d5','Andrea Solís Ulate',150000,'Heredia','Barva',0,3));
+  prestamos.push(mkPrestamo('d6','Roberto Vargas Cruz',200000,'Alajuela','Naranjo',5,3));
+  prestamos.push(mkPrestamo('d7','Patricia Núñez Díaz',250000,'San Ramón','Piedades Norte',10,3));
+  prestamos.push(mkPrestamo('d8','Diego Madrigal León',300000,'Heredia','Heredia Centro',15,3));
+  pagos.push({id_pago:'p1',id_prestamo:'d2',fechaPago:fechaOffset(-5),montoAbonado:prestamos.find(function(x){return x.id==='d2';}).Cuota_Quincenal});
+  pagos.push({id_pago:'p2',id_prestamo:'d3',fechaPago:fechaOffset(-15),montoAbonado:prestamos.find(function(x){return x.id==='d3';}).Cuota_Quincenal});
+  guardarDatos();
+}
 
 document.getElementById('np-fecha').value=new Date().toISOString().split('T')[0];
 calcPreview();
 updateHome();
+
+// Verificar sesión guardada
+if(localStorage.getItem('fjd_session')==='1'){
+  mostrarApp();
+}
 </script>
 </body>
 </html>
