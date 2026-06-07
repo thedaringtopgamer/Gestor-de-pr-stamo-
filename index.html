@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Gestor de Préstamos</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  :root{
+    --cyan:#0ea5e9;--cyan-dark:#0284c7;
+    --green:#16a34a;--green-dark:#15803d;
+    --blue:#2563eb;--blue-dark:#1d4ed8;
+    --red:#dc2626;--red-dark:#b91c1c;
+    --orange:#f97316;
+    --gray:#6b7280;
+    --bg:#f3f4f6;
+    --surface:#ffffff;
+    --border:#e5e7eb;
+    --text:#111827;
+    --text-muted:#6b7280;
+    --radius:10px;
+    --radius-lg:14px;
+  }
+  html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);font-size:14px;line-height:1.5}
+  .app{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative}
+
+  /* NAVBAR */
+  .navbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+  .navbar-title{font-size:16px;font-weight:600;color:var(--text)}
+  .menu-icon{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text);padding:4px;line-height:1}
+
+  /* SCREENS */
+  .screen{display:none;padding-bottom:40px;animation:fadeIn 0.18s ease}
+  .screen.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+  /* MENU DROPDOWN */
+  .menu-dropdown{display:none;position:absolute;top:52px;right:0;left:0;background:var(--surface);border-bottom:1px solid var(--border);z-index:99;box-shadow:0 4px 16px rgba(0,0,0,0.08)}
+  .menu-dropdown.open{display:block}
+  .menu-item{padding:14px 20px;font-size:15px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.1s}
+  .menu-item:hover{background:var(--bg)}
+  .menu-item:last-child{border-bottom:none}
+
+  /* SECTION */
+  .section{padding:16px}
+
+  /* BUTTONS */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:var(--radius);font-size:14px;font-weight:500;cursor:pointer;border:none;transition:filter 0.15s,transform 0.1s;font-family:'DM Sans',sans-serif}
+  .btn:active{transform:scale(0.97)}
+  .btn:hover{filter:brightness(0.92)}
+  .btn-cyan{background:var(--cyan);color:#fff}
+  .btn-green{background:var(--green);color:#fff}
+  .btn-blue{background:var(--blue);color:#fff}
+  .btn-red{background:var(--red);color:#fff}
+  .btn-gray{background:#e5e7eb;color:var(--text)}
+  .btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text)}
+  .btn-full{width:100%;display:flex}
+  .btn-sm{padding:7px 12px;font-size:12px}
+
+  /* ICON BUTTONS */
+  .icon-btn{width:38px;height:38px;border-radius:var(--radius);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:none;font-size:17px;flex-shrink:0;transition:filter 0.15s,transform 0.1s;font-family:sans-serif}
+  .icon-btn:active{transform:scale(0.93)}
+  .icon-btn-blue{background:var(--blue);color:#fff}
+  .icon-btn-cyan{background:var(--cyan);color:#fff}
+  .icon-btn-green{background:var(--green);color:#fff}
+
+  /* CARDS */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:12px}
+
+  /* FORM */
+  .field-group{margin-bottom:14px}
+  .field-group label{font-size:12px;font-weight:500;color:var(--text-muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.04em}
+  .field-group input,.field-group select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.15s}
+  .field-group input:focus,.field-group select:focus{border-color:var(--cyan)}
+  .radio-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .radio-label{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:13px;transition:border-color 0.15s,background 0.15s}
+  .radio-label:has(input:checked){border-color:var(--cyan);background:#f0f9ff}
+  .radio-label input{accent-color:var(--cyan)}
+
+  /* VALUE BOXES */
+  .vbox{background:#374151;color:#fff;border-radius:var(--radius);padding:7px 13px;font-size:14px;font-weight:600;display:inline-block}
+  .vbox-red{background:var(--red);color:#fff;border-radius:var(--radius);padding:7px 13px;font-size:14px;font-weight:600;display:inline-block}
+  .vbox-green{background:var(--green);color:#fff;border-radius:var(--radius);padding:7px 13px;font-size:14px;font-weight:600;display:inline-block}
+  .vbox-cyan{background:var(--cyan);color:#fff;border-radius:var(--radius);padding:7px 13px;font-size:14px;font-weight:600;display:inline-block}
+
+  /* TAGS */
+  .tag{display:inline-flex;align-items:center;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+  .tag-green{background:#dcfce7;color:#166534}
+  .tag-red{background:#fee2e2;color:#991b1b}
+  .tag-amber{background:#fef9c3;color:#92400e}
+  .tag-blue{background:#dbeafe;color:#1e40af}
+  .tag-gray{background:#f3f4f6;color:#374151}
+
+  /* PROGRESS */
+  .progress-bg{background:#e5e7eb;border-radius:10px;height:8px;overflow:hidden}
+  .progress-fill{height:100%;border-radius:10px;background:var(--cyan);transition:width 0.4s ease}
+
+  /* LOAN ROW */
+  .loan-row{display:flex;gap:8px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface)}
+  .loan-row:last-child{border-bottom:none}
+
+  /* DETAIL ROW */
+  .detail-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}
+  .detail-row:last-child{border-bottom:none}
+
+  /* CUOTA GRID */
+  .cuota-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:10px}
+  .cuota-cell{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;cursor:pointer;transition:transform 0.1s}
+  .cuota-cell:active{transform:scale(0.9)}
+  .cuota-paid{background:var(--green)}
+  .cuota-unpaid{background:var(--red)}
+
+  /* TABS */
+  .tabs{display:flex;gap:8px;margin-bottom:12px}
+  .tab{flex:1;padding:9px;border-radius:var(--radius);text-align:center;font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:background 0.15s,color 0.15s}
+  .tab.active{background:var(--cyan);color:#fff}
+  .tab.inactive{background:#f3f4f6;color:var(--text-muted)}
+
+  /* NO DATA */
+  .no-data{background:var(--red);color:#fff;border-radius:var(--radius);padding:9px 14px;font-size:13px;display:inline-block;margin:10px 0}
+
+  /* SECTION HEADER */
+  .section-header{display:flex;gap:10px;margin-bottom:14px}
+
+  /* SUMMARY GRID */
+  .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .summary-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px}
+  .summary-card .s-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px}
+  .summary-card .s-value{font-size:18px;font-weight:600}
+
+  /* HOME HERO */
+  .hero{background:linear-gradient(135deg,#0ea5e9 0%,#2563eb 100%);color:#fff;padding:28px 20px;margin-bottom:0}
+  .hero h2{font-size:22px;font-weight:600;margin-bottom:6px}
+  .hero p{font-size:13px;opacity:0.85}
+
+  /* DIVIDER */
+  .divider{height:1px;background:var(--border);margin:12px 0}
+
+  /* SCROLLABLE LIST */
+  .loans-list{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:12px}
+
+  /* BACK BTN */
+  .back-bar{background:var(--cyan);padding:10px 16px}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:500;z-index:999;opacity:0;transition:opacity 0.25s;pointer-events:none;white-space:nowrap}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- MENU DROPDOWN -->
+  <div class="menu-dropdown" id="menu-dropdown">
+    <div class="menu-item" onclick="goTo('screen-home');closeMenu()">🏠 Inicio</div>
+    <div class="menu-item" onclick="goTo('screen-cobros');closeMenu()">📋 Cobros</div>
+    <div class="menu-item" onclick="goTo('screen-tarjetas');closeMenu()">🃏 Tarjetas</div>
+    <div class="menu-item" onclick="goTo('screen-nuevo-prestamo');closeMenu()">➕ Nuevo Préstamo</div>
+    <div class="menu-item" onclick="closeMenu()" style="color:var(--red)">✕ Cerrar menú</div>
+  </div>
+
+  <!-- ==================== HOME ==================== -->
+  <div id="screen-home" class="screen active">
+    <div class="navbar">
+      <span class="navbar-title">Empresa 2</span>
+      <button class="menu-icon" onclick="toggleMenu()">☰</button>
+    </div>
+    <div class="hero">
+      <h2>Bienvenido al sistema de gestión de préstamos</h2>
+      <p>Utilice las opciones del menú</p>
+    </div>
+    <div class="section">
+      <div style="display:flex;gap:10px;margin-bottom:20px">
+        <button class="btn btn-blue" style="flex:1" onclick="goTo('screen-tarjetas')">Ver Tarjetas</button>
+        <button class="btn btn-green" style="flex:1" onclick="goTo('screen-nuevo-prestamo')">Nuevo Préstamo</button>
+      </div>
+      <div class="summary-grid" id="home-summary">
+        <div class="summary-card">
+          <div class="s-label">Préstamos activos</div>
+          <div class="s-value" id="home-total-prestamos">0</div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">Capital colocado</div>
+          <div class="s-value" id="home-capital" style="font-size:15px">₡0</div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">Total a cobrar</div>
+          <div class="s-value" id="home-cobrar" style="font-size:15px">₡0</div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">Cobros hoy</div>
+          <div class="s-value" id="home-cobros-dia">0</div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;padding:12px;font-size:12px;color:var(--text-muted)">Usuario: BOMBI &nbsp;·&nbsp; © 2026</div>
+  </div>
+
+  <!-- ==================== COBROS ==================== -->
+  <div id="screen-cobros" class="screen">
+    <div class="navbar">
+      <span class="navbar-title">Empresa 2</span>
+      <button class="menu-icon" onclick="toggleMenu()">☰</button>
+    </div>
+    <div class="section">
+      <div class="section-header">
+        <button class="btn btn-blue" style="flex:1" onclick="goTo('screen-tarjetas')">Ver Tarjetas</button>
+        <button class="btn btn-green" style="flex:1" onclick="goTo('screen-nuevo-prestamo')">Nuevo Préstamo</button>
+      </div>
+      <p style="font-size:18px;font-weight:600;margin-bottom:10px" id="cobros-titulo">Listado de cobros (0)</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
+        <span style="font-size:13px;color:var(--text-muted)">Filtro</span>
+        <input id="filtro-cobros" type="text" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none" placeholder="Buscar cliente...">
+        <button class="btn btn-blue btn-sm" onclick="filtrarCobros()">Buscar</button>
+      </div>
+      <button class="btn btn-cyan btn-full" style="margin-bottom:14px">🖨 Imprimir cuotas</button>
+      <div style="display:flex;justify-content:space-between;padding:0 4px 6px;border-bottom:1px solid var(--border);margin-bottom:4px">
+        <span style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em">Cliente</span>
+        <span style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em">SubRuta</span>
+      </div>
+      <div id="cobros-lista" class="loans-list"></div>
+    </div>
+    <div style="text-align:center;padding:12px;font-size:12px;color:var(--text-muted)">Usuario: BOMBI &nbsp;·&nbsp; © 2026</div>
+  </div>
+
+  <!-- ==================== TARJETAS ==================== -->
+  <div id="screen-tarjetas" class="screen">
+    <div class="navbar">
+      <span class="navbar-title">Empresa 2</span>
+      <button class="menu-icon" onclick="toggleMenu()">☰</button>
+    </div>
+    <div class="section">
+      <div class="section-header">
+        <button class="btn btn-blue" style="flex:1" onclick="goTo('screen-cobros')">Ver Cobros</button>
+        <button class="btn btn-green" style="flex:1" onclick="goTo('screen-nuevo-prestamo')">Nuevo Préstamo</button>
+      </div>
+      <p style="font-size:18px;font-weight:600;margin-bottom:10px" id="tarjetas-titulo">Listado de tarjetas (0)</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
+        <span style="font-size:13px;color:var(--text-muted)">Filtro</span>
+        <input id="filtro-tarjetas" type="text" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none" placeholder="Buscar cliente...">
+        <button class="btn btn-blue btn-sm" onclick="filtrarTarjetas()">Buscar</button>
+      </div>
+      <button class="btn btn-cyan btn-full" style="margin-bottom:14px">🖨 Imprimir tarjetas</button>
+      <div style="display:flex;justify-content:space-between;padding:0 4px 6px;border-bottom:1px solid var(--border);margin-bottom:4px">
+        <span style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em">Cliente</span>
+        <span style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em">Monto</span>
+      </div>
+      <div id="tarjetas-lista" class="loans-list"></div>
+    </div>
+    <div style="text-align:center;padding:12px;font-size:12px;color:var(--text-muted)">Usuario: BOMBI &nbsp;·&nbsp; © 2026</div>
+  </div>
+
+  <!-- ==================== NUEVO PRÉSTAMO ==================== -->
+  <div id="screen-nuevo-prestamo" class="screen">
+    <div class="navbar">
+      <button class="btn btn-cyan btn-sm" onclick="goBack()">← Volver</button>
+      <span class="navbar-title">Nuevo Préstamo</span>
+      <div style="width:70px"></div>
+    </div>
+    <div class="section">
+      <div class="field-group">
+        <label>Cliente *</label>
+        <input type="text" id="np-cliente" placeholder="Nombre del deudor" oninput="calcPreview()">
+      </div>
+      <div class="field-group">
+        <label>Monto *</label>
+        <input type="number" id="np-monto" placeholder="0" oninput="calcPreview()">
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:14px">
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:5px">Monto total</div>
+          <span class="vbox" id="np-monto-total">₡0</span>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:5px">Intereses</div>
+          <span class="vbox" id="np-intereses">₡0</span>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Porcentaje de interés % *</label>
+        <input type="number" id="np-tasa" placeholder="20" value="20" oninput="calcPreview()">
+      </div>
+      <div class="field-group">
+        <label>Tipo *</label>
+        <div class="radio-grid">
+          <label class="radio-label"><input type="radio" name="np-tipo" value="Diario"> Diario</label>
+          <label class="radio-label"><input type="radio" name="np-tipo" value="Semanal"> Semanal</label>
+          <label class="radio-label"><input type="radio" name="np-tipo" value="Quincenal" checked> Quincenal</label>
+          <label class="radio-label"><input type="radio" name="np-tipo" value="Mensual"> Mensual</label>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Cantidad de cuotas *</label>
+        <input type="number" id="np-cuotas" placeholder="6" value="6" oninput="calcPreview()">
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:5px">Cuota</div>
+        <span class="vbox" id="np-cuota-val">₡0</span>
+      </div>
+      <div class="field-group">
+        <label>Fecha inicio *</label>
+        <input type="date" id="np-fecha">
+      </div>
+      <div class="field-group">
+        <label>Recolector *</label>
+        <select id="np-recolector">
+          <option>BOMBI</option>
+          <option>OTRO</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:6px">
+        <div>
+          <div style="font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:5px">Saldo Préstamo</div>
+          <span class="vbox-red" id="np-saldo">₡0</span>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <button class="btn btn-cyan btn-full" style="margin-top:8px;padding:13px" onclick="guardarPrestamo()">✓ Guardar Préstamo</button>
+      <button class="btn btn-gray btn-full" style="margin-top:8px" onclick="goBack()">Volver</button>
+    </div>
+  </div>
+
+  <!-- ==================== DETALLE ==================== -->
+  <div id="screen-detalle" class="screen">
+    <div class="navbar">
+      <button class="btn btn-cyan btn-sm" onclick="goBack()">← Regresar</button>
+      <span class="navbar-title">Consulta de Préstamo</span>
+      <div style="width:80px"></div>
+    </div>
+    <div class="section">
+
+      <!-- Encabezado cliente -->
+      <div class="card" style="margin-bottom:12px">
+        <div style="font-size:11px;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:0.04em">Cliente *</div>
+        <div style="font-size:16px;font-weight:600;margin:2px 0 10px" id="det-cliente"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Monto *</div>
+            <span class="vbox" id="det-monto"></span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Monto total *</div>
+            <span class="vbox" id="det-total-cobrar"></span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Cuota *</div>
+            <span class="vbox" id="det-cuota"></span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Saldo</div>
+            <span class="vbox-red" id="det-saldo"></span>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Estado</div>
+          <span id="det-estado" class="tag"></span>
+        </div>
+        <div style="margin-top:12px">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Progreso de pago</div>
+          <div class="progress-bg"><div class="progress-fill" id="det-progress" style="width:0%"></div></div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px" id="det-progress-txt"></div>
+        </div>
+      </div>
+
+      <!-- Desglose financiero -->
+      <div class="card">
+        <p style="font-size:14px;font-weight:600;margin-bottom:10px">📊 Desglose financiero</p>
+        <div class="detail-row">
+          <span style="font-size:13px;color:var(--text-muted)">Total de Intereses</span>
+          <span class="vbox" id="det-intereses" style="font-size:12px;padding:5px 10px"></span>
+        </div>
+        <div class="detail-row">
+          <span style="font-size:13px;color:var(--text-muted)">Total a Cobrar</span>
+          <span class="vbox" id="det-total-cobrar2" style="font-size:12px;padding:5px 10px"></span>
+        </div>
+        <div class="detail-row">
+          <span style="font-size:13px;color:var(--text-muted)">Total Pagado</span>
+          <span class="vbox-green" id="det-pagado" style="font-size:12px;padding:5px 10px"></span>
+        </div>
+        <div class="detail-row">
+          <span style="font-size:13px;color:var(--text-muted)">Saldo Pendiente</span>
+          <span class="vbox-red" id="det-pendiente" style="font-size:12px;padding:5px 10px"></span>
+        </div>
+        <div class="detail-row">
+          <span style="font-size:13px;color:var(--text-muted)">Estado Actual</span>
+          <span id="det-estado2" class="tag"></span>
+        </div>
+      </div>
+
+      <!-- Cuotas -->
+      <div class="card">
+        <p style="font-size:14px;font-weight:600;margin-bottom:10px">📅 Cuotas</p>
+        <div class="tabs">
+          <button class="tab active" id="tab-tarjeta" onclick="switchTab('tarjeta')">Tarjeta</button>
+          <button class="tab inactive" id="tab-listado" onclick="switchTab('listado')">Listado</button>
+        </div>
+        <div id="view-tarjeta">
+          <div id="cuotas-grid" class="cuota-grid"></div>
+          <p style="font-size:12px;color:var(--text-muted);margin-top:8px" id="cuotas-counter"></p>
+        </div>
+        <div id="view-listado" style="display:none">
+          <div id="pagos-lista"></div>
+        </div>
+      </div>
+
+      <!-- Abonar -->
+      <div class="card">
+        <p style="font-size:14px;font-weight:600;margin-bottom:12px">💰 Abonar Monto</p>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Cobro a hoy</div>
+            <span class="vbox-red" id="abonar-cuota" style="font-size:13px;padding:6px 12px"></span>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Monto a abonar</label>
+          <input type="number" id="abonar-monto" placeholder="0">
+        </div>
+        <div class="field-group">
+          <label>Fecha de pago</label>
+          <input type="date" id="abonar-fecha">
+        </div>
+        <button class="btn btn-blue btn-full" style="padding:12px" onclick="registrarAbono()">✓ Abonar</button>
+      </div>
+
+      <button class="btn btn-cyan btn-full" style="padding:12px;margin-top:4px">🔄 Renovar</button>
+      <button class="btn btn-red btn-full" style="padding:11px;margin-top:8px" onclick="eliminarPrestamo()">🗑 Eliminar préstamo</button>
+    </div>
+    <div style="text-align:center;padding:12px;font-size:12px;color:var(--text-muted)">Usuario: BOMBI &nbsp;·&nbsp; © 2026</div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+var prestamos = [];
+var pagos = [];
+var currentId = null;
+var historial = ['screen-home'];
+
+function fmt(n){
+  return Number(n).toLocaleString('es-CR',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2200);
+}
+
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  historial.push(id);
+  window.scrollTo(0,0);
+  if(id==='screen-cobros') renderCobros();
+  if(id==='screen-tarjetas') renderTarjetas();
+  if(id==='screen-home') updateHome();
+}
+
+function goBack(){
+  if(historial.length>1) historial.pop();
+  var prev=historial[historial.length-1]||'screen-home';
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById(prev).classList.add('active');
+  window.scrollTo(0,0);
+  if(prev==='screen-cobros') renderCobros();
+  if(prev==='screen-tarjetas') renderTarjetas();
+  if(prev==='screen-home') updateHome();
+}
+
+function toggleMenu(){
+  document.getElementById('menu-dropdown').classList.toggle('open');
+}
+function closeMenu(){
+  document.getElementById('menu-dropdown').classList.remove('open');
+}
+document.addEventListener('click',function(e){
+  var menu=document.getElementById('menu-dropdown');
+  if(menu.classList.contains('open') && !e.target.closest('#menu-dropdown') && !e.target.closest('.menu-icon')){
+    menu.classList.remove('open');
+  }
+});
+
+function calcPreview(){
+  var monto=parseFloat(document.getElementById('np-monto').value)||0;
+  var tasa=parseFloat(document.getElementById('np-tasa').value)||0;
+  var cuotas=parseInt(document.getElementById('np-cuotas').value)||1;
+  var tasaDec=tasa/100;
+  var intereses=Math.round(monto*tasaDec);
+  var totalCobrar=monto+intereses;
+  var cuotaVal=cuotas>0?Math.round(totalCobrar/cuotas):0;
+  document.getElementById('np-monto-total').textContent='₡'+fmt(totalCobrar);
+  document.getElementById('np-intereses').textContent='₡'+fmt(intereses);
+  document.getElementById('np-cuota-val').textContent='₡'+fmt(cuotaVal);
+  document.getElementById('np-saldo').textContent='₡'+fmt(monto);
+}
+
+function guardarPrestamo(){
+  var cliente=document.getElementById('np-cliente').value.trim();
+  var monto=parseFloat(document.getElementById('np-monto').value)||0;
+  var tasa=parseFloat(document.getElementById('np-tasa').value)||0;
+  var cuotas=parseInt(document.getElementById('np-cuotas').value)||1;
+  var fecha=document.getElementById('np-fecha').value||new Date().toISOString().split('T')[0];
+  if(!cliente){toast('⚠ Ingrese el nombre del cliente');return;}
+  if(!monto){toast('⚠ Ingrese el monto del préstamo');return;}
+  var tasaDec=tasa/100;
+  var intereses=Math.round(monto*tasaDec);
+  var totalCobrar=monto+intereses;
+  var cuotaVal=cuotas>0?Math.round(totalCobrar/cuotas):0;
+  var id=Date.now().toString();
+  prestamos.push({
+    id:id,
+    cliente:cliente,
+    montoPrestado:monto,
+    tasaInteres:tasaDec,
+    cantidadDeQuincenas:cuotas,
+    fechaInicio:fecha,
+    estado:'Activo',
+    Cuota_Quincenal:cuotaVal,
+    Total_Intereses:intereses,
+    Total_A_Cobrar:totalCobrar
+  });
+  document.getElementById('np-cliente').value='';
+  document.getElementById('np-monto').value='';
+  document.getElementById('np-tasa').value='20';
+  document.getElementById('np-cuotas').value='6';
+  document.getElementById('np-fecha').value=new Date().toISOString().split('T')[0];
+  calcPreview();
+  toast('✓ Préstamo guardado: '+cliente);
+  goTo('screen-cobros');
+}
+
+function calcDerived(p){
+  var pagosP=pagos.filter(function(x){return x.id_prestamo===p.id;});
+  var totalPagado=pagosP.reduce(function(s,x){return s+x.montoAbonado;},0);
+  var saldoPendiente=Math.max(0,p.Total_A_Cobrar-totalPagado);
+  var cuotasPagadas=Math.min(p.cantidadDeQuincenas,Math.floor(totalPagado/p.Cuota_Quincenal));
+  var progreso=p.Total_A_Cobrar>0?Math.min(1,totalPagado/p.Total_A_Cobrar):0;
+  var estado=p.estado;
+  if(saldoPendiente<=0) estado='Cancelado';
+  return {totalPagado:totalPagado,saldoPendiente:saldoPendiente,cuotasPagadas:cuotasPagadas,progreso:progreso,estado:estado};
+}
+
+function estadoTag(estado){
+  var cls='tag-gray';
+  if(estado==='Activo'||estado==='al día') cls='tag-green';
+  else if(estado==='Cancelado') cls='tag-blue';
+  else if(estado==='Moroso') cls='tag-red';
+  else if(estado==='Atrasado') cls='tag-amber';
+  return '<span class="tag '+cls+'">'+estado+'</span>';
+}
+
+function renderCobros(filtro){
+  var lista=document.getElementById('cobros-lista');
+  var f=(filtro||'').toLowerCase();
+  var items=prestamos.filter(function(p){return !f||p.cliente.toLowerCase().includes(f);});
+  document.getElementById('cobros-titulo').textContent='Listado de cobros ('+items.length+')';
+  if(!items.length){
+    lista.innerHTML='<div style="padding:14px"><span class="no-data">No hay cobros.</span></div>';
+    return;
+  }
+  lista.innerHTML=items.map(function(p){
+    var d=calcDerived(p);
+    return '<div class="loan-row">'
+      +'<button class="icon-btn icon-btn-blue" onclick="verDetalle(\''+p.id+'\')" title="Ver detalle">✓</button>'
+      +'<button class="icon-btn icon-btn-cyan" onclick="verDetalle(\''+p.id+'\')" title="Actualizar">↻</button>'
+      +'<button class="icon-btn icon-btn-green" onclick="verDetalle(\''+p.id+'\')" title="Abonar">🐷</button>'
+      +'<div style="flex:1;padding-left:10px;min-width:0">'
+        +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+'</div>'
+        +'<div style="font-size:11px;color:var(--text-muted);margin-top:1px">Cuota: ₡'+fmt(p.Cuota_Quincenal)+'</div>'
+        +'<div class="progress-bg" style="margin-top:5px"><div class="progress-fill" style="width:'+Math.round(d.progreso*100)+'%"></div></div>'
+        +'<div style="font-size:10px;color:var(--text-muted);margin-top:2px">'+Math.round(d.progreso*100)+'% pagado</div>'
+      +'</div>'
+      +'<span style="font-size:11px;color:var(--text-muted);white-space:nowrap;margin-left:6px">1-Belén</span>'
+    +'</div>';
+  }).join('');
+}
+
+function renderTarjetas(filtro){
+  var lista=document.getElementById('tarjetas-lista');
+  var f=(filtro||'').toLowerCase();
+  var items=prestamos.filter(function(p){return !f||p.cliente.toLowerCase().includes(f);});
+  document.getElementById('tarjetas-titulo').textContent='Listado de tarjetas ('+items.length+')';
+  if(!items.length){
+    lista.innerHTML='<div style="padding:14px"><span class="no-data">No hay préstamos.</span></div>';
+    return;
+  }
+  lista.innerHTML=items.map(function(p){
+    var d=calcDerived(p);
+    return '<div class="loan-row">'
+      +'<button class="icon-btn icon-btn-cyan btn-sm" style="width:auto;padding:7px 14px;border-radius:var(--radius)" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
+      +'<div style="flex:1;padding-left:10px;min-width:0">'
+        +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+'</div>'
+        +'<div style="font-size:11px;color:var(--text-muted)">'+estadoTag(d.estado)+' &nbsp;'+p.cantidadDeQuincenas+' cuotas</div>'
+      +'</div>'
+      +'<div style="text-align:right;flex-shrink:0">'
+        +'<div style="font-size:13px;font-weight:600">₡'+fmt(p.montoPrestado)+'</div>'
+        +'<div style="font-size:10px;color:var(--text-muted)">1-Belén</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+
+function filtrarCobros(){renderCobros(document.getElementById('filtro-cobros').value);}
+function filtrarTarjetas(){renderTarjetas(document.getElementById('filtro-tarjetas').value);}
+
+function verDetalle(id){
+  currentId=id;
+  var p=prestamos.find(function(x){return x.id===id;});
+  if(!p) return;
+  var d=calcDerived(p);
+  document.getElementById('det-cliente').textContent=p.cliente;
+  document.getElementById('det-monto').textContent='₡'+fmt(p.montoPrestado);
+  document.getElementById('det-total-cobrar').textContent='₡'+fmt(p.Total_A_Cobrar);
+  document.getElementById('det-cuota').textContent='₡'+fmt(p.Cuota_Quincenal);
+  document.getElementById('det-saldo').textContent='₡'+fmt(d.saldoPendiente);
+  document.getElementById('det-intereses').textContent='₡'+fmt(p.Total_Intereses);
+  document.getElementById('det-total-cobrar2').textContent='₡'+fmt(p.Total_A_Cobrar);
+  document.getElementById('det-pagado').textContent='₡'+fmt(d.totalPagado);
+  document.getElementById('det-pendiente').textContent='₡'+fmt(d.saldoPendiente);
+  var estadoEl=document.getElementById('det-estado');
+  var estadoEl2=document.getElementById('det-estado2');
+  estadoEl.innerHTML=estadoTag(d.estado);
+  estadoEl2.innerHTML='';
+  var inner=estadoEl.querySelector('.tag');
+  if(inner) estadoEl2.appendChild(inner.cloneNode(true));
+  document.getElementById('det-progress').style.width=Math.round(d.progreso*100)+'%';
+  document.getElementById('det-progress-txt').textContent=Math.round(d.progreso*100)+'% pagado · '+d.cuotasPagadas+'/'+p.cantidadDeQuincenas+' cuotas completadas';
+  document.getElementById('abonar-cuota').textContent='₡'+fmt(p.Cuota_Quincenal);
+  document.getElementById('abonar-fecha').value=new Date().toISOString().split('T')[0];
+  document.getElementById('abonar-monto').value='';
+  renderCuotasGrid(p,d);
+  renderPagosLista(p);
+  switchTab('tarjeta');
+  goTo('screen-detalle');
+}
+
+function renderCuotasGrid(p,d){
+  var grid=document.getElementById('cuotas-grid');
+  var total=p.cantidadDeQuincenas;
+  var pagadas=d.cuotasPagadas;
+  document.getElementById('cuotas-counter').textContent='Préstamo Cuotas '+pagadas+'/'+total;
+  var html='';
+  for(var i=1;i<=total;i++){
+    var n=i<10?'0'+i:''+i;
+    html+='<div class="cuota-cell '+(i<=pagadas?'cuota-paid':'cuota-unpaid')+'">'+n+'</div>';
+  }
+  grid.innerHTML=html;
+}
+
+function renderPagosLista(p){
+  var lista=document.getElementById('pagos-lista');
+  var pp=pagos.filter(function(x){return x.id_prestamo===p.id;});
+  if(!pp.length){
+    lista.innerHTML='<p style="font-size:13px;color:var(--text-muted);padding:8px 0">Sin abonos registrados</p>';
+    return;
+  }
+  lista.innerHTML=pp.map(function(ab,i){
+    return '<div class="detail-row">'
+      +'<div><div style="font-size:13px;font-weight:500">Abono #'+(i+1)+'</div><div style="font-size:11px;color:var(--text-muted)">'+ab.fechaPago+'</div></div>'
+      +'<span class="vbox-green" style="font-size:12px;padding:5px 10px">₡'+fmt(ab.montoAbonado)+'</span>'
+    +'</div>';
+  }).join('');
+}
+
+function switchTab(tab){
+  document.getElementById('tab-tarjeta').className='tab '+(tab==='tarjeta'?'active':'inactive');
+  document.getElementById('tab-listado').className='tab '+(tab==='listado'?'active':'inactive');
+  document.getElementById('view-tarjeta').style.display=tab==='tarjeta'?'block':'none';
+  document.getElementById('view-listado').style.display=tab==='listado'?'block':'none';
+}
+
+function registrarAbono(){
+  var monto=parseFloat(document.getElementById('abonar-monto').value)||0;
+  var fecha=document.getElementById('abonar-fecha').value;
+  if(!monto){toast('⚠ Ingrese el monto a abonar');return;}
+  if(!fecha){toast('⚠ Ingrese la fecha del abono');return;}
+  if(!currentId){toast('⚠ Error: no hay préstamo seleccionado');return;}
+  pagos.push({
+    id_pago:Date.now().toString(),
+    id_prestamo:currentId,
+    fechaPago:fecha,
+    montoAbonado:monto
+  });
+  document.getElementById('abonar-monto').value='';
+  toast('✓ Abono registrado: ₡'+fmt(monto));
+  verDetalle(currentId);
+}
+
+function eliminarPrestamo(){
+  if(!currentId) return;
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  if(!confirm('¿Eliminar el préstamo de '+p.cliente+'?')) return;
+  prestamos=prestamos.filter(function(x){return x.id!==currentId;});
+  pagos=pagos.filter(function(x){return x.id_prestamo!==currentId;});
+  currentId=null;
+  toast('Préstamo eliminado');
+  goTo('screen-cobros');
+}
+
+function updateHome(){
+  var activos=prestamos.filter(function(p){return p.estado==='Activo';});
+  var capital=activos.reduce(function(s,p){return s+p.montoPrestado;},0);
+  var cobrar=activos.reduce(function(s,p){return s+p.Total_A_Cobrar;},0);
+  document.getElementById('home-total-prestamos').textContent=activos.length;
+  document.getElementById('home-capital').textContent='₡'+fmt(capital);
+  document.getElementById('home-cobrar').textContent='₡'+fmt(cobrar);
+  document.getElementById('home-cobros-dia').textContent=activos.length;
+}
+
+// ----- DATOS DE DEMO -----
+prestamos.push({
+  id:'demo1',cliente:'Denia Guarda Cenada H',
+  montoPrestado:75000,tasaInteres:0.20,cantidadDeQuincenas:6,
+  fechaInicio:'2026-05-01',estado:'Activo',
+  Cuota_Quincenal:15000,Total_Intereses:15000,Total_A_Cobrar:90000
+});
+prestamos.push({
+  id:'demo2',cliente:'Jairo Cenada H',
+  montoPrestado:100000,tasaInteres:0.20,cantidadDeQuincenas:6,
+  fechaInicio:'2026-05-21',estado:'Activo',
+  Cuota_Quincenal:20000,Total_Intereses:20000,Total_A_Cobrar:120000
+});
+prestamos.push({
+  id:'demo3',cliente:'Karen Lotería H',
+  montoPrestado:100000,tasaInteres:0.20,cantidadDeQuincenas:6,
+  fechaInicio:'2026-05-27',estado:'Activo',
+  Cuota_Quincenal:20000,Total_Intereses:20000,Total_A_Cobrar:120000
+});
+pagos.push({id_pago:'p1',id_prestamo:'demo2',fechaPago:'2026-05-27',montoAbonado:20000});
+pagos.push({id_pago:'p2',id_prestamo:'demo2',fechaPago:'2026-06-03',montoAbonado:20000});
+pagos.push({id_pago:'p3',id_prestamo:'demo2',fechaPago:'2026-06-06',montoAbonado:20000});
+pagos.push({id_pago:'p4',id_prestamo:'demo2',fechaPago:'2026-06-06',montoAbonado:20000});
+pagos.push({id_pago:'p5',id_prestamo:'demo2',fechaPago:'2026-06-06',montoAbonado:20000});
+pagos.push({id_pago:'p6',id_prestamo:'demo3',fechaPago:'2026-05-27',montoAbonado:20000});
+pagos.push({id_pago:'p7',id_prestamo:'demo3',fechaPago:'2026-06-03',montoAbonado:20000});
+
+document.getElementById('np-fecha').value=new Date().toISOString().split('T')[0];
+calcPreview();
+updateHome();
+</script>
+</body>
+</html>
