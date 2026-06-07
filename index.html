@@ -214,9 +214,9 @@
   <div class="menu-dropdown" id="menu-dropdown">
     <div class="menu-item" onclick="goTo('screen-cobros');closeMenu()">📋 Cobros</div>
     <div class="menu-item" onclick="goTo('screen-tarjetas');closeMenu()">🃏 Tarjetas</div>
+    <div class="menu-item" onclick="goTo('screen-panel-recolector');closeMenu()">📊 Panel Recolector</div>
     <div class="menu-item" onclick="goTo('screen-nuevo-cliente');closeMenu()">➕ Nuevo Cliente</div>
     <div class="menu-item" onclick="cerrarSesion()" style="color:var(--red)">🔒 Cerrar sesión</div>
-    <div class="menu-item" onclick="closeMenu()" style="color:var(--gray)">✕ Cerrar menú</div>
   </div>
 
   <!-- ==================== HOME ==================== -->
@@ -643,6 +643,48 @@
     </div>
   </div>
 
+  <!-- ==================== PANEL RECOLECTOR ==================== -->
+  <div id="screen-panel-recolector" class="screen">
+    <div class="navbar">
+      <button class="btn btn-cyan btn-sm" onclick="goBack()">← Volver</button>
+      <span class="navbar-title">Panel Recolector</span>
+      <div style="width:80px"></div>
+    </div>
+    <div class="section">
+      <!-- Fecha -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+        <span style="font-size:13px;color:var(--text-muted)">Fecha:</span>
+        <input type="date" id="panel-fecha" onchange="renderPanelRecolector()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
+      </div>
+      <!-- Resumen dinero -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div class="summary-card" style="background:#dcfce7;border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:11px;color:#166534;font-weight:600;text-transform:uppercase;margin-bottom:4px">Total Cobrado</div>
+          <div style="font-size:20px;font-weight:700;color:#166534" id="panel-total-cobrado">₡0</div>
+        </div>
+        <div class="summary-card" style="background:#dbeafe;border-radius:12px;padding:14px;text-align:center">
+          <div style="font-size:11px;color:#1e40af;font-weight:600;text-transform:uppercase;margin-bottom:4px">Cobros Admin</div>
+          <div style="font-size:20px;font-weight:700;color:#1e40af" id="panel-total-admin">₡0</div>
+        </div>
+      </div>
+      <!-- Cobros del día -->
+      <div class="card" style="margin-bottom:12px">
+        <p style="font-size:13px;font-weight:600;margin-bottom:10px" id="panel-cobros-titulo">💰 Cobros del día (0)</p>
+        <div id="panel-cobros-lista"></div>
+      </div>
+      <!-- Nuevos préstamos -->
+      <div class="card" style="margin-bottom:12px">
+        <p style="font-size:13px;font-weight:600;margin-bottom:10px" id="panel-nuevos-titulo">📄 Nuevos préstamos (0)</p>
+        <div id="panel-nuevos-lista"></div>
+      </div>
+      <!-- Cobros administrativos -->
+      <div class="card" style="margin-bottom:12px">
+        <p style="font-size:13px;font-weight:600;margin-bottom:10px" id="panel-admin-titulo">🏦 Cobros administrativos (0)</p>
+        <div id="panel-admin-lista"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== RENOVAR ==================== -->
   <div id="screen-renovar" class="screen">
     <div class="navbar">
@@ -781,6 +823,7 @@ function cerrarSesion(){
 
 var prestamos = [];
 var pagos = [];
+var cobrosAdmin = [];
 var currentId = null;
 var historial = ['screen-cobros'];
 
@@ -788,6 +831,7 @@ function guardarDatos(){
   try{
     localStorage.setItem('fjd_prestamos',JSON.stringify(prestamos));
     localStorage.setItem('fjd_pagos',JSON.stringify(pagos));
+    localStorage.setItem('fjd_cobrosadmin',JSON.stringify(cobrosAdmin));
   }catch(e){
     toast('⚠ Espacio lleno: fotos muy pesadas');
   }
@@ -799,6 +843,8 @@ function cargarDatos(){
     var sg=localStorage.getItem('fjd_pagos');
     if(sp) prestamos=JSON.parse(sp);
     if(sg) pagos=JSON.parse(sg);
+    var sc=localStorage.getItem('fjd_cobrosadmin');
+    if(sc) cobrosAdmin=JSON.parse(sc);
   }catch(e){}
 }
 
@@ -837,6 +883,7 @@ function goTo(id){
   window.scrollTo(0,0);
   if(id==='screen-cobros') renderCobros();
   if(id==='screen-tarjetas') renderTarjetas();
+  if(id==='screen-panel-recolector') renderPanelRecolector();
   if(id==='screen-home') updateHome();
   if(id==='screen-nuevo-prestamo' && clienteTemporal.nombre){
     document.getElementById('np-cliente').value=clienteTemporal.nombre;
@@ -852,6 +899,7 @@ function goBack(){
   window.scrollTo(0,0);
   if(prev==='screen-cobros') renderCobros();
   if(prev==='screen-tarjetas') renderTarjetas();
+  if(prev==='screen-panel-recolector') renderPanelRecolector();
   if(prev==='screen-home') updateHome();
 }
 
@@ -1091,9 +1139,15 @@ function renderCobros(filtro){
 
 function renderTarjetas(filtro){
   var lista=document.getElementById('tarjetas-lista');
-  var f=(filtro||'').toLowerCase();
-  var items=prestamos.filter(function(p){return !f||p.cliente.toLowerCase().includes(f);});
-  document.getElementById('tarjetas-titulo').textContent='Listado de tarjetas ('+items.length+')';
+  var f=(filtro||'').toLowerCase().trim();
+  var items=prestamos.filter(function(p){
+    var d=calcDerived(p);
+    var activo=d.saldoPendiente>0&&p.estado!=='Cancelado';
+    if(f) return p.cliente.toLowerCase().includes(f); // con búsqueda: mostrar todos
+    return activo; // sin búsqueda: solo activos
+  });
+  var totalActivos=prestamos.filter(function(p){var d=calcDerived(p);return d.saldoPendiente>0&&p.estado!=='Cancelado';}).length;
+  document.getElementById('tarjetas-titulo').textContent='Tarjetas activas ('+totalActivos+')'+(f?' · Búsqueda: '+items.length:'');
   if(!items.length){
     lista.innerHTML='<div style="padding:14px"><span class="no-data">No hay préstamos.</span></div>';
     return;
@@ -1421,6 +1475,10 @@ function confirmarRenovacion(){
     renovadoDe:p.id
   };
   prestamos.push(nuevo);
+  var adminMonto=readMoneyInput('ren-cobro-admin');
+  if(adminMonto>0){
+    cobrosAdmin.push({id:Date.now().toString(),id_prestamo:nuevo.id,cliente:nuevo.cliente,fecha:new Date().toISOString().split('T')[0],monto:adminMonto});
+  }
   guardarDatos();
   currentId=nuevo.id;
   toast('✓ Préstamo renovado correctamente');
@@ -1676,6 +1734,58 @@ function guardarDocsCliente(){
   // Actualizar teléfono en pantalla de detalle si está visible
   document.getElementById('det-telefono-txt').textContent=p.telefono||'';
   toast('✓ Datos del cliente actualizados');
+}
+
+function renderPanelRecolector(){
+  var fechaEl=document.getElementById('panel-fecha');
+  if(!fechaEl.value) fechaEl.value=new Date().toISOString().split('T')[0];
+  var fecha=fechaEl.value;
+
+  // Cobros realizados en esa fecha
+  var pagosHoy=pagos.filter(function(x){return x.fechaPago===fecha;});
+  var totalCobrado=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
+  document.getElementById('panel-total-cobrado').textContent='₡'+fmt(totalCobrado);
+
+  // Lista de cobros del día (clientes que pagaron)
+  var cobrosList=pagosHoy.map(function(pg){
+    var p=prestamos.find(function(x){return x.id===pg.id_prestamo;});
+    return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">'
+      +'<span style="font-size:13px">'+(p?p.cliente:pg.id_prestamo)+'</span>'
+      +'<span style="font-size:13px;font-weight:600;color:#166534">₡'+fmt(pg.montoAbonado)+'</span>'
+      +'</div>';
+  });
+  document.getElementById('panel-cobros-titulo').textContent='💰 Cobros del día ('+pagosHoy.length+')';
+  document.getElementById('panel-cobros-lista').innerHTML=cobrosList.length
+    ?cobrosList.join('')
+    :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros en esta fecha</p>';
+
+  // Nuevos préstamos creados en esa fecha
+  var nuevos=prestamos.filter(function(p){return p.fechaInicio===fecha;});
+  var nuevosList=nuevos.map(function(p){
+    return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">'
+      +'<span style="font-size:13px">'+p.cliente+'</span>'
+      +'<span style="font-size:13px;font-weight:600;color:#2563eb">₡'+fmt(p.montoPrestado)+'</span>'
+      +'</div>';
+  });
+  document.getElementById('panel-nuevos-titulo').textContent='📄 Nuevos préstamos ('+nuevos.length+')';
+  document.getElementById('panel-nuevos-lista').innerHTML=nuevosList.length
+    ?nuevosList.join('')
+    :'<p style="font-size:13px;color:var(--text-muted)">Sin préstamos nuevos en esta fecha</p>';
+
+  // Cobros administrativos (renovaciones)
+  var adminHoy=cobrosAdmin.filter(function(x){return x.fecha===fecha;});
+  var totalAdmin=adminHoy.reduce(function(s,x){return s+x.monto;},0);
+  document.getElementById('panel-total-admin').textContent='₡'+fmt(totalAdmin);
+  var adminList=adminHoy.map(function(ca){
+    return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">'
+      +'<span style="font-size:13px">'+ca.cliente+'</span>'
+      +'<span style="font-size:13px;font-weight:600;color:#1e40af">₡'+fmt(ca.monto)+'</span>'
+      +'</div>';
+  });
+  document.getElementById('panel-admin-titulo').textContent='🏦 Cobros administrativos ('+adminHoy.length+')';
+  document.getElementById('panel-admin-lista').innerHTML=adminList.length
+    ?adminList.join('')
+    :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros administrativos en esta fecha</p>';
 }
 
 // ----- INIT -----
