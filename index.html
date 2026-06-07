@@ -853,7 +853,7 @@ function getCuotasYDias(){
   } else if(tipo==='Semanal'){
     var semanas=parseInt(document.querySelector('input[name="np-semanas"]:checked').value)||5;
     cuotas=semanas;
-    diasPorCuota=Math.round(30/semanas); // 5sem=6dias, 6sem=5dias
+    diasPorCuota=7; // semanal = 1 pago por semana = 7 días
   } else if(tipo==='Quincenal'){
     var quincenas=parseInt(document.querySelector('input[name="np-quincenas"]:checked').value)||2;
     cuotas=quincenas;
@@ -1241,7 +1241,19 @@ function actualizarSubTiposRen(tipo){
 
 function toggleDigitarCuota(){
   var checked=document.getElementById('ren-digitar-check').checked;
-  document.getElementById('ren-cuota-manual').style.display=checked?'block':'none';
+  var display=document.getElementById('ren-cuota-display');
+  var manual=document.getElementById('ren-cuota-manual');
+  if(checked){
+    // Pre-llenar con la cuota calculada actual
+    var actual=display.textContent.replace(/[^0-9]/g,'');
+    manual.value=actual?Number(actual).toLocaleString('en-US'):'';
+    display.style.display='none';
+    manual.style.display='block';
+    manual.focus();
+  } else {
+    manual.style.display='none';
+    display.style.display='inline-block';
+  }
 }
 
 function calcRenovar(){
@@ -1253,7 +1265,7 @@ function calcRenovar(){
   else if(tipo==='Semanal'){
     var sem=document.querySelector('input[name="ren-sem"]:checked');
     var semVal=sem?parseInt(sem.value):6;
-    cuotas=semVal; diasPorCuota=Math.round(30/semVal);
+    cuotas=semVal; diasPorCuota=7;
   } else if(tipo==='Quincenal'){
     var quin=document.querySelector('input[name="ren-quin"]:checked');
     cuotas=quin?parseInt(quin.value):2; diasPorCuota=15;
@@ -1297,7 +1309,7 @@ function confirmarRenovacion(){
   var fecha=document.getElementById('ren-fecha').value||new Date().toISOString().split('T')[0];
   var cuotas=1,diasPorCuota=30;
   if(tipo==='Diario'){cuotas=30;diasPorCuota=1;}
-  else if(tipo==='Semanal'){var sem=document.querySelector('input[name="ren-sem"]:checked');var sv=sem?parseInt(sem.value):6;cuotas=sv;diasPorCuota=Math.round(30/sv);}
+  else if(tipo==='Semanal'){var sem=document.querySelector('input[name="ren-sem"]:checked');var sv=sem?parseInt(sem.value):6;cuotas=sv;diasPorCuota=7;}
   else if(tipo==='Quincenal'){var quin=document.querySelector('input[name="ren-quin"]:checked');cuotas=quin?parseInt(quin.value):2;diasPorCuota=15;}
   var total=Math.round(monto*(1+tasa));
   var intereses=total-monto;
