@@ -1196,8 +1196,8 @@ function abrirRenovar(){
     toast('⚠ Debe pagar los intereses antes de renovar');
     return;
   }
-  // Cobro admin automático = cuota diaria = Total / 30
-  var cobroAdmin=Math.round(p.Total_A_Cobrar/30);
+  // Cobro admin = 4% del monto prestado (₡2,000 por cada ₡50,000)
+  var cobroAdmin=Math.round(p.montoPrestado*0.04);
   document.getElementById('ren-cliente-nombre').textContent=p.cliente;
   document.getElementById('ren-saldo-viejo').textContent='₡'+fmt(d.saldoPendiente);
   document.getElementById('ren-monto').value=fmt(p.montoPrestado);
