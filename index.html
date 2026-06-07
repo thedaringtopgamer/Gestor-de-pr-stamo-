@@ -382,7 +382,7 @@
       </div>
       <div class="field-group">
         <label>Monto *</label>
-        <input type="number" id="np-monto" placeholder="0" oninput="calcPreview()">
+        <input type="text" inputmode="numeric" id="np-monto" placeholder="0" oninput="fmtMoneyInput(this);calcPreview()">
       </div>
       <div style="display:flex;gap:8px;margin-bottom:14px;align-items:flex-end;flex-wrap:wrap">
         <div style="flex:1;min-width:80px">
@@ -541,7 +541,7 @@
         </div>
         <div class="field-group">
           <label>Monto a abonar</label>
-          <input type="number" id="abonar-monto" placeholder="0">
+          <input type="text" inputmode="numeric" id="abonar-monto" placeholder="0" oninput="fmtMoneyInput(this)">
         </div>
         <div class="field-group">
           <label>Fecha de pago</label>
@@ -654,7 +654,24 @@ function cargarDatos(){
 }
 
 function fmt(n){
-  return Number(n).toLocaleString('es-CR',{minimumFractionDigits:0,maximumFractionDigits:0});
+  return Number(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+
+function fmtMoneyInput(el){
+  var pos=el.selectionStart;
+  var raw=el.value.replace(/[^0-9]/g,'');
+  var num=parseInt(raw,10);
+  var formatted=isNaN(num)?'':num.toLocaleString('en-US');
+  el.value=formatted;
+  // Ajustar cursor: contar cuántas comas hay antes de la posición original
+  try{
+    var diff=formatted.length-(raw.length);
+    el.setSelectionRange(pos+diff,pos+diff);
+  }catch(e){}
+}
+
+function readMoneyInput(id){
+  return parseInt((document.getElementById(id).value||'').replace(/[^0-9]/g,''),10)||0;
 }
 
 function toast(msg){
@@ -736,7 +753,7 @@ function getCuotasYDias(){
 }
 
 function calcPreview(){
-  var monto=parseFloat(document.getElementById('np-monto').value)||0;
+  var monto=readMoneyInput('np-monto');
   var tasa=parseFloat(document.getElementById('np-tasa').value)||0;
   var tasaDec=tasa/100;
   var intereses=Math.round(monto*tasaDec);
@@ -751,7 +768,7 @@ function calcPreview(){
 
 function guardarPrestamo(){
   var nombre=clienteTemporal.nombre||document.getElementById('np-cliente').value.trim();
-  var monto=parseFloat(document.getElementById('np-monto').value)||0;
+  var monto=readMoneyInput('np-monto');
   var tasa=parseFloat(document.getElementById('np-tasa').value)||0;
   var fecha=document.getElementById('np-fecha').value||new Date().toISOString().split('T')[0];
   if(!nombre){toast('⚠ Falta nombre del cliente');return;}
@@ -980,7 +997,7 @@ function switchTab(tab){
 }
 
 function registrarAbono(){
-  var monto=parseFloat(document.getElementById('abonar-monto').value)||0;
+  var monto=readMoneyInput('abonar-monto');
   var fecha=document.getElementById('abonar-fecha').value;
   if(!monto){toast('⚠ Ingrese el monto a abonar');return;}
   if(!fecha){toast('⚠ Ingrese la fecha del abono');return;}
