@@ -987,9 +987,13 @@ function renderCobros(filtro){
 
   function filaCobroHtml(p, etiqueta, colorEtiqueta){
     var d=calcDerived(p);
+    var puedeRenovar=d.saldoPendiente<=p.montoPrestado;
+    var btnRenovar=puedeRenovar
+      ?'<button class="icon-btn icon-btn-cyan" onclick="renovarDesdeLista(\''+p.id+'\')" title="Renovar">↻</button>'
+      :'<button class="icon-btn" style="background:#e5e7eb;color:#9ca3af;cursor:not-allowed" title="Pague los intereses primero">↻</button>';
     return '<div class="loan-row">'
       +'<button class="icon-btn icon-btn-blue" onclick="verDetalle(\''+p.id+'\')" title="Ver detalle">✓</button>'
-      +'<button class="icon-btn icon-btn-cyan" onclick="renovarDesdeLista(\''+p.id+'\')" title="Renovar">↻</button>'
+      +btnRenovar
       +'<button class="icon-btn icon-btn-green" onclick="abonoRapido(\''+p.id+'\',\''+p.cliente+'\','+p.Cuota_Quincenal+')" title="Abonar cuota">🐷</button>'
       +'<div style="flex:1;padding-left:10px;min-width:0">'
         +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+'</div>'
@@ -1187,12 +1191,19 @@ function abrirRenovar(){
   var p=prestamos.find(function(x){return x.id===currentId;});
   if(!p) return;
   var d=calcDerived(p);
+  // Validar: debe haber pagado al menos los intereses
+  if(d.saldoPendiente>p.montoPrestado){
+    toast('⚠ Debe pagar los intereses antes de renovar');
+    return;
+  }
+  // Cobro admin automático = cuota diaria = Total / 30
+  var cobroAdmin=Math.round(p.Total_A_Cobrar/30);
   document.getElementById('ren-cliente-nombre').textContent=p.cliente;
   document.getElementById('ren-saldo-viejo').textContent='₡'+fmt(d.saldoPendiente);
   document.getElementById('ren-monto').value=fmt(p.montoPrestado);
   document.getElementById('ren-tasa').value=Math.round((p.tasaInteres||0.20)*100);
   document.getElementById('ren-fecha').value=new Date().toISOString().split('T')[0];
-  document.getElementById('ren-cobro-admin').value='';
+  document.getElementById('ren-cobro-admin').value=fmt(cobroAdmin);
   document.getElementById('ren-entregar').textContent='—';
   document.getElementById('ren-cuota-manual').style.display='none';
   document.getElementById('ren-digitar-check').checked=false;
