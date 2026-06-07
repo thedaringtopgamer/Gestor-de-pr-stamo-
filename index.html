@@ -697,7 +697,7 @@
         </div>
         <div class="field-group">
           <label>Cobro Administrativo</label>
-          <input type="text" inputmode="numeric" id="ren-cobro-admin" placeholder="0" oninput="fmtMoneyInput(this);calcRenovar()" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+          <input type="text" inputmode="numeric" id="ren-cobro-admin" placeholder="0" oninput="fmtMoneyInput(this)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
         </div>
         <div>
           <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:500;margin-bottom:4px">Entregar al cliente</div>
@@ -1289,10 +1289,13 @@ function calcRenovar(){
   var total=Math.round(monto*(1+tasa));
   var cuotaVal=cuotas>0?Math.round(total/cuotas):0;
   document.getElementById('ren-cuota-display').textContent=cuotaVal>0?'₡'+fmt(cuotaVal):'—';
+  // Auto-calcular cobro administrativo = 4% del monto
+  var adminAuto=Math.round(monto*0.04);
+  document.getElementById('ren-cobro-admin').value=monto>0?fmt(adminAuto):'';
   // Entregar
   var p=prestamos.find(function(x){return x.id===currentId;});
   var saldo=p?calcDerived(p).saldoPendiente:0;
-  var admin=readMoneyInput('ren-cobro-admin');
+  var admin=adminAuto;
   var entregar=monto-saldo-admin;
   var eEl=document.getElementById('ren-entregar');
   eEl.textContent=(entregar>=0?'₡':'-₡')+fmt(Math.abs(entregar));
