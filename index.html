@@ -596,15 +596,15 @@ function cerrarSesion(){
   closeMenu();
 }
 
-// Verificar sesión guardada
-if(localStorage.getItem('fjd_session')==='1'){
-  mostrarApp();
-}
-
 var prestamos = [];
 var pagos = [];
 var currentId = null;
 var historial = ['screen-cobros'];
+
+// Verificar sesión guardada
+if(localStorage.getItem('fjd_session')==='1'){
+  mostrarApp();
+}
 
 function fmt(n){
   return Number(n).toLocaleString('es-CR',{minimumFractionDigits:0,maximumFractionDigits:0});
@@ -620,7 +620,7 @@ function toast(msg){
 function goTo(id){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.getElementById(id).classList.add('active');
-  historial.push(id);
+  if(historial[historial.length-1]!==id) historial.push(id);
   window.scrollTo(0,0);
   if(id==='screen-cobros') renderCobros();
   if(id==='screen-tarjetas') renderTarjetas();
