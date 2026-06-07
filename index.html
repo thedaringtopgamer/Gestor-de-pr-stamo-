@@ -992,11 +992,36 @@ function parseLocalDate(str){
   return new Date(+p[0],+p[1]-1,+p[2]);
 }
 
+function esFinDeSemana(d){ var dow=d.getDay(); return dow===0||dow===6; }
+function siguienteDiaHabil(d){
+  var r=new Date(d);
+  while(esFinDeSemana(r)) r.setDate(r.getDate()+1);
+  return r;
+}
+function addDiasHabiles(fecha, n){
+  var d=new Date(fecha);
+  var sumados=0;
+  while(sumados<n){
+    d.setDate(d.getDate()+1);
+    if(!esFinDeSemana(d)) sumados++;
+  }
+  return d;
+}
+
 function getCuotaVencimiento(p, numCuota){
   var fecha = parseLocalDate(p.fechaInicio);
-  var dias = p.diasPorCuota || 15;
-  fecha.setDate(fecha.getDate() + dias * (numCuota - 1));
-  return fecha;
+  var tipo = p.tipo||'Quincenal';
+  var diasPorCuota = p.diasPorCuota||15;
+  if(numCuota<=1) return siguienteDiaHabil(fecha);
+  if(tipo==='Diario'){
+    // Cada cuota = 1 día hábil (saltar sábado y domingo)
+    return addDiasHabiles(fecha, numCuota-1);
+  } else {
+    // Semanal, Quincenal, Mensual: días calendario + saltar fin de semana si cae en uno
+    var d=new Date(fecha);
+    d.setDate(d.getDate() + diasPorCuota*(numCuota-1));
+    return siguienteDiaHabil(d);
+  }
 }
 
 function getEstadoCobro(p){
