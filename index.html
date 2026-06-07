@@ -194,6 +194,12 @@
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
+  <!-- MODAL VISOR DE FOTO -->
+  <div id="foto-viewer" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9000;align-items:center;justify-content:center;flex-direction:column" onclick="cerrarFoto()">
+    <img id="foto-viewer-img" src="" style="max-width:100%;max-height:90vh;object-fit:contain;border-radius:8px">
+    <div style="color:#fff;font-size:13px;margin-top:14px;opacity:0.7">Toca para cerrar</div>
+  </div>
+
   <!-- MODAL CONFIRMACIÓN -->
   <div id="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:8000;display:none;align-items:flex-end;justify-content:center" onclick="modalCancelar()">
     <div style="background:#fff;border-radius:20px 20px 0 0;padding:28px 24px 36px;width:100%;max-width:390px;box-shadow:0 -4px 30px rgba(0,0,0,0.2)" onclick="event.stopPropagation()">
@@ -1175,6 +1181,18 @@ function switchTab(tab){
   document.getElementById('view-listado').style.display=tab==='listado'?'block':'none';
 }
 
+function verFoto(key){
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  var src=(p&&p.fotos&&p.fotos[key])||_docsNewFotos[key]||'';
+  if(!src) return;
+  document.getElementById('foto-viewer-img').src=src;
+  document.getElementById('foto-viewer').style.display='flex';
+}
+function cerrarFoto(){
+  document.getElementById('foto-viewer').style.display='none';
+  document.getElementById('foto-viewer-img').src='';
+}
+
 var _modalCallback=null;
 function modalCancelar(){
   document.getElementById('modal-overlay').style.display='none';
@@ -1567,7 +1585,7 @@ function verDocsCliente(){
     html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">'
       +'<div style="font-size:13px;font-weight:500;color:#374151">'+labels[k]+'</div>'
       +'<div style="display:flex;align-items:center;gap:8px">'
-      +(src?'<a href="'+src+'" target="_blank" style="font-size:12px;color:#2563eb;text-decoration:none;font-weight:500">👁 Ver</a>':'<span style="font-size:11px;color:var(--text-muted)">Sin foto</span>')
+      +(src?'<button onclick="verFoto(\''+k+'\')" style="font-size:12px;color:#2563eb;background:none;border:none;cursor:pointer;font-weight:500;padding:0;font-family:\'DM Sans\',sans-serif">👁 Ver</button>':'<span style="font-size:11px;color:var(--text-muted)">Sin foto</span>')
       +'<label style="font-size:11px;color:#059669;font-weight:600;cursor:pointer;border:1px solid #059669;border-radius:6px;padding:3px 8px">📷 '+(src?'Cambiar':'Subir')+'<input type="file" accept="image/*" data-key="'+k+'" onchange="onDocsFotoChange(this)" style="display:none"></label>'
       +'</div>'
       +'</div>';
@@ -1588,16 +1606,16 @@ function onDocsFotoChange(input){
     // Actualizar el link "Ver" en la fila correspondiente
     var fila=input.closest('label').closest('div[style*="justify-content"]');
     if(fila){
-      var linkArea=fila.querySelector('a[href]');
-      if(linkArea){ linkArea.href=e.target.result; }
+      var existing=fila.querySelector('button[onclick^="verFoto"]');
+      if(existing){ existing.setAttribute('onclick','verFoto(\''+k+'\')'); }
       else {
         var sinFoto=fila.querySelector('span');
         if(sinFoto){
-          var newA=document.createElement('a');
-          newA.href=e.target.result; newA.target='_blank';
-          newA.setAttribute('style','font-size:12px;color:#2563eb;text-decoration:none;font-weight:500');
-          newA.textContent='👁 Ver';
-          sinFoto.replaceWith(newA);
+          var newBtn=document.createElement('button');
+          newBtn.setAttribute('onclick','verFoto(\''+k+'\')');
+          newBtn.setAttribute('style','font-size:12px;color:#2563eb;background:none;border:none;cursor:pointer;font-weight:500;padding:0;font-family:\'DM Sans\',sans-serif');
+          newBtn.textContent='👁 Ver';
+          sinFoto.replaceWith(newBtn);
         }
       }
     }
