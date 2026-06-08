@@ -887,7 +887,7 @@
         </div>
       </div>
 
-      <button class="btn btn-cyan btn-full" style="padding:14px;font-size:16px" onclick="confirmarRenovacion()">✓ Confirmar Renovación</button>
+      <button class="btn btn-cyan btn-full" style="padding:14px;font-size:16px" onclick="pedirConfirmacionRenovacion()">✓ Confirmar Renovación</button>
       <button class="btn btn-gray btn-full" style="padding:12px;margin-top:8px" onclick="goBack()">Cancelar</button>
     </div>
   </div>
@@ -928,6 +928,7 @@ var prestamos = [];
 var pagos = [];
 var cobrosAdmin = [];
 var gastos = [];
+var renovaciones = [];
 var currentId = null;
 var historial = ['screen-cobros'];
 
@@ -937,6 +938,7 @@ function guardarDatos(){
     localStorage.setItem('fjd_pagos',JSON.stringify(pagos));
     localStorage.setItem('fjd_cobrosadmin',JSON.stringify(cobrosAdmin));
     localStorage.setItem('fjd_gastos',JSON.stringify(gastos));
+    localStorage.setItem('fjd_renovaciones',JSON.stringify(renovaciones));
   }catch(e){
     toast('⚠ Espacio lleno: fotos muy pesadas');
   }
@@ -952,6 +954,8 @@ function cargarDatos(){
     if(sc) cobrosAdmin=JSON.parse(sc);
     var sg2=localStorage.getItem('fjd_gastos');
     if(sg2) gastos=JSON.parse(sg2);
+    var sr=localStorage.getItem('fjd_renovaciones');
+    if(sr) renovaciones=JSON.parse(sr);
   }catch(e){}
 }
 
@@ -1359,17 +1363,135 @@ function mostrarInfoCelda(dia,fechaPago,totalCobrar){
 
 function renderPagosLista(p){
   var lista=document.getElementById('pagos-lista');
-  var pp=pagos.filter(function(x){return x.id_prestamo===p.id;});
-  if(!pp.length){
-    lista.innerHTML='<p style="font-size:13px;color:var(--text-muted);padding:8px 0">Sin abonos registrados</p>';
+  var pp=pagos.filter(function(x){return x.id_prestamo===p.id;}).map(function(x){return {tipo:'abono',fecha:x.fechaPago,data:x};});
+  var rr=renovaciones.filter(function(x){return x.id_prestamo===p.id;}).map(function(x){return {tipo:'renovacion',fecha:x.fecha,data:x};});
+  var todos=pp.concat(rr).sort(function(a,b){return b.fecha.localeCompare(a.fecha);});
+  if(!todos.length){
+    lista.innerHTML='<p style="font-size:13px;color:var(--text-muted);padding:8px 0">Sin movimientos registrados</p>';
     return;
   }
-  lista.innerHTML=pp.map(function(ab,i){
-    return '<div class="detail-row">'
-      +'<div><div style="font-size:13px;font-weight:500">Abono #'+(i+1)+'</div><div style="font-size:11px;color:var(--text-muted)">'+ab.fechaPago+'</div></div>'
-      +'<span class="vbox-green" style="font-size:12px;padding:5px 10px">₡'+fmt(ab.montoAbonado)+'</span>'
-    +'</div>';
+  var abonoNum=pp.length;
+  lista.innerHTML=todos.map(function(item,i){
+    if(item.tipo==='abono'){
+      var ab=item.data;
+      return '<div class="detail-row">'
+        +'<div><div style="font-size:13px;font-weight:500">Abono</div><div style="font-size:11px;color:var(--text-muted)">'+ab.fechaPago+'</div></div>'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+        +'<span class="vbox-green" style="font-size:12px;padding:5px 10px">₡'+fmt(ab.montoAbonado)+'</span>'
+        +'<button onclick="enviarWhatsAppMovimiento(\''+p.id+'\',\'abono\',\''+ab.id_pago+'\')" style="background:none;border:none;cursor:pointer;font-size:18px;padding:2px" title="Enviar WhatsApp">📱</button>'
+        +'</div></div>';
+    } else {
+      var rv=item.data;
+      var uid='ren-'+rv.id;
+      return '<div style="border-bottom:1px solid var(--border)">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;cursor:pointer" onclick="toggleRenEntry(\''+uid+'\')">'
+          +'<div><div style="font-size:13px;font-weight:600;color:var(--cyan)">🔄 Renovación</div><div style="font-size:11px;color:var(--text-muted)">'+rv.fecha+'</div></div>'
+          +'<div style="display:flex;align-items:center;gap:8px">'
+          +'<span style="font-size:12px;color:var(--cyan);font-weight:700">₡'+fmt(rv.montoNuevo)+'</span>'
+          +'<span style="font-size:14px;color:var(--text-muted)" id="arr-'+uid+'">▶</span>'
+          +'</div>'
+        +'</div>'
+        +'<div id="'+uid+'" style="display:none;background:#f0fdf4;border-radius:8px;padding:12px;margin-bottom:10px">'
+          +'<div style="font-size:12px;line-height:1.8">'
+          +'<b>Monto nuevo:</b> ₡'+fmt(rv.montoNuevo)+'<br>'
+          +'<b>Cuota:</b> ₡'+fmt(rv.cuotaNueva)+' ('+rv.tipo+')<br>'
+          +'<b>Cuotas:</b> '+rv.cuotas+'<br>'
+          +'<b>Tasa:</b> '+rv.tasa+'%<br>'
+          +(rv.adminMonto?'<b>Cobro admin:</b> ₡'+fmt(rv.adminMonto)+'<br>':'')
+          +'</div>'
+          +'<button onclick="enviarWhatsAppMovimiento(\''+p.id+'\',\'renovacion\',\''+rv.id+'\')" style="margin-top:8px;background:#25D366;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif">📱 Enviar WhatsApp</button>'
+        +'</div>'
+      +'</div>';
+    }
   }).join('');
+}
+
+function formatTel(tel){
+  var t=(tel||'').replace(/\D/g,'');
+  if(t.length===8) return '506'+t; // Costa Rica
+  if(t.startsWith('506')) return t;
+  return t;
+}
+
+function mensajeAbono(p){
+  var d=calcDerived(p);
+  var pp=pagos.filter(function(x){return x.id_prestamo===p.id;});
+  var ultimo=pp[pp.length-1];
+  var meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  function fmtFecha(s){var pts=s.split('-');return parseInt(pts[2])+'/'+meses[parseInt(pts[1])-1]+'/'+pts[0];}
+  return '✅ *Financiera JD*\n'
+    +'Cliente: '+p.cliente+'\n'
+    +'────────────────\n'
+    +'Abono registrado: ₡'+fmt(ultimo?ultimo.montoAbonado:0)+'\n'
+    +'Fecha: '+(ultimo?fmtFecha(ultimo.fechaPago):'')+'\n'
+    +'Saldo pendiente: ₡'+fmt(d.saldoPendiente)+'\n'
+    +'Cuota: ₡'+fmt(d.pendienteProxima)+' ('+p.tipo+')\n'
+    +'────────────────\n'
+    +'Gracias por su pago 🙏';
+}
+
+function mensajeRenovacion(p, rv){
+  return '🔄 *Financiera JD*\n'
+    +'Cliente: '+p.cliente+'\n'
+    +'────────────────\n'
+    +'*RENOVACIÓN DE PRÉSTAMO*\n'
+    +'Monto: ₡'+fmt(rv.montoNuevo)+'\n'
+    +'Cuota: ₡'+fmt(rv.cuotaNueva)+' ('+rv.tipo+')\n'
+    +'Cuotas: '+rv.cuotas+'\n'
+    +'Tasa: '+rv.tasa+'%\n'
+    +(rv.adminMonto?'Cobro admin: ₡'+fmt(rv.adminMonto)+'\n':'')
+    +'Inicio: '+rv.fecha+'\n'
+    +'────────────────\n'
+    +'Gracias por su confianza 🙏';
+}
+
+function ofrecerWhatsApp(id, tipo){
+  var p=prestamos.find(function(x){return x.id===id;});
+  if(!p||!p.telefono) return;
+  var overlay=document.getElementById('modal-overlay');
+  document.getElementById('modal-subtitulo').textContent='WhatsApp';
+  document.getElementById('modal-mensaje').textContent='¿Enviar comprobante a '+p.cliente+' ('+p.telefono+')?';
+  document.getElementById('modal-btn-si').textContent='📱 Sí, enviar WhatsApp';
+  document.getElementById('modal-btn-si').style.background='#25D366';
+  overlay.style.display='flex';
+  _modalCallback=function(){
+    overlay.style.display='none';
+    document.getElementById('modal-btn-si').style.background='#16a34a';
+    abrirWhatsApp(id, tipo, null);
+  };
+  document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
+}
+
+function enviarWhatsAppMovimiento(id, tipo, movId){
+  var p=prestamos.find(function(x){return x.id===id;});
+  if(!p){toast('⚠ Préstamo no encontrado');return;}
+  if(!p.telefono){toast('⚠ El cliente no tiene teléfono registrado');return;}
+  abrirWhatsApp(id, tipo, movId);
+}
+
+function abrirWhatsApp(id, tipo, movId){
+  var p=prestamos.find(function(x){return x.id===id;});
+  if(!p) return;
+  var msg='';
+  if(tipo==='abono'){
+    msg=mensajeAbono(p);
+  } else if(tipo==='renovacion'){
+    var rv=movId?renovaciones.find(function(x){return x.id===movId;}):renovaciones.filter(function(x){return x.id_prestamo===id;}).slice(-1)[0];
+    if(!rv){toast('⚠ Renovación no encontrada');return;}
+    msg=mensajeRenovacion(p,rv);
+  }
+  var tel=formatTel(p.telefono);
+  var url='https://wa.me/'+tel+'?text='+encodeURIComponent(msg);
+  window.open(url,'_blank');
+}
+
+function toggleRenEntry(uid){
+  var el=document.getElementById(uid);
+  var arr=document.getElementById('arr-'+uid);
+  if(!el) return;
+  var open=el.style.display==='block';
+  el.style.display=open?'none':'block';
+  if(arr) arr.textContent=open?'▶':'▼';
 }
 
 function switchTab(tab){
@@ -1433,6 +1555,7 @@ function registrarAbono(){
   document.getElementById('abonar-monto').value='';
   toast('✓ Abono registrado: ₡'+fmt(monto));
   verDetalle(currentId);
+  setTimeout(function(){ ofrecerWhatsApp(currentId,'abono'); },400);
 }
 
 function renovarDesdeLista(id){
@@ -1543,6 +1666,23 @@ function calcRenovar(){
   eEl.style.background=entregar>=0?'#1f2937':'#dc2626';
 }
 
+function pedirConfirmacionRenovacion(){
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  var overlay=document.getElementById('modal-overlay');
+  document.getElementById('modal-subtitulo').textContent='Renovar préstamo';
+  document.getElementById('modal-mensaje').textContent='¿Renovar la tarjeta de '+p.cliente+'?';
+  document.getElementById('modal-btn-si').textContent='Sí, renovar';
+  document.getElementById('modal-btn-si').style.background='var(--cyan)';
+  overlay.style.display='flex';
+  _modalCallback=function(){
+    overlay.style.display='none';
+    document.getElementById('modal-btn-si').style.background='#16a34a';
+    confirmarRenovacion();
+  };
+  document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
+}
+
 function confirmarRenovacion(){
   var p=prestamos.find(function(x){return x.id===currentId;});
   if(!p) return;
@@ -1577,13 +1717,19 @@ function confirmarRenovacion(){
   p.fechaInicio=fecha;
   p.estado='Activo';
   var adminMonto=readMoneyInput('ren-cobro-admin');
+  var fechaHoy=new Date().toISOString().split('T')[0];
   if(adminMonto>0){
-    cobrosAdmin.push({id:Date.now().toString(),id_prestamo:p.id,cliente:p.cliente,fecha:new Date().toISOString().split('T')[0],monto:adminMonto});
+    cobrosAdmin.push({id:Date.now().toString(),id_prestamo:p.id,cliente:p.cliente,fecha:fechaHoy,monto:adminMonto});
   }
+  // Registrar renovación en historial
+  renovaciones.push({id:Date.now().toString(),id_prestamo:p.id,cliente:p.cliente,fecha:fechaHoy,
+    montoNuevo:monto,cuotaNueva:cuotaVal,tipo:tipo,cuotas:cuotas,tasa:Math.round(tasa*100),adminMonto:adminMonto});
   guardarDatos();
   currentId=p.id;
   toast('✓ Préstamo renovado correctamente');
   verDetalle(p.id);
+  // Ofrecer WhatsApp si tiene teléfono
+  setTimeout(function(){ ofrecerWhatsApp(p.id,'renovacion'); },400);
 }
 
 function eliminarPrestamo(){
