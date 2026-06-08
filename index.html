@@ -2358,12 +2358,10 @@ function guardarDocsCliente(){
   if(!p.fotos) p.fotos={};
   Object.keys(_docsNewFotos).forEach(function(k){ p.fotos[k]=_docsNewFotos[k]; });
   _docsNewFotos={};
-  // Si ya tiene todos los docs, actualizar fecha de verificación
-  var verif=clienteNecesitaVerificacion(p);
-  if(!verif.necesita || verif.razon==='Sin verificación' || verif.razon==='Verificación vencida (+2 meses)'){
-    if(!clienteNecesitaVerificacion(p).razon.includes('incompleto')){
-      p.fechaVerificacion=new Date().toISOString().split('T')[0];
-    }
+  // Si ya tiene todos los docs completos, actualizar fecha de verificación
+  var verif2=clienteNecesitaVerificacion(p);
+  if(!verif2.necesita){
+    p.fechaVerificacion=new Date().toISOString().split('T')[0];
   }
   guardarDatos();
   document.getElementById('det-telefono-txt').textContent=p.telefono||'';
