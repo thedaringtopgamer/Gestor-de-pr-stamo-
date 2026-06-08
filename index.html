@@ -2332,7 +2332,10 @@ function renderPanelRecolector(){
     ?gastosHoy.map(function(g){
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">'
         +'<div><div style="font-size:13px;font-weight:600">'+g.tipo+'</div><div style="font-size:11px;color:var(--text-muted)">'+g.obs+'</div></div>'
+        +'<div style="display:flex;align-items:center;gap:8px">'
         +'<span style="font-size:14px;font-weight:700;color:#92400e">₡'+fmt(g.monto)+'</span>'
+        +'<button onclick="eliminarGasto(\''+g.id+'\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer">🗑</button>'
+        +'</div>'
         +'</div>';
     }).join('')
     :'<p style="font-size:13px;color:var(--text-muted)">Sin gastos registrados</p>';
@@ -2405,6 +2408,30 @@ function abrirNuevoGasto(){
   document.getElementById('gasto-modal').style.display='flex';
 }
 function cerrarGastoModal(){ document.getElementById('gasto-modal').style.display='none'; }
+function eliminarGasto(id){
+  var g=gastos.find(function(x){return x.id===id;});
+  if(!g) return;
+  var overlay=document.getElementById('modal-overlay');
+  document.getElementById('modal-subtitulo').textContent='Eliminar gasto';
+  document.getElementById('modal-mensaje').textContent='¿Eliminar gasto de ₡'+fmt(g.monto)+' ('+g.tipo+')?';
+  document.getElementById('modal-btn-si').textContent='Sí, eliminar';
+  document.getElementById('modal-btn-si').style.background='#dc2626';
+  overlay.style.display='flex';
+  _modalCallback=function(){
+    overlay.style.display='none';
+    document.getElementById('modal-btn-si').style.background='#16a34a';
+    gastos=gastos.filter(function(x){return x.id!==id;});
+    guardarDatos();
+    toast('✓ Gasto eliminado');
+    renderPanelRecolector();
+    // Mantener sección de gastos abierta
+    document.getElementById('panel-sec-gastos').style.display='block';
+    var arr=document.getElementById('arr-panel-gastos');
+    if(arr) arr.textContent='▼';
+  };
+  document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
+}
+
 function guardarGasto(){
   var monto=readMoneyInput('gasto-monto');
   if(!monto){toast('⚠ Ingrese el monto');return;}
