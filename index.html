@@ -537,7 +537,7 @@
       </div>
 
       <!-- Ver documentos -->
-      <button class="btn btn-outline btn-full" style="padding:12px;margin-bottom:4px" onclick="verDocsCliente()">📁 Ver documentos del cliente</button>
+      <button id="btn-ver-docs" class="btn btn-outline btn-full" style="padding:12px;margin-bottom:4px" onclick="verDocsCliente()">📁 Ver documentos del cliente</button>
 
       <!-- Abonar -->
       <div class="card">
@@ -1400,6 +1400,16 @@ function verDetalle(id){
   }
   document.getElementById('abonar-fecha').value=fechaInput;
   document.getElementById('abonar-monto').value='';
+  // Mostrar ⚠️ en botón de documentos si hay algo pendiente
+  var verifDet=clienteNecesitaVerificacion(p);
+  var btnDocs=document.getElementById('btn-ver-docs');
+  if(btnDocs){
+    btnDocs.innerHTML=verifDet.necesita
+      ?'📁 Ver documentos del cliente &nbsp;⚠️'
+      :'📁 Ver documentos del cliente';
+    btnDocs.style.borderColor=verifDet.necesita?'#f59e0b':'';
+    btnDocs.style.color=verifDet.necesita?'#b45309':'';
+  }
   renderCuotasGrid(p,d);
   renderPagosLista(p);
   switchTab('tarjeta');
