@@ -1616,34 +1616,49 @@ function renderTarjetas(filtro){
     return;
   }
   lista.innerHTML=items.map(function(p){
+    var btnEliminar='<button onclick="eliminarCliente(\''+p.id+'\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:6px 10px;font-size:18px;cursor:pointer;flex-shrink:0" title="Eliminar">🗑</button>';
     if(p.incompleto){
-      return '<div class="loan-row" style="border-left:4px solid #f59e0b;cursor:pointer" onclick="continuarClienteIncompleto(\''+p.id+'\')">'
-        +'<div style="font-size:22px;padding:0 8px">⚠️</div>'
-        +'<div style="flex:1;padding-left:6px;min-width:0">'
+      return '<div class="loan-row" style="border-left:4px solid #f59e0b">'
+        +'<div style="font-size:22px;padding:0 8px;cursor:pointer" onclick="continuarClienteIncompleto(\''+p.id+'\')">⚠️</div>'
+        +'<div style="flex:1;padding-left:6px;min-width:0;cursor:pointer" onclick="continuarClienteIncompleto(\''+p.id+'\')">'
           +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+'</div>'
           +'<div style="font-size:11px;color:#b45309;font-weight:500">Registro incompleto — toca para continuar</div>'
         +'</div>'
+        +btnEliminar
       +'</div>';
     }
     var d=calcDerived(p);
     var verif=clienteNecesitaVerificacion(p);
     var badgeTarjeta=verif.necesita?'<span title="'+verif.razon+'" style="font-size:15px;margin-left:4px">⚠️</span>':'';
+    var cancelado=d.saldoPendiente<=0;
     return '<div class="loan-row">'
       +'<button class="icon-btn icon-btn-cyan btn-sm" style="width:auto;padding:7px 14px;border-radius:var(--radius)" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
       +'<div style="flex:1;padding-left:10px;min-width:0">'
         +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+badgeTarjeta+'</div>'
         +'<div style="font-size:11px;color:var(--text-muted)">'+estadoTag(d.estado)+' &nbsp;'+p.cantidadDeQuincenas+' cuotas</div>'
       +'</div>'
-      +'<div style="text-align:right;flex-shrink:0">'
-        +'<div style="font-size:13px;font-weight:600">₡'+fmt(p.montoPrestado)+'</div>'
-        +'<div style="font-size:10px;color:var(--text-muted)">'+(p.ruta||'')+(p.subruta?' · '+p.subruta:'')+'</div>'
-      +'</div>'
+      +(cancelado ? btnEliminar
+        : '<div style="text-align:right;flex-shrink:0">'
+          +'<div style="font-size:13px;font-weight:600">₡'+fmt(p.montoPrestado)+'</div>'
+          +'<div style="font-size:10px;color:var(--text-muted)">'+(p.ruta||'')+(p.subruta?' · '+p.subruta:'')+'</div>'
+          +'</div>')
     +'</div>';
   }).join('');
 }
 
 function filtrarCobros(){renderCobros(document.getElementById('filtro-cobros').value);}
 function filtrarTarjetas(){renderTarjetas(document.getElementById('filtro-tarjetas').value);}
+
+function eliminarCliente(id){
+  var p=prestamos.find(function(x){return x.id===id;});
+  if(!p) return;
+  if(!confirm('¿Eliminar a '+p.cliente+'? Esta acción no se puede deshacer.')) return;
+  prestamos=prestamos.filter(function(x){return x.id!==id;});
+  pagos=pagos.filter(function(x){return x.id_prestamo!==id;});
+  guardarDatos();
+  renderTarjetas(document.getElementById('filtro-tarjetas').value);
+  toast('✓ Cliente eliminado');
+}
 
 function verDetalle(id){
   currentId=id;
