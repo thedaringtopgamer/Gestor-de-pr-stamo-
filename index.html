@@ -2682,10 +2682,12 @@ function mostrarResumenCaja(){
   var fecha=document.getElementById('panel-fecha').value||new Date().toISOString().split('T')[0];
   var parts=fecha.split('-');
   document.getElementById('caja-fecha-txt').textContent=parseInt(parts[2])+'/'+parseInt(parts[1])+'/'+parts[0];
-  var recogida=pagos.filter(function(x){return x.fechaPago===fecha;}).reduce(function(s,x){return s+x.montoAbonado;},0);
-  var prestamosHoy=prestamos.filter(function(p){return p.fechaInicio===fecha;}).reduce(function(s,p){return s+p.montoPrestado;},0);
-  var totalGastos=gastos.filter(function(x){return x.fecha===fecha;}).reduce(function(s,x){return s+x.monto;},0);
-  var baseKey='fjd_base_'+fecha;
+  var pRuta=prestamosVisibles();
+  var idsR=pRuta.map(function(p){return p.id;});
+  var recogida=pagos.filter(function(x){return x.fechaPago===fecha&&idsR.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
+  var prestamosHoy=pRuta.filter(function(p){return p.fechaInicio===fecha&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
+  var totalGastos=gastos.filter(function(x){return x.fecha===fecha&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
+  var baseKey='fjd_base_'+(rutaActual||'todas')+'_'+fecha;
   var baseGuardada=parseInt(localStorage.getItem(baseKey)||'0',10)||0;
   document.getElementById('caja-base').value=baseGuardada>0?fmt(baseGuardada):'';
   document.getElementById('caja-recogida').textContent='₡'+fmt(recogida);
