@@ -2482,8 +2482,14 @@ function renderPanelRecolector(){
   if(!fechaEl.value) fechaEl.value=new Date().toISOString().split('T')[0];
   var fecha=fechaEl.value;
 
-  // Gastos
-  var gastosHoy=gastos.filter(function(x){return x.fecha===fecha;});
+  // Préstamos visibles según ruta actual
+  var prestamosRuta=prestamosVisibles();
+  var idsRuta=prestamosRuta.map(function(p){return p.id;});
+
+  // Gastos filtrados por ruta
+  var gastosHoy=gastos.filter(function(x){
+    return x.fecha===fecha && (rutaActual==='todas' || x.ruta===rutaActual);
+  });
   var totalGastos=gastosHoy.reduce(function(s,x){return s+x.monto;},0);
   document.getElementById('panel-stat-gastos').textContent='₡'+fmt(totalGastos);
   var gastosHtml=gastosHoy.length
@@ -2499,8 +2505,8 @@ function renderPanelRecolector(){
     :'<p style="font-size:13px;color:var(--text-muted)">Sin gastos registrados</p>';
   document.getElementById('panel-gastos-lista').innerHTML=gastosHtml;
 
-  // Préstamos nuevos
-  var nuevos=prestamos.filter(function(p){return p.fechaInicio===fecha&&!p.incompleto;});
+  // Préstamos nuevos de esta ruta
+  var nuevos=prestamosRuta.filter(function(p){return p.fechaInicio===fecha&&!p.incompleto;});
   var totalNuevos=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0);
   document.getElementById('panel-stat-nuevos').textContent=nuevos.length+' préstamo'+(nuevos.length!==1?'s':'')+' · ₡'+fmt(totalNuevos);
   document.getElementById('panel-nuevos-lista').innerHTML=nuevos.length
@@ -2514,8 +2520,8 @@ function renderPanelRecolector(){
     }).join('')
     :'<p style="font-size:13px;color:var(--text-muted)">Sin préstamos nuevos</p>';
 
-  // Cobros realizados
-  var pagosHoy=pagos.filter(function(x){return x.fechaPago===fecha;});
+  // Cobros realizados de esta ruta
+  var pagosHoy=pagos.filter(function(x){return x.fechaPago===fecha && idsRuta.indexOf(x.id_prestamo)!==-1;});
   var totalCobros=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
   document.getElementById('panel-stat-cobros').textContent=pagosHoy.length+' cobro'+(pagosHoy.length!==1?'s':'')+' · ₡'+fmt(totalCobros);
   document.getElementById('panel-cobros-lista').innerHTML=pagosHoy.length
@@ -2530,8 +2536,8 @@ function renderPanelRecolector(){
     }).join('')
     :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros registrados</p>';
 
-  // Cobros admin
-  var adminHoy=cobrosAdmin.filter(function(x){return x.fecha===fecha;});
+  // Cobros admin de esta ruta
+  var adminHoy=cobrosAdmin.filter(function(x){return x.fecha===fecha && idsRuta.indexOf(x.id_prestamo)!==-1;});
   var totalAdmin=adminHoy.reduce(function(s,x){return s+x.monto;},0);
   document.getElementById('panel-stat-admin').textContent='₡'+fmt(totalAdmin);
   document.getElementById('panel-admin-lista').innerHTML=adminHoy.length
@@ -2546,18 +2552,20 @@ function renderPanelRecolector(){
     }).join('')
     :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros administrativos</p>';
 
-  // Resumen de caja
-  var baseKey='fjd_base_'+fecha;
+  // Resumen de caja (por ruta)
+  var rutaCajaKey=rutaActual||'todas';
+  var baseKey='fjd_base_'+rutaCajaKey+'_'+fecha;
   // Si no hay base guardada para este día, usar total de caja del día anterior
   var baseGuardada=parseInt(localStorage.getItem(baseKey)||'0',10)||0;
   if(!baseGuardada){
     var ayer=new Date(fecha+'T12:00:00');
     ayer.setDate(ayer.getDate()-1);
     var ayerStr=ayer.toISOString().split('T')[0];
-    var baseAyer=parseInt(localStorage.getItem('fjd_base_'+ayerStr)||'0',10)||0;
-    var recogidaAyer=pagos.filter(function(x){return x.fechaPago===ayerStr;}).reduce(function(s,x){return s+x.montoAbonado;},0);
-    var prestamosAyer=prestamos.filter(function(p){return p.fechaInicio===ayerStr&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
-    var gastosAyer=gastos.filter(function(x){return x.fecha===ayerStr;}).reduce(function(s,x){return s+x.monto;},0);
+    var baseAyer=parseInt(localStorage.getItem('fjd_base_'+rutaCajaKey+'_'+ayerStr)||'0',10)||0;
+    var idsAyer=prestamosRuta.map(function(p){return p.id;});
+    var recogidaAyer=pagos.filter(function(x){return x.fechaPago===ayerStr&&idsAyer.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
+    var prestamosAyer=prestamosRuta.filter(function(p){return p.fechaInicio===ayerStr&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
+    var gastosAyer=gastos.filter(function(x){return x.fecha===ayerStr&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
     var cajaAyer=recogidaAyer+baseAyer-prestamosAyer-gastosAyer;
     if(cajaAyer>0) baseGuardada=cajaAyer;
   }
@@ -2663,7 +2671,7 @@ function guardarGasto(){
   var tipo=(document.getElementById('gasto-tipo').value.trim()||'OTRO').toUpperCase();
   var obs=document.getElementById('gasto-obs').value.trim();
   var fechaPanel=document.getElementById('panel-fecha').value||new Date().toISOString().split('T')[0];
-  gastos.push({id:Date.now().toString(),fecha:fechaPanel,monto:monto,tipo:tipo,obs:obs});
+  gastos.push({id:Date.now().toString(),fecha:fechaPanel,monto:monto,tipo:tipo,obs:obs,ruta:rutaActual||'todas'});
   guardarDatos();
   cerrarGastoModal();
   toast('✓ Gasto registrado: ₡'+fmt(monto));
@@ -2691,7 +2699,7 @@ function mostrarResumenCaja(){
 function calcCaja(){
   var fecha=document.getElementById('panel-fecha').value||new Date().toISOString().split('T')[0];
   var base=readMoneyInput('caja-base');
-  localStorage.setItem('fjd_base_'+fecha,base);
+  localStorage.setItem('fjd_base_'+(rutaActual||'todas')+'_'+fecha,base);
   var recogida=pagos.filter(function(x){return x.fechaPago===fecha;}).reduce(function(s,x){return s+x.montoAbonado;},0);
   var prestamosHoy=prestamos.filter(function(p){return p.fechaInicio===fecha;}).reduce(function(s,p){return s+p.montoPrestado;},0);
   var totalGastos=gastos.filter(function(x){return x.fecha===fecha;}).reduce(function(s,x){return s+x.monto;},0);
