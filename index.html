@@ -956,9 +956,10 @@
 
 <script>
 var USUARIOS=[
-  {user:'The Daring', pass:'thedaring020603', rol:'admin'},
-  {user:'Ruta1',      pass:'ruta1234',        rol:'ruta'},
-  {user:'Ruta2',      pass:'ruta5678',        rol:'ruta'}
+  {user:'The Daring',    pass:'thedaring020603', rol:'admin'},
+  {user:'Ruta Heredia',  pass:'financierajd',    rol:'ruta', ruta:'Heredia'},
+  {user:'Ruta Alajuela', pass:'financierajd',    rol:'ruta', ruta:'Alajuela'},
+  {user:'Ruta San Ramón',pass:'financierajd',    rol:'ruta', ruta:'San Ramón'}
 ];
 var rolActual=localStorage.getItem('fjd_rol')||'ruta';
 var rutaActual=sessionStorage.getItem('fjd_ruta_actual')||'todas';
@@ -977,6 +978,9 @@ function doLogin(){
       document.getElementById('login-screen').style.display='none';
       document.getElementById('ruta-selector').style.display='flex';
     } else {
+      // Usuario de ruta entra directo a su ruta asignada
+      rutaActual=usr.ruta||'todas';
+      sessionStorage.setItem('fjd_ruta_actual',rutaActual);
       mostrarApp();
     }
   } else {
