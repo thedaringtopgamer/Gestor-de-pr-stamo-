@@ -2754,7 +2754,7 @@ function togglePanelSec(sec){
 
 function renderPanelRecolector(){
   var fechaEl=document.getElementById('panel-fecha');
-  fechaEl.value=new Date().toISOString().split('T')[0];
+  if(!fechaEl.value) fechaEl.value=new Date().toISOString().split('T')[0];
   var fecha=fechaEl.value;
 
   // Préstamos visibles según ruta actual
