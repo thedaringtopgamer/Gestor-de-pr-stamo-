@@ -1749,8 +1749,18 @@ function verDetalle(id){
   document.getElementById('det-modalidad').innerHTML=linea1+(linea2?'<br><span style="font-size:11px;font-weight:500;color:#6b7280">'+linea2+'</span>':'');
   document.getElementById('abonar-cuota').textContent='₡'+fmt(d.pendienteProxima);
   var proxCuotaNum=d.cuotasPagadas+1;
-  // La fecha del abono es siempre hoy — el día que físicamente se recibe el dinero
-  document.getElementById('abonar-fecha').value=new Date().toISOString().split('T')[0];
+  var fechaInput;
+  if(p.proximaFechaPago){
+    fechaInput=p.proximaFechaPago;
+  } else if(d.saldoPendiente<=0){
+    fechaInput=new Date().toISOString().split('T')[0];
+  } else if(proxCuotaNum<=p.cantidadDeQuincenas){
+    var fpd=getCuotaVencimiento(p,proxCuotaNum);
+    fechaInput=fpd.getFullYear()+'-'+String(fpd.getMonth()+1).padStart(2,'0')+'-'+String(fpd.getDate()).padStart(2,'0');
+  } else {
+    fechaInput=new Date().toISOString().split('T')[0];
+  }
+  document.getElementById('abonar-fecha').value=fechaInput;
   document.getElementById('abonar-monto').value='';
   // Mostrar ⚠️ en botón de documentos si hay algo pendiente
   var verifDet=clienteNecesitaVerificacion(p);
@@ -2085,6 +2095,7 @@ function abonoRapido(id,nombre,cuota){
     pagos.push({
       id_pago:Date.now().toString(),
       id_prestamo:id,
+      fechaRegistro:new Date().toISOString().split('T')[0],
       fechaPago:new Date().toISOString().split('T')[0],
       montoAbonado:cuota
     });
@@ -2116,6 +2127,7 @@ function registrarAbono(){
     pagos.push({
       id_pago:Date.now().toString(),
       id_prestamo:currentId,
+      fechaRegistro:new Date().toISOString().split('T')[0],
       fechaPago:fecha,
       montoAbonado:monto
     });
@@ -2790,7 +2802,7 @@ function renderPanelRecolector(){
     :'<p style="font-size:13px;color:var(--text-muted)">Sin préstamos nuevos</p>';
 
   // Cobros realizados de esta ruta
-  var pagosHoy=pagos.filter(function(x){return x.fechaPago===fecha && idsRuta.indexOf(x.id_prestamo)!==-1;});
+  var pagosHoy=pagos.filter(function(x){return (x.fechaRegistro||x.fechaPago)===fecha && idsRuta.indexOf(x.id_prestamo)!==-1;});
   var totalCobros=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
   document.getElementById('panel-stat-cobros').textContent=pagosHoy.length+' cobro'+(pagosHoy.length!==1?'s':'')+' · ₡'+fmt(totalCobros);
   document.getElementById('panel-cobros-lista').innerHTML=pagosHoy.length
