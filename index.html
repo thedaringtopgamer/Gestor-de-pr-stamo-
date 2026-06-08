@@ -257,9 +257,12 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
   <div class="toast" id="toast"></div>
 
   <!-- MODAL VISOR DE FOTO -->
-  <div id="foto-viewer" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9000;align-items:center;justify-content:center;flex-direction:column" onclick="cerrarFoto()">
-    <img id="foto-viewer-img" src="" style="max-width:100%;max-height:90vh;object-fit:contain;border-radius:8px">
-    <div style="color:#fff;font-size:13px;margin-top:14px;opacity:0.7">Toca para cerrar</div>
+  <div id="foto-viewer" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9000;align-items:center;justify-content:center;flex-direction:column">
+    <img id="foto-viewer-img" src="" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius:8px" onclick="cerrarFoto()">
+    <div style="display:flex;gap:12px;margin-top:16px;align-items:center">
+      <a id="foto-viewer-dl" download="foto.jpg" style="background:#2563eb;color:#fff;border-radius:10px;padding:10px 24px;font-size:14px;font-weight:700;text-decoration:none;font-family:'DM Sans',sans-serif">⬇ Descargar</a>
+      <button onclick="cerrarFoto()" style="background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">✕ Cerrar</button>
+    </div>
   </div>
 
   <!-- MODAL CONFIRMACIÓN -->
@@ -2027,7 +2030,11 @@ function verFoto(key){
   var p=prestamos.find(function(x){return x.id===currentId;});
   var src=(p&&p.fotos&&p.fotos[key])||_docsNewFotos[key]||'';
   if(!src) return;
+  var nombres={'cedula-frente':'cedula-frente','cedula-detras':'cedula-detras','foto-cliente':'foto-cliente','foto-casa':'foto-casa','foto-trabajo':'foto-trabajo'};
   document.getElementById('foto-viewer-img').src=src;
+  var dl=document.getElementById('foto-viewer-dl');
+  dl.href=src;
+  dl.download=(p?p.cliente.replace(/\s+/g,'_'):'foto')+'_'+(nombres[key]||key)+'.jpg';
   document.getElementById('foto-viewer').style.display='flex';
 }
 function cerrarFoto(){
