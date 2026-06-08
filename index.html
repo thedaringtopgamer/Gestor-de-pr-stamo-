@@ -1437,11 +1437,7 @@ function clienteNecesitaVerificacion(p){
   var faltaFoto=clavesFotos.some(function(k){return !fotos[k];});
   var faltaCoord=!p.coordCasa&&!p.coordTrabajo;
   if(faltaFoto||faltaCoord) return {necesita:true,razon:'Documentos incompletos'};
-  if(!p.fechaVerificacion) return {necesita:true,razon:'Sin verificación'};
-  var hoy=new Date(); hoy.setHours(0,0,0,0);
-  var fv=parseLocalDate(p.fechaVerificacion);
-  var dias=Math.floor((hoy-fv)/(1000*60*60*24));
-  if(dias>=60) return {necesita:true,razon:'Verificación vencida (+2 meses)'};
+  // Si tiene todas las fotos y al menos una ubicación, está completo
   return {necesita:false};
 }
 
