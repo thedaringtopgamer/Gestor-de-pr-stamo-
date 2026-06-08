@@ -1969,9 +1969,7 @@ function mensajeRenovacion(p, rv){
     +'────────────────\n'
     +'⏮ *Saldo anterior:* ₡'+fmt(rv.saldoAnterior)+'\n'
     +'🏦 *Cobro administrativo:* ₡'+fmt(rv.adminMonto)+'\n'
-    +(rv.montoEntregado>=0
-      ?'💸 *Monto entregado al cliente:* ₡'+fmt(rv.montoEntregado)+'\n\n'
-      :'💵 *Cobro al cliente:* ₡'+fmt(Math.abs(rv.montoEntregado))+'\n\n')
+    +'💸 *Monto entregado:* '+(rv.montoEntregado<0?'-':'')+'₡'+fmt(Math.abs(rv.montoEntregado))+'\n\n'
     +'✅ _Confirmar este mensaje_';
 }
 
