@@ -1652,6 +1652,7 @@ function renderTarjetas(filtro){
     // Mostrar activos (con saldo pendiente)
     return calcDerived(p).saldoPendiente>0;
   });
+  items.sort(function(a,b){return a.cliente.localeCompare(b.cliente,'es');});
   var totalActivos=todos.filter(function(p){return !p.incompleto&&calcDerived(p).saldoPendiente>0;}).length;
   document.getElementById('tarjetas-titulo').textContent='Tarjetas activas ('+totalActivos+')'+(f?' · Búsqueda: '+items.length:'');
   if(!items.length){
