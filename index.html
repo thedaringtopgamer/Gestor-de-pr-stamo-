@@ -1507,9 +1507,17 @@ function getEstadoCobro(p){
   var hoy = new Date(); hoy.setHours(0,0,0,0);
   var d = calcDerived(p);
   if(d.saldoPendiente<=0) return 'cancelado';
+  // Si hay fecha manual puesta y hay saldo pendiente, usarla directamente
+  if(p.proximaFechaPago){
+    var vencM = parseLocalDate(p.proximaFechaPago);
+    vencM.setHours(0,0,0,0);
+    if(vencM < hoy) return 'atrasado';
+    if(vencM.getTime() === hoy.getTime()) return 'hoy';
+    return 'pendiente';
+  }
   var proxCuota = d.cuotasPagadas + 1;
   if(proxCuota > p.cantidadDeQuincenas) return 'cancelado';
-  var venc = p.proximaFechaPago ? parseLocalDate(p.proximaFechaPago) : getCuotaVencimiento(p, proxCuota);
+  var venc = getCuotaVencimiento(p, proxCuota);
   venc.setHours(0,0,0,0);
   if(venc < hoy) return 'atrasado';
   if(venc.getTime() === hoy.getTime()) return 'hoy';
