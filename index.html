@@ -935,12 +935,22 @@
 </div><!-- /app -->
 
 <script>
+var USUARIOS=[
+  {user:'The Daring', pass:'thedaring020603', rol:'admin'},
+  {user:'Ruta1',      pass:'ruta1234',        rol:'ruta'},
+  {user:'Ruta2',      pass:'ruta5678',        rol:'ruta'}
+];
+var rolActual=localStorage.getItem('fjd_rol')||'ruta';
+
 function doLogin(){
   var u=document.getElementById('login-user').value.trim();
   var p=document.getElementById('login-pass').value;
   var err=document.getElementById('login-error');
-  if(u==='The Daring' && p==='thedaring020603'){
+  var usr=USUARIOS.find(function(x){return x.user===u&&x.pass===p;});
+  if(usr){
     localStorage.setItem('fjd_session','1');
+    localStorage.setItem('fjd_rol',usr.rol);
+    rolActual=usr.rol;
     mostrarApp();
   } else {
     err.style.display='block';
@@ -2399,12 +2409,29 @@ function renderPanelRecolector(){
     }).join('')
     :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros administrativos</p>';
 
-  // Resumen de caja (siempre visible al final)
+  // Resumen de caja
   var baseKey='fjd_base_'+fecha;
+  // Si no hay base guardada para este día, usar total de caja del día anterior
   var baseGuardada=parseInt(localStorage.getItem(baseKey)||'0',10)||0;
+  if(!baseGuardada){
+    var ayer=new Date(fecha+'T12:00:00');
+    ayer.setDate(ayer.getDate()-1);
+    var ayerStr=ayer.toISOString().split('T')[0];
+    var baseAyer=parseInt(localStorage.getItem('fjd_base_'+ayerStr)||'0',10)||0;
+    var recogidaAyer=pagos.filter(function(x){return x.fechaPago===ayerStr;}).reduce(function(s,x){return s+x.montoAbonado;},0);
+    var prestamosAyer=prestamos.filter(function(p){return p.fechaInicio===ayerStr&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
+    var gastosAyer=gastos.filter(function(x){return x.fecha===ayerStr;}).reduce(function(s,x){return s+x.monto;},0);
+    var cajaAyer=recogidaAyer+baseAyer-prestamosAyer-gastosAyer;
+    if(cajaAyer>0) baseGuardada=cajaAyer;
+  }
   var recogidaTotal=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
   var prestamosTotal=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0);
-  document.getElementById('caja-base').value=baseGuardada>0?fmt(baseGuardada):'';
+  var inputBase=document.getElementById('caja-base');
+  inputBase.value=baseGuardada>0?fmt(baseGuardada):'';
+  // Solo admin puede editar la base
+  inputBase.readOnly=(rolActual!=='admin');
+  inputBase.style.opacity=(rolActual!=='admin')?'0.6':'1';
+  inputBase.style.cursor=(rolActual!=='admin')?'not-allowed':'text';
   document.getElementById('caja-recogida').textContent='₡'+fmt(recogidaTotal);
   document.getElementById('caja-base-display').textContent='₡'+fmt(baseGuardada);
   document.getElementById('caja-prestamos').textContent='₡'+fmt(prestamosTotal);
