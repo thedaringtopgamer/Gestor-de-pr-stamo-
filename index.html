@@ -560,6 +560,7 @@
       </div>
 
       <button class="btn btn-cyan btn-full" style="padding:12px;margin-top:4px" onclick="abrirRenovar()">🔄 Renovar</button>
+      <button class="btn btn-full" style="padding:12px;margin-top:4px;background:#f59e0b;color:#fff;font-weight:700;border:none;border-radius:var(--radius);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px" onclick="guardarFechaPago()">💾 Guardar fecha de pago</button>
       <button class="btn btn-red btn-full" style="padding:11px;margin-top:8px" onclick="eliminarPrestamo()">🗑 Eliminar préstamo</button>
 
       <!-- Cuotas — al final -->
@@ -931,6 +932,17 @@ var gastos = [];
 var renovaciones = [];
 var currentId = null;
 var historial = ['screen-cobros'];
+
+function guardarFechaPago(){
+  if(!currentId) return;
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  var fecha=document.getElementById('abonar-fecha').value;
+  if(!fecha){toast('⚠ Ingrese una fecha');return;}
+  p.proximaFechaPago=fecha;
+  guardarDatos();
+  toast('✓ Fecha de pago guardada: '+fecha);
+}
 
 function guardarDatos(){
   try{
@@ -1311,7 +1323,9 @@ function verDetalle(id){
   document.getElementById('abonar-cuota').textContent='₡'+fmt(d.pendienteProxima);
   var proxCuotaNum=d.cuotasPagadas+1;
   var fechaInput;
-  if(d.saldoPendiente<=0){
+  if(p.proximaFechaPago){
+    fechaInput=p.proximaFechaPago; // fecha guardada manualmente
+  } else if(d.saldoPendiente<=0){
     fechaInput=new Date().toISOString().split('T')[0];
   } else if(proxCuotaNum<=p.cantidadDeQuincenas){
     var fpd=getCuotaVencimiento(p,proxCuotaNum);
@@ -1651,6 +1665,9 @@ function registrarAbono(){
     });
     guardarDatos();
     document.getElementById('abonar-monto').value='';
+    // Limpiar fecha manual guardada para que recalcule automáticamente
+    var pp2=prestamos.find(function(x){return x.id===currentId;});
+    if(pp2) delete pp2.proximaFechaPago;
     toast('✓ Abono registrado: ₡'+fmt(monto));
     verDetalle(currentId);
     setTimeout(function(){ ofrecerWhatsApp(currentId,'abono'); },400);
