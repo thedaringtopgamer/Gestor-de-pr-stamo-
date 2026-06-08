@@ -203,6 +203,13 @@
       <button onclick="seleccionarRuta('Alajuela')" style="padding:14px;background:#fff;color:#1e40af;border:2px solid #bfdbfe;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">📍 Alajuela</button>
       <button onclick="seleccionarRuta('San Ramón')" style="padding:14px;background:#fff;color:#1e40af;border:2px solid #bfdbfe;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">📍 San Ramón</button>
     </div>
+    <!-- Gestión de contraseñas -->
+    <div style="margin-top:16px;border-top:1.5px solid #e0e7ff;padding-top:14px">
+      <button onclick="toggleGestionUsuarios()" style="width:100%;padding:11px;background:#f0f9ff;color:#1d4ed8;border:1.5px solid #bfdbfe;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">👥 Gestión de contraseñas</button>
+      <div id="gestion-usuarios-panel" style="display:none;margin-top:12px">
+        <div id="gestion-usuarios-lista"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -750,6 +757,23 @@
         </div>
       </div>
 
+      <!-- Acordeón: Gestión de Usuarios (solo admin) -->
+      <div id="panel-usuarios-card" style="border:1.5px solid #2563eb;border-radius:12px;margin-bottom:10px;overflow:hidden;display:none">
+        <div onclick="togglePanelSec('usuarios')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#eff6ff;cursor:pointer" id="pcard-usuarios">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:18px">👥</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#1d4ed8">Gestión de Usuarios</div>
+              <div style="font-size:11px;color:#3b82f6">Cambiar contraseñas</div>
+            </div>
+          </div>
+          <span style="font-size:18px;color:#1d4ed8" id="arr-panel-usuarios">▶</span>
+        </div>
+        <div id="panel-sec-usuarios" style="display:none;padding:12px 16px;background:#fff">
+          <div id="panel-usuarios-lista"></div>
+        </div>
+      </div>
+
       <!-- Acordeón: Resumen de Caja -->
       <div style="border:1.5px solid #6b7280;border-radius:12px;margin-bottom:14px;overflow:hidden">
         <div onclick="togglePanelSec('caja')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#1f2937;cursor:pointer" id="pcard-caja">
@@ -961,6 +985,11 @@ var USUARIOS=[
   {user:'Ruta Alajuela', pass:'financierajd',    rol:'ruta', ruta:'Alajuela'},
   {user:'Ruta San Ramón',pass:'financierajd',    rol:'ruta', ruta:'San Ramón'}
 ];
+// Cargar contraseñas personalizadas si existen
+(function(){
+  var saved=localStorage.getItem('fjd_passwords');
+  if(saved){try{var arr=JSON.parse(saved);arr.forEach(function(p,i){if(USUARIOS[i]&&p)USUARIOS[i].pass=p;});}catch(e){}}
+})();
 var rolActual=localStorage.getItem('fjd_rol')||'ruta';
 var rutaActual=sessionStorage.getItem('fjd_ruta_actual')||'todas';
 
@@ -2417,7 +2446,7 @@ function marcarVerificado(){
 }
 
 function togglePanelSec(sec){
-  var secs=['gastos','nuevos','cobros','admin','caja'];
+  var secs=['gastos','nuevos','cobros','admin','usuarios','caja'];
   var el=document.getElementById('panel-sec-'+sec);
   var abierto=el.style.display!=='none';
   // Cerrar todos
@@ -2533,6 +2562,54 @@ function renderPanelRecolector(){
   var cajaTotal=recogidaTotal+baseGuardada-prestamosTotal-totalGastos;
   document.getElementById('caja-total').textContent='₡'+fmt(cajaTotal);
   document.getElementById('panel-stat-caja').textContent='Total: ₡'+fmt(cajaTotal);
+
+  // Gestión de usuarios (solo admin)
+  var cardUsuarios=document.getElementById('panel-usuarios-card');
+  if(cardUsuarios) cardUsuarios.style.display=rolActual==='admin'?'':'none';
+  var listaUsuarios=document.getElementById('panel-usuarios-lista');
+  if(listaUsuarios && rolActual==='admin'){
+    listaUsuarios.innerHTML=USUARIOS.map(function(u,i){
+      return '<div style="padding:10px 0;border-bottom:1px solid var(--border)">'
+        +'<div style="font-size:13px;font-weight:600;margin-bottom:6px">'+(u.rol==='admin'?'👑':'👤')+' '+u.user+'</div>'
+        +'<div style="display:flex;gap:8px;align-items:center">'
+        +'<input type="password" id="pwd-new-'+i+'" placeholder="Nueva contraseña" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:\'DM Sans\',sans-serif;outline:none;box-sizing:border-box">'
+        +'<button onclick="cambiarPassword('+i+')" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;font-family:\'DM Sans\',sans-serif;cursor:pointer;white-space:nowrap">Guardar</button>'
+        +'</div>'
+        +'</div>';
+    }).join('');
+  }
+}
+
+function toggleGestionUsuarios(){
+  var panel=document.getElementById('gestion-usuarios-panel');
+  var lista=document.getElementById('gestion-usuarios-lista');
+  if(panel.style.display==='none'){
+    panel.style.display='block';
+    lista.innerHTML=USUARIOS.map(function(u,i){
+      return '<div style="padding:10px 0;border-bottom:1px solid #e5e7eb">'
+        +'<div style="font-size:13px;font-weight:600;margin-bottom:6px;color:#1e40af">'+(u.rol==='admin'?'👑':'👤')+' '+u.user+'</div>'
+        +'<div style="display:flex;gap:8px">'
+        +'<input type="password" id="ruta-pwd-'+i+'" placeholder="Nueva contraseña" style="flex:1;padding:8px 10px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:13px;font-family:\'DM Sans\',sans-serif;outline:none;box-sizing:border-box">'
+        +'<button onclick="cambiarPassword('+i+')" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">Guardar</button>'
+        +'</div>'
+        +'</div>';
+    }).join('');
+  } else {
+    panel.style.display='none';
+  }
+}
+
+function cambiarPassword(idx){
+  var input=document.getElementById('ruta-pwd-'+idx)||document.getElementById('pwd-new-'+idx);
+  if(!input) return;
+  var nueva=input.value.trim();
+  if(!nueva){toast('⚠ Escribí la nueva contraseña');return;}
+  if(nueva.length<6){toast('⚠ Mínimo 6 caracteres');return;}
+  USUARIOS[idx].pass=nueva;
+  var passes=USUARIOS.map(function(u){return u.pass;});
+  localStorage.setItem('fjd_passwords',JSON.stringify(passes));
+  input.value='';
+  toast('✓ Contraseña de '+USUARIOS[idx].user+' actualizada');
 }
 
 function abrirNuevoGasto(){
