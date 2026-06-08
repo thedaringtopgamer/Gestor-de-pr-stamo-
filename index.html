@@ -1388,7 +1388,7 @@ function renderPagosLista(p){
     if(item.tipo==='abono'){
       var ab=item.data;
       var uid='ab-'+ab.id_pago;
-      var msgAbono=mensajeAbono(p).replace(/\n/g,'<br>').replace(/\*(.*?)\*/g,'<b>$1</b>').replace(/_(.*?)_/g,'<i>$1</i>');
+      var msgAbono=mensajeAbonoAt(p,ab.id_pago).replace(/\n/g,'<br>').replace(/\*(.*?)\*/g,'<b>$1</b>').replace(/_(.*?)_/g,'<i>$1</i>');
       return '<div style="border-bottom:1px solid var(--border)">'
         +'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;cursor:pointer" onclick="toggleRenEntry(\''+uid+'\')">'
           +'<div><div style="font-size:13px;font-weight:500">💰 Abono</div><div style="font-size:11px;color:var(--text-muted)">'+ab.fechaPago+'</div></div>'
@@ -1460,6 +1460,44 @@ function mensajeAbono(p){
     +'   *Con intereses:* ₡'+fmt(p.Total_A_Cobrar)+'\n'
     +'✅ *Abono:* ₡'+fmt(montoAbonado)+'\n'
     +'💳 *Saldo pendiente:* ₡'+fmt(d.saldoPendiente)+'\n'
+    +'📊 *Cuota:* '+diasPagados+'/30\n'
+    +'📅 *Próxima fecha de pago:*\n'
+    +'   '+fechaProxStr+'\n'
+    +'────────────────\n'
+    +'Gracias por su pago 🙏';
+}
+
+function mensajeAbonoAt(p, targetPagoId){
+  // Reproduce el estado del préstamo justo después de ese abono específico
+  var pp=pagos.filter(function(x){return x.id_prestamo===p.id;});
+  pp.sort(function(a,b){
+    var c=a.fechaPago.localeCompare(b.fechaPago);
+    return c!==0?c:a.id_pago.localeCompare(b.id_pago);
+  });
+  var idx=pp.findIndex(function(x){return x.id_pago===targetPagoId;});
+  if(idx<0) return mensajeAbono(p);
+  var montoAbonado=pp[idx].montoAbonado;
+  var pagosHasta=pp.slice(0,idx+1);
+  var totalPagadoGlobal=pagosHasta.reduce(function(s,x){return s+x.montoAbonado;},0);
+  var totalPagado=totalPagadoGlobal-(p.baseRenovacion||0);
+  var saldoPendiente=Math.max(0,p.Total_A_Cobrar-totalPagado);
+  var cuotasPagadas=Math.min(p.cantidadDeQuincenas,Math.floor(totalPagado/p.Cuota_Quincenal));
+  var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/30:0;
+  var diasPagados=cuotaDiaria>0?Math.min(30,Math.floor(totalPagado/cuotaDiaria)):0;
+  var proxCuota=cuotasPagadas+1;
+  var fechaProxStr='Préstamo cancelado ✅';
+  if(proxCuota<=p.cantidadDeQuincenas && saldoPendiente>0){
+    var fp=getCuotaVencimiento(p,proxCuota);
+    fechaProxStr=fmtFechaWA(fp);
+  }
+  return '📋 *Nota Informativa de Pago*\n'
+    +'_Financiera JD_\n'
+    +'────────────────\n'
+    +'👤 *Cliente:* '+p.cliente+'\n'
+    +'💰 *Monto prestado:* ₡'+fmt(p.montoPrestado)+'\n'
+    +'   *Con intereses:* ₡'+fmt(p.Total_A_Cobrar)+'\n'
+    +'✅ *Abono:* ₡'+fmt(montoAbonado)+'\n'
+    +'💳 *Saldo pendiente:* ₡'+fmt(saldoPendiente)+'\n'
     +'📊 *Cuota:* '+diasPagados+'/30\n'
     +'📅 *Próxima fecha de pago:*\n'
     +'   '+fechaProxStr+'\n'
