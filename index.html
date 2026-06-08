@@ -995,7 +995,7 @@ var USUARIOS=[
   if(saved){try{var arr=JSON.parse(saved);arr.forEach(function(p,i){if(USUARIOS[i]&&p)USUARIOS[i].pass=p;});}catch(e){}}
 })();
 var rolActual=localStorage.getItem('fjd_rol')||'ruta';
-var rutaActual=sessionStorage.getItem('fjd_ruta_actual')||'todas';
+var rutaActual=localStorage.getItem('fjd_ruta_actual')||'todas';
 
 function doLogin(){
   var u=document.getElementById('login-user').value.trim();
@@ -1013,7 +1013,7 @@ function doLogin(){
     } else {
       // Usuario de ruta entra directo a su ruta asignada
       rutaActual=usr.ruta||'todas';
-      sessionStorage.setItem('fjd_ruta_actual',rutaActual);
+      localStorage.setItem('fjd_ruta_actual',rutaActual);
       mostrarApp();
     }
   } else {
@@ -1108,17 +1108,18 @@ function guardarFechaPago(){
 }
 
 function guardarDatos(){
-  // Guardar en localStorage inmediatamente (respaldo local)
+  // 1. Guardar en localStorage inmediatamente (fuente de verdad local)
   try{
     localStorage.setItem('fjd_prestamos',JSON.stringify(prestamos));
     localStorage.setItem('fjd_pagos',JSON.stringify(pagos));
     localStorage.setItem('fjd_cobrosadmin',JSON.stringify(cobrosAdmin));
     localStorage.setItem('fjd_gastos',JSON.stringify(gastos));
     localStorage.setItem('fjd_renovaciones',JSON.stringify(renovaciones));
+    localStorage.setItem('fjd_ts',Date.now().toString());
   }catch(e){
     toast('⚠ Espacio lleno: fotos muy pesadas');
   }
-  // Sincronizar con Supabase en segundo plano
+  // 2. Sincronizar con Supabase inmediatamente
   _syncSupabase();
 }
 
@@ -1128,7 +1129,8 @@ function _syncSupabase(){
     {key:'pagos',value:pagos},
     {key:'cobrosadmin',value:cobrosAdmin},
     {key:'gastos',value:gastos},
-    {key:'renovaciones',value:renovaciones}
+    {key:'renovaciones',value:renovaciones},
+    {key:'ts',value:parseInt(localStorage.getItem('fjd_ts')||'0')}
   ];
   fetch(SUPA_URL+'/rest/v1/app_data',{
     method:'POST',
@@ -1138,18 +1140,53 @@ function _syncSupabase(){
 }
 
 async function cargarDatos(){
-  // Intentar cargar desde Supabase
+  // Primero cargar localStorage (siempre actualizado y sin delay)
+  var tsLocal=parseInt(localStorage.getItem('fjd_ts')||'0');
+  try{
+    var sp=localStorage.getItem('fjd_prestamos');
+    if(sp) prestamos=JSON.parse(sp);
+    var sg=localStorage.getItem('fjd_pagos');
+    if(sg) pagos=JSON.parse(sg);
+    var sc=localStorage.getItem('fjd_cobrosadmin');
+    if(sc) cobrosAdmin=JSON.parse(sc);
+    var sg2=localStorage.getItem('fjd_gastos');
+    if(sg2) gastos=JSON.parse(sg2);
+    var sr=localStorage.getItem('fjd_renovaciones');
+    if(sr) renovaciones=JSON.parse(sr);
+  }catch(e){}
+
+  // Si localStorage tiene datos recientes (menos de 1 hora), usarlos directamente
+  if(tsLocal>0 && (Date.now()-tsLocal)<3600000 && prestamos.length>0){
+    _syncSupabase(); // mantener Supabase actualizado
+    return;
+  }
+
+  // Si localStorage está vacío o muy viejo, bajar de Supabase
   try{
     var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:SUPA_HDR});
     if(r.ok){
       var rows=await r.json();
+      var tsRemoto=0;
       rows.forEach(function(row){
-        if(row.key==='prestamos'&&Array.isArray(row.value)) prestamos=row.value;
-        if(row.key==='pagos'&&Array.isArray(row.value)) pagos=row.value;
-        if(row.key==='cobrosadmin'&&Array.isArray(row.value)) cobrosAdmin=row.value;
-        if(row.key==='gastos'&&Array.isArray(row.value)) gastos=row.value;
-        if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
+        if(row.key==='ts') tsRemoto=row.value||0;
       });
+      // Usar Supabase solo si es más reciente que localStorage
+      if(tsRemoto>=tsLocal){
+        rows.forEach(function(row){
+          if(row.key==='prestamos'&&Array.isArray(row.value)) prestamos=row.value;
+          if(row.key==='pagos'&&Array.isArray(row.value)) pagos=row.value;
+          if(row.key==='cobrosadmin'&&Array.isArray(row.value)) cobrosAdmin=row.value;
+          if(row.key==='gastos'&&Array.isArray(row.value)) gastos=row.value;
+          if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
+        });
+        // Actualizar localStorage con los datos de Supabase
+        localStorage.setItem('fjd_prestamos',JSON.stringify(prestamos));
+        localStorage.setItem('fjd_pagos',JSON.stringify(pagos));
+        localStorage.setItem('fjd_cobrosadmin',JSON.stringify(cobrosAdmin));
+        localStorage.setItem('fjd_gastos',JSON.stringify(gastos));
+        localStorage.setItem('fjd_renovaciones',JSON.stringify(renovaciones));
+        localStorage.setItem('fjd_ts',tsRemoto.toString());
+      }
       return;
     }
   }catch(e){}
