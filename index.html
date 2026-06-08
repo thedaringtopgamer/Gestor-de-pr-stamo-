@@ -2476,10 +2476,20 @@ function onDocsFotoChange(input){
   var k=input.getAttribute('data-key');
   var file=input.files&&input.files[0];
   if(!file) return;
-  var reader=new FileReader();
-  reader.onload=function(e){
-    _docsNewFotos[k]=e.target.result;
-    // Actualizar el link "Ver" en la fila correspondiente
+  // Comprimir imagen antes de guardar
+  var img=new Image();
+  var url=URL.createObjectURL(file);
+  img.onload=function(){
+    var maxW=800,maxH=800;
+    var w=img.width,h=img.height;
+    if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+    if(h>maxH){w=Math.round(w*maxH/h);h=maxH;}
+    var canvas=document.createElement('canvas');
+    canvas.width=w; canvas.height=h;
+    canvas.getContext('2d').drawImage(img,0,0,w,h);
+    var data=canvas.toDataURL('image/jpeg',0.7);
+    URL.revokeObjectURL(url);
+    _docsNewFotos[k]=data;
     var fila=input.closest('label').closest('div[style*="justify-content"]');
     if(fila){
       var existing=fila.querySelector('button[onclick^="verFoto"]');
@@ -2496,7 +2506,7 @@ function onDocsFotoChange(input){
       }
     }
   };
-  reader.readAsDataURL(file);
+  img.src=url;
 }
 
 function guardarDocsCliente(){
