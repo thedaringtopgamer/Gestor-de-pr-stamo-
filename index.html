@@ -423,7 +423,9 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <p style="font-size:13px;font-weight:600;margin-bottom:12px">📸 Fotos</p>
         <div class="field-group"><label>Foto del cliente</label><input type="file" accept="image/*" id="doc-foto-cliente" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
         <div class="field-group"><label>Foto de la casa</label><input type="file" accept="image/*" id="doc-foto-casa" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
+        <div class="field-group"><label style="font-size:12px;color:#6b7280">Nota de la casa (dirección, referencia…)</label><textarea id="doc-nota-foto-casa" rows="2" placeholder="Ej: Casa amarilla, 200m norte del parque…" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;box-sizing:border-box"></textarea></div>
         <div class="field-group"><label>Foto del trabajo</label><input type="file" accept="image/*" id="doc-foto-trabajo" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
+        <div class="field-group"><label style="font-size:12px;color:#6b7280">Nota del trabajo (nombre, dirección…)</label><textarea id="doc-nota-foto-trabajo" rows="2" placeholder="Ej: Taller mecánico El Sol, 100m sur…" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;box-sizing:border-box"></textarea></div>
       </div>
       <div class="card">
         <p style="font-size:13px;font-weight:600;margin-bottom:12px">📍 Ubicaciones</p>
@@ -2372,10 +2374,20 @@ function guardarDocumentos(){
     if(_docsNewFotos[k]) fotos[k]=_docsNewFotos[k];
   });
   function finalizarDocumentos(){
+    var notaCasa=(document.getElementById('doc-nota-foto-casa')||{}).value||'';
+    var notaTrabajo=(document.getElementById('doc-nota-foto-trabajo')||{}).value||'';
     clienteTemporal.coordCasa=coordCasa;
     clienteTemporal.coordTrabajo=coordTrabajo;
     clienteTemporal.fotos=fotos;
-    if(ex){ex.coordCasa=coordCasa;ex.coordTrabajo=coordTrabajo;ex.fotos=fotos;ex.incompleto='paso2';}
+    if(!clienteTemporal.notas) clienteTemporal.notas={};
+    clienteTemporal.notas['foto-casa']=notaCasa.trim();
+    clienteTemporal.notas['foto-trabajo']=notaTrabajo.trim();
+    if(ex){
+      ex.coordCasa=coordCasa;ex.coordTrabajo=coordTrabajo;ex.fotos=fotos;ex.incompleto='paso2';
+      if(!ex.notas) ex.notas={};
+      ex.notas['foto-casa']=notaCasa.trim();
+      ex.notas['foto-trabajo']=notaTrabajo.trim();
+    }
     _docsNewFotos={};
     guardarDatos();
     goTo('screen-nuevo-prestamo');
