@@ -1413,19 +1413,39 @@ function formatTel(tel){
   return t;
 }
 
+function fmtFechaWA(fechaDate){
+  var diasSem=['DOMINGO','LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO'];
+  var dd=String(fechaDate.getDate()).padStart(2,'0');
+  var mm=String(fechaDate.getMonth()+1).padStart(2,'0');
+  return dd+'/'+mm+'/'+fechaDate.getFullYear()+' ('+diasSem[fechaDate.getDay()]+')';
+}
+
 function mensajeAbono(p){
   var d=calcDerived(p);
   var pp=pagos.filter(function(x){return x.id_prestamo===p.id;});
-  var ultimo=pp[pp.length-1];
-  var meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-  function fmtFecha(s){var pts=s.split('-');return parseInt(pts[2])+'/'+meses[parseInt(pts[1])-1]+'/'+pts[0];}
-  return '✅ *Financiera JD*\n'
-    +'Cliente: '+p.cliente+'\n'
+  var ultimo=pp.length?pp[pp.length-1]:null;
+  var montoAbonado=ultimo?ultimo.montoAbonado:0;
+  // Progreso días/cuotas
+  var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/30:0;
+  var diasPagados=cuotaDiaria>0?Math.min(30,Math.floor(d.totalPagado/cuotaDiaria)):0;
+  // Próxima fecha de pago con día de semana
+  var proxCuota=d.cuotasPagadas+1;
+  var fechaProxStr='Préstamo cancelado ✅';
+  if(proxCuota<=p.cantidadDeQuincenas && d.saldoPendiente>0){
+    var fp=getCuotaVencimiento(p,proxCuota);
+    fechaProxStr=fmtFechaWA(fp);
+  }
+  return '📋 *Nota Informativa de Pago*\n'
+    +'_Financiera JD_\n'
     +'────────────────\n'
-    +'Abono registrado: ₡'+fmt(ultimo?ultimo.montoAbonado:0)+'\n'
-    +'Fecha: '+(ultimo?fmtFecha(ultimo.fechaPago):'')+'\n'
-    +'Saldo pendiente: ₡'+fmt(d.saldoPendiente)+'\n'
-    +'Cuota: ₡'+fmt(d.pendienteProxima)+' ('+p.tipo+')\n'
+    +'👤 *Cliente:* '+p.cliente+'\n'
+    +'💰 *Monto prestado:* ₡'+fmt(p.montoPrestado)+'\n'
+    +'   *Con intereses:* ₡'+fmt(p.Total_A_Cobrar)+'\n'
+    +'✅ *Abono:* ₡'+fmt(montoAbonado)+'\n'
+    +'💳 *Saldo pendiente:* ₡'+fmt(d.saldoPendiente)+'\n'
+    +'📊 *Cuota:* '+diasPagados+'/30\n'
+    +'📅 *Próxima fecha de pago:*\n'
+    +'   '+fechaProxStr+'\n'
     +'────────────────\n'
     +'Gracias por su pago 🙏';
 }
