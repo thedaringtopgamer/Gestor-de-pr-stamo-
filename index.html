@@ -1633,17 +1633,29 @@ function registrarAbono(){
   if(!monto){toast('⚠ Ingrese el monto a abonar');return;}
   if(!fecha){toast('⚠ Ingrese la fecha del abono');return;}
   if(!currentId){toast('⚠ Error: no hay préstamo seleccionado');return;}
-  pagos.push({
-    id_pago:Date.now().toString(),
-    id_prestamo:currentId,
-    fechaPago:fecha,
-    montoAbonado:monto
-  });
-  guardarDatos();
-  document.getElementById('abonar-monto').value='';
-  toast('✓ Abono registrado: ₡'+fmt(monto));
-  verDetalle(currentId);
-  setTimeout(function(){ ofrecerWhatsApp(currentId,'abono'); },400);
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  var overlay=document.getElementById('modal-overlay');
+  document.getElementById('modal-subtitulo').textContent='Confirmar abono';
+  document.getElementById('modal-mensaje').textContent='¿Abonar ₡'+fmt(monto)+' a '+p.cliente+'?';
+  document.getElementById('modal-btn-si').textContent='Sí, abonar';
+  document.getElementById('modal-btn-si').style.background='#16a34a';
+  overlay.style.display='flex';
+  _modalCallback=function(){
+    overlay.style.display='none';
+    pagos.push({
+      id_pago:Date.now().toString(),
+      id_prestamo:currentId,
+      fechaPago:fecha,
+      montoAbonado:monto
+    });
+    guardarDatos();
+    document.getElementById('abonar-monto').value='';
+    toast('✓ Abono registrado: ₡'+fmt(monto));
+    verDetalle(currentId);
+    setTimeout(function(){ ofrecerWhatsApp(currentId,'abono'); },400);
+  };
+  document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
 }
 
 function renovarDesdeLista(id){
