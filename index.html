@@ -1131,7 +1131,9 @@ function guardarFechaPago(){
   if(!fecha){toast('⚠ Ingrese una fecha');return;}
   p.proximaFechaPago=fecha;
   guardarDatos();
-  toast('✓ Fecha de pago guardada: '+fecha);
+  toast('✓ Fecha guardada: '+fecha);
+  // Ir directo a cobros para que aparezca de inmediato
+  goTo('screen-cobros');
 }
 
 var _guardandoEnNube=false;
