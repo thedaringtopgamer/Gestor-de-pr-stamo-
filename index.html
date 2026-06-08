@@ -1373,26 +1373,39 @@ function mostrarInfoCelda(dia,fechaPago,totalCobrar){
 
 function renderPagosLista(p){
   var lista=document.getElementById('pagos-lista');
-  var pp=pagos.filter(function(x){return x.id_prestamo===p.id;}).map(function(x){return {tipo:'abono',fecha:x.fechaPago,data:x};});
-  var rr=renovaciones.filter(function(x){return x.id_prestamo===p.id;}).map(function(x){return {tipo:'renovacion',fecha:x.fecha,data:x};});
-  var todos=pp.concat(rr).sort(function(a,b){return b.fecha.localeCompare(a.fecha);});
+  var pp=pagos.filter(function(x){return x.id_prestamo===p.id;}).map(function(x){return {tipo:'abono',fecha:x.fechaPago,id:x.id_pago,data:x};});
+  var rr=renovaciones.filter(function(x){return x.id_prestamo===p.id;}).map(function(x){return {tipo:'renovacion',fecha:x.fecha,id:x.id,data:x};});
+  var todos=pp.concat(rr).sort(function(a,b){
+    var cmp=b.fecha.localeCompare(a.fecha);
+    if(cmp!==0) return cmp;
+    return b.id.localeCompare(a.id);
+  });
   if(!todos.length){
     lista.innerHTML='<p style="font-size:13px;color:var(--text-muted);padding:8px 0">Sin movimientos registrados</p>';
     return;
   }
-  var abonoNum=pp.length;
-  lista.innerHTML=todos.map(function(item,i){
+  lista.innerHTML=todos.map(function(item){
     if(item.tipo==='abono'){
       var ab=item.data;
-      return '<div class="detail-row">'
-        +'<div><div style="font-size:13px;font-weight:500">Abono</div><div style="font-size:11px;color:var(--text-muted)">'+ab.fechaPago+'</div></div>'
-        +'<div style="display:flex;align-items:center;gap:8px">'
-        +'<span class="vbox-green" style="font-size:12px;padding:5px 10px">₡'+fmt(ab.montoAbonado)+'</span>'
-        +'<button onclick="enviarWhatsAppMovimiento(\''+p.id+'\',\'abono\',\''+ab.id_pago+'\')" style="background:none;border:none;cursor:pointer;font-size:18px;padding:2px" title="Enviar WhatsApp">📱</button>'
-        +'</div></div>';
+      var uid='ab-'+ab.id_pago;
+      var msgAbono=mensajeAbono(p).replace(/\n/g,'<br>').replace(/\*(.*?)\*/g,'<b>$1</b>').replace(/_(.*?)_/g,'<i>$1</i>');
+      return '<div style="border-bottom:1px solid var(--border)">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;cursor:pointer" onclick="toggleRenEntry(\''+uid+'\')">'
+          +'<div><div style="font-size:13px;font-weight:500">💰 Abono</div><div style="font-size:11px;color:var(--text-muted)">'+ab.fechaPago+'</div></div>'
+          +'<div style="display:flex;align-items:center;gap:8px">'
+          +'<span class="vbox-green" style="font-size:12px;padding:5px 10px">₡'+fmt(ab.montoAbonado)+'</span>'
+          +'<span style="font-size:14px;color:var(--text-muted)" id="arr-'+uid+'">▶</span>'
+          +'</div>'
+        +'</div>'
+        +'<div id="'+uid+'" style="display:none;background:#f0fdf4;border-radius:8px;padding:12px;margin-bottom:10px;font-size:12px;line-height:1.8;font-family:monospace">'
+          +msgAbono
+          +'<br><button onclick="enviarWhatsAppMovimiento(\''+p.id+'\',\'abono\',\''+ab.id_pago+'\')" style="margin-top:8px;background:#25D366;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif">📱 Enviar WhatsApp</button>'
+        +'</div>'
+      +'</div>';
     } else {
       var rv=item.data;
       var uid='ren-'+rv.id;
+      var msgRen=mensajeRenovacion(p,rv).replace(/\n/g,'<br>').replace(/\*(.*?)\*/g,'<b>$1</b>').replace(/_(.*?)_/g,'<i>$1</i>');
       return '<div style="border-bottom:1px solid var(--border)">'
         +'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;cursor:pointer" onclick="toggleRenEntry(\''+uid+'\')">'
           +'<div><div style="font-size:13px;font-weight:600;color:var(--cyan)">🔄 Renovación</div><div style="font-size:11px;color:var(--text-muted)">'+rv.fecha+'</div></div>'
@@ -1401,15 +1414,9 @@ function renderPagosLista(p){
           +'<span style="font-size:14px;color:var(--text-muted)" id="arr-'+uid+'">▶</span>'
           +'</div>'
         +'</div>'
-        +'<div id="'+uid+'" style="display:none;background:#f0fdf4;border-radius:8px;padding:12px;margin-bottom:10px">'
-          +'<div style="font-size:12px;line-height:1.8">'
-          +'<b>Monto nuevo:</b> ₡'+fmt(rv.montoNuevo)+'<br>'
-          +'<b>Cuota:</b> ₡'+fmt(rv.cuotaNueva)+' ('+rv.tipo+')<br>'
-          +'<b>Cuotas:</b> '+rv.cuotas+'<br>'
-          +'<b>Tasa:</b> '+rv.tasa+'%<br>'
-          +(rv.adminMonto?'<b>Cobro admin:</b> ₡'+fmt(rv.adminMonto)+'<br>':'')
-          +'</div>'
-          +'<button onclick="enviarWhatsAppMovimiento(\''+p.id+'\',\'renovacion\',\''+rv.id+'\')" style="margin-top:8px;background:#25D366;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif">📱 Enviar WhatsApp</button>'
+        +'<div id="'+uid+'" style="display:none;background:#f0fdf4;border-radius:8px;padding:12px;margin-bottom:10px;font-size:12px;line-height:1.8;font-family:monospace">'
+          +msgRen
+          +'<br><button onclick="enviarWhatsAppMovimiento(\''+p.id+'\',\'renovacion\',\''+rv.id+'\')" style="margin-top:8px;background:#25D366;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif">📱 Enviar WhatsApp</button>'
         +'</div>'
       +'</div>';
     }
