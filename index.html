@@ -1097,27 +1097,44 @@ function guardarPrestamo(){
   var totalCobrar=monto+intereses;
   var cd=getCuotasYDias();
   var cuotaVal=cd.cuotas>0?Math.round(totalCobrar/cd.cuotas):0;
-  prestamos.push({
-    id:Date.now().toString(),
-    cliente:nombre,
-    cedula:clienteTemporal.cedula||'',
-    telefono:clienteTemporal.telefono||'',
-    ruta:clienteTemporal.ruta||'',
-    subruta:clienteTemporal.subruta||'',
-    coordCasa:clienteTemporal.coordCasa||'',
-    coordTrabajo:clienteTemporal.coordTrabajo||'',
-    fotos:clienteTemporal.fotos||{},
-    montoPrestado:monto,
-    tasaInteres:tasaDec,
-    cantidadDeQuincenas:cd.cuotas,
-    diasPorCuota:cd.diasPorCuota,
-    tipo:cd.tipo,
-    fechaInicio:fecha,
-    estado:'Activo',
-    Cuota_Quincenal:cuotaVal,
-    Total_Intereses:intereses,
-    Total_A_Cobrar:totalCobrar
-  });
+  // Si ya existe como incompleto, actualizar en lugar de crear nuevo
+  var existente=clienteTemporal._id?prestamos.find(function(x){return x.id===clienteTemporal._id;}):null;
+  if(existente){
+    existente.cliente=nombre;
+    existente.montoPrestado=monto;
+    existente.tasaInteres=tasaDec;
+    existente.cantidadDeQuincenas=cd.cuotas;
+    existente.diasPorCuota=cd.diasPorCuota;
+    existente.tipo=cd.tipo;
+    existente.fechaInicio=fecha;
+    existente.estado='Activo';
+    existente.Cuota_Quincenal=cuotaVal;
+    existente.Total_Intereses=intereses;
+    existente.Total_A_Cobrar=totalCobrar;
+    delete existente.incompleto;
+  } else {
+    prestamos.push({
+      id:Date.now().toString(),
+      cliente:nombre,
+      cedula:clienteTemporal.cedula||'',
+      telefono:clienteTemporal.telefono||'',
+      ruta:clienteTemporal.ruta||'',
+      subruta:clienteTemporal.subruta||'',
+      coordCasa:clienteTemporal.coordCasa||'',
+      coordTrabajo:clienteTemporal.coordTrabajo||'',
+      fotos:clienteTemporal.fotos||{},
+      montoPrestado:monto,
+      tasaInteres:tasaDec,
+      cantidadDeQuincenas:cd.cuotas,
+      diasPorCuota:cd.diasPorCuota,
+      tipo:cd.tipo,
+      fechaInicio:fecha,
+      estado:'Activo',
+      Cuota_Quincenal:cuotaVal,
+      Total_Intereses:intereses,
+      Total_A_Cobrar:totalCobrar
+    });
+  }
   guardarDatos();
   clienteTemporal={};
   document.getElementById('nc-nombre').value='';
@@ -1260,13 +1277,31 @@ function renderCobros(filtro){
   lista.innerHTML=html;
 }
 
+function continuarClienteIncompleto(id){
+  var p=prestamos.find(function(x){return x.id===id;});
+  if(!p) return;
+  // Restaurar clienteTemporal con los datos guardados
+  clienteTemporal={_id:p.id,nombre:p.cliente,cedula:p.cedula,telefono:p.telefono,
+    ruta:p.ruta,subruta:p.subruta,coordCasa:p.coordCasa||'',coordTrabajo:p.coordTrabajo||'',fotos:p.fotos||{}};
+  // Rellenar campos del paso 1
+  document.getElementById('nc-nombre').value=p.cliente;
+  document.getElementById('nc-cedula').value=p.cedula;
+  document.getElementById('nc-telefono').value=p.telefono||'';
+  document.getElementById('nc-ruta').value=p.ruta;
+  onRutaChange();
+  setTimeout(function(){ document.getElementById('nc-subruta').value=p.subruta; },50);
+  // Ir a la pantalla donde se quedó
+  if(p.incompleto==='paso1') goTo('screen-documentos');
+  else goTo('screen-nuevo-prestamo');
+}
+
 function renderTarjetas(filtro){
   var lista=document.getElementById('tarjetas-lista');
   var f=(filtro||'').toLowerCase().trim();
   var items=prestamos.filter(function(p){
-    var d=calcDerived(p);
-    if(f) return p.cliente.toLowerCase().includes(f); // con búsqueda: mostrar todos
-    return d.saldoPendiente>0; // sin búsqueda: cualquiera que aún deba algo
+    if(f) return p.cliente.toLowerCase().includes(f); // con búsqueda: mostrar todos incluyendo incompletos
+    if(p.incompleto) return false; // sin búsqueda: no mostrar incompletos
+    return calcDerived(p).saldoPendiente>0;
   });
   var totalActivos=prestamos.filter(function(p){return calcDerived(p).saldoPendiente>0;}).length;
   document.getElementById('tarjetas-titulo').textContent='Tarjetas activas ('+totalActivos+')'+(f?' · Búsqueda: '+items.length:'');
@@ -1275,6 +1310,15 @@ function renderTarjetas(filtro){
     return;
   }
   lista.innerHTML=items.map(function(p){
+    if(p.incompleto){
+      return '<div class="loan-row" style="border-left:4px solid #f59e0b;cursor:pointer" onclick="continuarClienteIncompleto(\''+p.id+'\')">'
+        +'<div style="font-size:22px;padding:0 8px">⚠️</div>'
+        +'<div style="flex:1;padding-left:6px;min-width:0">'
+          +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+'</div>'
+          +'<div style="font-size:11px;color:#b45309;font-weight:500">Registro incompleto — toca para continuar</div>'
+        +'</div>'
+      +'</div>';
+    }
     var d=calcDerived(p);
     return '<div class="loan-row">'
       +'<button class="icon-btn icon-btn-cyan btn-sm" style="width:auto;padding:7px 14px;border-radius:var(--radius)" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
@@ -1954,6 +1998,20 @@ function guardarCliente(){
   if(!ruta){toast('⚠ Seleccione la ruta');return;}
   if(!subruta){toast('⚠ Seleccione la subruta');return;}
   clienteTemporal={nombre:nombre,cedula:cedula,telefono:tel,ruta:ruta,subruta:subruta};
+  // Guardar en BD como incompleto paso1 (si no existía ya)
+  if(!clienteTemporal._id){
+    var id=Date.now().toString();
+    clienteTemporal._id=id;
+    prestamos.push({id:id,cliente:nombre,cedula:cedula,telefono:tel,ruta:ruta,subruta:subruta,
+      incompleto:'paso1',montoPrestado:0,Total_A_Cobrar:0,Cuota_Quincenal:0,
+      cantidadDeQuincenas:1,diasPorCuota:15,tipo:'Quincenal',
+      fechaInicio:new Date().toISOString().split('T')[0],estado:'Activo',
+      tasaInteres:0.20,Total_Intereses:0,fotos:{},coordCasa:'',coordTrabajo:''});
+  } else {
+    var ex=prestamos.find(function(x){return x.id===clienteTemporal._id;});
+    if(ex){ex.cliente=nombre;ex.cedula=cedula;ex.telefono=tel;ex.ruta=ruta;ex.subruta=subruta;ex.incompleto='paso1';}
+  }
+  guardarDatos();
   goTo('screen-documentos');
 }
 
@@ -1974,25 +2032,24 @@ function guardarDocumentos(){
   });
   var fotos={};
   var pendientes=archivos.filter(function(f){return f;}).length;
-  if(pendientes===0){
+  function finalizarDocumentos(){
     clienteTemporal.coordCasa=coordCasa;
     clienteTemporal.coordTrabajo=coordTrabajo;
     clienteTemporal.fotos=fotos;
+    // Actualizar en BD como incompleto paso2
+    var ex=clienteTemporal._id?prestamos.find(function(x){return x.id===clienteTemporal._id;}):null;
+    if(ex){ex.coordCasa=coordCasa;ex.coordTrabajo=coordTrabajo;ex.fotos=fotos;ex.incompleto='paso2';}
+    guardarDatos();
     goTo('screen-nuevo-prestamo');
-    return;
   }
+  if(pendientes===0){ finalizarDocumentos(); return; }
   archivos.forEach(function(file,i){
     if(!file) return;
     var reader=new FileReader();
     reader.onload=function(e){
       fotos[claves[i]]=e.target.result;
       pendientes--;
-      if(pendientes===0){
-        clienteTemporal.coordCasa=coordCasa;
-        clienteTemporal.coordTrabajo=coordTrabajo;
-        clienteTemporal.fotos=fotos;
-        goTo('screen-nuevo-prestamo');
-      }
+      if(pendientes===0) finalizarDocumentos();
     };
     reader.readAsDataURL(file);
   });
