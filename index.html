@@ -781,7 +781,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     <div class="navbar">
       <button class="btn btn-cyan btn-sm" onclick="goBack()">← Volver</button>
       <span class="navbar-title">Panel Recolector</span>
-      <div style="width:80px"></div>
+      <span id="navbar-ruta-label-panel" style="font-size:11px;background:#dbeafe;color:#1e40af;border-radius:8px;padding:3px 8px;font-weight:600;cursor:pointer" onclick="if(rolActual==='admin')cambiarRuta()"></span>
     </div>
     <div class="section">
       <!-- Fecha y acciones -->
@@ -1132,6 +1132,8 @@ function _actualizarLabelRuta(){
   var l2=document.getElementById('navbar-ruta-label-tarjetas');
   if(l1) l1.textContent=txt;
   if(l2) l2.textContent=txt;
+  var l3=document.getElementById('navbar-ruta-label-panel');
+  if(l3) l3.textContent=txt;
 }
 
 function seleccionarRuta(ruta){
