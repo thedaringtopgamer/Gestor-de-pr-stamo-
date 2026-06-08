@@ -800,6 +800,23 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         </div>
       </div>
 
+      <!-- Acordeón: Renovaciones -->
+      <div style="border:1.5px solid #f59e0b;border-radius:12px;margin-bottom:14px;overflow:hidden">
+        <div onclick="togglePanelSec('renov')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#fffbeb;cursor:pointer" id="pcard-renov">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:18px">🔄</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#92400e">Renovaciones</div>
+              <div style="font-size:11px;color:#b45309" id="panel-stat-renov">0 renovaciones</div>
+            </div>
+          </div>
+          <span style="font-size:18px;color:#f59e0b" id="arr-panel-renov">▶</span>
+        </div>
+        <div id="panel-sec-renov" style="display:none;padding:12px 16px;background:#fff">
+          <div id="panel-renov-lista"></div>
+        </div>
+      </div>
+
       <!-- Acordeón: Resumen de Caja -->
       <div style="border:1.5px solid #6b7280;border-radius:12px;margin-bottom:14px;overflow:hidden">
         <div onclick="togglePanelSec('caja')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#1f2937;cursor:pointer" id="pcard-caja">
@@ -2659,8 +2676,50 @@ function eliminarAbono(pagoId){
   document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
 }
 
+function eliminarCobroAdmin(caId){
+  var ca=cobrosAdmin.find(function(x){return x.id===caId;});
+  if(!ca) return;
+  var overlay=document.getElementById('modal-overlay');
+  document.getElementById('modal-subtitulo').textContent='Eliminar cobro administrativo';
+  document.getElementById('modal-mensaje').textContent='¿Eliminar cobro administrativo de ₡'+fmt(ca.monto)+' de '+ca.cliente+'?';
+  document.getElementById('modal-btn-si').textContent='Sí, eliminar';
+  document.getElementById('modal-btn-si').style.background='#dc2626';
+  overlay.style.display='flex';
+  _modalCallback=function(){
+    overlay.style.display='none';
+    document.getElementById('modal-btn-si').style.background='#16a34a';
+    cobrosAdmin=cobrosAdmin.filter(function(x){return x.id!==caId;});
+    guardarDatos();
+    renderPanelRecolector();
+    toast('✓ Cobro administrativo eliminado');
+  };
+  document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
+}
+
+function eliminarRenovacion(renId){
+  var rv=renovaciones.find(function(x){return x.id===renId;});
+  if(!rv) return;
+  var overlay=document.getElementById('modal-overlay');
+  document.getElementById('modal-subtitulo').textContent='Eliminar renovación';
+  document.getElementById('modal-mensaje').textContent='¿Eliminar la renovación de '+rv.cliente+'? Esto revierte el préstamo al estado anterior.';
+  document.getElementById('modal-btn-si').textContent='Sí, eliminar';
+  document.getElementById('modal-btn-si').style.background='#dc2626';
+  overlay.style.display='flex';
+  _modalCallback=function(){
+    overlay.style.display='none';
+    document.getElementById('modal-btn-si').style.background='#16a34a';
+    renovaciones=renovaciones.filter(function(x){return x.id!==renId;});
+    // También eliminar el cobro admin asociado a esta renovación (misma fecha y cliente)
+    cobrosAdmin=cobrosAdmin.filter(function(x){return !(x.id_prestamo===rv.id_prestamo&&x.fecha===rv.fecha);});
+    guardarDatos();
+    renderPanelRecolector();
+    toast('✓ Renovación eliminada');
+  };
+  document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
+}
+
 function togglePanelSec(sec){
-  var secs=['gastos','nuevos','cobros','admin','caja'];
+  var secs=['gastos','nuevos','cobros','admin','renov','caja'];
   var el=document.getElementById('panel-sec-'+sec);
   var abierto=el.style.display!=='none';
   // Cerrar todos
@@ -2749,9 +2808,25 @@ function renderPanelRecolector(){
         +'<div style="display:flex;align-items:center;gap:8px">'
         +'<span style="font-size:13px;font-weight:700;color:#5b21b6">₡'+fmt(ca.monto)+'</span>'
         +(p?'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button>':'')
+        +'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer" onclick="eliminarCobroAdmin(\''+ca.id+'\')">🗑 Eliminar</button>'
         +'</div></div>';
     }).join('')
     :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros administrativos</p>';
+
+  // Renovaciones del día
+  var renovHoy=renovaciones.filter(function(x){return x.fecha===fecha && idsRuta.indexOf(x.id_prestamo)!==-1;});
+  var panelRenov=document.getElementById('panel-renov-lista');
+  if(panelRenov){
+    document.getElementById('panel-stat-renov').textContent=renovHoy.length+' renovación'+(renovHoy.length!==1?'es':'');
+    panelRenov.innerHTML=renovHoy.length
+      ?renovHoy.map(function(rv){
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">'
+          +'<div><div style="font-size:13px;font-weight:600">'+rv.cliente+'</div><div style="font-size:11px;color:var(--text-muted)">₡'+fmt(rv.montoNuevo)+' · '+rv.tipo+'</div></div>'
+          +'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer" onclick="eliminarRenovacion(\''+rv.id+'\')">🗑 Eliminar</button>'
+          +'</div>';
+      }).join('')
+      :'<p style="font-size:13px;color:var(--text-muted)">Sin renovaciones</p>';
+  }
 
   // Resumen de caja (por ruta)
   var rutaCajaKey=rutaActual||'todas';
