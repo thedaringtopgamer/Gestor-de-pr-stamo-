@@ -1128,7 +1128,6 @@ var _ultimoGuardado=0;
 function guardarDatos(){
   var ts=Date.now();
   _ultimoGuardado=ts;
-  // Guardar en localStorage inmediatamente
   try{
     localStorage.setItem('fjd_prestamos',JSON.stringify(prestamos));
     localStorage.setItem('fjd_pagos',JSON.stringify(pagos));
@@ -1137,32 +1136,53 @@ function guardarDatos(){
     localStorage.setItem('fjd_renovaciones',JSON.stringify(renovaciones));
     localStorage.setItem('fjd_ts',ts.toString());
   }catch(e){}
-  // Guardar en Supabase — candado para evitar que sincronizarSupabaseFondo pise datos
+
+  // Separar fotos del resto para que el payload principal sea siempre pequeño
+  var fotosMap={};
+  var prestamosSinFotos=prestamos.map(function(p){
+    if(p.fotos&&Object.keys(p.fotos).length){
+      fotosMap[p.id]=p.fotos;
+    }
+    var copia=Object.assign({},p);
+    delete copia.fotos;
+    return copia;
+  });
+
   _guardandoEnNube=true;
-  var datos=[
-    {key:'prestamos',value:prestamos},
+  var datosPrincipales=[
+    {key:'prestamos',value:prestamosSinFotos},
     {key:'pagos',value:pagos},
     {key:'cobrosadmin',value:cobrosAdmin},
     {key:'gastos',value:gastos},
     {key:'renovaciones',value:renovaciones},
     {key:'ts',value:ts}
   ];
-  var body=JSON.stringify(datos);
-  var kb=Math.round(body.length/1024);
+
+  function subirFotos(){
+    if(!Object.keys(fotosMap).length) return Promise.resolve();
+    return fetch(SUPA_URL+'/rest/v1/app_data',{
+      method:'POST',
+      headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
+      body:JSON.stringify([{key:'fotos',value:fotosMap}])
+    }).then(function(r){
+      if(!r.ok) r.text().then(function(t){ toast('⚠ Error guardando fotos: '+t.substring(0,80)); });
+    }).catch(function(){ toast('⚠ Error de conexión al guardar fotos'); });
+  }
+
   fetch(SUPA_URL+'/rest/v1/app_data',{
     method:'POST',
     headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
-    body:body
+    body:JSON.stringify(datosPrincipales)
   }).then(function(r){
     _guardandoEnNube=false;
     if(!r.ok){
-      r.text().then(function(t){
-        toast('⚠ Error nube ('+kb+'KB): '+t.substring(0,80));
-      });
+      r.text().then(function(t){ toast('⚠ Error nube: '+t.substring(0,80)); });
+    } else {
+      subirFotos();
     }
-  }).catch(function(e){
+  }).catch(function(){
     _guardandoEnNube=false;
-    toast('⚠ Sin conexión ('+kb+'KB) — guardado local');
+    toast('⚠ Sin conexión — guardado local');
   });
 }
 
@@ -1197,13 +1217,18 @@ function sincronizarSupabaseFondo(){
     var tsRemoto=0;
     rows.forEach(function(row){if(row.key==='ts') tsRemoto=Number(row.value)||0;});
     if(tsRemoto<=tsLocal) return;
+    var fotosMapBg={};
     rows.forEach(function(row){
       if(row.key==='prestamos'&&Array.isArray(row.value)) prestamos=row.value;
       if(row.key==='pagos'&&Array.isArray(row.value)) pagos=row.value;
       if(row.key==='cobrosadmin'&&Array.isArray(row.value)) cobrosAdmin=row.value;
       if(row.key==='gastos'&&Array.isArray(row.value)) gastos=row.value;
       if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
+      if(row.key==='fotos'&&row.value&&typeof row.value==='object') fotosMapBg=row.value;
     });
+    if(Object.keys(fotosMapBg).length){
+      prestamos.forEach(function(p){ if(fotosMapBg[p.id]) p.fotos=fotosMapBg[p.id]; });
+    }
     try{
       localStorage.setItem('fjd_prestamos',JSON.stringify(prestamos));
       localStorage.setItem('fjd_pagos',JSON.stringify(pagos));
@@ -2883,13 +2908,21 @@ function fechaOffset(dias){
     clearTimeout(timeout);
     if(r.ok){
       var rows=await r.json();
+      var fotosMap={};
       rows.forEach(function(row){
         if(row.key==='prestamos'&&Array.isArray(row.value)) prestamos=row.value;
         if(row.key==='pagos'&&Array.isArray(row.value)) pagos=row.value;
         if(row.key==='cobrosadmin'&&Array.isArray(row.value)) cobrosAdmin=row.value;
         if(row.key==='gastos'&&Array.isArray(row.value)) gastos=row.value;
         if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
+        if(row.key==='fotos'&&row.value&&typeof row.value==='object') fotosMap=row.value;
       });
+      // Fusionar fotos de vuelta en los préstamos
+      if(Object.keys(fotosMap).length){
+        prestamos.forEach(function(p){
+          if(fotosMap[p.id]) p.fotos=fotosMap[p.id];
+        });
+      }
     } else {
       errorConexion=true;
     }
