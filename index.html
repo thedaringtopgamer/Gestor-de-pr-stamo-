@@ -1192,17 +1192,18 @@ function cargarDesdeLocalStorage(){
 }
 
 function sincronizarSupabaseFondo(){
-  // No sincronizar si hay un guardado en curso o si guardamos hace menos de 30 segundos
+  // Nunca sincronizar si hay un guardado en curso
   if(_guardandoEnNube) return;
-  if(Date.now()-_ultimoGuardado < 30000) return;
+  // Si localStorage tiene datos, protegerlos: solo actualizar si Supabase es más nuevo
   var tsLocal=parseInt(localStorage.getItem('fjd_ts')||'0');
+  // Si localStorage tiene datos recientes (menos de 5 min), no tocar nada
+  if(tsLocal>0 && (Date.now()-tsLocal)<300000) return;
   fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:SUPA_HDR})
   .then(function(r){return r.ok?r.json():null;})
   .then(function(rows){
     if(!rows||_guardandoEnNube) return;
     var tsRemoto=0;
     rows.forEach(function(row){if(row.key==='ts') tsRemoto=Number(row.value)||0;});
-    // Solo aplicar si Supabase es ESTRICTAMENTE más nuevo
     if(tsRemoto<=tsLocal) return;
     rows.forEach(function(row){
       if(row.key==='prestamos'&&Array.isArray(row.value)) prestamos=row.value;
@@ -2335,7 +2336,8 @@ function guardarCliente(){
   if(!cedula){toast('⚠ Ingrese la cédula');return;}
   if(!ruta){toast('⚠ Seleccione la ruta');return;}
   if(!subruta){toast('⚠ Seleccione la subruta');return;}
-  clienteTemporal={nombre:nombre,cedula:cedula,telefono:tel,ruta:ruta,subruta:subruta};
+  var prevId=clienteTemporal._id; // preservar ID si ya existía
+  clienteTemporal={_id:prevId,nombre:nombre,cedula:cedula,telefono:tel,ruta:ruta,subruta:subruta};
   // Guardar en BD como incompleto paso1 (si no existía ya)
   if(!clienteTemporal._id){
     var id=Date.now().toString();
