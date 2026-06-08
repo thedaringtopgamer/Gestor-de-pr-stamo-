@@ -2655,7 +2655,7 @@ function marcarVerificado(){
 }
 
 function eliminarAbono(pagoId){
-  var pg=pagos.find(function(x){return x.id===pagoId;});
+  var pg=pagos.find(function(x){return x.id_pago===pagoId;});
   if(!pg) return;
   var p=prestamos.find(function(x){return x.id===pg.id_prestamo;});
   var nombre=p?p.cliente:'cliente';
@@ -2668,7 +2668,7 @@ function eliminarAbono(pagoId){
   _modalCallback=function(){
     overlay.style.display='none';
     document.getElementById('modal-btn-si').style.background='#16a34a';
-    pagos=pagos.filter(function(x){return x.id!==pagoId;});
+    pagos=pagos.filter(function(x){return x.id_pago!==pagoId;});
     guardarDatos();
     renderPanelRecolector();
     toast('✓ Abono eliminado');
@@ -2791,7 +2791,7 @@ function renderPanelRecolector(){
         +'<div style="display:flex;align-items:center;gap:8px">'
         +'<span style="font-size:13px;font-weight:700;color:#166534">₡'+fmt(pg.montoAbonado)+'</span>'
         +(p?'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button>':'')
-        +'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer" onclick="eliminarAbono(\''+pg.id+'\')">🗑 Eliminar</button>'
+        +'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer" onclick="eliminarAbono(\''+pg.id_pago+'\')">🗑 Eliminar</button>'
         +'</div></div>';
     }).join('')
     :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros registrados</p>';
