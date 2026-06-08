@@ -11,8 +11,18 @@
 <meta name="apple-mobile-web-app-title" content="Financiera JD">
 <meta name="theme-color" content="#1e40af">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+// Corre ANTES de pintar — evita flash de login
+if(localStorage.getItem('fjd_session')==='1'){
+  document.documentElement.setAttribute('data-session','1');
+}
+</script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  /* Mostrar app inmediatamente si hay sesión — evita flash de login */
+  html[data-session='1'] #app{display:block!important}
+  html[data-session='1'] #login-screen{display:none!important}
+
   :root{
     --cyan:#0ea5e9;--cyan-dark:#0284c7;
     --green:#16a34a;--green-dark:#15803d;
