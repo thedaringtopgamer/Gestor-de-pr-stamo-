@@ -1969,7 +1969,9 @@ function mensajeRenovacion(p, rv){
     +'────────────────\n'
     +'⏮ *Saldo anterior:* ₡'+fmt(rv.saldoAnterior)+'\n'
     +'🏦 *Cobro administrativo:* ₡'+fmt(rv.adminMonto)+'\n'
-    +'💸 *Monto entregado:* ₡'+fmt(rv.montoEntregado)+'\n\n'
+    +(rv.montoEntregado>=0
+      ?'💸 *Monto entregado al cliente:* ₡'+fmt(rv.montoEntregado)+'\n\n'
+      :'💵 *Cobro al cliente:* ₡'+fmt(Math.abs(rv.montoEntregado))+'\n\n')
     +'✅ _Confirmar este mensaje_';
 }
 
@@ -2291,11 +2293,13 @@ function confirmarRenovacion(){
   }
   // Registrar renovación en historial
   var saldoAnterior=d.saldoPendiente;
-  var montoEntregado=Math.max(0,monto-saldoAnterior-adminMonto);
+  var montoEntregado=monto-saldoAnterior-adminMonto; // puede ser negativo (cliente paga diferencia)
   var renId=Date.now().toString();
   renovaciones.push({id:renId,id_prestamo:p.id,cliente:p.cliente,fecha:fechaHoy,
     montoNuevo:monto,cuotaNueva:cuotaVal,tipo:tipo,cuotas:cuotas,tasa:Math.round(tasa*100),
     adminMonto:adminMonto,saldoAnterior:saldoAnterior,montoEntregado:montoEntregado});
+  // Limpiar fecha manual para que use la nueva fechaInicio
+  p.proximaFechaPago=null;
   guardarDatos();
   currentId=p.id;
   toast('✓ Préstamo renovado correctamente');
