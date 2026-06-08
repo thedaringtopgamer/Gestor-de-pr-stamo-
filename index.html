@@ -730,35 +730,46 @@
         </div>
       </div>
 
-      <!-- Resumen de caja (siempre visible) -->
-      <div class="card" style="background:#1f2937;border-radius:14px;padding:16px">
-        <p style="font-size:14px;font-weight:700;color:#fff;margin-bottom:12px">🗂 Resumen de Caja</p>
-        <div class="field-group" style="margin-bottom:10px">
-          <label style="color:#9ca3af">Base (efectivo inicial)</label>
-          <input type="text" inputmode="numeric" id="caja-base" placeholder="0" oninput="fmtMoneyInput(this);calcCaja()" style="width:100%;padding:9px 12px;border:1.5px solid #374151;background:#374151;color:#fff;border-radius:var(--radius);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;font-weight:600">
+      <!-- Acordeón: Resumen de Caja -->
+      <div style="border:1.5px solid #6b7280;border-radius:12px;margin-bottom:14px;overflow:hidden">
+        <div onclick="togglePanelSec('caja')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#1f2937;cursor:pointer" id="pcard-caja">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:18px">🗂</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#fff">Resumen de Caja</div>
+              <div style="font-size:11px;color:#9ca3af" id="panel-stat-caja">₡0</div>
+            </div>
+          </div>
+          <span style="font-size:18px;color:#9ca3af" id="arr-panel-caja">▶</span>
         </div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
-            <span style="font-size:13px;color:#d1d5db">+ Recogida</span>
-            <span style="font-size:13px;font-weight:600;color:#4ade80" id="caja-recogida">₡0</span>
+        <div id="panel-sec-caja" style="display:none;padding:16px;background:#1f2937">
+          <div class="field-group" style="margin-bottom:10px">
+            <label style="color:#9ca3af">Base (efectivo inicial)</label>
+            <input type="text" inputmode="numeric" id="caja-base" placeholder="0" oninput="fmtMoneyInput(this);calcCaja()" style="width:100%;padding:9px 12px;border:1.5px solid #374151;background:#374151;color:#fff;border-radius:var(--radius);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;font-weight:600">
           </div>
-          <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
-            <span style="font-size:13px;color:#d1d5db">+ Base</span>
-            <span style="font-size:13px;font-weight:600;color:#4ade80" id="caja-base-display">₡0</span>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
+              <span style="font-size:13px;color:#d1d5db">+ Recogida</span>
+              <span style="font-size:13px;font-weight:600;color:#4ade80" id="caja-recogida">₡0</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
+              <span style="font-size:13px;color:#d1d5db">+ Base</span>
+              <span style="font-size:13px;font-weight:600;color:#4ade80" id="caja-base-display">₡0</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
+              <span style="font-size:13px;color:#d1d5db">− Préstamos realizados</span>
+              <span style="font-size:13px;font-weight:600;color:#f87171" id="caja-prestamos">₡0</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
+              <span style="font-size:13px;color:#d1d5db">− Gastos</span>
+              <span style="font-size:13px;font-weight:600;color:#f87171" id="caja-gastos">₡0</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:14px 16px;background:#16a34a;border-radius:10px;margin-top:4px">
+              <span style="font-size:16px;font-weight:700;color:#fff">Total Caja</span>
+              <span style="font-size:22px;font-weight:700;color:#fff" id="caja-total">₡0</span>
+            </div>
+            <p style="font-size:10px;color:#6b7280;text-align:center;margin-top:2px">(Recogida + Base − Préstamos − Gastos)</p>
           </div>
-          <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
-            <span style="font-size:13px;color:#d1d5db">− Préstamos realizados</span>
-            <span style="font-size:13px;font-weight:600;color:#f87171" id="caja-prestamos">₡0</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
-            <span style="font-size:13px;color:#d1d5db">− Gastos</span>
-            <span style="font-size:13px;font-weight:600;color:#f87171" id="caja-gastos">₡0</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:14px 16px;background:#16a34a;border-radius:10px;margin-top:4px">
-            <span style="font-size:16px;font-weight:700;color:#fff">Total Caja</span>
-            <span style="font-size:22px;font-weight:700;color:#fff" id="caja-total">₡0</span>
-          </div>
-          <p style="font-size:10px;color:#6b7280;text-align:center;margin-top:2px">(Recogida + Base − Préstamos − Gastos)</p>
         </div>
       </div>
     </div>
@@ -2302,7 +2313,7 @@ function marcarVerificado(){
 }
 
 function togglePanelSec(sec){
-  var secs=['gastos','nuevos','cobros','admin'];
+  var secs=['gastos','nuevos','cobros','admin','caja'];
   var el=document.getElementById('panel-sec-'+sec);
   var abierto=el.style.display!=='none';
   // Cerrar todos
@@ -2398,7 +2409,9 @@ function renderPanelRecolector(){
   document.getElementById('caja-base-display').textContent='₡'+fmt(baseGuardada);
   document.getElementById('caja-prestamos').textContent='₡'+fmt(prestamosTotal);
   document.getElementById('caja-gastos').textContent='₡'+fmt(totalGastos);
-  document.getElementById('caja-total').textContent='₡'+fmt(recogidaTotal+baseGuardada-prestamosTotal-totalGastos);
+  var cajaTotal=recogidaTotal+baseGuardada-prestamosTotal-totalGastos;
+  document.getElementById('caja-total').textContent='₡'+fmt(cajaTotal);
+  document.getElementById('panel-stat-caja').textContent='Total: ₡'+fmt(cajaTotal);
 }
 
 function abrirNuevoGasto(){
