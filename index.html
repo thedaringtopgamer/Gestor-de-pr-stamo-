@@ -1536,7 +1536,7 @@ function getCuotaVencimiento(p, numCuota){
   } else {
     // Semanal, Quincenal, Mensual: días calendario desde fechaInicio + saltar fin de semana
     var d=new Date(fecha);
-    d.setDate(d.getDate() + diasPorCuota*numCuota);
+    d.setDate(d.getDate() + diasPorCuota*(numCuota-1));
     return siguienteDiaHabil(d);
   }
 }
@@ -2067,6 +2067,18 @@ function modalCancelar(){
   document.getElementById('modal-overlay').style.display='none';
   _modalCallback=null;
 }
+function _autoProximaFecha(p){
+  // Calcula y guarda la próxima fecha de cobro automáticamente después de un abono
+  var d=calcDerived(p);
+  var proxCuota=d.cuotasPagadas+1;
+  if(proxCuota<=p.cantidadDeQuincenas && d.saldoPendiente>0){
+    var fp=getCuotaVencimiento(p,proxCuota);
+    p.proximaFechaPago=fp.toISOString().split('T')[0];
+  } else {
+    p.proximaFechaPago=null;
+  }
+}
+
 function abonoRapido(id,nombre,cuota){
   var overlay=document.getElementById('modal-overlay');
   document.getElementById('modal-subtitulo').textContent='Confirmar abono';
@@ -2081,6 +2093,8 @@ function abonoRapido(id,nombre,cuota){
       fechaPago:new Date().toISOString().split('T')[0],
       montoAbonado:cuota
     });
+    var pp=prestamos.find(function(x){return x.id===id;});
+    if(pp) _autoProximaFecha(pp);
     guardarDatos();
     toast('✓ ₡'+fmt(cuota)+' abonado a '+nombre);
     renderCobros();
@@ -2110,11 +2124,10 @@ function registrarAbono(){
       fechaPago:fecha,
       montoAbonado:monto
     });
+    var pp2=prestamos.find(function(x){return x.id===currentId;});
+    if(pp2) _autoProximaFecha(pp2);
     guardarDatos();
     document.getElementById('abonar-monto').value='';
-    // Limpiar fecha manual guardada para que recalcule automáticamente
-    var pp2=prestamos.find(function(x){return x.id===currentId;});
-    if(pp2) delete pp2.proximaFechaPago;
     toast('✓ Abono registrado: ₡'+fmt(monto));
     verDetalle(currentId);
     setTimeout(function(){ ofrecerWhatsApp(currentId,'abono'); },400);
@@ -2313,8 +2326,11 @@ function confirmarRenovacion(){
   renovaciones.push({id:renId,id_prestamo:p.id,cliente:p.cliente,fecha:fechaHoy,
     montoNuevo:monto,cuotaNueva:cuotaVal,tipo:tipo,cuotas:cuotas,tasa:Math.round(tasa*100),
     adminMonto:adminMonto,saldoAnterior:saldoAnterior,montoEntregado:montoEntregado});
-  // Limpiar fecha manual para que use la nueva fechaInicio
-  p.proximaFechaPago=null;
+  // Calcular y guardar próxima fecha de cobro automáticamente (fechaInicio + 1 período)
+  var proxFecha=new Date(parseLocalDate(fecha));
+  proxFecha.setDate(proxFecha.getDate()+diasPorCuota);
+  proxFecha=siguienteDiaHabil(proxFecha);
+  p.proximaFechaPago=proxFecha.toISOString().split('T')[0];
   guardarDatos();
   currentId=p.id;
   toast('✓ Préstamo renovado correctamente');
