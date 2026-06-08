@@ -1495,7 +1495,7 @@ function renderTarjetas(filtro){
       +'</div>'
       +'<div style="text-align:right;flex-shrink:0">'
         +'<div style="font-size:13px;font-weight:600">₡'+fmt(p.montoPrestado)+'</div>'
-        +'<div style="font-size:10px;color:var(--text-muted)">1-Belén</div>'
+        +'<div style="font-size:10px;color:var(--text-muted)">'+(p.ruta||'')+(p.subruta?' · '+p.subruta:'')+'</div>'
       +'</div>'
     +'</div>';
   }).join('');
