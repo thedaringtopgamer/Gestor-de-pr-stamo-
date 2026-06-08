@@ -1677,7 +1677,7 @@ function renderTarjetas(filtro){
     return;
   }
   lista.innerHTML=items.map(function(p){
-    var btnEliminar='<button onclick="eliminarCliente(\''+p.id+'\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:6px 10px;font-size:18px;cursor:pointer;flex-shrink:0" title="Eliminar">🗑</button>';
+    var btnEliminar=rolActual==='admin'?'<button onclick="eliminarCliente(\''+p.id+'\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:6px 10px;font-size:18px;cursor:pointer;flex-shrink:0" title="Eliminar">🗑</button>':'';
     if(p.incompleto){
       return '<div class="loan-row" style="border-left:4px solid #f59e0b">'
         +'<div style="font-size:22px;padding:0 8px;cursor:pointer" onclick="continuarClienteIncompleto(\''+p.id+'\')">⚠️</div>'
@@ -2779,7 +2779,7 @@ function renderPanelRecolector(){
         +'<div><div style="font-size:13px;font-weight:600">'+g.tipo+'</div><div style="font-size:11px;color:var(--text-muted)">'+g.obs+'</div></div>'
         +'<div style="display:flex;align-items:center;gap:8px">'
         +'<span style="font-size:14px;font-weight:700;color:#92400e">₡'+fmt(g.monto)+'</span>'
-        +'<button onclick="eliminarGasto(\''+g.id+'\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer">🗑</button>'
+        +(rolActual==='admin'?'<button onclick="eliminarGasto(\''+g.id+'\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer">🗑</button>':'')
         +'</div>'
         +'</div>';
     }).join('')
@@ -2813,7 +2813,7 @@ function renderPanelRecolector(){
         +'<div style="display:flex;align-items:center;gap:8px">'
         +'<span style="font-size:13px;font-weight:700;color:#166534">₡'+fmt(pg.montoAbonado)+'</span>'
         +(p?'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button>':'')
-        +'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer" onclick="eliminarAbono(\''+pg.id_pago+'\')">🗑 Eliminar</button>'
+        +(rolActual==='admin'?'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer" onclick="eliminarAbono(\''+pg.id_pago+'\')">🗑</button>':'')
         +'</div></div>';
     }).join('')
     :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros registrados</p>';
@@ -2830,7 +2830,7 @@ function renderPanelRecolector(){
         +'<div style="display:flex;align-items:center;gap:8px">'
         +'<span style="font-size:13px;font-weight:700;color:#5b21b6">₡'+fmt(ca.monto)+'</span>'
         +(p?'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button>':'')
-        +'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer" onclick="eliminarCobroAdmin(\''+ca.id+'\')">🗑 Eliminar</button>'
+        +(rolActual==='admin'?'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer" onclick="eliminarCobroAdmin(\''+ca.id+'\')">🗑</button>':'')
         +'</div></div>';
     }).join('')
     :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros administrativos</p>';
