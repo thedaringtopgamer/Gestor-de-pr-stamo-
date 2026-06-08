@@ -912,12 +912,26 @@ function doLogin(){
 function mostrarApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
-  goTo('screen-cobros');
+  // Restaurar última pantalla si se refrescó (sessionStorage), si no, ir a cobros
+  var ultimaPantalla=sessionStorage.getItem('fjd_pantalla');
+  if(ultimaPantalla && document.getElementById(ultimaPantalla)){
+    if(ultimaPantalla==='screen-detalle'){
+      var detId=sessionStorage.getItem('fjd_detalle_id');
+      if(detId && prestamos.find(function(x){return x.id===detId;})){
+        verDetalle(detId); return;
+      }
+    }
+    goTo(ultimaPantalla);
+  } else {
+    goTo('screen-cobros');
+  }
 }
 
 function cerrarSesion(){
   if(!confirm('¿Cerrar sesión?')) return;
   localStorage.removeItem('fjd_session');
+  sessionStorage.removeItem('fjd_pantalla');
+  sessionStorage.removeItem('fjd_detalle_id');
   document.getElementById('app').style.display='none';
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('login-user').value='';
@@ -999,11 +1013,19 @@ function toast(msg){
   setTimeout(function(){t.classList.remove('show');},2200);
 }
 
+// Pantallas que se pueden restaurar al refrescar (tienen datos persistentes)
+var _pantallasRestaurables=['screen-cobros','screen-tarjetas','screen-panel-recolector','screen-home','screen-detalle','screen-renovar','screen-docs-cliente'];
+
 function goTo(id){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.getElementById(id).classList.add('active');
   if(historial[historial.length-1]!==id) historial.push(id);
   window.scrollTo(0,0);
+  // Guardar en sessionStorage para restaurar al refrescar
+  if(_pantallasRestaurables.indexOf(id)!==-1){
+    sessionStorage.setItem('fjd_pantalla',id);
+    if(id==='screen-detalle'&&currentId) sessionStorage.setItem('fjd_detalle_id',currentId);
+  }
   if(id==='screen-cobros') renderCobros();
   if(id==='screen-tarjetas') renderTarjetas();
   if(id==='screen-panel-recolector') renderPanelRecolector();
