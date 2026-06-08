@@ -1749,18 +1749,8 @@ function verDetalle(id){
   document.getElementById('det-modalidad').innerHTML=linea1+(linea2?'<br><span style="font-size:11px;font-weight:500;color:#6b7280">'+linea2+'</span>':'');
   document.getElementById('abonar-cuota').textContent='₡'+fmt(d.pendienteProxima);
   var proxCuotaNum=d.cuotasPagadas+1;
-  var fechaInput;
-  if(p.proximaFechaPago){
-    fechaInput=p.proximaFechaPago; // fecha guardada manualmente
-  } else if(d.saldoPendiente<=0){
-    fechaInput=new Date().toISOString().split('T')[0];
-  } else if(proxCuotaNum<=p.cantidadDeQuincenas){
-    var fpd=getCuotaVencimiento(p,proxCuotaNum);
-    fechaInput=fpd.getFullYear()+'-'+String(fpd.getMonth()+1).padStart(2,'0')+'-'+String(fpd.getDate()).padStart(2,'0');
-  } else {
-    fechaInput=new Date().toISOString().split('T')[0];
-  }
-  document.getElementById('abonar-fecha').value=fechaInput;
+  // La fecha del abono es siempre hoy — el día que físicamente se recibe el dinero
+  document.getElementById('abonar-fecha').value=new Date().toISOString().split('T')[0];
   document.getElementById('abonar-monto').value='';
   // Mostrar ⚠️ en botón de documentos si hay algo pendiente
   var verifDet=clienteNecesitaVerificacion(p);
