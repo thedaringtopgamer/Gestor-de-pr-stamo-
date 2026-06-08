@@ -189,6 +189,23 @@
   </div>
 </div>
 
+<!-- SELECTOR DE RUTA (admin) -->
+<div id="ruta-selector" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#0ea5e9 0%,#2563eb 100%);z-index:9998;align-items:center;justify-content:center;flex-direction:column">
+  <div style="background:#fff;border-radius:20px;padding:28px 24px;width:320px;max-width:90vw;box-shadow:0 8px 40px rgba(0,0,0,0.18)">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:28px;margin-bottom:6px">🗺️</div>
+      <h2 style="font-size:18px;font-weight:700;color:#1e40af;margin:0">Seleccionar Ruta</h2>
+      <p style="font-size:12px;color:#6b7280;margin-top:4px">¿Qué ruta desea revisar?</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button onclick="seleccionarRuta('todas')" style="padding:14px;background:#1e40af;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">🌐 Ver todas las rutas</button>
+      <button onclick="seleccionarRuta('Heredia')" style="padding:14px;background:#fff;color:#1e40af;border:2px solid #bfdbfe;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">📍 Heredia</button>
+      <button onclick="seleccionarRuta('Alajuela')" style="padding:14px;background:#fff;color:#1e40af;border:2px solid #bfdbfe;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">📍 Alajuela</button>
+      <button onclick="seleccionarRuta('San Ramón')" style="padding:14px;background:#fff;color:#1e40af;border:2px solid #bfdbfe;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">📍 San Ramón</button>
+    </div>
+  </div>
+</div>
+
 <div class="app" id="app" style="display:none">
 
   <!-- TOAST -->
@@ -258,8 +275,11 @@
   <!-- ==================== COBROS ==================== -->
   <div id="screen-cobros" class="screen">
     <div class="navbar">
-      <span class="navbar-title">Financiera JD</span>
-      <button class="menu-icon" onclick="toggleMenu()">☰</button>
+      <span class="navbar-title" style="font-size:13px">Financiera JD</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span id="navbar-ruta-label" style="font-size:11px;background:#dbeafe;color:#1e40af;border-radius:8px;padding:3px 8px;font-weight:600;cursor:pointer" onclick="if(rolActual==='admin')cambiarRuta()"></span>
+        <button class="menu-icon" onclick="toggleMenu()">☰</button>
+      </div>
     </div>
     <div class="section">
       <div class="section-header">
@@ -481,7 +501,7 @@
     <div class="navbar">
       <button class="btn btn-cyan btn-sm" onclick="goBack()">← Regresar</button>
       <span class="navbar-title">Consulta de Préstamo</span>
-      <button class="btn btn-sm" style="background:#f59e0b;color:#fff;font-weight:700;border:none;border-radius:var(--radius);cursor:pointer;font-family:'DM Sans',sans-serif" onclick="guardarFechaPago()">💾 Guardar</button>
+      <button id="btn-guardar-fecha" class="btn btn-sm" style="background:#f59e0b;color:#fff;font-weight:700;border:none;border-radius:var(--radius);cursor:pointer;font-family:'DM Sans',sans-serif" onclick="guardarFechaPago()">💾 Guardar</button>
     </div>
     <div class="section">
 
@@ -560,7 +580,7 @@
       </div>
 
       <button class="btn btn-cyan btn-full" style="padding:12px;margin-top:4px" onclick="abrirRenovar()">🔄 Renovar</button>
-<button class="btn btn-red btn-full" style="padding:11px;margin-top:8px" onclick="eliminarPrestamo()">🗑 Eliminar préstamo</button>
+<button id="btn-eliminar-prestamo" class="btn btn-red btn-full" style="padding:11px;margin-top:8px" onclick="eliminarPrestamo()">🗑 Eliminar préstamo</button>
 
       <!-- Cuotas — al final -->
       <div class="card" style="margin-top:8px">
@@ -941,6 +961,7 @@ var USUARIOS=[
   {user:'Ruta2',      pass:'ruta5678',        rol:'ruta'}
 ];
 var rolActual=localStorage.getItem('fjd_rol')||'ruta';
+var rutaActual=sessionStorage.getItem('fjd_ruta_actual')||'todas';
 
 function doLogin(){
   var u=document.getElementById('login-user').value.trim();
@@ -951,16 +972,38 @@ function doLogin(){
     localStorage.setItem('fjd_session','1');
     localStorage.setItem('fjd_rol',usr.rol);
     rolActual=usr.rol;
-    mostrarApp();
+    if(usr.rol==='admin'){
+      // Admin elige ruta primero
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('ruta-selector').style.display='flex';
+    } else {
+      mostrarApp();
+    }
   } else {
     err.style.display='block';
     document.getElementById('login-pass').value='';
   }
 }
 
+function seleccionarRuta(ruta){
+  rutaActual=ruta;
+  sessionStorage.setItem('fjd_ruta_actual',ruta);
+  document.getElementById('ruta-selector').style.display='none';
+  mostrarApp();
+}
+
+function cambiarRuta(){
+  document.getElementById('ruta-selector').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+
 function mostrarApp(){
   document.getElementById('login-screen').style.display='none';
+  document.getElementById('ruta-selector').style.display='none';
   document.getElementById('app').style.display='block';
+  // Mostrar etiqueta de ruta en navbar
+  var lbl=document.getElementById('navbar-ruta-label');
+  if(lbl) lbl.textContent=rutaActual==='todas'?'🌐 Todas':'📍 '+rutaActual;
   // Restaurar última pantalla si se refrescó (sessionStorage), si no, ir a cobros
   var ultimaPantalla=sessionStorage.getItem('fjd_pantalla');
   if(ultimaPantalla && document.getElementById(ultimaPantalla)){
@@ -1246,6 +1289,11 @@ function guardarPrestamo(){
   goTo('screen-cobros');
 }
 
+function prestamosVisibles(){
+  if(rutaActual==='todas') return prestamos;
+  return prestamos.filter(function(p){return p.ruta===rutaActual;});
+}
+
 function clienteNecesitaVerificacion(p){
   var fotos=p.fotos||{};
   var clavesFotos=['cedula-frente','cedula-detras','foto-cliente','foto-casa','foto-trabajo'];
@@ -1336,7 +1384,7 @@ function getEstadoCobro(p){
 function renderCobros(filtro){
   var lista=document.getElementById('cobros-lista');
   var f=(filtro||'').toLowerCase();
-  var todos=prestamos.filter(function(p){return p.estado!=='Cancelado' && calcDerived(p).saldoPendiente>0;});
+  var todos=prestamosVisibles().filter(function(p){return !p.incompleto && calcDerived(p).saldoPendiente>0;});
   var items=todos.filter(function(p){return !f||p.cliente.toLowerCase().includes(f);});
 
   // Separar por categoría
@@ -1411,12 +1459,12 @@ function continuarClienteIncompleto(id){
 function renderTarjetas(filtro){
   var lista=document.getElementById('tarjetas-lista');
   var f=(filtro||'').toLowerCase().trim();
-  var items=prestamos.filter(function(p){
-    if(f) return p.cliente.toLowerCase().includes(f); // con búsqueda: mostrar todos incluyendo incompletos
-    if(p.incompleto) return false; // sin búsqueda: no mostrar incompletos
+  var items=prestamosVisibles().filter(function(p){
+    if(f) return p.cliente.toLowerCase().includes(f);
+    if(p.incompleto) return false;
     return calcDerived(p).saldoPendiente>0;
   });
-  var totalActivos=prestamos.filter(function(p){return calcDerived(p).saldoPendiente>0;}).length;
+  var totalActivos=prestamosVisibles().filter(function(p){return !p.incompleto&&calcDerived(p).saldoPendiente>0;}).length;
   document.getElementById('tarjetas-titulo').textContent='Tarjetas activas ('+totalActivos+')'+(f?' · Búsqueda: '+items.length:'');
   if(!items.length){
     lista.innerHTML='<div style="padding:14px"><span class="no-data">No hay préstamos.</span></div>';
@@ -1503,6 +1551,12 @@ function verDetalle(id){
     btnDocs.style.borderColor=verifDet.necesita?'#f59e0b':'';
     btnDocs.style.color=verifDet.necesita?'#b45309':'';
   }
+  // Mostrar/ocultar controles según rol
+  var esAdmin=(rolActual==='admin');
+  var btnGuardar=document.getElementById('btn-guardar-fecha');
+  var btnEliminar=document.getElementById('btn-eliminar-prestamo');
+  if(btnGuardar) btnGuardar.style.display=esAdmin?'':'none';
+  if(btnEliminar) btnEliminar.style.display=esAdmin?'':'none';
   renderCuotasGrid(p,d);
   renderPagosLista(p);
   switchTab('tarjeta');
