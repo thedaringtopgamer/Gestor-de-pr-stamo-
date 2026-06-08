@@ -1128,8 +1128,7 @@ function calcDerived(p){
   var adelanto=totalPagado-(cuotasPagadas*p.Cuota_Quincenal); // pagado de más hacia próxima cuota
   var pendienteProxima=saldoPendiente>0?Math.max(0,p.Cuota_Quincenal-adelanto):0;
   var progreso=p.Total_A_Cobrar>0?Math.min(1,totalPagado/p.Total_A_Cobrar):0;
-  var estado=p.estado;
-  if(saldoPendiente<=0) estado='Cancelado';
+  var estado=saldoPendiente<=0?'Cancelado':'Activo';
   return {totalPagado:totalPagado,saldoPendiente:saldoPendiente,cuotasPagadas:cuotasPagadas,adelanto:adelanto,pendienteProxima:pendienteProxima,progreso:progreso,estado:estado};
 }
 
@@ -1249,11 +1248,10 @@ function renderTarjetas(filtro){
   var f=(filtro||'').toLowerCase().trim();
   var items=prestamos.filter(function(p){
     var d=calcDerived(p);
-    var activo=d.saldoPendiente>0&&p.estado!=='Cancelado';
     if(f) return p.cliente.toLowerCase().includes(f); // con búsqueda: mostrar todos
-    return activo; // sin búsqueda: solo activos
+    return d.saldoPendiente>0; // sin búsqueda: cualquiera que aún deba algo
   });
-  var totalActivos=prestamos.filter(function(p){var d=calcDerived(p);return d.saldoPendiente>0&&p.estado!=='Cancelado';}).length;
+  var totalActivos=prestamos.filter(function(p){return calcDerived(p).saldoPendiente>0;}).length;
   document.getElementById('tarjetas-titulo').textContent='Tarjetas activas ('+totalActivos+')'+(f?' · Búsqueda: '+items.length:'');
   if(!items.length){
     lista.innerHTML='<div style="padding:14px"><span class="no-data">No hay préstamos.</span></div>';
