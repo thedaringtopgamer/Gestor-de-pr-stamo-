@@ -277,7 +277,59 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     <div class="menu-item" onclick="goTo('screen-tarjetas');closeMenu()">🃏 Tarjetas</div>
     <div class="menu-item" onclick="goTo('screen-panel-recolector');closeMenu()">📊 Panel Recolector</div>
     <div class="menu-item" onclick="goTo('screen-nuevo-cliente');closeMenu()">➕ Nuevo Cliente</div>
+    <div class="menu-item" id="menu-inversion" onclick="goTo('screen-inversion');closeMenu()" style="display:none">💰 Inversión</div>
     <div class="menu-item" onclick="cerrarSesion()" style="color:var(--red)">🔒 Cerrar sesión</div>
+  </div>
+
+  <!-- ==================== INVERSIÓN ==================== -->
+  <div id="screen-inversion" class="screen">
+    <div class="navbar">
+      <button class="btn btn-cyan btn-sm" onclick="goBack()">← Volver</button>
+      <span class="navbar-title">Inversión</span>
+      <div style="width:70px"></div>
+    </div>
+    <div class="section">
+      <!-- Capital en la calle -->
+      <div class="card" style="margin-bottom:14px">
+        <p style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:12px">💸 Dinero actualmente en la calle</p>
+        <div style="font-size:32px;font-weight:900;color:#1e40af" id="inv-en-calle">₡0</div>
+        <div style="font-size:12px;color:#6b7280;margin-top:4px" id="inv-clientes-activos">0 clientes activos</div>
+      </div>
+
+      <!-- Capital invertido -->
+      <div class="card" style="margin-bottom:14px">
+        <p style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:12px">🏦 Capital invertido (de tu bolsillo)</p>
+        <div style="font-size:32px;font-weight:900;color:#166534" id="inv-capital-total">₡0</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:4px">Total acumulado que has metido</div>
+      </div>
+
+      <!-- Diferencia -->
+      <div class="card" style="margin-bottom:20px;background:#f0fdf4">
+        <p style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:8px">📊 Diferencia</p>
+        <div style="font-size:22px;font-weight:800" id="inv-diferencia">₡0</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:4px" id="inv-diferencia-label">—</div>
+      </div>
+
+      <!-- Registrar inversión -->
+      <div class="card">
+        <p style="font-size:13px;font-weight:700;margin-bottom:12px">➕ Registrar inversión</p>
+        <div class="field-group">
+          <label>Monto</label>
+          <input type="text" inputmode="numeric" id="inv-monto" placeholder="0" oninput="fmtMoneyInput(this)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+        </div>
+        <div class="field-group">
+          <label>Nota (opcional)</label>
+          <input type="text" id="inv-nota" placeholder="Ej: Capital inicial, inyección junio…" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+        </div>
+        <button class="btn btn-blue btn-full" style="padding:12px" onclick="registrarInversion()">Registrar</button>
+      </div>
+
+      <!-- Historial de inversiones -->
+      <div style="margin-top:16px">
+        <p style="font-size:13px;font-weight:700;margin-bottom:10px">📋 Historial</p>
+        <div id="inv-historial"></div>
+      </div>
+    </div>
   </div>
 
   <!-- ==================== HOME ==================== -->
@@ -1092,6 +1144,8 @@ function mostrarApp(){
   if(lbl) lbl.textContent=rutaActual==='todas'?'🌐 Todas':'📍 '+rutaActual;
   var adminBtn=document.getElementById('admin-menu-btn');
   if(adminBtn) adminBtn.style.display=rolActual==='admin'?'block':'none';
+  var menuInv=document.getElementById('menu-inversion');
+  if(menuInv) menuInv.style.display=rolActual==='admin'?'block':'none';
   // sessionStorage se borra al cerrar la app completamente, pero sobrevive recargas en segundo plano
   // → Si no hay pantalla en sessionStorage, la app fue cerrada: ir a cobros
   // → Si hay pantalla, la app estaba en segundo plano: restaurar donde estaba
@@ -1135,6 +1189,7 @@ var SUPA_HDR={'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization
 var prestamos = [];
 var pagos = [];
 var cobrosAdmin = [];
+var inversiones = [];
 var gastos = [];
 var renovaciones = [];
 var currentId = null;
@@ -1186,6 +1241,7 @@ function guardarDatos(){
     {key:'cobrosadmin',value:cobrosAdmin},
     {key:'gastos',value:gastos},
     {key:'renovaciones',value:renovaciones},
+    {key:'inversiones',value:inversiones},
     {key:'ts',value:ts}
   ];
 
@@ -1218,6 +1274,60 @@ function guardarDatos(){
 }
 
 function _syncSupabase(){ guardarDatos(); }
+
+function renderInversion(){
+  var activos=prestamos.filter(function(p){
+    var d=calcDerived(p); return d.saldoPendiente>0;
+  });
+  var enCalle=activos.reduce(function(s,p){ return s+calcDerived(p).saldoPendiente; },0);
+  var capitalTotal=inversiones.reduce(function(s,i){ return s+i.monto; },0);
+  var diff=enCalle-capitalTotal;
+
+  document.getElementById('inv-en-calle').textContent=_fmtCol(enCalle);
+  document.getElementById('inv-clientes-activos').textContent=activos.length+' cliente'+(activos.length===1?'':'s')+' activo'+(activos.length===1?'':'s');
+  document.getElementById('inv-capital-total').textContent=_fmtCol(capitalTotal);
+
+  var diffEl=document.getElementById('inv-diferencia');
+  var labelEl=document.getElementById('inv-diferencia-label');
+  diffEl.textContent=(diff>=0?'+':'')+_fmtCol(diff);
+  diffEl.style.color=diff>=0?'#166534':'#991b1b';
+  labelEl.textContent=diff>0?'Más plata en calle que invertida (ganancia de intereses acumulados)':diff<0?'Has invertido más de lo que está en calle':'Exactamente igual';
+
+  var hist=document.getElementById('inv-historial');
+  if(!inversiones.length){ hist.innerHTML='<p style="color:#6b7280;font-size:13px;text-align:center;padding:16px">Sin registros</p>'; return; }
+  var sorted=inversiones.slice().sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
+  hist.innerHTML=sorted.map(function(inv){
+    return '<div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'
+      +'<div>'
+        +'<div style="font-weight:700;font-size:15px;color:#1e40af">'+_fmtCol(inv.monto)+'</div>'
+        +(inv.nota?'<div style="font-size:12px;color:#6b7280">'+inv.nota+'</div>':'')
+        +'<div style="font-size:11px;color:#9ca3af">'+inv.fecha+'</div>'
+      +'</div>'
+      +(rolActual==='admin'?'<button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:none" onclick="eliminarInversion(\''+inv.id+'\')">Eliminar</button>':'')
+      +'</div>';
+  }).join('');
+}
+
+function registrarInversion(){
+  var montoRaw=document.getElementById('inv-monto').value.replace(/[^\d]/g,'');
+  var monto=parseInt(montoRaw,10);
+  if(!monto||monto<=0){ toast('⚠ Ingrese un monto válido'); return; }
+  var nota=document.getElementById('inv-nota').value.trim();
+  inversiones.push({id:Date.now().toString(),monto:monto,nota:nota,fecha:new Date().toISOString().split('T')[0]});
+  guardarDatos();
+  document.getElementById('inv-monto').value='';
+  document.getElementById('inv-nota').value='';
+  renderInversion();
+  toast('✓ Inversión registrada');
+}
+
+function eliminarInversion(id){
+  if(!confirm('¿Eliminar esta inversión?')) return;
+  inversiones=inversiones.filter(function(i){ return i.id!==id; });
+  guardarDatos();
+  renderInversion();
+  toast('✓ Inversión eliminada');
+}
 
 function cargarDesdeLocalStorage(){
   try{
@@ -1282,6 +1392,7 @@ function cargarDatos(){
 function fmt(n){
   return Number(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
 }
+function _fmtCol(n){ return '₡'+fmt(n); }
 
 function fmtMoneyInput(el){
   var pos=el.selectionStart;
@@ -1328,6 +1439,7 @@ function goTo(id){
   if(id==='screen-tarjetas') renderTarjetas();
   if(id==='screen-panel-recolector') renderPanelRecolector();
   if(id==='screen-home') updateHome();
+  if(id==='screen-inversion') renderInversion();
   if(id==='screen-nuevo-prestamo' && clienteTemporal.nombre){
     document.getElementById('np-cliente').value=clienteTemporal.nombre;
     document.getElementById('np-cliente-display').textContent=clienteTemporal.nombre+(clienteTemporal.subruta?' · '+clienteTemporal.subruta:'');
@@ -3120,6 +3232,7 @@ function fechaOffset(dias){
         if(row.key==='cobrosadmin'&&Array.isArray(row.value)) cobrosAdmin=row.value;
         if(row.key==='gastos'&&Array.isArray(row.value)) gastos=row.value;
         if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
+        if(row.key==='inversiones'&&Array.isArray(row.value)) inversiones=row.value;
         if(row.key==='fotos'&&row.value&&typeof row.value==='object') fotosMap=row.value;
       });
       // Fusionar fotos de vuelta en los préstamos
