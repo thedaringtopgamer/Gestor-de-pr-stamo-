@@ -1469,20 +1469,22 @@ function mensajeRenovacion(p, rv){
   var fechaFmt=parseInt(fparts[2])+'/'+parseInt(fparts[1])+'/'+fparts[0];
   var tipoAbrev=rv.tipo==='Diario'?'DIA':rv.tipo.toUpperCase();
   var ref=p.id.slice(-5);
-  return 'Nueva tarjeta ('+ref+')\n\n'
-    +'Cliente: '+p.cliente+'\n'
-    +'Fecha: '+fechaFmt+'\n'
-    +'Monto: ₡'+fmt(rv.montoNuevo)+'\n'
-    +'Con intereses: ₡'+fmt(p.Total_A_Cobrar)+'\n'
-    +'Tipo: '+tipoAbrev+'\n'
-    +'Cuota: ₡'+fmt(rv.cuotaNueva)+'\n'
-    +'Cantidad de cuotas: '+rv.cuotas+'\n'
-    +'Próxima fecha de pago: '+fechaProx+'\n\n'
-    +'Datos de renovación\n\n'
-    +'Saldo anterior: ₡'+fmt(rv.saldoAnterior)+'\n'
-    +'Cobro administrativo: ₡'+fmt(rv.adminMonto)+'\n'
-    +'Monto entregado: ₡'+fmt(rv.montoEntregado)+'\n\n'
-    +'Confirmar este mensaje';
+  return '🔄 *Nueva tarjeta ('+ref+')*\n\n'
+    +'👤 *Cliente:* '+p.cliente+'\n'
+    +'📅 *Fecha:* '+fechaFmt+'\n'
+    +'💵 *Monto:* ₡'+fmt(rv.montoNuevo)+'\n'
+    +'💰 *Con intereses:* ₡'+fmt(p.Total_A_Cobrar)+'\n'
+    +'📋 *Tipo:* '+tipoAbrev+'\n'
+    +'💳 *Cuota:* ₡'+fmt(rv.cuotaNueva)+'\n'
+    +'🔢 *Cantidad de cuotas:* '+rv.cuotas+'\n'
+    +'📆 *Próxima fecha de pago:* '+fechaProx+'\n\n'
+    +'────────────────\n'
+    +'📊 *Datos de renovación*\n'
+    +'────────────────\n'
+    +'⏮ *Saldo anterior:* ₡'+fmt(rv.saldoAnterior)+'\n'
+    +'🏦 *Cobro administrativo:* ₡'+fmt(rv.adminMonto)+'\n'
+    +'💸 *Monto entregado:* ₡'+fmt(rv.montoEntregado)+'\n\n'
+    +'✅ _Confirmar este mensaje_';
 }
 
 function ofrecerWhatsApp(id, tipo){
