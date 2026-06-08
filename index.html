@@ -1464,7 +1464,8 @@ function mensajeRenovacion(p, rv){
   var fp=getCuotaVencimiento(p,1);
   var dd=String(fp.getDate()).padStart(2,'0');
   var mm=String(fp.getMonth()+1).padStart(2,'0');
-  var fechaProx=dd+'-'+mm+'-'+fp.getFullYear();
+  var diasSemRen=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  var fechaProx=dd+'-'+mm+'-'+fp.getFullYear()+' ('+diasSemRen[fp.getDay()]+')';
   var fparts=rv.fecha.split('-');
   var fechaFmt=parseInt(fparts[2])+'/'+parseInt(fparts[1])+'/'+fparts[0];
   var tipoAbrev=rv.tipo==='Diario'?'DIA':rv.tipo.toUpperCase();
