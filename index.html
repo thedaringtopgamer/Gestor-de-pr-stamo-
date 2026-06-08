@@ -2672,7 +2672,13 @@ function mostrarResumenCaja(){
 function guardarBase(){
   var fecha=document.getElementById('panel-fecha').value||new Date().toISOString().split('T')[0];
   var base=readMoneyInput('caja-base');
-  localStorage.setItem('fjd_base_'+(rutaActual||'todas')+'_'+fecha, base);
+  var rutas=['todas','Heredia','Alajuela','San Ramón'];
+  if(rutaActual==='todas'){
+    // Ruta madre: propagar a todas las rutas
+    rutas.forEach(function(r){ localStorage.setItem('fjd_base_'+r+'_'+fecha, base); });
+  } else {
+    localStorage.setItem('fjd_base_'+rutaActual+'_'+fecha, base);
+  }
   calcCaja();
   toast('✓ Base guardada: ₡'+fmt(base));
 }
