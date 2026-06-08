@@ -725,7 +725,8 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <!-- Fecha y acciones -->
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <span style="font-size:13px;color:var(--text-muted);font-weight:500">Fecha:</span>
-        <input type="date" id="panel-fecha" onchange="renderPanelRecolector()" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
+        <input type="date" id="panel-fecha" onchange="sessionStorage.setItem('fjd_panel_fecha_manual','1');renderPanelRecolector();" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
+        <button onclick="sessionStorage.removeItem('fjd_panel_fecha_manual');document.getElementById('panel-fecha').value=new Date().toISOString().split('T')[0];renderPanelRecolector();" style="background:#2563eb;color:#fff;border:none;border-radius:var(--radius);padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">Hoy</button>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <button class="btn btn-green btn-full" style="padding:11px;font-size:13px" onclick="goTo('screen-nuevo-cliente')">➕ Nuevo Préstamo</button>
@@ -2754,7 +2755,12 @@ function togglePanelSec(sec){
 
 function renderPanelRecolector(){
   var fechaEl=document.getElementById('panel-fecha');
-  if(!fechaEl.value) fechaEl.value=new Date().toISOString().split('T')[0];
+  // Siempre mostrar hoy al abrir el panel por primera vez en la sesión
+  if(!sessionStorage.getItem('fjd_panel_fecha_manual')){
+    fechaEl.value=new Date().toISOString().split('T')[0];
+  } else if(!fechaEl.value){
+    fechaEl.value=new Date().toISOString().split('T')[0];
+  }
   var fecha=fechaEl.value;
 
   // Préstamos visibles según ruta actual
