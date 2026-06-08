@@ -190,34 +190,34 @@
 </div>
 
 <!-- SELECTOR DE RUTA (admin) -->
-<div id="ruta-selector" style="display:none;position:fixed;inset:0;background:linear-gradient(160deg,#0ea5e9 0%,#2563eb 100%);z-index:9998;overflow-y:auto">
+<div id="ruta-selector" style="display:none;position:fixed;inset:0;background:#fff;z-index:9998;overflow-y:auto">
   <div style="min-height:100vh;padding:40px 20px 40px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start">
     <div style="text-align:center;margin-bottom:32px">
       <div style="font-size:48px;margin-bottom:10px">💰</div>
-      <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0">Financiera JD</h1>
-      <p style="font-size:14px;color:#bfdbfe;margin-top:6px">Seleccioná tu ruta de trabajo</p>
+      <h1 style="font-size:24px;font-weight:700;color:#1e40af;margin:0">Financiera JD</h1>
+      <p style="font-size:14px;color:#6b7280;margin-top:6px">Seleccioná tu ruta de trabajo</p>
     </div>
-    <div style="display:flex;flex-direction:column;gap:14px;width:100%;max-width:420px">
-      <button onclick="seleccionarRuta('todas')" style="padding:22px 20px;background:#fff;color:#1e40af;border:none;border-radius:16px;font-size:18px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:14px;box-shadow:0 4px 16px rgba(0,0,0,0.12)">
+    <div style="display:flex;flex-direction:column;gap:14px;width:100%">
+      <button onclick="seleccionarRuta('todas')" style="padding:22px 20px;background:#1e40af;color:#fff;border:none;border-radius:16px;font-size:18px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:14px">
         <span style="font-size:28px">🌐</span>
-        <div style="text-align:left"><div>Todas las rutas</div><div style="font-size:12px;font-weight:400;color:#6b7280">Ver datos de todas las rutas</div></div>
+        <div style="text-align:left"><div>Todas las rutas</div><div style="font-size:12px;font-weight:400;color:#bfdbfe">Ver datos de todas las rutas</div></div>
       </button>
-      <button onclick="seleccionarRuta('Heredia')" style="padding:22px 20px;background:rgba(255,255,255,0.15);color:#fff;border:2px solid rgba(255,255,255,0.4);border-radius:16px;font-size:18px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:14px">
+      <button onclick="seleccionarRuta('Heredia')" style="padding:22px 20px;background:#fff;color:#1e40af;border:2px solid #bfdbfe;border-radius:16px;font-size:18px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,0.07)">
         <span style="font-size:28px">📍</span>
-        <div style="text-align:left"><div>Heredia</div><div style="font-size:12px;font-weight:400;color:#bfdbfe">Ruta Heredia</div></div>
+        <div style="text-align:left"><div>Heredia</div><div style="font-size:12px;font-weight:400;color:#6b7280">Ruta Heredia</div></div>
       </button>
-      <button onclick="seleccionarRuta('Alajuela')" style="padding:22px 20px;background:rgba(255,255,255,0.15);color:#fff;border:2px solid rgba(255,255,255,0.4);border-radius:16px;font-size:18px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:14px">
+      <button onclick="seleccionarRuta('Alajuela')" style="padding:22px 20px;background:#fff;color:#1e40af;border:2px solid #bfdbfe;border-radius:16px;font-size:18px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,0.07)">
         <span style="font-size:28px">📍</span>
-        <div style="text-align:left"><div>Alajuela</div><div style="font-size:12px;font-weight:400;color:#bfdbfe">Ruta Alajuela</div></div>
+        <div style="text-align:left"><div>Alajuela</div><div style="font-size:12px;font-weight:400;color:#6b7280">Ruta Alajuela</div></div>
       </button>
-      <button onclick="seleccionarRuta('San Ramón')" style="padding:22px 20px;background:rgba(255,255,255,0.15);color:#fff;border:2px solid rgba(255,255,255,0.4);border-radius:16px;font-size:18px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:14px">
+      <button onclick="seleccionarRuta('San Ramón')" style="padding:22px 20px;background:#fff;color:#1e40af;border:2px solid #bfdbfe;border-radius:16px;font-size:18px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,0.07)">
         <span style="font-size:28px">📍</span>
-        <div style="text-align:left"><div>San Ramón</div><div style="font-size:12px;font-weight:400;color:#bfdbfe">Ruta San Ramón</div></div>
+        <div style="text-align:left"><div>San Ramón</div><div style="font-size:12px;font-weight:400;color:#6b7280">Ruta San Ramón</div></div>
       </button>
       <!-- Gestión de contraseñas -->
-      <div style="margin-top:8px;border-top:1.5px solid rgba(255,255,255,0.25);padding-top:16px">
-        <button onclick="toggleGestionUsuarios()" style="width:100%;padding:16px;background:rgba(255,255,255,0.1);color:#fff;border:1.5px solid rgba(255,255,255,0.3);border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">👥 Gestión de contraseñas</button>
-        <div id="gestion-usuarios-panel" style="display:none;margin-top:12px;background:rgba(255,255,255,0.95);border-radius:14px;padding:16px">
+      <div style="margin-top:8px;border-top:1.5px solid #e5e7eb;padding-top:16px">
+        <button onclick="toggleGestionUsuarios()" style="width:100%;padding:16px;background:#f0f9ff;color:#1d4ed8;border:1.5px solid #bfdbfe;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">👥 Gestión de contraseñas</button>
+        <div id="gestion-usuarios-panel" style="display:none;margin-top:12px;background:#f8fafc;border-radius:14px;padding:16px;border:1.5px solid #e5e7eb">
           <div id="gestion-usuarios-lista"></div>
         </div>
       </div>
