@@ -1046,6 +1046,11 @@ function cerrarSesion(){
   closeMenu();
 }
 
+// Supabase
+var SUPA_URL='https://crylhkioshvlmiywzldz.supabase.co';
+var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyeWxoa2lvc2h2bG1peXd6bGR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4Nzc3OTksImV4cCI6MjA5NjQ1Mzc5OX0.RF6SYR5w7m1CfCR6pFMCNcn9-jL_qq8c8vxWmZvEH2k';
+var SUPA_HDR={'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY};
+
 var prestamos = [];
 var pagos = [];
 var cobrosAdmin = [];
@@ -1066,6 +1071,7 @@ function guardarFechaPago(){
 }
 
 function guardarDatos(){
+  // Guardar en localStorage inmediatamente (respaldo local)
   try{
     localStorage.setItem('fjd_prestamos',JSON.stringify(prestamos));
     localStorage.setItem('fjd_pagos',JSON.stringify(pagos));
@@ -1075,9 +1081,42 @@ function guardarDatos(){
   }catch(e){
     toast('⚠ Espacio lleno: fotos muy pesadas');
   }
+  // Sincronizar con Supabase en segundo plano
+  _syncSupabase();
 }
 
-function cargarDatos(){
+function _syncSupabase(){
+  var datos=[
+    {key:'prestamos',value:prestamos},
+    {key:'pagos',value:pagos},
+    {key:'cobrosadmin',value:cobrosAdmin},
+    {key:'gastos',value:gastos},
+    {key:'renovaciones',value:renovaciones}
+  ];
+  fetch(SUPA_URL+'/rest/v1/app_data',{
+    method:'POST',
+    headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
+    body:JSON.stringify(datos)
+  }).catch(function(){});
+}
+
+async function cargarDatos(){
+  // Intentar cargar desde Supabase
+  try{
+    var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:SUPA_HDR});
+    if(r.ok){
+      var rows=await r.json();
+      rows.forEach(function(row){
+        if(row.key==='prestamos'&&Array.isArray(row.value)) prestamos=row.value;
+        if(row.key==='pagos'&&Array.isArray(row.value)) pagos=row.value;
+        if(row.key==='cobrosadmin'&&Array.isArray(row.value)) cobrosAdmin=row.value;
+        if(row.key==='gastos'&&Array.isArray(row.value)) gastos=row.value;
+        if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
+      });
+      return;
+    }
+  }catch(e){}
+  // Si Supabase falla, usar localStorage como respaldo
   try{
     var sp=localStorage.getItem('fjd_prestamos');
     var sg=localStorage.getItem('fjd_pagos');
@@ -2574,35 +2613,34 @@ function fechaOffset(dias){
   return d.toISOString().split('T')[0];
 }
 
-cargarDatos();
-
-// Demo: solo si no hay datos guardados
-if(prestamos.length===0){
-  function mkPrestamo(id,nombre,monto,ruta,subruta,offsetDias,cuotas){
-    var tasa=0.20,intereses=Math.round(monto*tasa),total=monto+intereses,cuota=Math.round(total/cuotas);
-    return {id:id,cliente:nombre,ruta:ruta,subruta:subruta,montoPrestado:monto,tasaInteres:tasa,cantidadDeQuincenas:cuotas,diasPorCuota:15,tipo:'Quincenal',fechaInicio:fechaOffset(offsetDias),estado:'Activo',Cuota_Quincenal:cuota,Total_Intereses:intereses,Total_A_Cobrar:total,coordCasa:'',coordTrabajo:'',fotos:{}};
+// Arranque asíncrono: cargar datos desde Supabase primero
+(async function iniciarApp(){
+  document.getElementById('np-fecha').value=new Date().toISOString().split('T')[0];
+  await cargarDatos();
+  // Demo si no hay datos
+  if(prestamos.length===0){
+    function mkPrestamo(id,nombre,monto,ruta,subruta,offsetDias,cuotas){
+      var tasa=0.20,intereses=Math.round(monto*tasa),total=monto+intereses,cuota=Math.round(total/cuotas);
+      return {id:id,cliente:nombre,ruta:ruta,subruta:subruta,montoPrestado:monto,tasaInteres:tasa,cantidadDeQuincenas:cuotas,diasPorCuota:15,tipo:'Quincenal',fechaInicio:fechaOffset(offsetDias),estado:'Activo',Cuota_Quincenal:cuota,Total_Intereses:intereses,Total_A_Cobrar:total,coordCasa:'',coordTrabajo:'',fotos:{}};
+    }
+    prestamos.push(mkPrestamo('d1','Ana García Mora',50000,'Heredia','Santo Domingo',-35,2));
+    prestamos.push(mkPrestamo('d2','Carlos Mora Vega',75000,'Heredia','San Rafael',-20,2));
+    prestamos.push(mkPrestamo('d3','María Jiménez Solís',100000,'Alajuela','Grecia',-15,2));
+    prestamos.push(mkPrestamo('d4','Luis Rodríguez Pérez',125000,'San Ramón','San Ramón Centro',0,2));
+    prestamos.push(mkPrestamo('d5','Andrea Solís Ulate',150000,'Heredia','Barva',0,3));
+    prestamos.push(mkPrestamo('d6','Roberto Vargas Cruz',200000,'Alajuela','Naranjo',5,3));
+    prestamos.push(mkPrestamo('d7','Patricia Núñez Díaz',250000,'San Ramón','Piedades Norte',10,3));
+    prestamos.push(mkPrestamo('d8','Diego Madrigal León',300000,'Heredia','Heredia Centro',15,3));
+    pagos.push({id_pago:'p1',id_prestamo:'d2',fechaPago:fechaOffset(-5),montoAbonado:prestamos.find(function(x){return x.id==='d2';}).Cuota_Quincenal});
+    pagos.push({id_pago:'p2',id_prestamo:'d3',fechaPago:fechaOffset(-15),montoAbonado:prestamos.find(function(x){return x.id==='d3';}).Cuota_Quincenal});
+    guardarDatos();
   }
-  prestamos.push(mkPrestamo('d1','Ana García Mora',50000,'Heredia','Santo Domingo',-35,2));
-  prestamos.push(mkPrestamo('d2','Carlos Mora Vega',75000,'Heredia','San Rafael',-20,2));
-  prestamos.push(mkPrestamo('d3','María Jiménez Solís',100000,'Alajuela','Grecia',-15,2));
-  prestamos.push(mkPrestamo('d4','Luis Rodríguez Pérez',125000,'San Ramón','San Ramón Centro',0,2));
-  prestamos.push(mkPrestamo('d5','Andrea Solís Ulate',150000,'Heredia','Barva',0,3));
-  prestamos.push(mkPrestamo('d6','Roberto Vargas Cruz',200000,'Alajuela','Naranjo',5,3));
-  prestamos.push(mkPrestamo('d7','Patricia Núñez Díaz',250000,'San Ramón','Piedades Norte',10,3));
-  prestamos.push(mkPrestamo('d8','Diego Madrigal León',300000,'Heredia','Heredia Centro',15,3));
-  pagos.push({id_pago:'p1',id_prestamo:'d2',fechaPago:fechaOffset(-5),montoAbonado:prestamos.find(function(x){return x.id==='d2';}).Cuota_Quincenal});
-  pagos.push({id_pago:'p2',id_prestamo:'d3',fechaPago:fechaOffset(-15),montoAbonado:prestamos.find(function(x){return x.id==='d3';}).Cuota_Quincenal});
-  guardarDatos();
-}
-
-document.getElementById('np-fecha').value=new Date().toISOString().split('T')[0];
-calcPreview();
-updateHome();
-
-// Verificar sesión guardada
-if(localStorage.getItem('fjd_session')==='1'){
-  mostrarApp();
-}
+  calcPreview();
+  updateHome();
+  if(localStorage.getItem('fjd_session')==='1'){
+    mostrarApp();
+  }
+})();
 </script>
 </body>
 </html>
