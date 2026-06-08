@@ -238,13 +238,6 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       </button>
       <!-- Borrar todos los datos -->
       <div style="margin-top:8px;border-top:1.5px solid #e5e7eb;padding-top:16px">
-        <button onclick="exportarBackup()" style="width:100%;padding:16px;background:#f0fdf4;color:#166534;border:1.5px solid #86efac;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px">⬇ Exportar backup</button>
-        <label style="width:100%;display:block">
-          <div style="width:100%;padding:16px;background:#eff6ff;color:#1d4ed8;border:1.5px solid #93c5fd;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:center;box-sizing:border-box">⬆ Importar backup</div>
-          <input type="file" accept=".json" onchange="importarBackup(this)" style="display:none">
-        </label>
-      </div>
-      <div style="margin-top:8px;border-top:1.5px solid #e5e7eb;padding-top:16px">
         <button onclick="borrarTodosLosDatos()" style="width:100%;padding:16px;background:#fee2e2;color:#dc2626;border:1.5px solid #fca5a5;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">🗑 Borrar todos los datos</button>
       </div>
       <!-- Gestión de contraseñas -->
@@ -333,6 +326,17 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <span class="navbar-title" style="font-size:13px">Financiera JD</span>
       <div style="display:flex;align-items:center;gap:6px">
         <span id="navbar-ruta-label" style="font-size:11px;background:#dbeafe;color:#1e40af;border-radius:8px;padding:3px 8px;font-weight:600;cursor:pointer" onclick="if(rolActual==='admin')cambiarRuta()"></span>
+        <div style="position:relative" id="admin-menu-wrap">
+          <button id="admin-menu-btn" onclick="toggleAdminMenu()" style="display:none;background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:#374151;line-height:1">⋮</button>
+          <div id="admin-menu-drop" style="display:none;position:absolute;right:0;top:36px;background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:500;min-width:200px;overflow:hidden">
+            <button onclick="exportarBackup();toggleAdminMenu()" style="width:100%;padding:14px 16px;background:none;border:none;border-bottom:1px solid #f3f4f6;text-align:left;font-size:14px;font-weight:600;color:#166534;cursor:pointer;font-family:'DM Sans',sans-serif">⬇ Exportar backup</button>
+            <label style="display:block;cursor:pointer">
+              <div style="padding:14px 16px;border-bottom:1px solid #f3f4f6;font-size:14px;font-weight:600;color:#1d4ed8">⬆ Importar backup</div>
+              <input type="file" accept=".json" onchange="importarBackup(this);toggleAdminMenu()" style="display:none">
+            </label>
+            <button onclick="borrarTodosLosDatos();toggleAdminMenu()" style="width:100%;padding:14px 16px;background:none;border:none;text-align:left;font-size:14px;font-weight:600;color:#dc2626;cursor:pointer;font-family:'DM Sans',sans-serif">🗑 Borrar todos los datos</button>
+          </div>
+        </div>
         <button class="menu-icon" onclick="toggleMenu()">☰</button>
       </div>
     </div>
@@ -1090,6 +1094,8 @@ function mostrarApp(){
   // Mostrar etiqueta de ruta en navbar
   var lbl=document.getElementById('navbar-ruta-label');
   if(lbl) lbl.textContent=rutaActual==='todas'?'🌐 Todas':'📍 '+rutaActual;
+  var adminBtn=document.getElementById('admin-menu-btn');
+  if(adminBtn) adminBtn.style.display=rolActual==='admin'?'block':'none';
   // sessionStorage se borra al cerrar la app completamente, pero sobrevive recargas en segundo plano
   // → Si no hay pantalla en sessionStorage, la app fue cerrada: ir a cobros
   // → Si hay pantalla, la app estaba en segundo plano: restaurar donde estaba
@@ -1348,6 +1354,17 @@ function goBack(){
 function toggleMenu(){
   document.getElementById('menu-dropdown').classList.toggle('open');
 }
+function toggleAdminMenu(){
+  var d=document.getElementById('admin-menu-drop');
+  d.style.display=d.style.display==='block'?'none':'block';
+}
+// Cerrar el menú admin si se toca fuera
+document.addEventListener('click',function(e){
+  var wrap=document.getElementById('admin-menu-wrap');
+  if(wrap&&!wrap.contains(e.target)){
+    document.getElementById('admin-menu-drop').style.display='none';
+  }
+});
 function closeMenu(){
   document.getElementById('menu-dropdown').classList.remove('open');
 }
