@@ -1161,6 +1161,8 @@ function goBack(){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.getElementById(prev).classList.add('active');
   window.scrollTo(0,0);
+  _pantallaActual=prev;
+  _guardarPantallaActual();
   if(prev==='screen-cobros') renderCobros();
   if(prev==='screen-tarjetas') renderTarjetas();
   if(prev==='screen-panel-recolector') renderPanelRecolector();
