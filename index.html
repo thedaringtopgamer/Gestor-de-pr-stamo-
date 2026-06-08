@@ -2807,38 +2807,51 @@ function fechaOffset(dias){
   return d.toISOString().split('T')[0];
 }
 
-// Arranque: SOLO desde Supabase — nunca datos locales viejos
+// Arranque: SOLO desde Supabase
 (async function iniciarApp(){
   document.getElementById('np-fecha').value=new Date().toISOString().split('T')[0];
   var splash=document.getElementById('splash-screen');
-
-  function mostrarError(msg){
-    // Mostrar error en la pantalla de splash sin entrar al sistema
-    splash.innerHTML+='<div style="color:#f87171;font-size:13px;margin-top:24px;text-align:center;padding:0 32px">'+msg+'<br><br><button onclick="location.reload()" style="background:#2563eb;color:#fff;border:none;border-radius:10px;padding:10px 28px;font-size:14px;font-weight:700;cursor:pointer">Reintentar</button></div>';
-  }
+  var errorConexion=false;
 
   try{
     var controller=new AbortController();
     var timeout=setTimeout(function(){controller.abort();},10000);
     var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:SUPA_HDR,signal:controller.signal});
     clearTimeout(timeout);
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    var rows=await r.json();
-    rows.forEach(function(row){
-      if(row.key==='prestamos'&&Array.isArray(row.value)) prestamos=row.value;
-      if(row.key==='pagos'&&Array.isArray(row.value)) pagos=row.value;
-      if(row.key==='cobrosadmin'&&Array.isArray(row.value)) cobrosAdmin=row.value;
-      if(row.key==='gastos'&&Array.isArray(row.value)) gastos=row.value;
-      if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
-    });
+    if(r.ok){
+      var rows=await r.json();
+      rows.forEach(function(row){
+        if(row.key==='prestamos'&&Array.isArray(row.value)) prestamos=row.value;
+        if(row.key==='pagos'&&Array.isArray(row.value)) pagos=row.value;
+        if(row.key==='cobrosadmin'&&Array.isArray(row.value)) cobrosAdmin=row.value;
+        if(row.key==='gastos'&&Array.isArray(row.value)) gastos=row.value;
+        if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
+      });
+    } else {
+      errorConexion=true;
+    }
   }catch(e){
-    mostrarError('⚠ Sin conexión a la nube.<br>Verifique su internet e intente de nuevo.');
+    errorConexion=true;
+  }
+
+  // Siempre ocultar splash — nunca dejar pantalla en blanco
+  splash.style.display='none';
+
+  if(errorConexion){
+    // Mostrar pantalla de error con botón reintentar
+    var errDiv=document.createElement('div');
+    errDiv.style.cssText='position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a8a);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999';
+    errDiv.innerHTML='<div style="font-size:80px;font-weight:900;color:#fff;letter-spacing:-3px">JD</div>'
+      +'<div style="font-size:14px;font-weight:700;color:#60a5fa;letter-spacing:8px;margin-bottom:32px">FINANCIERA</div>'
+      +'<div style="color:#f87171;font-size:14px;text-align:center;padding:0 32px;margin-bottom:24px">⚠ Sin conexión a la nube.<br>Verifique su internet.</div>'
+      +'<button onclick="location.reload()" style="background:#2563eb;color:#fff;border:none;border-radius:12px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer">↺ Reintentar</button>';
+    document.body.appendChild(errDiv);
     return;
   }
 
-  calcPreview();
-  updateHome();
-  splash.style.display='none';
+  try{ calcPreview(); }catch(e){}
+  try{ updateHome(); }catch(e){}
+
   if(localStorage.getItem('fjd_session')==='1'){
     mostrarApp();
   } else {
