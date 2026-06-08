@@ -771,23 +771,6 @@
         </div>
       </div>
 
-      <!-- Acordeón: Gestión de Usuarios (solo admin) -->
-      <div id="panel-usuarios-card" style="border:1.5px solid #2563eb;border-radius:12px;margin-bottom:10px;overflow:hidden;display:none">
-        <div onclick="togglePanelSec('usuarios')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#eff6ff;cursor:pointer" id="pcard-usuarios">
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:18px">👥</span>
-            <div>
-              <div style="font-size:13px;font-weight:700;color:#1d4ed8">Gestión de Usuarios</div>
-              <div style="font-size:11px;color:#3b82f6">Cambiar contraseñas</div>
-            </div>
-          </div>
-          <span style="font-size:18px;color:#1d4ed8" id="arr-panel-usuarios">▶</span>
-        </div>
-        <div id="panel-sec-usuarios" style="display:none;padding:12px 16px;background:#fff">
-          <div id="panel-usuarios-lista"></div>
-        </div>
-      </div>
-
       <!-- Acordeón: Resumen de Caja -->
       <div style="border:1.5px solid #6b7280;border-radius:12px;margin-bottom:14px;overflow:hidden">
         <div onclick="togglePanelSec('caja')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#1f2937;cursor:pointer" id="pcard-caja">
@@ -803,7 +786,10 @@
         <div id="panel-sec-caja" style="display:none;padding:16px;background:#1f2937">
           <div class="field-group" style="margin-bottom:10px">
             <label style="color:#9ca3af">Base (efectivo inicial)</label>
-            <input type="text" inputmode="numeric" id="caja-base" placeholder="0" oninput="fmtMoneyInput(this);calcCaja()" style="width:100%;padding:9px 12px;border:1.5px solid #374151;background:#374151;color:#fff;border-radius:var(--radius);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;font-weight:600">
+            <div style="display:flex;gap:8px">
+              <input type="text" inputmode="numeric" id="caja-base" placeholder="0" oninput="fmtMoneyInput(this)" style="flex:1;padding:9px 12px;border:1.5px solid #374151;background:#374151;color:#fff;border-radius:var(--radius);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;font-weight:600">
+              <button onclick="guardarBase()" style="background:#16a34a;color:#fff;border:none;border-radius:var(--radius);padding:9px 14px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap">💾 Guardar</button>
+            </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px">
             <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
@@ -2585,21 +2571,6 @@ function renderPanelRecolector(){
   document.getElementById('caja-total').textContent='₡'+fmt(cajaTotal);
   document.getElementById('panel-stat-caja').textContent='Total: ₡'+fmt(cajaTotal);
 
-  // Gestión de usuarios (solo admin)
-  var cardUsuarios=document.getElementById('panel-usuarios-card');
-  if(cardUsuarios) cardUsuarios.style.display=rolActual==='admin'?'':'none';
-  var listaUsuarios=document.getElementById('panel-usuarios-lista');
-  if(listaUsuarios && rolActual==='admin'){
-    listaUsuarios.innerHTML=USUARIOS.map(function(u,i){
-      return '<div style="padding:10px 0;border-bottom:1px solid var(--border)">'
-        +'<div style="font-size:13px;font-weight:600;margin-bottom:6px">'+(u.rol==='admin'?'👑':'👤')+' '+u.user+'</div>'
-        +'<div style="display:flex;gap:8px;align-items:center">'
-        +'<input type="password" id="pwd-new-'+i+'" placeholder="Nueva contraseña" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:\'DM Sans\',sans-serif;outline:none;box-sizing:border-box">'
-        +'<button onclick="cambiarPassword('+i+')" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;font-family:\'DM Sans\',sans-serif;cursor:pointer;white-space:nowrap">Guardar</button>'
-        +'</div>'
-        +'</div>';
-    }).join('');
-  }
 }
 
 function toggleGestionUsuarios(){
@@ -2697,6 +2668,13 @@ function mostrarResumenCaja(){
   document.getElementById('caja-base-display').textContent='₡'+fmt(base);
   document.getElementById('caja-total').textContent='₡'+fmt(recogida+base-prestamosHoy-totalGastos);
   document.getElementById('caja-modal').style.display='flex';
+}
+function guardarBase(){
+  var fecha=document.getElementById('panel-fecha').value||new Date().toISOString().split('T')[0];
+  var base=readMoneyInput('caja-base');
+  localStorage.setItem('fjd_base_'+(rutaActual||'todas')+'_'+fecha, base);
+  calcCaja();
+  toast('✓ Base guardada: ₡'+fmt(base));
 }
 function calcCaja(){
   var fecha=document.getElementById('panel-fecha').value||new Date().toISOString().split('T')[0];
