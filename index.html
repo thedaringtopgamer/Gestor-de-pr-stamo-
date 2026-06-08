@@ -2852,11 +2852,25 @@ function fechaOffset(dias){
   try{ calcPreview(); }catch(e){}
   try{ updateHome(); }catch(e){}
 
-  if(localStorage.getItem('fjd_session')==='1'){
-    mostrarApp();
-  } else {
+  try{
+    if(localStorage.getItem('fjd_session')==='1'){
+      mostrarApp();
+    } else {
+      document.getElementById('login-screen').style.display='flex';
+    }
+  }catch(e){
+    // Si todo falla, mostrar login para que pueda entrar
     document.getElementById('login-screen').style.display='flex';
   }
+
+  // Doble seguro: si después de 500ms nada es visible, mostrar login
+  setTimeout(function(){
+    var appVisible=document.getElementById('app').style.display==='block';
+    var loginVisible=document.getElementById('login-screen').style.display==='flex';
+    if(!appVisible && !loginVisible){
+      document.getElementById('login-screen').style.display='flex';
+    }
+  },500);
 })();
 </script>
 </body>
