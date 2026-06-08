@@ -1309,7 +1309,17 @@ function verDetalle(id){
   else if(tipo==='Diario') linea2='30 días';
   document.getElementById('det-modalidad').innerHTML=linea1+(linea2?'<br><span style="font-size:11px;font-weight:500;color:#6b7280">'+linea2+'</span>':'');
   document.getElementById('abonar-cuota').textContent='₡'+fmt(d.pendienteProxima);
-  document.getElementById('abonar-fecha').value=new Date().toISOString().split('T')[0];
+  var proxCuotaNum=d.cuotasPagadas+1;
+  var fechaInput;
+  if(d.saldoPendiente<=0){
+    fechaInput=new Date().toISOString().split('T')[0];
+  } else if(proxCuotaNum<=p.cantidadDeQuincenas){
+    var fpd=getCuotaVencimiento(p,proxCuotaNum);
+    fechaInput=fpd.getFullYear()+'-'+String(fpd.getMonth()+1).padStart(2,'0')+'-'+String(fpd.getDate()).padStart(2,'0');
+  } else {
+    fechaInput=new Date().toISOString().split('T')[0];
+  }
+  document.getElementById('abonar-fecha').value=fechaInput;
   document.getElementById('abonar-monto').value='';
   renderCuotasGrid(p,d);
   renderPagosLista(p);
@@ -1451,18 +1461,28 @@ function mensajeAbono(p){
 }
 
 function mensajeRenovacion(p, rv){
-  return '🔄 *Financiera JD*\n'
+  var fp=getCuotaVencimiento(p,1);
+  var dd=String(fp.getDate()).padStart(2,'0');
+  var mm=String(fp.getMonth()+1).padStart(2,'0');
+  var fechaProx=dd+'-'+mm+'-'+fp.getFullYear();
+  var fparts=rv.fecha.split('-');
+  var fechaFmt=parseInt(fparts[2])+'/'+parseInt(fparts[1])+'/'+fparts[0];
+  var tipoAbrev=rv.tipo==='Diario'?'DIA':rv.tipo.toUpperCase();
+  var ref=p.id.slice(-5);
+  return 'Nueva tarjeta ('+ref+')\n\n'
     +'Cliente: '+p.cliente+'\n'
-    +'────────────────\n'
-    +'*RENOVACIÓN DE PRÉSTAMO*\n'
-    +'Monto: ₡'+fmt(rv.montoNuevo)+'\n'
-    +'Cuota: ₡'+fmt(rv.cuotaNueva)+' ('+rv.tipo+')\n'
-    +'Cuotas: '+rv.cuotas+'\n'
-    +'Tasa: '+rv.tasa+'%\n'
-    +(rv.adminMonto?'Cobro admin: ₡'+fmt(rv.adminMonto)+'\n':'')
-    +'Inicio: '+rv.fecha+'\n'
-    +'────────────────\n'
-    +'Gracias por su confianza 🙏';
+    +'Fecha: '+fechaFmt+'\n'
+    +'Monto: '+fmt(rv.montoNuevo)+'\n'
+    +'Con intereses: '+fmt(p.Total_A_Cobrar)+'\n'
+    +'Tipo: '+tipoAbrev+'\n'
+    +'Cuota: '+fmt(rv.cuotaNueva)+'\n'
+    +'Cant Cuotas: '+rv.cuotas+'\n'
+    +'Próximo pago: '+fechaProx+'\n\n'
+    +'Datos de renovación\n\n'
+    +'Saldo Anterior: '+fmt(rv.saldoAnterior)+'\n'
+    +'Cobro Adm: '+fmt(rv.adminMonto)+'\n'
+    +'Monto entregado: '+fmt(rv.montoEntregado)+'\n\n'
+    +'Confirmar este mensaje';
 }
 
 function ofrecerWhatsApp(id, tipo){
@@ -1742,8 +1762,12 @@ function confirmarRenovacion(){
     cobrosAdmin.push({id:Date.now().toString(),id_prestamo:p.id,cliente:p.cliente,fecha:fechaHoy,monto:adminMonto});
   }
   // Registrar renovación en historial
-  renovaciones.push({id:Date.now().toString(),id_prestamo:p.id,cliente:p.cliente,fecha:fechaHoy,
-    montoNuevo:monto,cuotaNueva:cuotaVal,tipo:tipo,cuotas:cuotas,tasa:Math.round(tasa*100),adminMonto:adminMonto});
+  var saldoAnterior=d.saldoPendiente;
+  var montoEntregado=Math.max(0,monto-saldoAnterior-adminMonto);
+  var renId=Date.now().toString();
+  renovaciones.push({id:renId,id_prestamo:p.id,cliente:p.cliente,fecha:fechaHoy,
+    montoNuevo:monto,cuotaNueva:cuotaVal,tipo:tipo,cuotas:cuotas,tasa:Math.round(tasa*100),
+    adminMonto:adminMonto,saldoAnterior:saldoAnterior,montoEntregado:montoEntregado});
   guardarDatos();
   currentId=p.id;
   toast('✓ Préstamo renovado correctamente');
