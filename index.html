@@ -1622,7 +1622,7 @@ function renderTarjetas(filtro){
         +'<div style="font-size:22px;padding:0 8px;cursor:pointer" onclick="continuarClienteIncompleto(\''+p.id+'\')">⚠️</div>'
         +'<div style="flex:1;padding-left:6px;min-width:0;cursor:pointer" onclick="continuarClienteIncompleto(\''+p.id+'\')">'
           +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+'</div>'
-          +'<div style="font-size:11px;color:#b45309;font-weight:500">Registro incompleto — toca para continuar</div>'
+          +'<div style="font-size:11px;color:#b45309;font-weight:500">'+(p.incompleto==='paso1'?'Falta: documentos y préstamo':'Falta: datos del préstamo')+' — toca para continuar</div>'
         +'</div>'
         +btnEliminar
       +'</div>';
@@ -2336,9 +2336,17 @@ function guardarCliente(){
   if(!cedula){toast('⚠ Ingrese la cédula');return;}
   if(!ruta){toast('⚠ Seleccione la ruta');return;}
   if(!subruta){toast('⚠ Seleccione la subruta');return;}
-  var prevId=clienteTemporal._id; // preservar ID si ya existía
+
+  var prevId=clienteTemporal._id;
+
+  // Bloquear duplicado por cédula (ignorar el propio cliente si está editando)
+  var duplicado=prestamos.find(function(x){return x.cedula===cedula && x.id!==prevId;});
+  if(duplicado){
+    toast('⚠ Ya existe un cliente con esa cédula: '+duplicado.cliente);
+    return;
+  }
+
   clienteTemporal={_id:prevId,nombre:nombre,cedula:cedula,telefono:tel,ruta:ruta,subruta:subruta};
-  // Guardar en BD como incompleto paso1 (si no existía ya)
   if(!clienteTemporal._id){
     var id=Date.now().toString();
     clienteTemporal._id=id;
