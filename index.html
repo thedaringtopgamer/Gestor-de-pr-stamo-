@@ -866,7 +866,7 @@
       <!-- Fecha -->
       <div class="card" style="margin-bottom:12px">
         <div class="field-group" style="margin-bottom:0">
-          <label>Fecha Inicio *</label>
+          <label>Próxima fecha de pago *</label>
           <input type="date" id="ren-fecha" oninput="calcRenovar()">
         </div>
       </div>
@@ -1677,7 +1677,20 @@ function abrirRenovar(){
   document.getElementById('ren-saldo-viejo').textContent='₡'+fmt(d.saldoPendiente);
   document.getElementById('ren-monto').value=fmt(p.montoPrestado);
   document.getElementById('ren-tasa').value=Math.round((p.tasaInteres||0.20)*100);
-  document.getElementById('ren-fecha').value=new Date().toISOString().split('T')[0];
+  // Auto-calcular próxima fecha de pago después de la renovación
+  var tipoActual=p.tipo||'Quincenal';
+  var proximaFechaRen;
+  if(tipoActual==='Diario'){
+    var manana=new Date(); manana.setDate(manana.getDate()+1);
+    proximaFechaRen=siguienteDiaHabil(manana);
+  } else {
+    var proxN=d.cuotasPagadas+1;
+    var nextDue=(proxN<=p.cantidadDeQuincenas&&d.saldoPendiente>0)?getCuotaVencimiento(p,proxN):new Date();
+    var firstNew=new Date(nextDue);
+    firstNew.setDate(firstNew.getDate()+p.diasPorCuota);
+    proximaFechaRen=siguienteDiaHabil(firstNew);
+  }
+  document.getElementById('ren-fecha').value=proximaFechaRen.getFullYear()+'-'+String(proximaFechaRen.getMonth()+1).padStart(2,'0')+'-'+String(proximaFechaRen.getDate()).padStart(2,'0');
   document.getElementById('ren-cobro-admin').value=fmt(cobroAdmin);
   document.getElementById('ren-entregar').textContent='—';
   document.getElementById('ren-cuota-manual').style.display='none';
@@ -1803,22 +1816,6 @@ function confirmarRenovacion(){
   var cuotaVal=digitar?readMoneyInput('ren-cuota-manual'):Math.round(total/cuotas);
   if(!cuotaVal){toast('⚠ Ingrese la cuota manual');return;}
   var d=calcDerived(p);
-  // Calcular la fecha de inicio correcta según el tipo de préstamo
-  var oldFechaInicio=p.fechaInicio;
-  var fechaRen=parseLocalDate(fecha);
-  var nuevaFechaInicio;
-  if(tipo==='Diario'){
-    // Próximo día hábil después de la fecha de renovación
-    var sig=new Date(fechaRen);
-    sig.setDate(sig.getDate()+1);
-    nuevaFechaInicio=siguienteDiaHabil(sig);
-  } else {
-    // Avanzar desde el fechaInicio viejo por intervalos hasta pasar la fecha de renovación
-    var dp=new Date(parseLocalDate(oldFechaInicio));
-    while(dp<=fechaRen) dp.setDate(dp.getDate()+diasPorCuota);
-    nuevaFechaInicio=siguienteDiaHabil(dp);
-  }
-  var nfi=nuevaFechaInicio.getFullYear()+'-'+String(nuevaFechaInicio.getMonth()+1).padStart(2,'0')+'-'+String(nuevaFechaInicio.getDate()).padStart(2,'0');
   // Guardar cuánto se había pagado antes de renovar (para que calcDerived ignore esos pagos)
   p.baseRenovacion=(p.baseRenovacion||0)+d.totalPagado;
   // Actualizar la misma tarjeta con los nuevos valores
@@ -1830,7 +1827,7 @@ function confirmarRenovacion(){
   p.cantidadDeQuincenas=cuotas;
   p.diasPorCuota=diasPorCuota;
   p.tipo=tipo;
-  p.fechaInicio=nfi;
+  p.fechaInicio=fecha;
   p.estado='Activo';
   var adminMonto=readMoneyInput('ren-cobro-admin');
   var fechaHoy=new Date().toISOString().split('T')[0];
