@@ -2815,10 +2815,13 @@ function fechaOffset(dias){
   var splash=document.getElementById('splash-screen');
   splash.style.display='flex';
 
-  // Intentar cargar desde Supabase (fuente de verdad)
+  // Intentar cargar desde Supabase con timeout de 5 segundos
   var cargadoDeNube=false;
   try{
-    var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:SUPA_HDR});
+    var controller=new AbortController();
+    var timeout=setTimeout(function(){controller.abort();},5000);
+    var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:SUPA_HDR,signal:controller.signal});
+    clearTimeout(timeout);
     if(r.ok){
       var rows=await r.json();
       rows.forEach(function(row){
