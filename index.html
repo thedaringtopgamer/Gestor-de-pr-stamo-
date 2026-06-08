@@ -1145,16 +1145,22 @@ function guardarDatos(){
     {key:'renovaciones',value:renovaciones},
     {key:'ts',value:ts}
   ];
+  var body=JSON.stringify(datos);
+  var kb=Math.round(body.length/1024);
   fetch(SUPA_URL+'/rest/v1/app_data',{
     method:'POST',
     headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
-    body:JSON.stringify(datos)
+    body:body
   }).then(function(r){
     _guardandoEnNube=false;
-    if(!r.ok) toast('⚠ Error al guardar en la nube');
-  }).catch(function(){
+    if(!r.ok){
+      r.text().then(function(t){
+        toast('⚠ Error nube ('+kb+'KB): '+t.substring(0,80));
+      });
+    }
+  }).catch(function(e){
     _guardandoEnNube=false;
-    toast('⚠ Sin conexión — dato guardado localmente');
+    toast('⚠ Sin conexión ('+kb+'KB) — guardado local');
   });
 }
 
@@ -2358,33 +2364,47 @@ function guardarDocumentos(){
   var coordCasa=document.getElementById('doc-coord-casa').value.trim();
   var coordTrabajo=document.getElementById('doc-coord-trabajo').value.trim();
   var claves=['cedula-frente','cedula-detras','foto-cliente','foto-casa','foto-trabajo'];
-  var archivos=claves.map(function(k){
-    var el=document.getElementById('doc-'+k);
-    return (el&&el.files&&el.files[0])?el.files[0]:null;
+  // Partir de fotos ya guardadas en el cliente, no de objeto vacío
+  var ex=clienteTemporal._id?prestamos.find(function(x){return x.id===clienteTemporal._id;}):null;
+  var fotos=Object.assign({},ex&&ex.fotos?ex.fotos:{});
+  // Mezclar fotos nuevas comprimidas (de _docsNewFotos)
+  claves.forEach(function(k){
+    if(_docsNewFotos[k]) fotos[k]=_docsNewFotos[k];
   });
-  var fotos={};
-  var pendientes=archivos.filter(function(f){return f;}).length;
   function finalizarDocumentos(){
     clienteTemporal.coordCasa=coordCasa;
     clienteTemporal.coordTrabajo=coordTrabajo;
     clienteTemporal.fotos=fotos;
-    // Actualizar en BD como incompleto paso2
-    var ex=clienteTemporal._id?prestamos.find(function(x){return x.id===clienteTemporal._id;}):null;
     if(ex){ex.coordCasa=coordCasa;ex.coordTrabajo=coordTrabajo;ex.fotos=fotos;ex.incompleto='paso2';}
+    _docsNewFotos={};
     guardarDatos();
     goTo('screen-nuevo-prestamo');
   }
-  if(pendientes===0){ finalizarDocumentos(); return; }
-  archivos.forEach(function(file,i){
+  // Si hay archivos sin comprimir todavía (fallback), comprimirlos antes de continuar
+  var pendientes=0;
+  claves.forEach(function(k,i){
+    if(_docsNewFotos[k]) return; // ya comprimida
+    var el=document.getElementById('doc-'+k);
+    var file=el&&el.files&&el.files[0];
     if(!file) return;
-    var reader=new FileReader();
-    reader.onload=function(e){
-      fotos[claves[i]]=e.target.result;
+    pendientes++;
+    var img=new Image();
+    var url=URL.createObjectURL(file);
+    img.onload=function(){
+      var maxW=800,maxH=800,w=img.width,h=img.height;
+      if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+      if(h>maxH){w=Math.round(w*maxH/h);h=maxH;}
+      var canvas=document.createElement('canvas');
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      fotos[k]=canvas.toDataURL('image/jpeg',0.7);
+      URL.revokeObjectURL(url);
       pendientes--;
       if(pendientes===0) finalizarDocumentos();
     };
-    reader.readAsDataURL(file);
+    img.src=url;
   });
+  if(pendientes===0) finalizarDocumentos();
 }
 
 function editarTelefonoInline(){
