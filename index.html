@@ -1694,16 +1694,24 @@ function abrirRenovar(){
   document.getElementById('ren-saldo-viejo').textContent='₡'+fmt(d.saldoPendiente);
   document.getElementById('ren-monto').value=fmt(p.montoPrestado);
   document.getElementById('ren-tasa').value=Math.round((p.tasaInteres||0.20)*100);
-  // Auto-calcular próxima fecha de pago después de la renovación
+  // Próxima fecha de pago tras renovación = fecha actual de la tarjeta + un intervalo
   var tipoActual=p.tipo||'Quincenal';
   var proximaFechaRen;
   if(tipoActual==='Diario'){
+    // Diario: próximo día hábil después de hoy
     var manana=new Date(); manana.setDate(manana.getDate()+1);
     proximaFechaRen=siguienteDiaHabil(manana);
   } else {
-    var proxN=d.cuotasPagadas+1;
-    var nextDue=(proxN<=p.cantidadDeQuincenas&&d.saldoPendiente>0)?getCuotaVencimiento(p,proxN):new Date();
-    var firstNew=new Date(nextDue);
+    // Usar la fecha que aparece en la tarjeta (guardada o calculada)
+    var fechaEnTarjeta;
+    if(p.proximaFechaPago){
+      fechaEnTarjeta=parseLocalDate(p.proximaFechaPago);
+    } else {
+      var proxN=d.cuotasPagadas+1;
+      fechaEnTarjeta=(proxN<=p.cantidadDeQuincenas&&d.saldoPendiente>0)?getCuotaVencimiento(p,proxN):new Date();
+    }
+    // Sumar un intervalo a esa fecha
+    var firstNew=new Date(fechaEnTarjeta);
     firstNew.setDate(firstNew.getDate()+p.diasPorCuota);
     proximaFechaRen=siguienteDiaHabil(firstNew);
   }
