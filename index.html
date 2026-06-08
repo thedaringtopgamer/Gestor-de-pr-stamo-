@@ -2813,20 +2813,51 @@ function fechaOffset(dias){
   return d.toISOString().split('T')[0];
 }
 
-// Arranque instantáneo: localStorage primero, Supabase en segundo plano
-(function iniciarApp(){
+// Arranque: siempre bajar de Supabase primero para no perder datos
+(async function iniciarApp(){
   document.getElementById('np-fecha').value=new Date().toISOString().split('T')[0];
-  cargarDatos(); // instantáneo desde localStorage
+
+  // Mostrar spinner mientras carga (no el login)
+  var splash=document.getElementById('splash-screen');
+  splash.style.display='flex';
+
+  // Intentar cargar desde Supabase (fuente de verdad)
+  var cargadoDeNube=false;
+  try{
+    var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:SUPA_HDR});
+    if(r.ok){
+      var rows=await r.json();
+      rows.forEach(function(row){
+        if(row.key==='prestamos'&&Array.isArray(row.value)) prestamos=row.value;
+        if(row.key==='pagos'&&Array.isArray(row.value)) pagos=row.value;
+        if(row.key==='cobrosadmin'&&Array.isArray(row.value)) cobrosAdmin=row.value;
+        if(row.key==='gastos'&&Array.isArray(row.value)) gastos=row.value;
+        if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
+      });
+      // Actualizar localStorage con lo de Supabase
+      try{
+        localStorage.setItem('fjd_prestamos',JSON.stringify(prestamos));
+        localStorage.setItem('fjd_pagos',JSON.stringify(pagos));
+        localStorage.setItem('fjd_cobrosadmin',JSON.stringify(cobrosAdmin));
+        localStorage.setItem('fjd_gastos',JSON.stringify(gastos));
+        localStorage.setItem('fjd_renovaciones',JSON.stringify(renovaciones));
+        localStorage.setItem('fjd_ts',Date.now().toString());
+      }catch(e){}
+      cargadoDeNube=true;
+    }
+  }catch(e){}
+
+  // Si Supabase falló, usar localStorage como respaldo
+  if(!cargadoDeNube) cargarDesdeLocalStorage();
+
   calcPreview();
   updateHome();
-  document.getElementById('splash-screen').style.display='none';
+  splash.style.display='none';
   if(localStorage.getItem('fjd_session')==='1'){
     mostrarApp();
   } else {
     document.getElementById('login-screen').style.display='flex';
   }
-  // Sincronizar con Supabase en segundo plano sin bloquear la pantalla
-  sincronizarSupabaseFondo();
 })();
 </script>
 </body>
