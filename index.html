@@ -412,7 +412,10 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
   <div id="screen-tarjetas" class="screen">
     <div class="navbar">
       <span class="navbar-title">Financiera JD</span>
-      <button class="menu-icon" onclick="toggleMenu()">☰</button>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span id="navbar-ruta-label-tarjetas" style="font-size:11px;background:#dbeafe;color:#1e40af;border-radius:8px;padding:3px 8px;font-weight:600;cursor:pointer" onclick="if(rolActual==='admin')cambiarRuta()"></span>
+        <button class="menu-icon" onclick="toggleMenu()">☰</button>
+      </div>
     </div>
     <div class="section">
       <div class="section-header">
@@ -1123,6 +1126,14 @@ function doLogin(){
   }
 }
 
+function _actualizarLabelRuta(){
+  var txt=rutaActual==='todas'?'🌐 Todas':'📍 '+rutaActual;
+  var l1=document.getElementById('navbar-ruta-label');
+  var l2=document.getElementById('navbar-ruta-label-tarjetas');
+  if(l1) l1.textContent=txt;
+  if(l2) l2.textContent=txt;
+}
+
 function seleccionarRuta(ruta){
   rutaActual=ruta;
   sessionStorage.setItem('fjd_ruta_actual',ruta);
@@ -1139,9 +1150,8 @@ function mostrarApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('ruta-selector').style.display='none';
   document.getElementById('app').style.display='block';
-  // Mostrar etiqueta de ruta en navbar
-  var lbl=document.getElementById('navbar-ruta-label');
-  if(lbl) lbl.textContent=rutaActual==='todas'?'🌐 Todas':'📍 '+rutaActual;
+  // Mostrar etiqueta de ruta en ambos navbars (cobros y tarjetas)
+  _actualizarLabelRuta();
   var adminBtn=document.getElementById('admin-menu-btn');
   if(adminBtn) adminBtn.style.display=rolActual==='admin'?'block':'none';
   var menuInv=document.getElementById('menu-inversion');
