@@ -1122,7 +1122,9 @@ function guardarPrestamo(){
 
 function calcDerived(p){
   var pagosP=pagos.filter(function(x){return x.id_prestamo===p.id;});
-  var totalPagado=pagosP.reduce(function(s,x){return s+x.montoAbonado;},0);
+  var totalPagadoGlobal=pagosP.reduce(function(s,x){return s+x.montoAbonado;},0);
+  // baseRenovacion: total acumulado antes de la última renovación (pagos viejos no cuentan)
+  var totalPagado=totalPagadoGlobal-(p.baseRenovacion||0);
   var saldoPendiente=Math.max(0,p.Total_A_Cobrar-totalPagado);
   var cuotasPagadas=Math.min(p.cantidadDeQuincenas,Math.floor(totalPagado/p.Cuota_Quincenal));
   var adelanto=totalPagado-(cuotasPagadas*p.Cuota_Quincenal); // pagado de más hacia próxima cuota
@@ -1443,11 +1445,6 @@ function abrirRenovar(){
   var p=prestamos.find(function(x){return x.id===currentId;});
   if(!p) return;
   var d=calcDerived(p);
-  // Validar: debe haber pagado al menos los intereses
-  if(d.saldoPendiente>p.montoPrestado){
-    toast('⚠ Debe pagar los intereses antes de renovar');
-    return;
-  }
   // Cobro admin = 4% del monto prestado (₡2,000 por cada ₡50,000)
   var cobroAdmin=Math.round(p.montoPrestado*0.04);
   document.getElementById('ren-cliente-nombre').textContent=p.cliente;
@@ -1566,28 +1563,27 @@ function confirmarRenovacion(){
   var cuotaVal=digitar?readMoneyInput('ren-cuota-manual'):Math.round(total/cuotas);
   if(!cuotaVal){toast('⚠ Ingrese la cuota manual');return;}
   var d=calcDerived(p);
-  // Cancelar préstamo viejo
-  p.estado='Cancelado';
-  // Crear préstamo nuevo (mismos datos de cliente)
-  var nuevo={
-    id:Date.now().toString(),
-    cliente:p.cliente,cedula:p.cedula||'',telefono:p.telefono||'',
-    ruta:p.ruta||'',subruta:p.subruta||'',
-    coordCasa:p.coordCasa||'',coordTrabajo:p.coordTrabajo||'',fotos:p.fotos||{},
-    montoPrestado:monto,tasaInteres:tasa,cantidadDeQuincenas:cuotas,
-    diasPorCuota:diasPorCuota,tipo:tipo,fechaInicio:fecha,estado:'Activo',
-    Cuota_Quincenal:cuotaVal,Total_Intereses:intereses,Total_A_Cobrar:total,
-    renovadoDe:p.id
-  };
-  prestamos.push(nuevo);
+  // Guardar cuánto se había pagado antes de renovar (para que calcDerived ignore esos pagos)
+  p.baseRenovacion=(p.baseRenovacion||0)+d.totalPagado;
+  // Actualizar la misma tarjeta con los nuevos valores
+  p.montoPrestado=monto;
+  p.tasaInteres=tasa;
+  p.Total_A_Cobrar=total;
+  p.Total_Intereses=intereses;
+  p.Cuota_Quincenal=cuotaVal;
+  p.cantidadDeQuincenas=cuotas;
+  p.diasPorCuota=diasPorCuota;
+  p.tipo=tipo;
+  p.fechaInicio=fecha;
+  p.estado='Activo';
   var adminMonto=readMoneyInput('ren-cobro-admin');
   if(adminMonto>0){
-    cobrosAdmin.push({id:Date.now().toString(),id_prestamo:nuevo.id,cliente:nuevo.cliente,fecha:new Date().toISOString().split('T')[0],monto:adminMonto});
+    cobrosAdmin.push({id:Date.now().toString(),id_prestamo:p.id,cliente:p.cliente,fecha:new Date().toISOString().split('T')[0],monto:adminMonto});
   }
   guardarDatos();
-  currentId=nuevo.id;
+  currentId=p.id;
   toast('✓ Préstamo renovado correctamente');
-  goTo('screen-cobros');
+  verDetalle(p.id);
 }
 
 function eliminarPrestamo(){
