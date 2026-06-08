@@ -1134,9 +1134,13 @@ function guardarFechaPago(){
   toast('✓ Fecha de pago guardada: '+fecha);
 }
 
+var _guardandoEnNube=false;
+var _ultimoGuardado=0;
+
 function guardarDatos(){
   var ts=Date.now();
-  // Guardar en localStorage como respaldo inmediato
+  _ultimoGuardado=ts;
+  // Guardar en localStorage inmediatamente
   try{
     localStorage.setItem('fjd_prestamos',JSON.stringify(prestamos));
     localStorage.setItem('fjd_pagos',JSON.stringify(pagos));
@@ -1145,7 +1149,8 @@ function guardarDatos(){
     localStorage.setItem('fjd_renovaciones',JSON.stringify(renovaciones));
     localStorage.setItem('fjd_ts',ts.toString());
   }catch(e){}
-  // Guardar directo en Supabase (nube) — mostrar estado
+  // Guardar en Supabase — candado para evitar que sincronizarSupabaseFondo pise datos
+  _guardandoEnNube=true;
   var datos=[
     {key:'prestamos',value:prestamos},
     {key:'pagos',value:pagos},
@@ -1159,8 +1164,10 @@ function guardarDatos(){
     headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
     body:JSON.stringify(datos)
   }).then(function(r){
+    _guardandoEnNube=false;
     if(!r.ok) toast('⚠ Error al guardar en la nube');
   }).catch(function(){
+    _guardandoEnNube=false;
     toast('⚠ Sin conexión — dato guardado localmente');
   });
 }
@@ -1183,14 +1190,17 @@ function cargarDesdeLocalStorage(){
 }
 
 function sincronizarSupabaseFondo(){
+  // No sincronizar si hay un guardado en curso o si guardamos hace menos de 30 segundos
+  if(_guardandoEnNube) return;
+  if(Date.now()-_ultimoGuardado < 30000) return;
   var tsLocal=parseInt(localStorage.getItem('fjd_ts')||'0');
   fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:SUPA_HDR})
   .then(function(r){return r.ok?r.json():null;})
   .then(function(rows){
-    if(!rows) return;
+    if(!rows||_guardandoEnNube) return;
     var tsRemoto=0;
     rows.forEach(function(row){if(row.key==='ts') tsRemoto=Number(row.value)||0;});
-    // Solo aplicar si Supabase tiene datos MÁS NUEVOS que localStorage
+    // Solo aplicar si Supabase es ESTRICTAMENTE más nuevo
     if(tsRemoto<=tsLocal) return;
     rows.forEach(function(row){
       if(row.key==='prestamos'&&Array.isArray(row.value)) prestamos=row.value;
