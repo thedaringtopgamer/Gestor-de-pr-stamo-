@@ -1183,34 +1183,34 @@ function cargarDesdeLocalStorage(){
 }
 
 function sincronizarSupabaseFondo(){
-  // Descarga de Supabase en segundo plano y actualiza la pantalla si hay cambios
+  var tsLocal=parseInt(localStorage.getItem('fjd_ts')||'0');
   fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:SUPA_HDR})
   .then(function(r){return r.ok?r.json():null;})
   .then(function(rows){
     if(!rows) return;
-    var cambiado=false;
+    var tsRemoto=0;
+    rows.forEach(function(row){if(row.key==='ts') tsRemoto=Number(row.value)||0;});
+    // Solo aplicar si Supabase tiene datos MÁS NUEVOS que localStorage
+    if(tsRemoto<=tsLocal) return;
     rows.forEach(function(row){
-      if(row.key==='prestamos'&&Array.isArray(row.value)){prestamos=row.value;cambiado=true;}
-      if(row.key==='pagos'&&Array.isArray(row.value)){pagos=row.value;cambiado=true;}
-      if(row.key==='cobrosadmin'&&Array.isArray(row.value)){cobrosAdmin=row.value;cambiado=true;}
-      if(row.key==='gastos'&&Array.isArray(row.value)){gastos=row.value;cambiado=true;}
-      if(row.key==='renovaciones'&&Array.isArray(row.value)){renovaciones=row.value;cambiado=true;}
+      if(row.key==='prestamos'&&Array.isArray(row.value)) prestamos=row.value;
+      if(row.key==='pagos'&&Array.isArray(row.value)) pagos=row.value;
+      if(row.key==='cobrosadmin'&&Array.isArray(row.value)) cobrosAdmin=row.value;
+      if(row.key==='gastos'&&Array.isArray(row.value)) gastos=row.value;
+      if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
     });
-    if(cambiado){
-      try{
-        localStorage.setItem('fjd_prestamos',JSON.stringify(prestamos));
-        localStorage.setItem('fjd_pagos',JSON.stringify(pagos));
-        localStorage.setItem('fjd_cobrosadmin',JSON.stringify(cobrosAdmin));
-        localStorage.setItem('fjd_gastos',JSON.stringify(gastos));
-        localStorage.setItem('fjd_renovaciones',JSON.stringify(renovaciones));
-        localStorage.setItem('fjd_ts',Date.now().toString());
-      }catch(e){}
-      // Refrescar la pantalla actual silenciosamente
-      var pantalla=localStorage.getItem('fjd_pantalla')||'screen-cobros';
-      if(pantalla==='screen-cobros') renderTarjetas();
-      else if(pantalla==='screen-home') updateHome();
-      else if(pantalla==='screen-panel') renderPanel();
-    }
+    try{
+      localStorage.setItem('fjd_prestamos',JSON.stringify(prestamos));
+      localStorage.setItem('fjd_pagos',JSON.stringify(pagos));
+      localStorage.setItem('fjd_cobrosadmin',JSON.stringify(cobrosAdmin));
+      localStorage.setItem('fjd_gastos',JSON.stringify(gastos));
+      localStorage.setItem('fjd_renovaciones',JSON.stringify(renovaciones));
+      localStorage.setItem('fjd_ts',tsRemoto.toString());
+    }catch(e){}
+    var pantalla=localStorage.getItem('fjd_pantalla')||'screen-cobros';
+    if(pantalla==='screen-cobros') renderTarjetas();
+    else if(pantalla==='screen-home') updateHome();
+    else if(pantalla==='screen-panel') renderPanel();
   }).catch(function(){});
 }
 
