@@ -2373,15 +2373,19 @@ function verDocsCliente(){
   // Fotos: link para ver + botón para cambiar
   var fotos=p.fotos||{};
   var labels={'cedula-frente':'Cédula frente','cedula-detras':'Cédula detrás','foto-cliente':'Foto cliente','foto-casa':'Foto casa','foto-trabajo':'Foto trabajo'};
+  var notas=p.notas||{};
   var html='<div style="display:flex;flex-direction:column;gap:10px">';
   Object.keys(labels).forEach(function(k){
     var src=fotos[k]||'';
-    html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">'
+    var tieneNota=(k==='foto-casa'||k==='foto-trabajo');
+    html+='<div style="padding:8px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between">'
       +'<div style="font-size:13px;font-weight:500;color:#374151">'+labels[k]+'</div>'
       +'<div style="display:flex;align-items:center;gap:8px">'
       +(src?'<button onclick="verFoto(\''+k+'\')" style="font-size:12px;color:#2563eb;background:none;border:none;cursor:pointer;font-weight:500;padding:0;font-family:\'DM Sans\',sans-serif">👁 Ver</button>':'<span style="font-size:11px;color:var(--text-muted)">Sin foto</span>')
       +'<label style="font-size:11px;color:#059669;font-weight:600;cursor:pointer;border:1px solid #059669;border-radius:6px;padding:3px 8px">📷 '+(src?'Cambiar':'Subir')+'<input type="file" accept="image/*" data-key="'+k+'" onchange="onDocsFotoChange(this)" style="display:none"></label>'
-      +'</div>'
+      +'</div></div>'
+      +(tieneNota?'<textarea id="nota-'+k+'" placeholder="Nota sobre '+(k==='foto-casa'?'la casa':'el trabajo')+'..." rows="2" style="width:100%;margin-top:6px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:\'DM Sans\',sans-serif;outline:none;resize:none;box-sizing:border-box;color:#374151">'+((notas[k]||'').replace(/</g,'&lt;'))+'</textarea>':'')
       +'</div>';
   });
   html+='</div>';
@@ -2424,6 +2428,12 @@ function guardarDocsCliente(){
   p.ruta=document.getElementById('docs-edit-ruta').value;
   p.subruta=document.getElementById('docs-edit-subruta').value;
   p.coordCasa=document.getElementById('docs-edit-coord-casa').value.trim();
+  // Guardar notas de casa y trabajo
+  if(!p.notas) p.notas={};
+  var notaCasa=document.getElementById('nota-foto-casa');
+  var notaTrabajo=document.getElementById('nota-foto-trabajo');
+  if(notaCasa) p.notas['foto-casa']=notaCasa.value.trim();
+  if(notaTrabajo) p.notas['foto-trabajo']=notaTrabajo.value.trim();
   p.coordTrabajo=document.getElementById('docs-edit-coord-trabajo').value.trim();
   // Fotos nuevas
   if(!p.fotos) p.fotos={};
