@@ -639,7 +639,8 @@
         <p style="font-size:13px;font-weight:600;margin-bottom:12px">📷 Fotos</p>
         <div id="docs-fotos-edit"></div>
       </div>
-      <button class="btn btn-blue btn-full" style="padding:12px;margin-bottom:16px" onclick="guardarDocsCliente()">💾 Guardar cambios</button>
+      <button class="btn btn-blue btn-full" style="padding:12px;margin-bottom:8px" onclick="guardarDocsCliente()">💾 Guardar cambios</button>
+      <button class="btn btn-full" style="padding:11px;margin-bottom:16px;background:#16a34a;color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600" onclick="marcarVerificado()">✔ Marcar documentos verificados</button>
     </div>
   </div>
 
@@ -1152,6 +1153,20 @@ function guardarPrestamo(){
   goTo('screen-cobros');
 }
 
+function clienteNecesitaVerificacion(p){
+  var fotos=p.fotos||{};
+  var clavesFotos=['cedula-frente','cedula-detras','foto-cliente','foto-casa','foto-trabajo'];
+  var faltaFoto=clavesFotos.some(function(k){return !fotos[k];});
+  var faltaCoord=!p.coordCasa&&!p.coordTrabajo;
+  if(faltaFoto||faltaCoord) return {necesita:true,razon:'Documentos incompletos'};
+  if(!p.fechaVerificacion) return {necesita:true,razon:'Sin verificación'};
+  var hoy=new Date(); hoy.setHours(0,0,0,0);
+  var fv=parseLocalDate(p.fechaVerificacion);
+  var dias=Math.floor((hoy-fv)/(1000*60*60*24));
+  if(dias>=60) return {necesita:true,razon:'Verificación vencida (+2 meses)'};
+  return {necesita:false};
+}
+
 function calcDerived(p){
   var pagosP=pagos.filter(function(x){return x.id_prestamo===p.id;});
   var totalPagadoGlobal=pagosP.reduce(function(s,x){return s+x.montoAbonado;},0);
@@ -1249,11 +1264,16 @@ function renderCobros(filtro){
     var btnRenovar=puedeRenovar
       ?'<button class="icon-btn icon-btn-cyan" onclick="renovarDesdeLista(\''+p.id+'\')" title="Renovar">↻</button>'
       :'<button class="icon-btn" style="background:#e5e7eb;color:#9ca3af;cursor:not-allowed" title="Pague los intereses primero">↻</button>';
+    var verif=clienteNecesitaVerificacion(p);
+    var badgeVerif=verif.necesita
+      ?'<span title="'+verif.razon+'" style="font-size:16px;cursor:pointer" onclick="verDetalle(\''+p.id+'\')">⚠️</span>'
+      :'';
     return '<div class="loan-row">'
+      +badgeVerif
       +'<button class="icon-btn icon-btn-blue" onclick="verDetalle(\''+p.id+'\')" title="Ver detalle">✓</button>'
       +btnRenovar
       +'<button class="icon-btn icon-btn-green" onclick="abonoRapido(\''+p.id+'\',\''+p.cliente+'\','+d.pendienteProxima+')" title="Abonar cuota">🐷</button>'
-      +'<div style="flex:1;padding-left:10px;min-width:0">'
+      +'<div style="flex:1;padding-left:6px;min-width:0">'
         +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+'</div>'
         +'<div style="font-size:11px;margin-top:1px">Cuota: ₡'+fmt(d.pendienteProxima)+'&nbsp;&nbsp;<span style="background:'+colorEtiqueta+';color:#fff;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:600">'+etiqueta+'</span></div>'
         +'<div style="font-size:10px;color:var(--text-muted);margin-top:3px">'+Math.min(30,Math.floor(d.totalPagado/(p.Total_A_Cobrar/30)))+'/30 días</div>'
@@ -1320,10 +1340,12 @@ function renderTarjetas(filtro){
       +'</div>';
     }
     var d=calcDerived(p);
+    var verif=clienteNecesitaVerificacion(p);
+    var badgeTarjeta=verif.necesita?'<span title="'+verif.razon+'" style="font-size:15px;margin-left:4px">⚠️</span>':'';
     return '<div class="loan-row">'
       +'<button class="icon-btn icon-btn-cyan btn-sm" style="width:auto;padding:7px 14px;border-radius:var(--radius)" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
       +'<div style="flex:1;padding-left:10px;min-width:0">'
-        +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+'</div>'
+        +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+badgeTarjeta+'</div>'
         +'<div style="font-size:11px;color:var(--text-muted)">'+estadoTag(d.estado)+' &nbsp;'+p.cantidadDeQuincenas+' cuotas</div>'
       +'</div>'
       +'<div style="text-align:right;flex-shrink:0">'
@@ -2175,10 +2197,26 @@ function guardarDocsCliente(){
   if(!p.fotos) p.fotos={};
   Object.keys(_docsNewFotos).forEach(function(k){ p.fotos[k]=_docsNewFotos[k]; });
   _docsNewFotos={};
+  // Si ya tiene todos los docs, actualizar fecha de verificación
+  var verif=clienteNecesitaVerificacion(p);
+  if(!verif.necesita || verif.razon==='Sin verificación' || verif.razon==='Verificación vencida (+2 meses)'){
+    if(!clienteNecesitaVerificacion(p).razon.includes('incompleto')){
+      p.fechaVerificacion=new Date().toISOString().split('T')[0];
+    }
+  }
   guardarDatos();
-  // Actualizar teléfono en pantalla de detalle si está visible
   document.getElementById('det-telefono-txt').textContent=p.telefono||'';
   toast('✓ Datos del cliente actualizados');
+}
+
+function marcarVerificado(){
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  var verif=clienteNecesitaVerificacion(p);
+  if(verif.razon==='Documentos incompletos'){toast('⚠ Faltan documentos antes de verificar');return;}
+  p.fechaVerificacion=new Date().toISOString().split('T')[0];
+  guardarDatos();
+  toast('✓ Documentos verificados — próxima verificación en 2 meses');
 }
 
 var _panelSecAbierta=null;
