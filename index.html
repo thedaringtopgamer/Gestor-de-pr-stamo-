@@ -1124,20 +1124,24 @@ function toast(msg){
 
 // Pantallas que se pueden restaurar al refrescar (tienen datos persistentes)
 var _pantallasRestaurables=['screen-cobros','screen-tarjetas','screen-panel-recolector','screen-home','screen-detalle','screen-renovar','screen-docs-cliente','screen-nuevo-cliente','screen-documentos','screen-nuevo-prestamo'];
+var _saveScreenTimer=null;
 
 function goTo(id){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.getElementById(id).classList.add('active');
   if(historial[historial.length-1]!==id) historial.push(id);
   window.scrollTo(0,0);
-  // Guardar en sessionStorage para restaurar al refrescar
+  // Guardar en sessionStorage para restaurar al refrescar (debounced para capturar solo la pantalla final)
   if(_pantallasRestaurables.indexOf(id)!==-1){
-    sessionStorage.setItem('fjd_pantalla',id);
-    if(id==='screen-detalle'&&currentId) sessionStorage.setItem('fjd_detalle_id',currentId);
-    // Guardar clienteTemporal si estamos en flujo de nuevo cliente
-    if(['screen-nuevo-cliente','screen-documentos','screen-nuevo-prestamo'].indexOf(id)!==-1){
-      try{ sessionStorage.setItem('fjd_cliente_temp',JSON.stringify(clienteTemporal)); }catch(e){}
-    }
+    if(_saveScreenTimer) clearTimeout(_saveScreenTimer);
+    _saveScreenTimer=setTimeout(function(){
+      sessionStorage.setItem('fjd_pantalla',id);
+      if(id==='screen-detalle'&&currentId) sessionStorage.setItem('fjd_detalle_id',currentId);
+      // Guardar clienteTemporal si estamos en flujo de nuevo cliente
+      if(['screen-nuevo-cliente','screen-documentos','screen-nuevo-prestamo'].indexOf(id)!==-1){
+        try{ sessionStorage.setItem('fjd_cliente_temp',JSON.stringify(clienteTemporal)); }catch(e){}
+      }
+    },400);
   }
   if(id==='screen-cobros') renderCobros();
   if(id==='screen-tarjetas') renderTarjetas();
