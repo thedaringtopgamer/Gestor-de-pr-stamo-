@@ -652,87 +652,115 @@
       <div style="width:80px"></div>
     </div>
     <div class="section">
-      <!-- Fecha -->
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <!-- Fecha y acciones -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <span style="font-size:13px;color:var(--text-muted);font-weight:500">Fecha:</span>
         <input type="date" id="panel-fecha" onchange="renderPanelRecolector()" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
       </div>
-      <!-- Acciones rápidas -->
       <div style="display:flex;gap:8px;margin-bottom:14px">
-        <button class="btn btn-green btn-full" style="padding:12px;font-size:14px" onclick="goTo('screen-nuevo-cliente')">➕ Nuevo Préstamo</button>
-        <button class="btn btn-outline btn-full" style="padding:12px;font-size:14px" onclick="abrirNuevoGasto()">💸 Nuevo Gasto</button>
+        <button class="btn btn-green btn-full" style="padding:11px;font-size:13px" onclick="goTo('screen-nuevo-cliente')">➕ Nuevo Préstamo</button>
+        <button class="btn btn-outline btn-full" style="padding:11px;font-size:13px" onclick="abrirNuevoGasto()">💸 Nuevo Gasto</button>
       </div>
-      <!-- Tarjetas de estadísticas -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-        <div onclick="togglePanelSec('gastos')" style="background:#fef3c7;border-radius:12px;padding:14px;text-align:center;cursor:pointer;border:2px solid transparent" id="pcard-gastos">
-          <div style="font-size:11px;color:#92400e;font-weight:600;text-transform:uppercase;margin-bottom:4px">Gastos</div>
-          <div style="font-size:22px;font-weight:700;color:#92400e" id="panel-stat-gastos">₡0</div>
+
+      <!-- Acordeón: Gastos -->
+      <div style="border:1.5px solid #fde68a;border-radius:12px;margin-bottom:10px;overflow:hidden">
+        <div onclick="togglePanelSec('gastos')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#fef3c7;cursor:pointer" id="pcard-gastos">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:18px">💸</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#92400e">Gastos</div>
+              <div style="font-size:11px;color:#b45309" id="panel-stat-gastos">₡0</div>
+            </div>
+          </div>
+          <span style="font-size:18px;color:#92400e" id="arr-panel-gastos">▶</span>
         </div>
-        <div onclick="togglePanelSec('nuevos')" style="background:#dbeafe;border-radius:12px;padding:14px;text-align:center;cursor:pointer;border:2px solid transparent" id="pcard-nuevos">
-          <div style="font-size:11px;color:#1e40af;font-weight:600;text-transform:uppercase;margin-bottom:4px">Préstamos nuevos</div>
-          <div style="font-size:22px;font-weight:700;color:#1e40af" id="panel-stat-nuevos">0</div>
-        </div>
-        <div onclick="togglePanelSec('cobros')" style="background:#dcfce7;border-radius:12px;padding:14px;text-align:center;cursor:pointer;border:2px solid transparent" id="pcard-cobros">
-          <div style="font-size:11px;color:#166534;font-weight:600;text-transform:uppercase;margin-bottom:4px">Cobros realizados</div>
-          <div style="font-size:22px;font-weight:700;color:#166534" id="panel-stat-cobros">0</div>
-        </div>
-        <div onclick="togglePanelSec('admin')" style="background:#ede9fe;border-radius:12px;padding:14px;text-align:center;cursor:pointer;border:2px solid transparent" id="pcard-admin">
-          <div style="font-size:11px;color:#5b21b6;font-weight:600;text-transform:uppercase;margin-bottom:4px">Cobros admin</div>
-          <div style="font-size:22px;font-weight:700;color:#5b21b6" id="panel-stat-admin">₡0</div>
-        </div>
-      </div>
-      <!-- Sección Gastos -->
-      <div id="panel-sec-gastos" style="display:none;margin-bottom:12px">
-        <div class="card">
-          <p style="font-size:13px;font-weight:600;margin-bottom:10px">💸 Gastos del día</p>
+        <div id="panel-sec-gastos" style="display:none;padding:12px 16px;background:#fff">
           <div id="panel-gastos-lista"></div>
         </div>
       </div>
-      <!-- Sección Préstamos nuevos -->
-      <div id="panel-sec-nuevos" style="display:none;margin-bottom:12px">
-        <div class="card">
-          <p style="font-size:13px;font-weight:600;margin-bottom:10px">📄 Préstamos nuevos</p>
-          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
-            <thead><tr style="border-bottom:2px solid var(--border)">
-              <th style="padding:6px 4px;text-align:left;color:var(--text-muted);font-weight:600">Cliente</th>
-              <th style="padding:6px 4px;text-align:right;color:var(--text-muted);font-weight:600">Monto</th>
-              <th style="padding:6px 4px;text-align:center;color:var(--text-muted);font-weight:600"></th>
-            </tr></thead>
-            <tbody id="panel-nuevos-body"></tbody>
-          </table></div>
+
+      <!-- Acordeón: Préstamos nuevos -->
+      <div style="border:1.5px solid #bfdbfe;border-radius:12px;margin-bottom:10px;overflow:hidden">
+        <div onclick="togglePanelSec('nuevos')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#dbeafe;cursor:pointer" id="pcard-nuevos">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:18px">📄</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#1e40af">Préstamos nuevos</div>
+              <div style="font-size:11px;color:#1d4ed8" id="panel-stat-nuevos">0</div>
+            </div>
+          </div>
+          <span style="font-size:18px;color:#1e40af" id="arr-panel-nuevos">▶</span>
+        </div>
+        <div id="panel-sec-nuevos" style="display:none;padding:12px 16px;background:#fff">
+          <div id="panel-nuevos-lista"></div>
         </div>
       </div>
-      <!-- Sección Cobros realizados -->
-      <div id="panel-sec-cobros" style="display:none;margin-bottom:12px">
-        <div class="card">
-          <p style="font-size:13px;font-weight:600;margin-bottom:10px">💰 Cobros realizados</p>
-          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
-            <thead><tr style="border-bottom:2px solid var(--border)">
-              <th style="padding:6px 4px;text-align:left;color:var(--text-muted);font-weight:600">Cliente</th>
-              <th style="padding:6px 4px;text-align:right;color:var(--text-muted);font-weight:600">Cobro</th>
-              <th style="padding:6px 4px;text-align:center;color:var(--text-muted);font-weight:600"></th>
-            </tr></thead>
-            <tbody id="panel-cobros-body"></tbody>
-          </table></div>
+
+      <!-- Acordeón: Cobros realizados -->
+      <div style="border:1.5px solid #bbf7d0;border-radius:12px;margin-bottom:10px;overflow:hidden">
+        <div onclick="togglePanelSec('cobros')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#dcfce7;cursor:pointer" id="pcard-cobros">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:18px">💰</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#166534">Cobros realizados</div>
+              <div style="font-size:11px;color:#15803d" id="panel-stat-cobros">0 cobros</div>
+            </div>
+          </div>
+          <span style="font-size:18px;color:#166534" id="arr-panel-cobros">▶</span>
+        </div>
+        <div id="panel-sec-cobros" style="display:none;padding:12px 16px;background:#fff">
+          <div id="panel-cobros-lista"></div>
         </div>
       </div>
-      <!-- Sección Cobros admin -->
-      <div id="panel-sec-admin" style="display:none;margin-bottom:12px">
-        <div class="card">
-          <p style="font-size:13px;font-weight:600;margin-bottom:10px">🏦 Cobros administrativos</p>
-          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
-            <thead><tr style="border-bottom:2px solid var(--border)">
-              <th style="padding:6px 4px;text-align:left;color:var(--text-muted);font-weight:600">Cliente</th>
-              <th style="padding:6px 4px;text-align:right;color:var(--text-muted);font-weight:600">Cobro Adm.</th>
-              <th style="padding:6px 4px;text-align:right;color:var(--text-muted);font-weight:600">Monto</th>
-              <th style="padding:6px 4px;text-align:center;color:var(--text-muted);font-weight:600"></th>
-            </tr></thead>
-            <tbody id="panel-admin-body"></tbody>
-          </table></div>
+
+      <!-- Acordeón: Cobros administrativos -->
+      <div style="border:1.5px solid #ddd6fe;border-radius:12px;margin-bottom:14px;overflow:hidden">
+        <div onclick="togglePanelSec('admin')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#ede9fe;cursor:pointer" id="pcard-admin">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:18px">🏦</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#5b21b6">Cobros administrativos</div>
+              <div style="font-size:11px;color:#6d28d9" id="panel-stat-admin">₡0</div>
+            </div>
+          </div>
+          <span style="font-size:18px;color:#5b21b6" id="arr-panel-admin">▶</span>
+        </div>
+        <div id="panel-sec-admin" style="display:none;padding:12px 16px;background:#fff">
+          <div id="panel-admin-lista"></div>
         </div>
       </div>
-      <!-- Resumen Caja -->
-      <button class="btn btn-blue btn-full" style="padding:13px;font-size:15px;margin-bottom:16px" onclick="mostrarResumenCaja()">🗂 Resumen Caja</button>
+
+      <!-- Resumen de caja (siempre visible) -->
+      <div class="card" style="background:#1f2937;border-radius:14px;padding:16px">
+        <p style="font-size:14px;font-weight:700;color:#fff;margin-bottom:12px">🗂 Resumen de Caja</p>
+        <div class="field-group" style="margin-bottom:10px">
+          <label style="color:#9ca3af">Base (efectivo inicial)</label>
+          <input type="text" inputmode="numeric" id="caja-base" placeholder="0" oninput="fmtMoneyInput(this);calcCaja()" style="width:100%;padding:9px 12px;border:1.5px solid #374151;background:#374151;color:#fff;border-radius:var(--radius);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;font-weight:600">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
+            <span style="font-size:13px;color:#d1d5db">+ Recogida</span>
+            <span style="font-size:13px;font-weight:600;color:#4ade80" id="caja-recogida">₡0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
+            <span style="font-size:13px;color:#d1d5db">+ Base</span>
+            <span style="font-size:13px;font-weight:600;color:#4ade80" id="caja-base-display">₡0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
+            <span style="font-size:13px;color:#d1d5db">− Préstamos realizados</span>
+            <span style="font-size:13px;font-weight:600;color:#f87171" id="caja-prestamos">₡0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
+            <span style="font-size:13px;color:#d1d5db">− Gastos</span>
+            <span style="font-size:13px;font-weight:600;color:#f87171" id="caja-gastos">₡0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:14px 16px;background:#16a34a;border-radius:10px;margin-top:4px">
+            <span style="font-size:16px;font-weight:700;color:#fff">Total Caja</span>
+            <span style="font-size:22px;font-weight:700;color:#fff" id="caja-total">₡0</span>
+          </div>
+          <p style="font-size:10px;color:#6b7280;text-align:center;margin-top:2px">(Recogida + Base − Préstamos − Gastos)</p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2273,21 +2301,21 @@ function marcarVerificado(){
   toast('✓ Documentos verificados — próxima verificación en 2 meses');
 }
 
-var _panelSecAbierta=null;
 function togglePanelSec(sec){
   var secs=['gastos','nuevos','cobros','admin'];
-  if(_panelSecAbierta===sec){
-    document.getElementById('panel-sec-'+sec).style.display='none';
-    document.getElementById('pcard-'+sec).style.border='2px solid transparent';
-    _panelSecAbierta=null;
-  } else {
-    secs.forEach(function(s){
-      document.getElementById('panel-sec-'+s).style.display='none';
-      document.getElementById('pcard-'+s).style.border='2px solid transparent';
-    });
-    document.getElementById('panel-sec-'+sec).style.display='block';
-    document.getElementById('pcard-'+sec).style.border='2px solid #374151';
-    _panelSecAbierta=sec;
+  var el=document.getElementById('panel-sec-'+sec);
+  var abierto=el.style.display!=='none';
+  // Cerrar todos
+  secs.forEach(function(s){
+    document.getElementById('panel-sec-'+s).style.display='none';
+    var a=document.getElementById('arr-panel-'+s);
+    if(a) a.textContent='▶';
+  });
+  // Si estaba cerrado, abrir este
+  if(!abierto){
+    el.style.display='block';
+    var arr=document.getElementById('arr-panel-'+sec);
+    if(arr) arr.textContent='▼';
   }
 }
 
@@ -2311,47 +2339,63 @@ function renderPanelRecolector(){
   document.getElementById('panel-gastos-lista').innerHTML=gastosHtml;
 
   // Préstamos nuevos
-  var nuevos=prestamos.filter(function(p){return p.fechaInicio===fecha;});
-  document.getElementById('panel-stat-nuevos').textContent=nuevos.length;
-  document.getElementById('panel-nuevos-body').innerHTML=nuevos.length
+  var nuevos=prestamos.filter(function(p){return p.fechaInicio===fecha&&!p.incompleto;});
+  var totalNuevos=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0);
+  document.getElementById('panel-stat-nuevos').textContent=nuevos.length+' préstamo'+(nuevos.length!==1?'s':'')+' · ₡'+fmt(totalNuevos);
+  document.getElementById('panel-nuevos-lista').innerHTML=nuevos.length
     ?nuevos.map(function(p){
-      return '<tr style="border-bottom:1px solid var(--border)">'
-        +'<td style="padding:7px 4px;font-size:12px">'+p.cliente+'</td>'
-        +'<td style="padding:7px 4px;font-size:12px;text-align:right;font-weight:600;color:#2563eb">₡'+fmt(p.montoPrestado)+'</td>'
-        +'<td style="padding:7px 4px;text-align:center"><button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button></td>'
-        +'</tr>';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">'
+        +'<div><div style="font-size:13px;font-weight:600">'+p.cliente+'</div><div style="font-size:11px;color:var(--text-muted)">'+p.tipo+'</div></div>'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+        +'<span style="font-size:13px;font-weight:700;color:#2563eb">₡'+fmt(p.montoPrestado)+'</span>'
+        +'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
+        +'</div></div>';
     }).join('')
-    :'<tr><td colspan="3" style="padding:10px 4px;font-size:13px;color:var(--text-muted)">Sin préstamos nuevos</td></tr>';
+    :'<p style="font-size:13px;color:var(--text-muted)">Sin préstamos nuevos</p>';
 
   // Cobros realizados
   var pagosHoy=pagos.filter(function(x){return x.fechaPago===fecha;});
-  document.getElementById('panel-stat-cobros').textContent=pagosHoy.length;
-  document.getElementById('panel-cobros-body').innerHTML=pagosHoy.length
+  var totalCobros=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
+  document.getElementById('panel-stat-cobros').textContent=pagosHoy.length+' cobro'+(pagosHoy.length!==1?'s':'')+' · ₡'+fmt(totalCobros);
+  document.getElementById('panel-cobros-lista').innerHTML=pagosHoy.length
     ?pagosHoy.map(function(pg){
       var p=prestamos.find(function(x){return x.id===pg.id_prestamo;});
-      return '<tr style="border-bottom:1px solid var(--border)">'
-        +'<td style="padding:7px 4px;font-size:12px">'+(p?p.cliente:'—')+'</td>'
-        +'<td style="padding:7px 4px;font-size:12px;text-align:right;font-weight:600;color:#166534">₡'+fmt(pg.montoAbonado)+'</td>'
-        +'<td style="padding:7px 4px;text-align:center">'+(p?'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button>':'')+'</td>'
-        +'</tr>';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">'
+        +'<div><div style="font-size:13px;font-weight:600">'+(p?p.cliente:'—')+'</div><div style="font-size:11px;color:var(--text-muted)">'+pg.fechaPago+'</div></div>'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+        +'<span style="font-size:13px;font-weight:700;color:#166534">₡'+fmt(pg.montoAbonado)+'</span>'
+        +(p?'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button>':'')
+        +'</div></div>';
     }).join('')
-    :'<tr><td colspan="3" style="padding:10px 4px;font-size:13px;color:var(--text-muted)">Sin cobros</td></tr>';
+    :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros registrados</p>';
 
   // Cobros admin
   var adminHoy=cobrosAdmin.filter(function(x){return x.fecha===fecha;});
   var totalAdmin=adminHoy.reduce(function(s,x){return s+x.monto;},0);
   document.getElementById('panel-stat-admin').textContent='₡'+fmt(totalAdmin);
-  document.getElementById('panel-admin-body').innerHTML=adminHoy.length
+  document.getElementById('panel-admin-lista').innerHTML=adminHoy.length
     ?adminHoy.map(function(ca){
       var p=prestamos.find(function(x){return x.id===ca.id_prestamo;});
-      return '<tr style="border-bottom:1px solid var(--border)">'
-        +'<td style="padding:7px 4px;font-size:12px">'+ca.cliente+'</td>'
-        +'<td style="padding:7px 4px;font-size:12px;text-align:right;font-weight:600;color:#5b21b6">₡'+fmt(ca.monto)+'</td>'
-        +'<td style="padding:7px 4px;font-size:12px;text-align:right;color:var(--text-muted)">₡'+fmt(p?p.montoPrestado:0)+'</td>'
-        +'<td style="padding:7px 4px;text-align:center">'+(p?'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button>':'')+'</td>'
-        +'</tr>';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">'
+        +'<div><div style="font-size:13px;font-weight:600">'+ca.cliente+'</div><div style="font-size:11px;color:var(--text-muted)">Renovación</div></div>'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+        +'<span style="font-size:13px;font-weight:700;color:#5b21b6">₡'+fmt(ca.monto)+'</span>'
+        +(p?'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button>':'')
+        +'</div></div>';
     }).join('')
-    :'<tr><td colspan="4" style="padding:10px 4px;font-size:13px;color:var(--text-muted)">Sin cobros administrativos</td></tr>';
+    :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros administrativos</p>';
+
+  // Resumen de caja (siempre visible al final)
+  var baseKey='fjd_base_'+fecha;
+  var baseGuardada=parseInt(localStorage.getItem(baseKey)||'0',10)||0;
+  var recogidaTotal=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
+  var prestamosTotal=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0);
+  document.getElementById('caja-base').value=baseGuardada>0?fmt(baseGuardada):'';
+  document.getElementById('caja-recogida').textContent='₡'+fmt(recogidaTotal);
+  document.getElementById('caja-base-display').textContent='₡'+fmt(baseGuardada);
+  document.getElementById('caja-prestamos').textContent='₡'+fmt(prestamosTotal);
+  document.getElementById('caja-gastos').textContent='₡'+fmt(totalGastos);
+  document.getElementById('caja-total').textContent='₡'+fmt(recogidaTotal+baseGuardada-prestamosTotal-totalGastos);
 }
 
 function abrirNuevoGasto(){
