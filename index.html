@@ -1604,12 +1604,15 @@ function continuarClienteIncompleto(id){
 function renderTarjetas(filtro){
   var lista=document.getElementById('tarjetas-lista');
   var f=(filtro||'').toLowerCase().trim();
-  var items=prestamosVisibles().filter(function(p){
+  var todos=prestamosVisibles();
+  var items=todos.filter(function(p){
     if(f) return p.cliente.toLowerCase().includes(f);
-    if(p.incompleto) return false;
+    // Mostrar incompletos siempre (para que se puedan completar o eliminar)
+    if(p.incompleto) return true;
+    // Mostrar activos (con saldo pendiente)
     return calcDerived(p).saldoPendiente>0;
   });
-  var totalActivos=prestamosVisibles().filter(function(p){return !p.incompleto&&calcDerived(p).saldoPendiente>0;}).length;
+  var totalActivos=todos.filter(function(p){return !p.incompleto&&calcDerived(p).saldoPendiente>0;}).length;
   document.getElementById('tarjetas-titulo').textContent='Tarjetas activas ('+totalActivos+')'+(f?' · Búsqueda: '+items.length:'');
   if(!items.length){
     lista.innerHTML='<div style="padding:14px"><span class="no-data">No hay préstamos.</span></div>';
