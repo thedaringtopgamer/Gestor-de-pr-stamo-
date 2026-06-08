@@ -1066,16 +1066,18 @@ function mostrarApp(){
   // Mostrar etiqueta de ruta en navbar
   var lbl=document.getElementById('navbar-ruta-label');
   if(lbl) lbl.textContent=rutaActual==='todas'?'🌐 Todas':'📍 '+rutaActual;
-  // Restaurar última pantalla al recargar
-  var ultimaPantalla=localStorage.getItem('fjd_pantalla');
+  // sessionStorage se borra al cerrar la app completamente, pero sobrevive recargas en segundo plano
+  // → Si no hay pantalla en sessionStorage, la app fue cerrada: ir a cobros
+  // → Si hay pantalla, la app estaba en segundo plano: restaurar donde estaba
+  var ultimaPantalla=sessionStorage.getItem('fjd_pantalla');
+  sessionStorage.setItem('fjd_pantalla','screen-cobros'); // default para próxima vez
   if(ultimaPantalla && document.getElementById(ultimaPantalla)){
     if(ultimaPantalla==='screen-detalle'){
-      var detId=localStorage.getItem('fjd_detalle_id');
+      var detId=sessionStorage.getItem('fjd_detalle_id');
       if(detId && prestamos.find(function(x){return x.id===detId;})){
         verDetalle(detId); return;
       }
     }
-    // Al recargar, nunca volver a pantallas de formulario — ir a tarjetas
     if(['screen-nuevo-cliente','screen-documentos','screen-nuevo-prestamo'].indexOf(ultimaPantalla)!==-1){
       goTo('screen-tarjetas'); return;
     }
@@ -1283,8 +1285,8 @@ function toast(msg){
 var _pantallasRestaurables=['screen-cobros','screen-tarjetas','screen-panel-recolector','screen-home','screen-detalle','screen-renovar','screen-docs-cliente'];
 
 function _guardarPantalla(id){
-  localStorage.setItem('fjd_pantalla',id);
-  if(id==='screen-detalle'&&currentId) localStorage.setItem('fjd_detalle_id',currentId);
+  sessionStorage.setItem('fjd_pantalla',id);
+  if(id==='screen-detalle'&&currentId) sessionStorage.setItem('fjd_detalle_id',currentId);
   if(['screen-nuevo-cliente','screen-documentos','screen-nuevo-prestamo'].indexOf(id)!==-1){
     try{ localStorage.setItem('fjd_cliente_temp',JSON.stringify(clienteTemporal)); }catch(e){}
   }
