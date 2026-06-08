@@ -1076,19 +1076,9 @@ function mostrarApp(){
         verDetalle(detId); return;
       }
     }
+    // Al recargar, nunca volver a pantallas de formulario — ir a tarjetas
     if(['screen-nuevo-cliente','screen-documentos','screen-nuevo-prestamo'].indexOf(ultimaPantalla)!==-1){
-      try{
-        var ct=localStorage.getItem('fjd_cliente_temp');
-        if(ct) clienteTemporal=JSON.parse(ct);
-      }catch(e){}
-      if(clienteTemporal.nombre){
-        document.getElementById('nc-nombre').value=clienteTemporal.nombre||'';
-        document.getElementById('nc-cedula').value=clienteTemporal.cedula||'';
-        document.getElementById('nc-telefono').value=clienteTemporal.telefono||'';
-        document.getElementById('nc-ruta').value=clienteTemporal.ruta||'';
-        onRutaChange();
-        setTimeout(function(){ if(clienteTemporal.subruta) document.getElementById('nc-subruta').value=clienteTemporal.subruta; },50);
-      }
+      goTo('screen-tarjetas'); return;
     }
     goTo(ultimaPantalla);
   } else {
@@ -1260,7 +1250,7 @@ function toast(msg){
 }
 
 // Pantallas que se pueden restaurar al refrescar (tienen datos persistentes)
-var _pantallasRestaurables=['screen-cobros','screen-tarjetas','screen-panel-recolector','screen-home','screen-detalle','screen-renovar','screen-docs-cliente','screen-nuevo-cliente','screen-documentos','screen-nuevo-prestamo'];
+var _pantallasRestaurables=['screen-cobros','screen-tarjetas','screen-panel-recolector','screen-home','screen-detalle','screen-renovar','screen-docs-cliente'];
 
 function _guardarPantalla(id){
   localStorage.setItem('fjd_pantalla',id);
