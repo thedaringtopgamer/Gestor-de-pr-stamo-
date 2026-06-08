@@ -158,8 +158,15 @@
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:500;z-index:999;opacity:0;transition:opacity 0.25s;pointer-events:none;white-space:nowrap}
   .toast.show{opacity:1}
 
+  /* PANTALLA DE CARGA */
+  .splash-screen{position:fixed;inset:0;background:linear-gradient(135deg,#0ea5e9 0%,#2563eb 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10000}
+  .splash-screen .splash-logo{font-size:52px;margin-bottom:16px}
+  .splash-screen h1{font-size:24px;font-weight:700;color:#fff;margin:0 0 32px}
+  .splash-spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
   /* LOGIN */
-  .login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#0ea5e9 0%,#2563eb 100%);display:flex;align-items:center;justify-content:center;z-index:9999}
+  .login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#0ea5e9 0%,#2563eb 100%);display:none;align-items:center;justify-content:center;z-index:9999}
   .login-box{background:#fff;border-radius:20px;padding:32px 24px;width:320px;max-width:90vw;box-shadow:0 8px 40px rgba(0,0,0,0.18)}
   .login-logo{text-align:center;margin-bottom:24px}
   .login-logo h1{font-size:24px;font-weight:600;color:#1e40af}
@@ -174,6 +181,13 @@
 </style>
 </head>
 <body>
+
+<!-- PANTALLA DE CARGA -->
+<div class="splash-screen" id="splash-screen">
+  <div class="splash-logo">💰</div>
+  <h1>Financiera JD</h1>
+  <div class="splash-spinner"></div>
+</div>
 
 <!-- PANTALLA DE LOGIN -->
 <div class="login-screen" id="login-screen">
@@ -1078,6 +1092,7 @@ function cerrarSesion(){
   localStorage.removeItem('fjd_cliente_temp');
   document.getElementById('app').style.display='none';
   document.getElementById('login-screen').style.display='flex';
+  document.getElementById('splash-screen').style.display='none';
   document.getElementById('login-user').value='';
   document.getElementById('login-pass').value='';
   closeMenu();
@@ -2764,8 +2779,11 @@ function fechaOffset(dias){
   }
   calcPreview();
   updateHome();
+  document.getElementById('splash-screen').style.display='none';
   if(localStorage.getItem('fjd_session')==='1'){
     mostrarApp();
+  } else {
+    document.getElementById('login-screen').style.display='flex';
   }
 })();
 </script>
