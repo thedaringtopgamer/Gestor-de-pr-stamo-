@@ -204,16 +204,25 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <h1>💰 Financiera JD</h1>
       <p>Acceso Administrador</p>
     </div>
-    <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
-    <div class="login-field">
-      <label>Usuario</label>
-      <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="login-user" placeholder="Ingrese usuario" autocomplete="username">
+    <div class="login-error" id="login-error"></div>
+    <!-- Paso 1: ingresar correo -->
+    <div id="login-step-email">
+      <div class="login-field">
+        <label>Correo electrónico</label>
+        <input type="email" id="login-email" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="correo@ejemplo.com" onkeydown="if(event.key==='Enter')loginEnviarCodigo()">
+      </div>
+      <button class="login-btn" onclick="loginEnviarCodigo()">Enviar código</button>
     </div>
-    <div class="login-field">
-      <label>Contraseña</label>
-      <input type="password" id="login-pass" placeholder="Ingrese contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <!-- Paso 2: ingresar código -->
+    <div id="login-step-codigo" style="display:none">
+      <p style="font-size:13px;color:#64748b;text-align:center;margin-bottom:16px">Se envió un código a <strong id="login-email-mostrado"></strong></p>
+      <div class="login-field">
+        <label>Código de verificación</label>
+        <input type="text" id="login-codigo" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric" maxlength="6" placeholder="000000" onkeydown="if(event.key==='Enter')loginVerificarCodigo()">
+      </div>
+      <button class="login-btn" onclick="loginVerificarCodigo()">Verificar</button>
+      <button style="width:100%;margin-top:8px;padding:10px;background:none;border:none;color:#64748b;font-size:13px;cursor:pointer" onclick="loginVolverEmail()">← Cambiar correo</button>
     </div>
-    <button class="login-btn" onclick="doLogin()">Ingresar</button>
   </div>
 </div>
 
@@ -1107,26 +1116,90 @@ var USUARIOS=[
 var rolActual=localStorage.getItem('fjd_rol')||'ruta';
 var rutaActual=localStorage.getItem('fjd_ruta_actual')||'todas';
 
-function doLogin(){
-  var u=document.getElementById('login-user').value.trim();
-  var p=document.getElementById('login-pass').value;
-  var err=document.getElementById('login-error');
-  var usr=USUARIOS.find(function(x){return x.user===u&&x.pass===p&&x.rol==='admin';});
-  if(usr){
-    var loginTs=Date.now();
-    localStorage.setItem('fjd_session','1');
-    localStorage.setItem('fjd_rol','admin');
-    localStorage.setItem('fjd_login_ts',loginTs.toString());
-    localStorage.setItem('fjd_login_ruta','todas');
-    localStorage.setItem('fjd_login_user',usr.user);
-    rolActual='admin';
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('ruta-selector').style.display='flex';
-  } else {
-    err.style.display='block';
-    err.textContent='Acceso denegado';
-    document.getElementById('login-pass').value='';
-  }
+var ADMIN_EMAILS=['thedaringtopgamer@gmail.com'];
+var _loginEmailActual='';
+
+function _loginSetError(msg){
+  var el=document.getElementById('login-error');
+  if(msg){el.style.display='block';el.textContent=msg;}
+  else{el.style.display='none';el.textContent='';}
+}
+
+function loginEnviarCodigo(){
+  var email=document.getElementById('login-email').value.trim().toLowerCase();
+  _loginSetError('');
+  if(!email){_loginSetError('Ingrese su correo electrónico');return;}
+  if(ADMIN_EMAILS.indexOf(email)<0){_loginSetError('Correo no autorizado como administrador');return;}
+  var btn=document.querySelector('#login-step-email .login-btn');
+  btn.disabled=true; btn.textContent='Enviando...';
+  fetch(SUPA_URL+'/auth/v1/otp',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SUPA_KEY},
+    body:JSON.stringify({email:email,create_user:false})
+  }).then(function(r){
+    btn.disabled=false; btn.textContent='Enviar código';
+    if(r.ok||r.status===204||r.status===200){
+      _loginEmailActual=email;
+      document.getElementById('login-email-mostrado').textContent=email;
+      document.getElementById('login-step-email').style.display='none';
+      document.getElementById('login-step-codigo').style.display='block';
+      document.getElementById('login-codigo').value='';
+      document.getElementById('login-codigo').focus();
+    } else {
+      return r.json().then(function(j){_loginSetError(j.message||'Error al enviar código');});
+    }
+  }).catch(function(){
+    btn.disabled=false; btn.textContent='Enviar código';
+    _loginSetError('Error de conexión. Intente de nuevo.');
+  });
+}
+
+function loginVerificarCodigo(){
+  var token=document.getElementById('login-codigo').value.trim();
+  _loginSetError('');
+  if(!token||token.length<6){_loginSetError('Ingrese el código de 6 dígitos');return;}
+  var btn=document.querySelector('#login-step-codigo .login-btn');
+  btn.disabled=true; btn.textContent='Verificando...';
+  fetch(SUPA_URL+'/auth/v1/verify',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SUPA_KEY},
+    body:JSON.stringify({type:'email',email:_loginEmailActual,token:token})
+  }).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+  .then(function(res){
+    btn.disabled=false; btn.textContent='Verificar';
+    if(res.ok&&res.j.access_token){
+      var loginTs=Date.now();
+      localStorage.setItem('fjd_session','1');
+      localStorage.setItem('fjd_rol','admin');
+      localStorage.setItem('fjd_login_ts',loginTs.toString());
+      localStorage.setItem('fjd_login_ruta','todas');
+      localStorage.setItem('fjd_login_user',_loginEmailActual);
+      rolActual='admin';
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('ruta-selector').style.display='flex';
+    } else {
+      _loginSetError(res.j.message||'Código incorrecto o expirado');
+      document.getElementById('login-codigo').value='';
+    }
+  }).catch(function(){
+    btn.disabled=false; btn.textContent='Verificar';
+    _loginSetError('Error de conexión. Intente de nuevo.');
+  });
+}
+
+function loginVolverEmail(){
+  _loginSetError('');
+  document.getElementById('login-step-codigo').style.display='none';
+  document.getElementById('login-step-email').style.display='block';
+}
+
+function _resetLoginForm(){
+  document.getElementById('login-step-email').style.display='block';
+  document.getElementById('login-step-codigo').style.display='none';
+  document.getElementById('login-email').value='';
+  document.getElementById('login-codigo').value='';
+  _loginSetError('');
+  _loginEmailActual='';
 }
 
 // ── Pantalla de espera para dispositivos de ruta ───────────────────
@@ -1278,9 +1351,8 @@ function _forzarLogout(){
     mostrarEspera();
     if(rutaAnterior) setTimeout(function(){ solicitarAcceso(rutaAnterior); },500);
   } else {
+    _resetLoginForm();
     document.getElementById('login-screen').style.display='flex';
-    document.getElementById('login-user').value='';
-    document.getElementById('login-pass').value='';
   }
 }
 
