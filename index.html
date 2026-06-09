@@ -2732,6 +2732,7 @@ function abonoRapido(id,nombre,cuota){
     guardarDatos();
     toast('✓ ₡'+fmt(cuota)+' abonado a '+nombre);
     renderCobros();
+    setTimeout(function(){ ofrecerWhatsApp(id,'abono'); },400);
   };
   document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
 }
