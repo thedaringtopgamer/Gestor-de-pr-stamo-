@@ -1593,6 +1593,21 @@ function guardarPrestamo(){
     });
   }
   guardarDatos();
+  // Construir mensaje WhatsApp
+  var p=existente||(prestamos[prestamos.length-1]);
+  var proxFecha=p.proximaFechaPago||fecha;
+  var tipoCuota=cd.tipo==='Diario'?'diaria':cd.tipo==='Semanal'?'semanal':'quincenal';
+  var msg='Hola '+nombre+' 👋\n'
+    +'Te confirmamos tu préstamo con *Financiera JD*:\n\n'
+    +'💰 *Monto prestado:* ₡'+fmt(monto)+'\n'
+    +'📈 *Intereses ('+tasa+'%):* ₡'+fmt(intereses)+'\n'
+    +'💵 *Total a pagar:* ₡'+fmt(totalCobrar)+'\n'
+    +'🗓 *Cuotas:* '+cd.cuotas+' pagos '+tipoCuota+'s de ₡'+fmt(cuotaVal)+'\n'
+    +'📅 *Fecha inicio:* '+fecha+'\n'
+    +'📅 *Próximo pago:* '+proxFecha+'\n\n'
+    +'¡Gracias por confiar en nosotros! 🙌';
+  var tel=(clienteTemporal.telefono||p.telefono||'').replace(/\D/g,'');
+  var waUrl='https://wa.me/'+(tel?'506'+tel:'')+'?text='+encodeURIComponent(msg);
   clienteTemporal={};
   sessionStorage.removeItem('fjd_cliente_temp');
   document.getElementById('nc-nombre').value='';
@@ -1606,8 +1621,22 @@ function guardarPrestamo(){
   document.getElementById('np-tasa').value='20';
   document.getElementById('np-fecha').value=new Date().toISOString().split('T')[0];
   calcPreview();
-  toast('✓ Cliente guardado: '+nombre);
-  goTo('screen-cobros');
+  // Modal WhatsApp
+  var modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:24px;max-width:360px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.2)">'
+    +'<p style="font-size:16px;font-weight:800;margin-bottom:8px">✅ Préstamo guardado</p>'
+    +'<p style="font-size:13px;color:#374151;margin-bottom:16px">¿Desea enviarle el resumen al cliente por WhatsApp?</p>'
+    +'<pre style="background:#f0fdf4;border-radius:10px;padding:12px;font-size:11px;font-family:monospace;white-space:pre-wrap;color:#166534;margin-bottom:16px">'+msg+'</pre>'
+    +'<div style="display:flex;gap:10px">'
+      +'<button onclick="this.closest(\'[style*=fixed]\').remove();goTo(\'screen-cobros\')" style="flex:1;padding:12px;border:1.5px solid #e5e7eb;background:#fff;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;color:#374151">Omitir</button>'
+      +'<a href="'+waUrl+'" target="_blank" id="wa-send-btn" style="flex:1;padding:12px;background:#22c55e;color:#fff;border-radius:10px;font-size:14px;font-weight:700;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px">📲 Enviar</a>'
+    +'</div>'
+    +'</div>';
+  document.body.appendChild(modal);
+  modal.querySelector('#wa-send-btn').addEventListener('click',function(){
+    setTimeout(function(){ modal.remove(); goTo('screen-cobros'); },400);
+  });
 }
 
 function prestamosVisibles(){
