@@ -1528,10 +1528,10 @@ function calcProxFechaPago(){
   var proxEl=document.getElementById('np-prox-fecha');
   if(!fechaEl||!proxEl||!fechaEl.value) return;
   var cd=getCuotasYDias();
-  var d=new Date(parseLocalDate(fechaEl.value));
+  var d=parseLocalDate(fechaEl.value);
   d.setDate(d.getDate()+cd.diasPorCuota);
   d=siguienteDiaHabil(d);
-  proxEl.value=d.toISOString().split('T')[0];
+  proxEl.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
 function getCuotasYDias(){
@@ -1585,7 +1585,7 @@ function guardarPrestamo(){
   var proxD=proxFechaInput?parseLocalDate(proxFechaInput):(function(){
     var d=new Date(parseLocalDate(fecha)); d.setDate(d.getDate()+cd.diasPorCuota); return siguienteDiaHabil(d);
   })();
-  var proxFechaISO=proxD.toISOString().split('T')[0];
+  var proxFechaISO=proxD.getFullYear()+'-'+String(proxD.getMonth()+1).padStart(2,'0')+'-'+String(proxD.getDate()).padStart(2,'0');
   var existente=clienteTemporal._id?prestamos.find(function(x){return x.id===clienteTemporal._id;}):null;
   if(existente){
     existente.cliente=nombre;
