@@ -1524,11 +1524,10 @@ function onTipoChange(){
 }
 
 function calcProxFechaPago(){
-  var fechaEl=document.getElementById('np-fecha');
   var proxEl=document.getElementById('np-prox-fecha');
-  if(!fechaEl||!proxEl||!fechaEl.value) return;
+  if(!proxEl) return;
   var cd=getCuotasYDias();
-  var d=parseLocalDate(fechaEl.value);
+  var d=parseLocalDate(hoyLocal());
   d.setDate(d.getDate()+cd.diasPorCuota);
   d=siguienteDiaHabil(d);
   proxEl.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
