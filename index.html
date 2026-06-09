@@ -2291,20 +2291,17 @@ function renderTarjetas(filtro){
   var f=(filtro||'').toLowerCase().trim();
   var todos=prestamosVisibles();
   var items=todos.filter(function(p){
-    var cancelado=!p.incompleto&&calcDerived(p).saldoPendiente<=0;
-    if(f){
-      // Con búsqueda: mostrar todo (activos, incompletos, cancelados)
-      return p.cliente.toLowerCase().includes(f);
-    }
-    // Sin búsqueda: ocultar cancelados, mostrar activos e incompletos
-    if(cancelado) return false;
+    if(f) return p.cliente.toLowerCase().includes(f);
+    // Sin búsqueda: solo activas completas con saldo pendiente
+    if(p.incompleto) return false;
+    if(calcDerived(p).saldoPendiente<=0) return false;
     return true;
   });
   items.sort(function(a,b){return a.cliente.localeCompare(b.cliente,'es');});
   var totalActivos=todos.filter(function(p){return !p.incompleto&&calcDerived(p).saldoPendiente>0;}).length;
   var totalIncompletos=todos.filter(function(p){return p.incompleto;}).length;
   var titulo='Tarjetas activas ('+totalActivos+')';
-  if(totalIncompletos>0) titulo+=' · Incompletas ('+totalIncompletos+')';
+  if(totalIncompletos>0&&!f) titulo+=' · ⚠️ '+totalIncompletos+' incompleta'+(totalIncompletos===1?'':'s')+' (busca el nombre)';
   if(f) titulo+=' · Búsqueda: '+items.length;
   document.getElementById('tarjetas-titulo').textContent=titulo;
   if(!items.length){
