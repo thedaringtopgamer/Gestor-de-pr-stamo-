@@ -1238,7 +1238,7 @@ function _enviarHeartbeat(){
     var sesiones=(rows&&rows[0]&&rows[0].value)||{};
     sesiones[deviceId]=sesion;
     // Limpiar sesiones viejas (más de 2 minutos)
-    var cutoff=Date.now()-120000;
+    var cutoff=Date.now()-30000;
     Object.keys(sesiones).forEach(function(k){ if(sesiones[k].lastSeen<cutoff) delete sesiones[k]; });
     return fetch(SUPA_URL+'/rest/v1/app_data',{
       method:'POST',
@@ -1257,7 +1257,7 @@ function _iniciarHeartbeat(){
       _pedirUbicacion();
       _enviarHeartbeat();
     }
-  },30000);
+  },10000);
 }
 
 // ── Ver dispositivos conectados ────────────────────────────────────
@@ -1266,7 +1266,7 @@ function verDispositivosConectados(){
   .then(function(r){return r.ok?r.json():[];})
   .then(function(rows){
     var sesiones=(rows&&rows[0]&&rows[0].value)||{};
-    var cutoff=Date.now()-120000;
+    var cutoff=Date.now()-20000;
     var activos=Object.values(sesiones).filter(function(s){return s.lastSeen>=cutoff;});
     activos.sort(function(a,b){return b.lastSeen-a.lastSeen;});
     var modal=document.createElement('div');
