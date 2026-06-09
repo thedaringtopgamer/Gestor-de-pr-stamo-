@@ -1576,7 +1576,7 @@ function calcPreview(){
   document.getElementById('np-monto-total').textContent='₡'+fmt(totalCobrar);
   document.getElementById('np-intereses').textContent='₡'+fmt(intereses);
   document.getElementById('np-cuota-val').textContent='₡'+fmt(cuotaVal);
-  document.getElementById('np-saldo').textContent='₡'+fmt(monto);
+  var saldoEl=document.getElementById('np-saldo'); if(saldoEl) saldoEl.textContent='₡'+fmt(monto);
 }
 
 function guardarPrestamo(){
