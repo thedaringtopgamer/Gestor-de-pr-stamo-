@@ -593,8 +593,9 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <span class="vbox" id="np-cuota-val">₡0</span>
       </div>
       <div class="field-group">
-        <label>Fecha inicio *</label>
-        <input type="date" id="np-fecha" oninput="calcProxFechaPago()">
+        <label>Fecha inicio</label>
+        <div style="padding:10px 12px;background:#f3f4f6;border-radius:var(--radius);font-size:14px;font-weight:600;color:#374151" id="np-fecha-display">—</div>
+        <input type="hidden" id="np-fecha">
       </div>
       <div class="field-group">
         <label>Próxima fecha de pago *</label>
@@ -1648,7 +1649,12 @@ function guardarPrestamo(){
   document.getElementById('np-cliente-display').textContent='—';
   document.getElementById('np-monto').value='';
   document.getElementById('np-tasa').value='20';
-  document.getElementById('np-fecha').value=new Date().toISOString().split('T')[0];
+  var _hoy=new Date().toISOString().split('T')[0];
+  document.getElementById('np-fecha').value=_hoy;
+  var _hoyParts=_hoy.split('-');
+  var _hoyDisp=parseInt(_hoyParts[2])+'/'+parseInt(_hoyParts[1])+'/'+_hoyParts[0];
+  var _dispEl=document.getElementById('np-fecha-display');
+  if(_dispEl) _dispEl.textContent=_hoyDisp;
   document.getElementById('np-prox-fecha').value='';
   calcPreview();
   calcProxFechaPago();
