@@ -568,10 +568,10 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Seleccione período:</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <label style="display:flex;align-items:center;gap:6px;padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500" id="lbl-s5">
-              <input type="radio" name="np-semanas" value="5" checked onchange="calcPreview()" style="accent-color:var(--cyan)"> 5 semanas
+              <input type="radio" name="np-semanas" value="5" checked onchange="calcPreview();calcProxFechaPago()" style="accent-color:var(--cyan)"> 5 semanas
             </label>
             <label style="display:flex;align-items:center;gap:6px;padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500" id="lbl-s6">
-              <input type="radio" name="np-semanas" value="6" onchange="calcPreview()" style="accent-color:var(--cyan)"> 6 semanas
+              <input type="radio" name="np-semanas" value="6" onchange="calcPreview();calcProxFechaPago()" style="accent-color:var(--cyan)"> 6 semanas
             </label>
           </div>
         </div>
@@ -580,10 +580,10 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Seleccione período:</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <label style="display:flex;align-items:center;gap:6px;padding:9px 10px;border:1.5px solid var(--cyan);background:#f0f9ff;border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500" id="lbl-q2">
-              <input type="radio" name="np-quincenas" value="2" checked onchange="calcPreview()" style="accent-color:var(--cyan)"> 2 quincenas
+              <input type="radio" name="np-quincenas" value="2" checked onchange="calcPreview();calcProxFechaPago()" style="accent-color:var(--cyan)"> 2 quincenas
             </label>
             <label style="display:flex;align-items:center;gap:6px;padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500" id="lbl-q3">
-              <input type="radio" name="np-quincenas" value="3" onchange="calcPreview()" style="accent-color:var(--cyan)"> 3 quincenas
+              <input type="radio" name="np-quincenas" value="3" onchange="calcPreview();calcProxFechaPago()" style="accent-color:var(--cyan)"> 3 quincenas
             </label>
           </div>
         </div>
@@ -594,7 +594,11 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       </div>
       <div class="field-group">
         <label>Fecha inicio *</label>
-        <input type="date" id="np-fecha">
+        <input type="date" id="np-fecha" oninput="calcProxFechaPago()">
+      </div>
+      <div class="field-group">
+        <label>Próxima fecha de pago *</label>
+        <input type="date" id="np-prox-fecha" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
       </div>
       <div style="display:flex;gap:12px;margin-bottom:6px">
         <div>
@@ -1507,6 +1511,18 @@ function onTipoChange(){
     lbl.style.background=sel?'#f0f9ff':'';
   });
   calcPreview();
+  calcProxFechaPago();
+}
+
+function calcProxFechaPago(){
+  var fechaEl=document.getElementById('np-fecha');
+  var proxEl=document.getElementById('np-prox-fecha');
+  if(!fechaEl||!proxEl||!fechaEl.value) return;
+  var cd=getCuotasYDias();
+  var d=new Date(parseLocalDate(fechaEl.value));
+  d.setDate(d.getDate()+cd.diasPorCuota);
+  d=siguienteDiaHabil(d);
+  proxEl.value=d.toISOString().split('T')[0];
 }
 
 function getCuotasYDias(){
@@ -1555,10 +1571,11 @@ function guardarPrestamo(){
   var cd=getCuotasYDias();
   var cuotaVal=cd.cuotas>0?Math.round(totalCobrar/cd.cuotas):0;
   // Si ya existe como incompleto, actualizar en lugar de crear nuevo
-  // Calcular próxima fecha de pago: fechaInicio + diasPorCuota, saltando fines de semana
-  var proxD=new Date(parseLocalDate(fecha));
-  proxD.setDate(proxD.getDate()+cd.diasPorCuota);
-  proxD=siguienteDiaHabil(proxD);
+  // Próxima fecha de pago: usa lo que eligió el usuario, o calcula automático como fallback
+  var proxFechaInput=document.getElementById('np-prox-fecha').value;
+  var proxD=proxFechaInput?parseLocalDate(proxFechaInput):(function(){
+    var d=new Date(parseLocalDate(fecha)); d.setDate(d.getDate()+cd.diasPorCuota); return siguienteDiaHabil(d);
+  })();
   var proxFechaISO=proxD.toISOString().split('T')[0];
   var existente=clienteTemporal._id?prestamos.find(function(x){return x.id===clienteTemporal._id;}):null;
   if(existente){
@@ -1632,7 +1649,9 @@ function guardarPrestamo(){
   document.getElementById('np-monto').value='';
   document.getElementById('np-tasa').value='20';
   document.getElementById('np-fecha').value=new Date().toISOString().split('T')[0];
+  document.getElementById('np-prox-fecha').value='';
   calcPreview();
+  calcProxFechaPago();
   // Modal WhatsApp
   var modal=document.createElement('div');
   modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
