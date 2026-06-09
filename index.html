@@ -3416,6 +3416,7 @@ function fechaOffset(dias){
         if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
         if(row.key==='inversiones'&&Array.isArray(row.value)) inversiones=row.value;
         if(row.key==='fotos'&&row.value&&typeof row.value==='object') fotosMap=row.value;
+        if(row.key==='session_revoked'&&row.value&&typeof row.value==='object') window._sessionRevoked=row.value;
       });
       // Fusionar fotos de vuelta en los préstamos
       if(Object.keys(fotosMap).length){
@@ -3450,13 +3451,27 @@ function fechaOffset(dias){
 
   try{
     if(localStorage.getItem('fjd_session')==='1'){
-      mostrarApp();
-      _verificarRevocacion();
+      // Verificar revocación ANTES de mostrar la app
+      var _rol=localStorage.getItem('fjd_rol')||'ruta';
+      var _revocado=false;
+      if(_rol!=='admin' && window._sessionRevoked){
+        var _loginTs=parseInt(localStorage.getItem('fjd_login_ts')||'0');
+        var _loginRuta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
+        var _revokeTs=(window._sessionRevoked[_loginRuta]||window._sessionRevoked['todas'])||0;
+        if(_revokeTs>_loginTs){ _revocado=true; }
+      }
+      if(_revocado){
+        localStorage.removeItem('fjd_session'); localStorage.removeItem('fjd_rol');
+        localStorage.removeItem('fjd_login_ts'); localStorage.removeItem('fjd_login_ruta');
+        document.getElementById('login-screen').style.display='flex';
+        toast('⚠ Su sesión fue cerrada. Inicie sesión nuevamente.');
+      } else {
+        mostrarApp();
+      }
     } else {
       document.getElementById('login-screen').style.display='flex';
     }
   }catch(e){
-    // Si todo falla, mostrar login para que pueda entrar
     document.getElementById('login-screen').style.display='flex';
   }
 
