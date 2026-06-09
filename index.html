@@ -2700,12 +2700,15 @@ function modalCancelar(){
   document.getElementById('modal-overlay').style.display='none';
   _modalCallback=null;
 }
-function _autoProximaFecha(p){
+function _autoProximaFecha(p, montoAbonado){
   var d=calcDerived(p);
   if(d.saldoPendiente<=0){ p.proximaFechaPago=null; return; }
-  // Base = fecha programada en la tarjeta (proximaFechaPago actual), no la fecha en que se cobró
+  // Cuántas cuotas cubre este abono (mínimo 1)
+  var cuota=p.Cuota_Quincenal||1;
+  var cuotasCubiertas=montoAbonado?Math.max(1,Math.floor(montoAbonado/cuota)):1;
+  // Base = fecha programada en la tarjeta
   var base=p.proximaFechaPago?parseLocalDate(p.proximaFechaPago):parseLocalDate(p.fechaInicio);
-  base.setDate(base.getDate()+(p.diasPorCuota||15));
+  base.setDate(base.getDate()+(p.diasPorCuota||15)*cuotasCubiertas);
   base=siguienteDiaHabil(base);
   p.proximaFechaPago=base.getFullYear()+'-'+String(base.getMonth()+1).padStart(2,'0')+'-'+String(base.getDate()).padStart(2,'0');
 }
@@ -2726,7 +2729,7 @@ function abonoRapido(id,nombre,cuota){
       montoAbonado:cuota
     });
     var pp=prestamos.find(function(x){return x.id===id;});
-    if(pp) _autoProximaFecha(pp);
+    if(pp) _autoProximaFecha(pp,cuota);
     guardarDatos();
     toast('✓ ₡'+fmt(cuota)+' abonado a '+nombre);
     renderCobros();
@@ -2759,7 +2762,7 @@ function registrarAbono(){
       montoAbonado:monto
     });
     var pp2=prestamos.find(function(x){return x.id===currentId;});
-    if(pp2) _autoProximaFecha(pp2);
+    if(pp2) _autoProximaFecha(pp2,monto);
     guardarDatos();
     document.getElementById('abonar-monto').value='';
     toast('✓ Abono registrado: ₡'+fmt(monto));
