@@ -3528,20 +3528,29 @@ function renderPanelRecolector(){
     :'<p style="font-size:13px;color:var(--text-muted)">Sin gastos registrados</p>';
   document.getElementById('panel-gastos-lista').innerHTML=gastosHtml;
 
-  // Préstamos nuevos de esta ruta
+  // Préstamos nuevos de esta ruta (incluye renovaciones)
   var nuevos=prestamosRuta.filter(function(p){return p.fechaInicio===fecha&&!p.incompleto;});
-  var totalNuevos=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0);
-  document.getElementById('panel-stat-nuevos').textContent=nuevos.length+' préstamo'+(nuevos.length!==1?'s':'')+' · ₡'+fmt(totalNuevos);
-  document.getElementById('panel-nuevos-lista').innerHTML=nuevos.length
-    ?nuevos.map(function(p){
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">'
-        +'<div><div style="font-size:13px;font-weight:600">'+p.cliente+'</div><div style="font-size:11px;color:var(--text-muted)">'+p.tipo+'</div></div>'
-        +'<div style="display:flex;align-items:center;gap:8px">'
-        +'<span style="font-size:13px;font-weight:700;color:#2563eb">₡'+fmt(p.montoPrestado)+'</span>'
-        +'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
-        +'</div></div>';
-    }).join('')
-    :'<p style="font-size:13px;color:var(--text-muted)">Sin préstamos nuevos</p>';
+  var renovNuevos=renovaciones.filter(function(x){return x.fecha===fecha&&idsRuta.indexOf(x.id_prestamo)!==-1;});
+  var totalNuevos=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0)+renovNuevos.reduce(function(s,x){return s+(x.montoEntregado||0);},0);
+  var countNuevos=nuevos.length+renovNuevos.length;
+  document.getElementById('panel-stat-nuevos').textContent=countNuevos+' préstamo'+(countNuevos!==1?'s':'')+' · ₡'+fmt(totalNuevos);
+  var nuevosItems=nuevos.map(function(p){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">'
+      +'<div><div style="font-size:13px;font-weight:600">'+p.cliente+'</div><div style="font-size:11px;color:var(--text-muted)">'+p.tipo+' · Nuevo</div></div>'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+      +'<span style="font-size:13px;font-weight:700;color:#2563eb">₡'+fmt(p.montoPrestado)+'</span>'
+      +'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
+      +'</div></div>';
+  });
+  var renovItems=renovNuevos.map(function(rv){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">'
+      +'<div><div style="font-size:13px;font-weight:600">'+rv.cliente+'</div><div style="font-size:11px;color:#7c3aed">🔄 Renovación · '+rv.tipo+'</div></div>'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+      +'<span style="font-size:13px;font-weight:700;color:#2563eb">₡'+fmt(rv.montoEntregado||0)+'</span>'
+      +'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+rv.id_prestamo+'\')">Ver</button>'
+      +'</div></div>';
+  });
+  document.getElementById('panel-nuevos-lista').innerHTML=(nuevosItems.concat(renovItems)).join('')||'<p style="font-size:13px;color:var(--text-muted)">Sin préstamos nuevos</p>';
 
   // Cobros realizados de esta ruta
   var pagosHoy=pagos.filter(function(x){return (x.fechaRegistro||x.fechaPago)===fecha && idsRuta.indexOf(x.id_prestamo)!==-1;});
@@ -3604,12 +3613,13 @@ function renderPanelRecolector(){
     var idsAyer=prestamosRuta.map(function(p){return p.id;});
     var recogidaAyer=pagos.filter(function(x){return x.fechaPago===ayerStr&&idsAyer.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
     var prestamosAyer=prestamosRuta.filter(function(p){return p.fechaInicio===ayerStr&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
+    var renovAyer=renovaciones.filter(function(x){return x.fecha===ayerStr&&(rutaActual==='todas'||prestamos.find(function(p){return p.id===x.id_prestamo&&p.ruta===rutaActual;}));}).reduce(function(s,x){return s+(x.montoEntregado||0);},0);
     var gastosAyer=gastos.filter(function(x){return x.fecha===ayerStr&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
-    var cajaAyer=recogidaAyer+baseAyer-prestamosAyer-gastosAyer;
+    var cajaAyer=recogidaAyer+baseAyer-(prestamosAyer+renovAyer)-gastosAyer;
     if(cajaAyer>0) baseGuardada=cajaAyer;
   }
   var recogidaTotal=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
-  var prestamosTotal=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0);
+  var prestamosTotal=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0)+renovNuevos.reduce(function(s,x){return s+(x.montoEntregado||0);},0);
   var salidaKey='fjd_salida_'+rutaCajaKey+'_'+fecha;
   var salidaGuardada=parseInt(localStorage.getItem(salidaKey)||'0',10)||0;
   var adminTotal=cobrosAdmin.filter(function(x){return x.fecha===fecha&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
