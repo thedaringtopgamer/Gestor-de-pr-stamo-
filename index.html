@@ -382,6 +382,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
               <div style="padding:14px 16px;border-bottom:1px solid #f3f4f6;font-size:14px;font-weight:600;color:#1d4ed8">⬆ Importar backup</div>
               <input type="file" accept=".json" onchange="importarBackup(this);toggleAdminMenu()" style="display:none">
             </label>
+            <button onclick="verDispositivosConectados();toggleAdminMenu()" style="width:100%;padding:14px 16px;background:none;border:none;border-bottom:1px solid #f3f4f6;text-align:left;font-size:14px;font-weight:600;color:#0e7490;cursor:pointer;font-family:'DM Sans',sans-serif">📱 Dispositivos conectados</button>
             <button onclick="abrirRevocarSesiones();toggleAdminMenu()" style="width:100%;padding:14px 16px;background:none;border:none;border-bottom:1px solid #f3f4f6;text-align:left;font-size:14px;font-weight:600;color:#7c3aed;cursor:pointer;font-family:'DM Sans',sans-serif">🔐 Cerrar sesiones remotas</button>
             <button onclick="borrarTodosLosDatos();toggleAdminMenu()" style="width:100%;padding:14px 16px;background:none;border:none;text-align:left;font-size:14px;font-weight:600;color:#dc2626;cursor:pointer;font-family:'DM Sans',sans-serif">🗑 Borrar todos los datos</button>
           </div>
@@ -1149,6 +1150,7 @@ function mostrarApp(){
   if(menuInv) menuInv.style.display=rolActual==='admin'?'block':'none';
   var menuCerrar=document.getElementById('menu-cerrar-sesion');
   if(menuCerrar) menuCerrar.style.display=rolActual==='admin'?'block':'none';
+  _iniciarHeartbeat();
   // sessionStorage se borra al cerrar la app completamente, pero sobrevive recargas en segundo plano
   // → Si no hay pantalla en sessionStorage, la app fue cerrada: ir a cobros
   // → Si hay pantalla, la app estaba en segundo plano: restaurar donde estaba
@@ -1203,6 +1205,97 @@ function _verificarRevocacion(){
       setTimeout(_forzarLogout,2000);
     }
   }).catch(function(){});
+}
+
+// ── Heartbeat de dispositivos ──────────────────────────────────────
+function _getDeviceId(){
+  var id=localStorage.getItem('fjd_device_id');
+  if(!id){ id='dev_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); localStorage.setItem('fjd_device_id',id); }
+  return id;
+}
+
+var _deviceLat=null, _deviceLng=null;
+function _pedirUbicacion(){
+  if(!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(function(pos){
+    _deviceLat=pos.coords.latitude;
+    _deviceLng=pos.coords.longitude;
+  },function(){},{enableHighAccuracy:true,timeout:10000});
+}
+
+function _enviarHeartbeat(){
+  if(rolActual==='admin'||!localStorage.getItem('fjd_session')) return;
+  var deviceId=_getDeviceId();
+  var ruta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
+  var user=localStorage.getItem('fjd_login_user')||ruta;
+  var ua=navigator.userAgent;
+  var dispositivo=ua.indexOf('iPhone')!==-1?'iPhone':ua.indexOf('Android')!==-1?'Android':ua.indexOf('iPad')!==-1?'iPad':'Otro';
+  var sesion={deviceId:deviceId,ruta:ruta,user:user,lastSeen:Date.now(),dispositivo:dispositivo,lat:_deviceLat,lng:_deviceLng};
+  // Leer sesiones actuales, actualizar esta, guardar
+  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.device_sessions&select=value',{headers:SUPA_HDR})
+  .then(function(r){return r.ok?r.json():[];})
+  .then(function(rows){
+    var sesiones=(rows&&rows[0]&&rows[0].value)||{};
+    sesiones[deviceId]=sesion;
+    // Limpiar sesiones viejas (más de 2 minutos)
+    var cutoff=Date.now()-120000;
+    Object.keys(sesiones).forEach(function(k){ if(sesiones[k].lastSeen<cutoff) delete sesiones[k]; });
+    return fetch(SUPA_URL+'/rest/v1/app_data',{
+      method:'POST',
+      headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
+      body:JSON.stringify([{key:'device_sessions',value:sesiones}])
+    });
+  }).catch(function(){});
+}
+
+function _iniciarHeartbeat(){
+  if(rolActual==='admin') return;
+  _pedirUbicacion();
+  _enviarHeartbeat();
+  setInterval(function(){
+    if(localStorage.getItem('fjd_session')==='1'&&rolActual!=='admin'){
+      _pedirUbicacion();
+      _enviarHeartbeat();
+    }
+  },30000);
+}
+
+// ── Ver dispositivos conectados ────────────────────────────────────
+function verDispositivosConectados(){
+  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.device_sessions&select=value',{headers:SUPA_HDR})
+  .then(function(r){return r.ok?r.json():[];})
+  .then(function(rows){
+    var sesiones=(rows&&rows[0]&&rows[0].value)||{};
+    var cutoff=Date.now()-120000;
+    var activos=Object.values(sesiones).filter(function(s){return s.lastSeen>=cutoff;});
+    activos.sort(function(a,b){return b.lastSeen-a.lastSeen;});
+    var modal=document.createElement('div');
+    modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    var filas=activos.length?activos.map(function(s){
+      var hace=Math.round((Date.now()-s.lastSeen)/1000);
+      var haceStr=hace<60?hace+'s':Math.round(hace/60)+'min';
+      var mapLink=s.lat&&s.lng
+        ?'<a href="https://www.google.com/maps?q='+s.lat+','+s.lng+'" target="_blank" style="color:#2563eb;font-size:12px;font-weight:700;text-decoration:none">📍 Ver en mapa</a>'
+        :'<span style="color:#9ca3af;font-size:11px">Sin ubicación</span>';
+      return '<div style="padding:12px 0;border-bottom:1px solid #f3f4f6">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+          +'<div>'
+            +'<div style="font-weight:700;font-size:14px">'+s.dispositivo+' · '+s.user+'</div>'
+            +'<div style="font-size:11px;color:#6b7280">Ruta: '+s.ruta+' · Hace '+haceStr+'</div>'
+          +'</div>'
+          +'<span style="background:#dcfce7;color:#166534;font-size:10px;font-weight:700;padding:3px 7px;border-radius:99px">● Activo</span>'
+        +'</div>'
+        +'<div style="margin-top:4px">'+mapLink+'</div>'
+        +'</div>';
+    }).join(''):'<p style="text-align:center;color:#6b7280;padding:20px">Sin dispositivos activos</p>';
+    modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:24px;max-width:380px;width:100%;max-height:85vh;overflow-y:auto">'
+      +'<p style="font-size:16px;font-weight:800;margin-bottom:4px">📱 Dispositivos conectados</p>'
+      +'<p style="font-size:12px;color:#6b7280;margin-bottom:16px">Activos en los últimos 2 minutos · '+activos.length+' en línea</p>'
+      +filas
+      +'<button onclick="this.closest(\'[style*=fixed]\').remove()" style="width:100%;margin-top:16px;padding:12px;background:#f3f4f6;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">Cerrar</button>'
+      +'</div>';
+    document.body.appendChild(modal);
+  }).catch(function(){ toast('⚠ Error de conexión'); });
 }
 
 function abrirRevocarSesiones(){
