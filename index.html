@@ -1593,20 +1593,29 @@ function guardarPrestamo(){
     });
   }
   guardarDatos();
-  // Construir mensaje WhatsApp
+  // Construir mensaje WhatsApp con formato de tarjeta
   var p=existente||(prestamos[prestamos.length-1]);
-  var proxFecha=p.proximaFechaPago||fecha;
-  var tipoCuota=cd.tipo==='Diario'?'diaria':cd.tipo==='Semanal'?'semanal':'quincenal';
-  var msg='Hola '+nombre+' 👋\n'
-    +'Te confirmamos tu préstamo con *Financiera JD*:\n\n'
-    +'💰 *Monto prestado:* ₡'+fmt(monto)+'\n'
-    +'📈 *Intereses ('+tasa+'%):* ₡'+fmt(intereses)+'\n'
-    +'💵 *Total a pagar:* ₡'+fmt(totalCobrar)+'\n'
-    +'🗓 *Cuotas:* '+cd.cuotas+' pagos '+tipoCuota+'s de ₡'+fmt(cuotaVal)+'\n'
-    +'📅 *Fecha inicio:* '+fecha+'\n'
-    +'📅 *Próximo pago:* '+proxFecha+'\n\n'
-    +'¡Gracias por confiar en nosotros! 🙌';
-  var tel=(clienteTemporal.telefono||p.telefono||'').replace(/\D/g,'');
+  // Calcular próxima fecha de pago: fechaInicio + diasPorCuota, saltando fines de semana
+  var proxD=new Date(parseLocalDate(fecha));
+  proxD.setDate(proxD.getDate()+cd.diasPorCuota);
+  proxD=siguienteDiaHabil(proxD);
+  var diasSemana=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  var proxStr=String(proxD.getDate()).padStart(2,'0')+'-'+String(proxD.getMonth()+1).padStart(2,'0')+'-'+proxD.getFullYear();
+  var proxDia=diasSemana[proxD.getDay()];
+  var fechaParts=fecha.split('-');
+  var fechaFmt=parseInt(fechaParts[2])+'/'+parseInt(fechaParts[1])+'/'+fechaParts[0];
+  var tipoAbrev=cd.tipo==='Diario'?'DIARIO':cd.tipo.toUpperCase();
+  var ref=p.id.slice(-5);
+  var msg='🆕 *Nueva tarjeta ('+ref+')*\n\n'
+    +'👤 *Cliente:* '+nombre+'\n'
+    +'📅 *Fecha:* '+fechaFmt+'\n'
+    +'💵 *Monto:* ₡'+fmt(monto)+'\n'
+    +'💰 *Con intereses:* ₡'+fmt(totalCobrar)+'\n'
+    +'📋 *Tipo:* '+tipoAbrev+'\n'
+    +'💳 *Cuota:* ₡'+fmt(cuotaVal)+'\n'
+    +'🔢 *Cantidad de cuotas:* '+cd.cuotas+'\n'
+    +'📆 *Próxima fecha de pago:* '+proxStr+' ('+proxDia+')';
+  var tel=(p.telefono||'').replace(/\D/g,'');
   var waUrl='https://wa.me/'+(tel?'506'+tel:'')+'?text='+encodeURIComponent(msg);
   clienteTemporal={};
   sessionStorage.removeItem('fjd_cliente_temp');
