@@ -230,6 +230,8 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     <p id="espera-ruta-txt" style="color:#60a5fa;font-size:14px;font-weight:600;margin-bottom:32px"></p>
     <button onclick="cancelarEspera()" style="background:rgba(255,255,255,0.1);color:#94a3b8;border:none;border-radius:10px;padding:10px 24px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">Cambiar ruta</button>
   </div>
+  <!-- Acceso oculto para admin -->
+  <button onclick="irLoginAdmin()" style="position:absolute;bottom:20px;right:20px;background:none;border:none;color:rgba(255,255,255,0.15);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;padding:8px">🔑</button>
 </div>
 
 <!-- SELECTOR DE RUTA (admin) -->
@@ -1197,6 +1199,12 @@ function cancelarEspera(){
   localStorage.removeItem('fjd_pending_ruta');
   document.getElementById('espera-ruta-sel').style.display='block';
   document.getElementById('espera-pendiente').style.display='none';
+}
+
+function irLoginAdmin(){
+  clearInterval(_esperaInterval);
+  document.getElementById('espera-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
 }
 
 function _actualizarLabelRuta(){
