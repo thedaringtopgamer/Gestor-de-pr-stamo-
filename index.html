@@ -1096,6 +1096,7 @@ function doLogin(){
     localStorage.setItem('fjd_session','1');
     localStorage.setItem('fjd_rol',usr.rol);
     localStorage.setItem('fjd_login_ts',loginTs.toString());
+    localStorage.setItem('fjd_login_ruta',usr.ruta||'todas');
     localStorage.setItem('fjd_login_user',usr.user);
     rolActual=usr.rol;
     if(usr.rol==='admin'){
@@ -1188,57 +1189,62 @@ function cerrarSesion(){
 }
 
 function _verificarRevocacion(){
+  if(rolActual==='admin') return;
   var loginTs=parseInt(localStorage.getItem('fjd_login_ts')||'0');
-  var loginUser=localStorage.getItem('fjd_login_user')||'';
-  if(!loginTs||!loginUser||rolActual==='admin') return;
+  var loginRuta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
   fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value',{headers:SUPA_HDR})
   .then(function(r){return r.ok?r.json():null;})
   .then(function(rows){
     if(!rows||!rows[0]) return;
     var rev=rows[0].value||{};
-    var revokeTs=rev[loginUser]||0;
+    var revokeTs=rev[loginRuta]||rev['todas']||0;
     if(revokeTs>loginTs){
-      toast('⚠ Su sesión fue cerrada remotamente');
-      setTimeout(_forzarLogout,1500);
+      toast('⚠ Su sesión fue cerrada. Inicie sesión nuevamente.');
+      setTimeout(_forzarLogout,2000);
     }
   }).catch(function(){});
 }
 
 function abrirRevocarSesiones(){
   fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value',{headers:SUPA_HDR})
-  .then(function(r){return r.ok?r.json():null;})
+  .then(function(r){return r.ok?r.json():[];})
   .then(function(rows){
     var rev=(rows&&rows[0]&&rows[0].value)||{};
-    var usuarios=USUARIOS.filter(function(u){return u.rol!=='admin';});
+    // Listar rutas únicas de usuarios no-admin
+    var rutas=[]; var vistas={};
+    USUARIOS.forEach(function(u){
+      if(u.rol==='admin') return;
+      var r=u.ruta||'todas';
+      if(!vistas[r]){ vistas[r]=true; rutas.push(r); }
+    });
     var modal=document.createElement('div');
     modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
-    var filas=usuarios.map(function(u){
-      var ts=rev[u.user]||0;
-      var estado=ts?'Revocado '+new Date(ts).toLocaleDateString():'Activo';
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f3f4f6">'
-        +'<div><div style="font-weight:700;font-size:14px">'+u.user+'</div>'
-        +'<div style="font-size:11px;color:#6b7280">'+(u.ruta||'sin ruta')+' · '+estado+'</div></div>'
-        +'<button onclick="revocarUsuario(\''+u.user+'\',this)" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">Cerrar sesión</button>'
+    var filas=rutas.map(function(ruta){
+      var ts=rev[ruta]||0;
+      var estado=ts?'Última revocación: '+new Date(ts).toLocaleString():'Sin revocaciones';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #f3f4f6">'
+        +'<div><div style="font-weight:700;font-size:15px">📍 '+ruta+'</div>'
+        +'<div style="font-size:11px;color:#6b7280">'+estado+'</div></div>'
+        +'<button onclick="revocarRuta(\''+ruta+'\',this)" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">Cerrar sesión</button>'
         +'</div>';
     }).join('');
-    modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:24px;max-width:360px;width:100%">'
+    modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:24px;max-width:360px;width:100%;max-height:80vh;overflow-y:auto">'
       +'<p style="font-size:16px;font-weight:800;margin-bottom:4px">🔐 Cerrar sesiones remotas</p>'
-      +'<p style="font-size:12px;color:#6b7280;margin-bottom:16px">El usuario será forzado a hacer login la próxima vez que abra la app.</p>'
+      +'<p style="font-size:12px;color:#6b7280;margin-bottom:16px">La próxima vez que el teléfono de esa ruta abra la app, será forzado al login.</p>'
       +filas
       +'<button onclick="this.closest(\'[style*=fixed]\').remove()" style="width:100%;margin-top:16px;padding:12px;background:#f3f4f6;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">Cerrar</button>'
       +'</div>';
     document.body.appendChild(modal);
-  }).catch(function(){ toast('⚠ Error al cargar sesiones'); });
+  }).catch(function(){ toast('⚠ Error de conexión'); });
 }
 
-function revocarUsuario(usuario, btn){
+function revocarRuta(ruta, btn){
   btn.disabled=true; btn.textContent='...';
-  var ts=Date.now();
   fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value',{headers:SUPA_HDR})
-  .then(function(r){return r.ok?r.json():[]; })
+  .then(function(r){return r.ok?r.json():[];})
   .then(function(rows){
     var rev=(rows&&rows[0]&&rows[0].value)||{};
-    rev[usuario]=ts;
+    rev[ruta]=Date.now();
     return fetch(SUPA_URL+'/rest/v1/app_data',{
       method:'POST',
       headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
@@ -1246,9 +1252,9 @@ function revocarUsuario(usuario, btn){
     });
   })
   .then(function(r){
-    if(r&&r.ok){ btn.textContent='✓ Cerrado'; btn.style.background='#16a34a'; toast('✓ Sesión de '+usuario+' cerrada'); }
-    else { btn.disabled=false; btn.textContent='Cerrar sesión'; toast('⚠ Error'); }
-  }).catch(function(){ btn.disabled=false; btn.textContent='Cerrar sesión'; toast('⚠ Error de conexión'); });
+    if(r&&r.ok){ btn.textContent='✓ Cerrado'; btn.style.background='#16a34a'; toast('✓ Sesión de ruta '+ruta+' cerrada'); }
+    else{ btn.disabled=false; btn.textContent='Cerrar sesión'; toast('⚠ Error'); }
+  }).catch(function(){ btn.disabled=false; btn.textContent='Cerrar sesión'; toast('⚠ Error'); });
 }
 
 // Supabase
