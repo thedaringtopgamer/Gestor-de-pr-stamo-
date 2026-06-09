@@ -2291,15 +2291,22 @@ function renderTarjetas(filtro){
   var f=(filtro||'').toLowerCase().trim();
   var todos=prestamosVisibles();
   var items=todos.filter(function(p){
-    if(f) return p.cliente.toLowerCase().includes(f);
-    // Mostrar incompletos siempre (para que se puedan completar o eliminar)
-    if(p.incompleto) return true;
-    // Mostrar activos (con saldo pendiente)
-    return calcDerived(p).saldoPendiente>0;
+    var cancelado=!p.incompleto&&calcDerived(p).saldoPendiente<=0;
+    if(f){
+      // Con búsqueda: mostrar todo (activos, incompletos, cancelados)
+      return p.cliente.toLowerCase().includes(f);
+    }
+    // Sin búsqueda: ocultar cancelados, mostrar activos e incompletos
+    if(cancelado) return false;
+    return true;
   });
   items.sort(function(a,b){return a.cliente.localeCompare(b.cliente,'es');});
   var totalActivos=todos.filter(function(p){return !p.incompleto&&calcDerived(p).saldoPendiente>0;}).length;
-  document.getElementById('tarjetas-titulo').textContent='Tarjetas activas ('+totalActivos+')'+(f?' · Búsqueda: '+items.length:'');
+  var totalIncompletos=todos.filter(function(p){return p.incompleto;}).length;
+  var titulo='Tarjetas activas ('+totalActivos+')';
+  if(totalIncompletos>0) titulo+=' · Incompletas ('+totalIncompletos+')';
+  if(f) titulo+=' · Búsqueda: '+items.length;
+  document.getElementById('tarjetas-titulo').textContent=titulo;
   if(!items.length){
     lista.innerHTML='<div style="padding:14px"><span class="no-data">No hay préstamos.</span></div>';
     return;
@@ -2320,13 +2327,18 @@ function renderTarjetas(filtro){
     var verif=clienteNecesitaVerificacion(p);
     var badgeTarjeta=verif.necesita?'<span title="'+verif.razon+'" style="font-size:15px;margin-left:4px">⚠️</span>':'';
     var cancelado=d.saldoPendiente<=0;
-    return '<div class="loan-row">'
+    var borderColor=cancelado?'border-left:4px solid #93c5fd':'';
+    return '<div class="loan-row" style="'+borderColor+(cancelado?';opacity:0.7':'')+'">'
       +'<button class="icon-btn icon-btn-cyan btn-sm" style="width:auto;padding:7px 14px;border-radius:var(--radius)" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
       +'<div style="flex:1;padding-left:10px;min-width:0">'
         +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+badgeTarjeta+'</div>'
         +'<div style="font-size:11px;color:var(--text-muted)">'+estadoTag(d.estado)+' &nbsp;'+p.cantidadDeQuincenas+' cuotas</div>'
       +'</div>'
-      +(cancelado ? btnEliminar
+      +(cancelado
+        ? '<div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
+            +'<span style="font-size:10px;font-weight:700;color:#2563eb;background:#dbeafe;padding:2px 7px;border-radius:6px">✓ CANCELADO</span>'
+            +btnEliminar
+          +'</div>'
         : '<div style="text-align:right;flex-shrink:0">'
           +'<div style="font-size:13px;font-weight:600">₡'+fmt(p.montoPrestado)+'</div>'
           +'<div style="font-size:12px;font-weight:600;color:#2563eb">'+(p.subruta||p.ruta||'')+'</div>'
