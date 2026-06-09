@@ -551,16 +551,16 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <label>Tipo *</label>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
           <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-diario">
-            <input type="radio" name="np-tipo" value="Diario" onchange="onTipoChange()" style="accent-color:var(--cyan)"> Diario
+            <input type="radio" name="np-tipo" value="Diario" onclick="onTipoChange()" style="accent-color:var(--cyan)"> Diario
           </label>
           <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-semanal">
-            <input type="radio" name="np-tipo" value="Semanal" onchange="onTipoChange()" style="accent-color:var(--cyan)"> Semanal
+            <input type="radio" name="np-tipo" value="Semanal" onclick="onTipoChange()" style="accent-color:var(--cyan)"> Semanal
           </label>
           <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--cyan);background:#f0f9ff;border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-quincenal">
-            <input type="radio" name="np-tipo" value="Quincenal" checked onchange="onTipoChange()" style="accent-color:var(--cyan)"> Quincenal
+            <input type="radio" name="np-tipo" value="Quincenal" checked onclick="onTipoChange()" style="accent-color:var(--cyan)"> Quincenal
           </label>
           <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-mensual">
-            <input type="radio" name="np-tipo" value="Mensual" onchange="onTipoChange()" style="accent-color:var(--cyan)"> Mensual
+            <input type="radio" name="np-tipo" value="Mensual" onclick="onTipoChange()" style="accent-color:var(--cyan)"> Mensual
           </label>
         </div>
         <!-- Sub-opciones Semanal -->
@@ -568,10 +568,10 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Seleccione período:</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <label style="display:flex;align-items:center;gap:6px;padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500" id="lbl-s5">
-              <input type="radio" name="np-semanas" value="5" checked onchange="calcPreview();calcProxFechaPago()" style="accent-color:var(--cyan)"> 5 semanas
+              <input type="radio" name="np-semanas" value="5" checked onclick="calcPreview();calcProxFechaPago()" style="accent-color:var(--cyan)"> 5 semanas
             </label>
             <label style="display:flex;align-items:center;gap:6px;padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500" id="lbl-s6">
-              <input type="radio" name="np-semanas" value="6" onchange="calcPreview();calcProxFechaPago()" style="accent-color:var(--cyan)"> 6 semanas
+              <input type="radio" name="np-semanas" value="6" onclick="calcPreview();calcProxFechaPago()" style="accent-color:var(--cyan)"> 6 semanas
             </label>
           </div>
         </div>
@@ -580,10 +580,10 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Seleccione período:</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <label style="display:flex;align-items:center;gap:6px;padding:9px 10px;border:1.5px solid var(--cyan);background:#f0f9ff;border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500" id="lbl-q2">
-              <input type="radio" name="np-quincenas" value="2" checked onchange="calcPreview();calcProxFechaPago()" style="accent-color:var(--cyan)"> 2 quincenas
+              <input type="radio" name="np-quincenas" value="2" checked onclick="calcPreview();calcProxFechaPago()" style="accent-color:var(--cyan)"> 2 quincenas
             </label>
             <label style="display:flex;align-items:center;gap:6px;padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500" id="lbl-q3">
-              <input type="radio" name="np-quincenas" value="3" onchange="calcPreview();calcProxFechaPago()" style="accent-color:var(--cyan)"> 3 quincenas
+              <input type="radio" name="np-quincenas" value="3" onclick="calcPreview();calcProxFechaPago()" style="accent-color:var(--cyan)"> 3 quincenas
             </label>
           </div>
         </div>
