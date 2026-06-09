@@ -2537,10 +2537,9 @@ function mensajeAbono(p){
   var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/30:0;
   var diasPagados=cuotaDiaria>0?Math.min(30,Math.floor(d.totalPagado/cuotaDiaria)):0;
   // Próxima fecha de pago con día de semana
-  var proxCuota=d.cuotasPagadas+1;
   var fechaProxStr='Préstamo cancelado ✅';
-  if(proxCuota<=p.cantidadDeQuincenas && d.saldoPendiente>0){
-    var fp=getCuotaVencimiento(p,proxCuota);
+  if(d.saldoPendiente>0){
+    var fp=p.proximaFechaPago?parseLocalDate(p.proximaFechaPago):getCuotaVencimiento(p,d.cuotasPagadas+1);
     fechaProxStr=fmtFechaWA(fp);
   }
   return '📋 *Nota Informativa de Pago*\n'
@@ -2704,12 +2703,10 @@ function modalCancelar(){
 function _autoProximaFecha(p){
   var d=calcDerived(p);
   if(d.saldoPendiente<=0){ p.proximaFechaPago=null; return; }
-  // Avanzar desde la fecha que tenía programada, no desde fechaInicio
-  var base=p.proximaFechaPago?parseLocalDate(p.proximaFechaPago):getCuotaVencimiento(p,Math.max(1,d.cuotasPagadas));
-  var next=new Date(base);
-  next.setDate(next.getDate()+(p.diasPorCuota||15));
-  next=siguienteDiaHabil(next);
-  p.proximaFechaPago=next.toISOString().split('T')[0];
+  var proxCuota=d.cuotasPagadas+1;
+  if(proxCuota>p.cantidadDeQuincenas){ p.proximaFechaPago=null; return; }
+  var next=getCuotaVencimiento(p,proxCuota);
+  p.proximaFechaPago=next.getFullYear()+'-'+String(next.getMonth()+1).padStart(2,'0')+'-'+String(next.getDate()).padStart(2,'0');
 }
 
 function abonoRapido(id,nombre,cuota){
