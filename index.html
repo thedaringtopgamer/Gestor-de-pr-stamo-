@@ -1082,7 +1082,7 @@ var USUARIOS=[
   var saved=localStorage.getItem('fjd_passwords');
   if(saved){try{var arr=JSON.parse(saved);arr.forEach(function(p,i){if(USUARIOS[i]&&p)USUARIOS[i].pass=p;});}catch(e){}}
 })();
-var rolActual=localStorage.getItem('fjd_rol')||'ruta';
+var rolActual=sessionStorage.getItem('fjd_rol')||'ruta';
 var rutaActual=localStorage.getItem('fjd_ruta_actual')||'todas';
 
 function doLogin(){
@@ -1091,8 +1091,8 @@ function doLogin(){
   var err=document.getElementById('login-error');
   var usr=USUARIOS.find(function(x){return x.user===u&&x.pass===p;});
   if(usr){
-    localStorage.setItem('fjd_session','1');
-    localStorage.setItem('fjd_rol',usr.rol);
+    sessionStorage.setItem('fjd_session','1');
+    sessionStorage.setItem('fjd_rol',usr.rol);
     rolActual=usr.rol;
     if(usr.rol==='admin'){
       // Admin elige ruta primero
@@ -1165,7 +1165,7 @@ function mostrarApp(){
 
 function cerrarSesion(){
   if(!confirm('¿Cerrar sesión?')) return;
-  localStorage.removeItem('fjd_session');
+  sessionStorage.removeItem('fjd_session');
   localStorage.removeItem('fjd_pantalla');
   localStorage.removeItem('fjd_detalle_id');
   localStorage.removeItem('fjd_cliente_temp');
@@ -3365,7 +3365,7 @@ function fechaOffset(dias){
   try{ updateHome(); }catch(e){}
 
   try{
-    if(localStorage.getItem('fjd_session')==='1'){
+    if(sessionStorage.getItem('fjd_session')==='1'){
       mostrarApp();
     } else {
       document.getElementById('login-screen').style.display='flex';
