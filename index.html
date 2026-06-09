@@ -922,15 +922,13 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px">
-            <!-- Fórmula 1: Base + Cobrado − Préstamos − Gastos -->
-            <p style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px">Fórmula 1 — Control de préstamos</p>
+            <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
+              <span style="font-size:13px;color:#d1d5db">+ Recogida</span>
+              <span style="font-size:13px;font-weight:600;color:#4ade80" id="caja-recogida">₡0</span>
+            </div>
             <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
               <span style="font-size:13px;color:#d1d5db">+ Base</span>
               <span style="font-size:13px;font-weight:600;color:#4ade80" id="caja-base-display">₡0</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
-              <span style="font-size:13px;color:#d1d5db">+ Cobrado</span>
-              <span style="font-size:13px;font-weight:600;color:#4ade80" id="caja-recogida">₡0</span>
             </div>
             <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
               <span style="font-size:13px;color:#f87171">− Préstamos realizados</span>
@@ -940,33 +938,12 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
               <span style="font-size:13px;color:#f87171">− Gastos</span>
               <span style="font-size:13px;font-weight:600;color:#f87171" id="caja-gastos">₡0</span>
             </div>
-            <div style="display:flex;justify-content:space-between;padding:12px 16px;background:#1d4ed8;border-radius:10px;margin-top:2px">
-              <span style="font-size:14px;font-weight:700;color:#fff">= Total F1</span>
-              <span style="font-size:18px;font-weight:700;color:#fff" id="caja-total-f1">₡0</span>
+            <div style="display:flex;justify-content:space-between;padding:14px 16px;background:#16a34a;border-radius:10px;margin-top:4px">
+              <span style="font-size:16px;font-weight:700;color:#fff">Caja</span>
+              <span style="font-size:22px;font-weight:700;color:#fff" id="caja-total">₡0</span>
             </div>
-
-            <!-- Fórmula 2: Base − Salida + Cobrado − Administrativo -->
-            <p style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;margin-top:10px;margin-bottom:2px">Fórmula 2 — Control de caja</p>
-            <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
-              <span style="font-size:13px;color:#d1d5db">+ Base</span>
-              <span style="font-size:13px;font-weight:600;color:#4ade80" id="caja-base-display2">₡0</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
-              <span style="font-size:13px;color:#f87171">− Salida</span>
-              <span style="font-size:13px;font-weight:600;color:#f87171" id="caja-salida-display">₡0</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
-              <span style="font-size:13px;color:#d1d5db">+ Cobrado</span>
-              <span style="font-size:13px;font-weight:600;color:#4ade80" id="caja-recogida2">₡0</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
-              <span style="font-size:13px;color:#f87171">− Administrativo</span>
-              <span style="font-size:13px;font-weight:600;color:#f87171" id="caja-admin-display">₡0</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:12px 16px;background:#16a34a;border-radius:10px;margin-top:2px">
-              <span style="font-size:14px;font-weight:700;color:#fff">= Total F2</span>
-              <span style="font-size:18px;font-weight:700;color:#fff" id="caja-total">₡0</span>
-            </div>
+            <p style="font-size:10px;color:#6b7280;text-align:center;margin-top:2px">📌 Recogida + Base − Préstamos − Gastos</p>
+            <p style="font-size:10px;color:#6b7280;text-align:center;margin-top:0">📌 Base − Salida + Efectivo − Administrativo</p>
           </div>
         </div>
       </div>
@@ -3633,25 +3610,13 @@ function renderPanelRecolector(){
     var wrapSalida=document.getElementById('caja-salida-wrap');
     if(wrapSalida) wrapSalida.style.display=(rolActual==='admin')?'':'none';
   }
-  // Fórmula 1: Base + Cobrado − Préstamos − Gastos
-  var totalF1=baseGuardada+recogidaTotal-prestamosTotal-totalGastos;
-  document.getElementById('caja-base-display').textContent='₡'+fmt(baseGuardada);
+  var cajaTotal=recogidaTotal+baseGuardada-prestamosTotal-totalGastos;
   document.getElementById('caja-recogida').textContent='₡'+fmt(recogidaTotal);
+  document.getElementById('caja-base-display').textContent='₡'+fmt(baseGuardada);
   document.getElementById('caja-prestamos').textContent='₡'+fmt(prestamosTotal);
   document.getElementById('caja-gastos').textContent='₡'+fmt(totalGastos);
-  document.getElementById('caja-total-f1').textContent='₡'+fmt(totalF1);
-  // Fórmula 2: Base − Salida + Cobrado − Administrativo
-  var totalF2=baseGuardada-salidaGuardada+recogidaTotal-adminTotal;
-  var bd2=document.getElementById('caja-base-display2');
-  var rc2=document.getElementById('caja-recogida2');
-  var sd=document.getElementById('caja-salida-display');
-  var ad=document.getElementById('caja-admin-display');
-  if(bd2) bd2.textContent='₡'+fmt(baseGuardada);
-  if(rc2) rc2.textContent='₡'+fmt(recogidaTotal);
-  if(sd) sd.textContent='₡'+fmt(salidaGuardada);
-  if(ad) ad.textContent='₡'+fmt(adminTotal);
-  document.getElementById('caja-total').textContent='₡'+fmt(totalF2);
-  document.getElementById('panel-stat-caja').textContent='F1:₡'+fmt(totalF1)+'  F2:₡'+fmt(totalF2);
+  document.getElementById('caja-total').textContent='₡'+fmt(cajaTotal);
+  document.getElementById('panel-stat-caja').textContent='Total: ₡'+fmt(cajaTotal);
 
 }
 
