@@ -1330,7 +1330,7 @@ function registrarInversion(){
   var monto=parseInt(montoRaw,10);
   if(!monto||monto<=0){ toast('⚠ Ingrese un monto válido'); return; }
   var nota=document.getElementById('inv-nota').value.trim();
-  inversiones.push({id:Date.now().toString(),monto:monto,nota:nota,fecha:new Date().toISOString().split('T')[0]});
+  inversiones.push({id:Date.now().toString(),monto:monto,nota:nota,fecha:hoyLocal()});
   guardarDatos();
   document.getElementById('inv-monto').value='';
   document.getElementById('inv-nota').value='';
@@ -1404,6 +1404,14 @@ function sincronizarSupabaseFondo(){
 
 function cargarDatos(){
   cargarDesdeLocalStorage();
+}
+
+function hoyLocal(){
+  var d=new Date();
+  var y=d.getFullYear();
+  var m=String(d.getMonth()+1).padStart(2,'0');
+  var dd=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+dd;
 }
 
 function fmt(n){
@@ -1563,7 +1571,7 @@ function guardarPrestamo(){
   var nombre=clienteTemporal.nombre||document.getElementById('np-cliente').value.trim();
   var monto=readMoneyInput('np-monto');
   var tasa=parseFloat(document.getElementById('np-tasa').value)||0;
-  var fecha=document.getElementById('np-fecha').value||new Date().toISOString().split('T')[0];
+  var fecha=document.getElementById('np-fecha').value||hoyLocal();
   if(!nombre){toast('⚠ Falta nombre del cliente');return;}
   if(!monto){toast('⚠ Ingrese el monto');return;}
   var tasaDec=tasa/100;
@@ -1649,7 +1657,7 @@ function guardarPrestamo(){
   document.getElementById('np-cliente-display').textContent='—';
   document.getElementById('np-monto').value='';
   document.getElementById('np-tasa').value='20';
-  var _hoy=new Date().toISOString().split('T')[0];
+  var _hoy=hoyLocal();
   document.getElementById('np-fecha').value=_hoy;
   var _hoyParts=_hoy.split('-');
   var _hoyDisp=parseInt(_hoyParts[2])+'/'+parseInt(_hoyParts[1])+'/'+_hoyParts[0];
@@ -1963,12 +1971,12 @@ function verDetalle(id){
   if(p.proximaFechaPago){
     fechaInput=p.proximaFechaPago;
   } else if(d.saldoPendiente<=0){
-    fechaInput=new Date().toISOString().split('T')[0];
+    fechaInput=hoyLocal();
   } else if(proxCuotaNum<=p.cantidadDeQuincenas){
     var fpd=getCuotaVencimiento(p,proxCuotaNum);
     fechaInput=fpd.getFullYear()+'-'+String(fpd.getMonth()+1).padStart(2,'0')+'-'+String(fpd.getDate()).padStart(2,'0');
   } else {
-    fechaInput=new Date().toISOString().split('T')[0];
+    fechaInput=hoyLocal();
   }
   document.getElementById('abonar-fecha').value=fechaInput;
   document.getElementById('abonar-monto').value='';
@@ -2305,8 +2313,8 @@ function abonoRapido(id,nombre,cuota){
     pagos.push({
       id_pago:Date.now().toString(),
       id_prestamo:id,
-      fechaRegistro:new Date().toISOString().split('T')[0],
-      fechaPago:new Date().toISOString().split('T')[0],
+      fechaRegistro:hoyLocal(),
+      fechaPago:hoyLocal(),
       montoAbonado:cuota
     });
     var pp=prestamos.find(function(x){return x.id===id;});
@@ -2337,7 +2345,7 @@ function registrarAbono(){
     pagos.push({
       id_pago:Date.now().toString(),
       id_prestamo:currentId,
-      fechaRegistro:new Date().toISOString().split('T')[0],
+      fechaRegistro:hoyLocal(),
       fechaPago:fecha,
       montoAbonado:monto
     });
@@ -2507,7 +2515,7 @@ function confirmarRenovacion(){
   var monto=readMoneyInput('ren-monto');
   if(!monto){toast('⚠ Ingrese el monto');return;}
   var tasa=(parseFloat(document.getElementById('ren-tasa').value)||20)/100;
-  var fecha=document.getElementById('ren-fecha').value||new Date().toISOString().split('T')[0];
+  var fecha=document.getElementById('ren-fecha').value||hoyLocal();
   var cuotas=1,diasPorCuota=30;
   if(tipo==='Diario'){cuotas=30;diasPorCuota=1;}
   else if(tipo==='Semanal'){var sem=document.querySelector('input[name="ren-sem"]:checked');var sv=sem?parseInt(sem.value):6;cuotas=sv;diasPorCuota=7;}
@@ -2532,7 +2540,7 @@ function confirmarRenovacion(){
   p.fechaInicio=fecha;
   p.estado='Activo';
   var adminMonto=readMoneyInput('ren-cobro-admin');
-  var fechaHoy=new Date().toISOString().split('T')[0];
+  var fechaHoy=hoyLocal();
   if(adminMonto>0){
     cobrosAdmin.push({id:Date.now().toString(),id_prestamo:p.id,cliente:p.cliente,fecha:fechaHoy,monto:adminMonto});
   }
@@ -2653,7 +2661,7 @@ function guardarCliente(){
     prestamos.push({id:id,cliente:nombre,cedula:cedula,telefono:tel,ruta:ruta,subruta:subruta,
       incompleto:'paso1',montoPrestado:0,Total_A_Cobrar:0,Cuota_Quincenal:0,
       cantidadDeQuincenas:1,diasPorCuota:15,tipo:'Quincenal',
-      fechaInicio:new Date().toISOString().split('T')[0],estado:'Activo',
+      fechaInicio:hoyLocal(),estado:'Activo',
       tasaInteres:0.20,Total_Intereses:0,fotos:{},coordCasa:'',coordTrabajo:''});
   } else {
     var ex=prestamos.find(function(x){return x.id===clienteTemporal._id;});
@@ -2870,7 +2878,7 @@ function guardarDocsCliente(){
   // Si ya tiene todos los docs completos, actualizar fecha de verificación
   var verif2=clienteNecesitaVerificacion(p);
   if(!verif2.necesita){
-    p.fechaVerificacion=new Date().toISOString().split('T')[0];
+    p.fechaVerificacion=hoyLocal();
   }
   guardarDatos();
   document.getElementById('det-telefono-txt').textContent=p.telefono||'';
@@ -2882,7 +2890,7 @@ function marcarVerificado(){
   if(!p) return;
   var verif=clienteNecesitaVerificacion(p);
   if(verif.razon==='Documentos incompletos'){toast('⚠ Faltan documentos antes de verificar');return;}
-  p.fechaVerificacion=new Date().toISOString().split('T')[0];
+  p.fechaVerificacion=hoyLocal();
   guardarDatos();
   toast('✓ Documentos verificados — próxima verificación en 2 meses');
 }
@@ -2970,7 +2978,7 @@ function togglePanelSec(sec){
 
 function renderPanelRecolector(){
   var fechaEl=document.getElementById('panel-fecha');
-  if(!fechaEl.value) fechaEl.value=new Date().toISOString().split('T')[0];
+  if(!fechaEl.value) fechaEl.value=hoyLocal();
   var fecha=fechaEl.value;
 
   // Préstamos visibles según ruta actual
@@ -3109,7 +3117,7 @@ function exportarBackup(){
   var blob=new Blob([json],{type:'application/json'});
   var url=URL.createObjectURL(blob);
   var a=document.createElement('a');
-  var hoy=new Date().toISOString().split('T')[0];
+  var hoy=hoyLocal();
   a.href=url;
   a.download='backup-financiera-jd-'+hoy+'.json';
   a.click();
@@ -3229,7 +3237,7 @@ function guardarGasto(){
   if(!monto){toast('⚠ Ingrese el monto');return;}
   var tipo=(document.getElementById('gasto-tipo').value.trim()||'OTRO').toUpperCase();
   var obs=document.getElementById('gasto-obs').value.trim();
-  var fechaPanel=document.getElementById('panel-fecha').value||new Date().toISOString().split('T')[0];
+  var fechaPanel=document.getElementById('panel-fecha').value||hoyLocal();
   gastos.push({id:Date.now().toString(),fecha:fechaPanel,monto:monto,tipo:tipo,obs:obs,ruta:rutaActual||'todas'});
   guardarDatos();
   cerrarGastoModal();
@@ -3238,7 +3246,7 @@ function guardarGasto(){
 }
 
 function mostrarResumenCaja(){
-  var fecha=document.getElementById('panel-fecha').value||new Date().toISOString().split('T')[0];
+  var fecha=document.getElementById('panel-fecha').value||hoyLocal();
   var parts=fecha.split('-');
   document.getElementById('caja-fecha-txt').textContent=parseInt(parts[2])+'/'+parseInt(parts[1])+'/'+parts[0];
   var pRuta=prestamosVisibles();
@@ -3258,7 +3266,7 @@ function mostrarResumenCaja(){
   document.getElementById('caja-modal').style.display='flex';
 }
 function guardarBase(){
-  var fecha=document.getElementById('panel-fecha').value||new Date().toISOString().split('T')[0];
+  var fecha=document.getElementById('panel-fecha').value||hoyLocal();
   var base=readMoneyInput('caja-base');
   var rutas=['todas','Heredia','Alajuela','San Ramón'];
   if(rutaActual==='todas'){
@@ -3271,7 +3279,7 @@ function guardarBase(){
   toast('✓ Base guardada: ₡'+fmt(base));
 }
 function calcCaja(){
-  var fecha=document.getElementById('panel-fecha').value||new Date().toISOString().split('T')[0];
+  var fecha=document.getElementById('panel-fecha').value||hoyLocal();
   var base=readMoneyInput('caja-base');
   localStorage.setItem('fjd_base_'+(rutaActual||'todas')+'_'+fecha,base);
   var recogida=pagos.filter(function(x){return x.fechaPago===fecha;}).reduce(function(s,x){return s+x.montoAbonado;},0);
@@ -3292,7 +3300,7 @@ function fechaOffset(dias){
 
 // Arranque: SOLO desde Supabase
 (async function iniciarApp(){
-  document.getElementById('np-fecha').value=new Date().toISOString().split('T')[0];
+  document.getElementById('np-fecha').value=hoyLocal();
   var splash=document.getElementById('splash-screen');
   var errorConexion=false;
 
