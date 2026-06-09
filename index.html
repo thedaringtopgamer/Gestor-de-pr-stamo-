@@ -195,12 +195,12 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
   <div class="splash-spinner"></div>
 </div>
 
-<!-- PANTALLA DE LOGIN -->
-<div class="login-screen" id="login-screen">
+<!-- PANTALLA DE LOGIN (solo admin) -->
+<div class="login-screen" id="login-screen" style="display:none">
   <div class="login-box">
     <div class="login-logo">
       <h1>💰 Financiera JD</h1>
-      <p>Sistema de gestión de préstamos</p>
+      <p>Acceso Administrador</p>
     </div>
     <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
     <div class="login-field">
@@ -212,6 +212,23 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <input type="password" id="login-pass" placeholder="Ingrese contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <button class="login-btn" onclick="doLogin()">Ingresar</button>
+  </div>
+</div>
+
+<!-- PANTALLA DE ESPERA (dispositivos de ruta) -->
+<div id="espera-screen" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a8a);z-index:9997;display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px">
+  <div style="font-size:64px;font-weight:900;color:#fff;letter-spacing:-2px">JD</div>
+  <div style="font-size:12px;font-weight:700;color:#60a5fa;letter-spacing:8px;margin-bottom:48px">FINANCIERA</div>
+  <div id="espera-ruta-sel" style="width:100%;max-width:320px">
+    <p style="color:#cbd5e1;font-size:14px;text-align:center;margin-bottom:16px">Seleccione su ruta para solicitar acceso:</p>
+    <div id="espera-rutas-lista" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+  <div id="espera-pendiente" style="display:none;text-align:center">
+    <div style="font-size:40px;margin-bottom:16px">⏳</div>
+    <p style="color:#fff;font-size:18px;font-weight:700;margin-bottom:8px">Esperando activación</p>
+    <p style="color:#94a3b8;font-size:13px;margin-bottom:24px">El administrador debe activar este dispositivo.<br>Esto puede tardar unos segundos.</p>
+    <p id="espera-ruta-txt" style="color:#60a5fa;font-size:14px;font-weight:600;margin-bottom:32px"></p>
+    <button onclick="cancelarEspera()" style="background:rgba(255,255,255,0.1);color:#94a3b8;border:none;border-radius:10px;padding:10px 24px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">Cambiar ruta</button>
   </div>
 </div>
 
@@ -382,6 +399,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
               <div style="padding:14px 16px;border-bottom:1px solid #f3f4f6;font-size:14px;font-weight:600;color:#1d4ed8">⬆ Importar backup</div>
               <input type="file" accept=".json" onchange="importarBackup(this);toggleAdminMenu()" style="display:none">
             </label>
+            <button onclick="verSolicitudesAcceso();toggleAdminMenu()" style="width:100%;padding:14px 16px;background:none;border:none;border-bottom:1px solid #f3f4f6;text-align:left;font-size:14px;font-weight:600;color:#d97706;cursor:pointer;font-family:'DM Sans',sans-serif">🔓 Activar dispositivos</button>
             <button onclick="verDispositivosConectados();toggleAdminMenu()" style="width:100%;padding:14px 16px;background:none;border:none;border-bottom:1px solid #f3f4f6;text-align:left;font-size:14px;font-weight:600;color:#0e7490;cursor:pointer;font-family:'DM Sans',sans-serif">📱 Dispositivos conectados</button>
             <button onclick="abrirRevocarSesiones();toggleAdminMenu()" style="width:100%;padding:14px 16px;background:none;border:none;border-bottom:1px solid #f3f4f6;text-align:left;font-size:14px;font-weight:600;color:#7c3aed;cursor:pointer;font-family:'DM Sans',sans-serif">🔐 Cerrar sesiones remotas</button>
             <button onclick="borrarTodosLosDatos();toggleAdminMenu()" style="width:100%;padding:14px 16px;background:none;border:none;text-align:left;font-size:14px;font-weight:600;color:#dc2626;cursor:pointer;font-family:'DM Sans',sans-serif">🗑 Borrar todos los datos</button>
@@ -1091,29 +1109,94 @@ function doLogin(){
   var u=document.getElementById('login-user').value.trim();
   var p=document.getElementById('login-pass').value;
   var err=document.getElementById('login-error');
-  var usr=USUARIOS.find(function(x){return x.user===u&&x.pass===p;});
+  var usr=USUARIOS.find(function(x){return x.user===u&&x.pass===p&&x.rol==='admin';});
   if(usr){
     var loginTs=Date.now();
     localStorage.setItem('fjd_session','1');
-    localStorage.setItem('fjd_rol',usr.rol);
+    localStorage.setItem('fjd_rol','admin');
     localStorage.setItem('fjd_login_ts',loginTs.toString());
-    localStorage.setItem('fjd_login_ruta',usr.ruta||'todas');
+    localStorage.setItem('fjd_login_ruta','todas');
     localStorage.setItem('fjd_login_user',usr.user);
-    rolActual=usr.rol;
-    if(usr.rol==='admin'){
-      // Admin elige ruta primero
-      document.getElementById('login-screen').style.display='none';
-      document.getElementById('ruta-selector').style.display='flex';
-    } else {
-      // Usuario de ruta entra directo a su ruta asignada
-      rutaActual=usr.ruta||'todas';
-      localStorage.setItem('fjd_ruta_actual',rutaActual);
-      mostrarApp();
-    }
+    rolActual='admin';
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('ruta-selector').style.display='flex';
   } else {
     err.style.display='block';
+    err.textContent='Acceso denegado';
     document.getElementById('login-pass').value='';
   }
+}
+
+// ── Pantalla de espera para dispositivos de ruta ───────────────────
+var _esperaInterval=null;
+
+function mostrarEspera(){
+  document.getElementById('espera-screen').style.display='flex';
+  var rutas=USUARIOS.filter(function(u){return u.rol==='ruta';}).map(function(u){return u.ruta;});
+  var lista=document.getElementById('espera-rutas-lista');
+  lista.innerHTML=rutas.map(function(r){
+    return '<button onclick="solicitarAcceso(\''+r+'\')" style="width:100%;padding:14px;background:rgba(255,255,255,0.1);color:#fff;border:1.5px solid rgba(255,255,255,0.2);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">📍 '+r+'</button>';
+  }).join('');
+}
+
+function solicitarAcceso(ruta){
+  localStorage.setItem('fjd_pending_ruta',ruta);
+  document.getElementById('espera-ruta-sel').style.display='none';
+  document.getElementById('espera-pendiente').style.display='block';
+  document.getElementById('espera-ruta-txt').textContent='Ruta: '+ruta;
+  // Registrar dispositivo pendiente en Supabase
+  var deviceId=_getDeviceId();
+  var ua=navigator.userAgent;
+  var dispositivo=ua.indexOf('iPhone')!==-1?'iPhone':ua.indexOf('Android')!==-1?'Android':ua.indexOf('iPad')!==-1?'iPad':'Otro';
+  _actualizarPendiente(deviceId,ruta,dispositivo);
+  // Polling para ver si admin activó
+  _esperaInterval=setInterval(function(){
+    _actualizarPendiente(deviceId,ruta,dispositivo);
+    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_grants&select=value',{headers:SUPA_HDR})
+    .then(function(r){return r.ok?r.json():[];})
+    .then(function(rows){
+      var grants=(rows&&rows[0]&&rows[0].value)||{};
+      if(grants[deviceId]&&grants[deviceId].activo){
+        clearInterval(_esperaInterval);
+        _activarSesionRuta(ruta,deviceId);
+      }
+    }).catch(function(){});
+  },5000);
+}
+
+function _actualizarPendiente(deviceId,ruta,dispositivo){
+  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_pending&select=value',{headers:SUPA_HDR})
+  .then(function(r){return r.ok?r.json():[];})
+  .then(function(rows){
+    var pending=(rows&&rows[0]&&rows[0].value)||{};
+    pending[deviceId]={deviceId:deviceId,ruta:ruta,dispositivo:dispositivo,ts:Date.now()};
+    return fetch(SUPA_URL+'/rest/v1/app_data',{
+      method:'POST',
+      headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
+      body:JSON.stringify([{key:'session_pending',value:pending}])
+    });
+  }).catch(function(){});
+}
+
+function _activarSesionRuta(ruta,deviceId){
+  var loginTs=Date.now();
+  localStorage.setItem('fjd_session','1');
+  localStorage.setItem('fjd_rol','ruta');
+  localStorage.setItem('fjd_login_ts',loginTs.toString());
+  localStorage.setItem('fjd_login_ruta',ruta);
+  localStorage.setItem('fjd_login_user',ruta);
+  localStorage.setItem('fjd_ruta_actual',ruta);
+  rolActual='ruta';
+  rutaActual=ruta;
+  document.getElementById('espera-screen').style.display='none';
+  mostrarApp();
+}
+
+function cancelarEspera(){
+  clearInterval(_esperaInterval);
+  localStorage.removeItem('fjd_pending_ruta');
+  document.getElementById('espera-ruta-sel').style.display='block';
+  document.getElementById('espera-pendiente').style.display='none';
 }
 
 function _actualizarLabelRuta(){
@@ -1173,16 +1256,24 @@ function mostrarApp(){
 }
 
 function _forzarLogout(){
+  var eraRuta=localStorage.getItem('fjd_rol')!=='admin';
+  var rutaAnterior=localStorage.getItem('fjd_login_ruta')||'';
   localStorage.removeItem('fjd_session'); localStorage.removeItem('fjd_rol');
   localStorage.removeItem('fjd_pantalla'); localStorage.removeItem('fjd_detalle_id');
   localStorage.removeItem('fjd_cliente_temp'); localStorage.removeItem('fjd_login_ts');
   localStorage.removeItem('fjd_login_user');
   document.getElementById('app').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
   document.getElementById('splash-screen').style.display='none';
-  document.getElementById('login-user').value='';
-  document.getElementById('login-pass').value='';
   closeMenu();
+  if(eraRuta){
+    // Ir directo a pantalla de espera con la ruta anterior preseleccionada
+    mostrarEspera();
+    if(rutaAnterior) setTimeout(function(){ solicitarAcceso(rutaAnterior); },500);
+  } else {
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('login-user').value='';
+    document.getElementById('login-pass').value='';
+  }
 }
 
 function cerrarSesion(){
@@ -1261,6 +1352,51 @@ function _iniciarHeartbeat(){
 }
 
 // ── Ver dispositivos conectados ────────────────────────────────────
+function verSolicitudesAcceso(){
+  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_pending&select=value',{headers:SUPA_HDR})
+  .then(function(r){return r.ok?r.json():[];})
+  .then(function(rows){
+    var pending=(rows&&rows[0]&&rows[0].value)||{};
+    var cutoff=Date.now()-60000;
+    var lista=Object.values(pending).filter(function(d){return d.ts>=cutoff;});
+    var modal=document.createElement('div');
+    modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    var filas=lista.length?lista.map(function(d){
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #f3f4f6">'
+        +'<div><div style="font-weight:700;font-size:14px">'+d.dispositivo+' — '+d.ruta+'</div>'
+        +'<div style="font-size:11px;color:#6b7280">Solicitud hace '+Math.round((Date.now()-d.ts)/1000)+'s</div></div>'
+        +'<button onclick="activarDispositivo(\''+d.deviceId+'\',\''+d.ruta+'\',this)" style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">✓ Activar</button>'
+        +'</div>';
+    }).join(''):'<p style="text-align:center;color:#6b7280;padding:20px">Sin solicitudes pendientes</p>';
+    modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:24px;max-width:380px;width:100%">'
+      +'<p style="font-size:16px;font-weight:800;margin-bottom:4px">🔓 Solicitudes de acceso</p>'
+      +'<p style="font-size:12px;color:#6b7280;margin-bottom:16px">Dispositivos esperando activación</p>'
+      +filas
+      +'<button onclick="this.closest(\'[style*=fixed]\').remove()" style="width:100%;margin-top:16px;padding:12px;background:#f3f4f6;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">Cerrar</button>'
+      +'</div>';
+    document.body.appendChild(modal);
+  }).catch(function(){ toast('⚠ Error de conexión'); });
+}
+
+function activarDispositivo(deviceId,ruta,btn){
+  btn.disabled=true; btn.textContent='...';
+  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_grants&select=value',{headers:SUPA_HDR})
+  .then(function(r){return r.ok?r.json():[];})
+  .then(function(rows){
+    var grants=(rows&&rows[0]&&rows[0].value)||{};
+    grants[deviceId]={activo:true,ruta:ruta,grantedAt:Date.now()};
+    return fetch(SUPA_URL+'/rest/v1/app_data',{
+      method:'POST',
+      headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
+      body:JSON.stringify([{key:'session_grants',value:grants}])
+    });
+  })
+  .then(function(r){
+    if(r&&r.ok){ btn.textContent='✓ Activado'; btn.style.background='#0e7490'; toast('✓ Dispositivo activado'); }
+    else{ btn.disabled=false; btn.textContent='✓ Activar'; toast('⚠ Error'); }
+  }).catch(function(){ btn.disabled=false; btn.textContent='✓ Activar'; toast('⚠ Error'); });
+}
+
 function verDispositivosConectados(){
   fetch(SUPA_URL+'/rest/v1/app_data?key=eq.device_sessions&select=value',{headers:SUPA_HDR})
   .then(function(r){return r.ok?r.json():[];})
@@ -3561,25 +3697,32 @@ function fechaOffset(dias){
       if(_revocado){
         localStorage.removeItem('fjd_session'); localStorage.removeItem('fjd_rol');
         localStorage.removeItem('fjd_login_ts'); localStorage.removeItem('fjd_login_ruta');
-        document.getElementById('login-screen').style.display='flex';
-        toast('⚠ Su sesión fue cerrada. Inicie sesión nuevamente.');
+        mostrarEspera();
+        toast('⚠ Su sesión fue cerrada por el administrador.');
       } else {
         mostrarApp();
       }
     } else {
-      document.getElementById('login-screen').style.display='flex';
+      // Sin sesión: admin va al login, ruta va a pantalla de espera
+      var _rolGuardado=localStorage.getItem('fjd_rol')||'';
+      if(_rolGuardado==='admin'||_rolGuardado===''){
+        document.getElementById('login-screen').style.display='flex';
+      } else {
+        mostrarEspera();
+        var _rutaPend=localStorage.getItem('fjd_pending_ruta')||localStorage.getItem('fjd_login_ruta');
+        if(_rutaPend) setTimeout(function(){ solicitarAcceso(_rutaPend); },300);
+      }
     }
   }catch(e){
     document.getElementById('login-screen').style.display='flex';
   }
 
-  // Doble seguro: si después de 500ms nada es visible, mostrar login
+  // Doble seguro
   setTimeout(function(){
-    var appVisible=document.getElementById('app').style.display==='block';
-    var loginVisible=document.getElementById('login-screen').style.display==='flex';
-    if(!appVisible && !loginVisible){
-      document.getElementById('login-screen').style.display='flex';
-    }
+    var appV=document.getElementById('app').style.display==='block';
+    var loginV=document.getElementById('login-screen').style.display==='flex';
+    var esperaV=document.getElementById('espera-screen').style.display==='flex';
+    if(!appV&&!loginV&&!esperaV) document.getElementById('login-screen').style.display='flex';
   },500);
 })();
 </script>
