@@ -1459,9 +1459,15 @@ function goTo(id){
   if(id==='screen-panel-recolector') renderPanelRecolector();
   if(id==='screen-home') updateHome();
   if(id==='screen-inversion') renderInversion();
-  if(id==='screen-nuevo-prestamo' && clienteTemporal.nombre){
-    document.getElementById('np-cliente').value=clienteTemporal.nombre;
-    document.getElementById('np-cliente-display').textContent=clienteTemporal.nombre+(clienteTemporal.subruta?' · '+clienteTemporal.subruta:'');
+  if(id==='screen-nuevo-prestamo'){
+    var _h=hoyLocal(); var _hp=_h.split('-');
+    document.getElementById('np-fecha').value=_h;
+    document.getElementById('np-fecha-display').textContent=parseInt(_hp[2])+'/'+parseInt(_hp[1])+'/'+_hp[0];
+    if(!document.getElementById('np-prox-fecha').value) calcProxFechaPago();
+    if(clienteTemporal.nombre){
+      document.getElementById('np-cliente').value=clienteTemporal.nombre;
+      document.getElementById('np-cliente-display').textContent=clienteTemporal.nombre+(clienteTemporal.subruta?' · '+clienteTemporal.subruta:'');
+    }
   }
 }
 
