@@ -550,17 +550,17 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <div class="field-group">
         <label>Tipo *</label>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
-          <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-diario">
-            <input type="radio" name="np-tipo" value="Diario" onclick="onTipoChange()" style="accent-color:var(--cyan)"> Diario
+          <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-diario" onclick="selTipo('Diario')">
+            <input type="radio" name="np-tipo" value="Diario" style="accent-color:var(--cyan)"> Diario
           </label>
-          <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-semanal">
-            <input type="radio" name="np-tipo" value="Semanal" onclick="onTipoChange()" style="accent-color:var(--cyan)"> Semanal
+          <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-semanal" onclick="selTipo('Semanal')">
+            <input type="radio" name="np-tipo" value="Semanal" style="accent-color:var(--cyan)"> Semanal
           </label>
-          <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--cyan);background:#f0f9ff;border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-quincenal">
-            <input type="radio" name="np-tipo" value="Quincenal" checked onclick="onTipoChange()" style="accent-color:var(--cyan)"> Quincenal
+          <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--cyan);background:#f0f9ff;border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-quincenal" onclick="selTipo('Quincenal')">
+            <input type="radio" name="np-tipo" value="Quincenal" checked style="accent-color:var(--cyan)"> Quincenal
           </label>
-          <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-mensual">
-            <input type="radio" name="np-tipo" value="Mensual" onclick="onTipoChange()" style="accent-color:var(--cyan)"> Mensual
+          <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-mensual" onclick="selTipo('Mensual')">
+            <input type="radio" name="np-tipo" value="Mensual" style="accent-color:var(--cyan)"> Mensual
           </label>
         </div>
         <!-- Sub-opciones Semanal -->
@@ -1507,6 +1507,12 @@ document.addEventListener('click',function(e){
     menu.classList.remove('open');
   }
 });
+
+function selTipo(tipo){
+  var r=document.querySelector('input[name="np-tipo"][value="'+tipo+'"]');
+  if(r) r.checked=true;
+  onTipoChange();
+}
 
 function onTipoChange(){
   var tipo=document.querySelector('input[name="np-tipo"]:checked').value;
