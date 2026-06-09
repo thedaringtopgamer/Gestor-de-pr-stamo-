@@ -278,7 +278,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     <div class="menu-item" onclick="goTo('screen-panel-recolector');closeMenu()">📊 Panel Recolector</div>
     <div class="menu-item" onclick="goTo('screen-nuevo-cliente');closeMenu()">➕ Nuevo Cliente</div>
     <div class="menu-item" id="menu-inversion" onclick="goTo('screen-inversion');closeMenu()" style="display:none">💰 Inversión</div>
-    <div class="menu-item" onclick="cerrarSesion()" style="color:var(--red)">🔒 Cerrar sesión</div>
+    <div class="menu-item" id="menu-cerrar-sesion" onclick="cerrarSesion()" style="display:none;color:var(--red)">🔒 Cerrar sesión</div>
   </div>
 
   <!-- ==================== INVERSIÓN ==================== -->
@@ -1082,7 +1082,7 @@ var USUARIOS=[
   var saved=localStorage.getItem('fjd_passwords');
   if(saved){try{var arr=JSON.parse(saved);arr.forEach(function(p,i){if(USUARIOS[i]&&p)USUARIOS[i].pass=p;});}catch(e){}}
 })();
-var rolActual=sessionStorage.getItem('fjd_rol')||'ruta';
+var rolActual=localStorage.getItem('fjd_rol')||'ruta';
 var rutaActual=localStorage.getItem('fjd_ruta_actual')||'todas';
 
 function doLogin(){
@@ -1091,8 +1091,8 @@ function doLogin(){
   var err=document.getElementById('login-error');
   var usr=USUARIOS.find(function(x){return x.user===u&&x.pass===p;});
   if(usr){
-    sessionStorage.setItem('fjd_session','1');
-    sessionStorage.setItem('fjd_rol',usr.rol);
+    localStorage.setItem('fjd_session','1');
+    localStorage.setItem('fjd_rol',usr.rol);
     rolActual=usr.rol;
     if(usr.rol==='admin'){
       // Admin elige ruta primero
@@ -1142,6 +1142,8 @@ function mostrarApp(){
   if(adminBtn) adminBtn.style.display=rolActual==='admin'?'block':'none';
   var menuInv=document.getElementById('menu-inversion');
   if(menuInv) menuInv.style.display=rolActual==='admin'?'block':'none';
+  var menuCerrar=document.getElementById('menu-cerrar-sesion');
+  if(menuCerrar) menuCerrar.style.display=rolActual==='admin'?'block':'none';
   // sessionStorage se borra al cerrar la app completamente, pero sobrevive recargas en segundo plano
   // → Si no hay pantalla en sessionStorage, la app fue cerrada: ir a cobros
   // → Si hay pantalla, la app estaba en segundo plano: restaurar donde estaba
@@ -1165,7 +1167,7 @@ function mostrarApp(){
 
 function cerrarSesion(){
   if(!confirm('¿Cerrar sesión?')) return;
-  sessionStorage.removeItem('fjd_session');
+  localStorage.removeItem('fjd_session'); localStorage.removeItem('fjd_rol');
   localStorage.removeItem('fjd_pantalla');
   localStorage.removeItem('fjd_detalle_id');
   localStorage.removeItem('fjd_cliente_temp');
@@ -3365,7 +3367,7 @@ function fechaOffset(dias){
   try{ updateHome(); }catch(e){}
 
   try{
-    if(sessionStorage.getItem('fjd_session')==='1'){
+    if(localStorage.getItem('fjd_session')==='1'){
       mostrarApp();
     } else {
       document.getElementById('login-screen').style.display='flex';
