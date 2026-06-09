@@ -549,42 +549,27 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       </div>
       <div class="field-group">
         <label>Tipo *</label>
+        <input type="hidden" id="np-tipo-val" value="Quincenal">
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
-          <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-diario" onclick="selTipo('Diario')">
-            <input type="radio" name="np-tipo" value="Diario" style="accent-color:var(--cyan)"> Diario
-          </label>
-          <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-semanal" onclick="selTipo('Semanal')">
-            <input type="radio" name="np-tipo" value="Semanal" style="accent-color:var(--cyan)"> Semanal
-          </label>
-          <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--cyan);background:#f0f9ff;border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-quincenal" onclick="selTipo('Quincenal')">
-            <input type="radio" name="np-tipo" value="Quincenal" checked style="accent-color:var(--cyan)"> Quincenal
-          </label>
-          <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;transition:border-color 0.15s,background 0.15s" id="lbl-mensual" onclick="selTipo('Mensual')">
-            <input type="radio" name="np-tipo" value="Mensual" style="accent-color:var(--cyan)"> Mensual
-          </label>
+          <button type="button" id="btn-tipo-Diario" onclick="selTipo('Diario')" style="padding:10px 4px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:12px;font-weight:600;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif">Diario</button>
+          <button type="button" id="btn-tipo-Semanal" onclick="selTipo('Semanal')" style="padding:10px 4px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:12px;font-weight:600;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif">Semanal</button>
+          <button type="button" id="btn-tipo-Quincenal" onclick="selTipo('Quincenal')" style="padding:10px 4px;border:1.5px solid var(--cyan);border-radius:var(--radius);font-size:12px;font-weight:600;background:#f0f9ff;color:#0e7490;cursor:pointer;font-family:'DM Sans',sans-serif">Quincenal</button>
+          <button type="button" id="btn-tipo-Mensual" onclick="selTipo('Mensual')" style="padding:10px 4px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:12px;font-weight:600;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif">Mensual</button>
         </div>
         <!-- Sub-opciones Semanal -->
         <div id="sub-semanal" style="display:none;margin-top:8px">
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Seleccione período:</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <label style="display:flex;align-items:center;gap:6px;padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500" id="lbl-s5">
-              <input type="radio" name="np-semanas" value="5" checked onclick="calcPreview();calcProxFechaPago()" style="accent-color:var(--cyan)"> 5 semanas
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500" id="lbl-s6">
-              <input type="radio" name="np-semanas" value="6" onclick="calcPreview();calcProxFechaPago()" style="accent-color:var(--cyan)"> 6 semanas
-            </label>
+            <button type="button" id="btn-sem-5" onclick="selSemanas(5)" style="padding:10px;border:1.5px solid var(--cyan);border-radius:var(--radius);font-size:13px;font-weight:600;background:#f0f9ff;color:#0e7490;cursor:pointer;font-family:'DM Sans',sans-serif">5 semanas</button>
+            <button type="button" id="btn-sem-6" onclick="selSemanas(6)" style="padding:10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-weight:600;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif">6 semanas</button>
           </div>
         </div>
         <!-- Sub-opciones Quincenal -->
         <div id="sub-quincenal" style="margin-top:8px">
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Seleccione período:</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <label style="display:flex;align-items:center;gap:6px;padding:9px 10px;border:1.5px solid var(--cyan);background:#f0f9ff;border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500" id="lbl-q2">
-              <input type="radio" name="np-quincenas" value="2" checked onclick="calcPreview();calcProxFechaPago()" style="accent-color:var(--cyan)"> 2 quincenas
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:500" id="lbl-q3">
-              <input type="radio" name="np-quincenas" value="3" onclick="calcPreview();calcProxFechaPago()" style="accent-color:var(--cyan)"> 3 quincenas
-            </label>
+            <button type="button" id="btn-quin-2" onclick="selQuincenas(2)" style="padding:10px;border:1.5px solid var(--cyan);border-radius:var(--radius);font-size:13px;font-weight:600;background:#f0f9ff;color:#0e7490;cursor:pointer;font-family:'DM Sans',sans-serif">2 quincenas</button>
+            <button type="button" id="btn-quin-3" onclick="selQuincenas(3)" style="padding:10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-weight:600;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif">3 quincenas</button>
           </div>
         </div>
       </div>
@@ -1463,7 +1448,8 @@ function goTo(id){
     var _h=hoyLocal(); var _hp=_h.split('-');
     document.getElementById('np-fecha').value=_h;
     document.getElementById('np-fecha-display').textContent=parseInt(_hp[2])+'/'+parseInt(_hp[1])+'/'+_hp[0];
-    calcProxFechaPago();
+    _npSemanas=5; _npQuincenas=2;
+    selTipo('Quincenal');
     if(clienteTemporal.nombre){
       document.getElementById('np-cliente').value=clienteTemporal.nombre;
       document.getElementById('np-cliente-display').textContent=clienteTemporal.nombre+(clienteTemporal.subruta?' · '+clienteTemporal.subruta:'');
@@ -1508,22 +1494,46 @@ document.addEventListener('click',function(e){
   }
 });
 
-function selTipo(tipo){
-  var r=document.querySelector('input[name="np-tipo"][value="'+tipo+'"]');
-  if(r) r.checked=true;
-  onTipoChange();
-}
+var _npSemanas=5;
+var _npQuincenas=2;
 
-function onTipoChange(){
-  var tipo=document.querySelector('input[name="np-tipo"]:checked').value;
+function selTipo(tipo){
+  document.getElementById('np-tipo-val').value=tipo;
+  ['Diario','Semanal','Quincenal','Mensual'].forEach(function(t){
+    var btn=document.getElementById('btn-tipo-'+t);
+    if(!btn) return;
+    var sel=t===tipo;
+    btn.style.borderColor=sel?'var(--cyan)':'var(--border)';
+    btn.style.background=sel?'#f0f9ff':'#fff';
+    btn.style.color=sel?'#0e7490':'inherit';
+  });
   document.getElementById('sub-semanal').style.display=tipo==='Semanal'?'block':'none';
   document.getElementById('sub-quincenal').style.display=tipo==='Quincenal'?'block':'none';
-  // resaltar label seleccionado
-  ['diario','semanal','quincenal','mensual'].forEach(function(t){
-    var lbl=document.getElementById('lbl-'+t);
-    var sel=tipo.toLowerCase()===t;
-    lbl.style.borderColor=sel?'var(--cyan)':'var(--border)';
-    lbl.style.background=sel?'#f0f9ff':'';
+  calcPreview();
+  calcProxFechaPago();
+}
+
+function selSemanas(n){
+  _npSemanas=n;
+  [5,6].forEach(function(v){
+    var btn=document.getElementById('btn-sem-'+v);
+    if(!btn) return;
+    btn.style.borderColor=v===n?'var(--cyan)':'var(--border)';
+    btn.style.background=v===n?'#f0f9ff':'#fff';
+    btn.style.color=v===n?'#0e7490':'inherit';
+  });
+  calcPreview();
+  calcProxFechaPago();
+}
+
+function selQuincenas(n){
+  _npQuincenas=n;
+  [2,3].forEach(function(v){
+    var btn=document.getElementById('btn-quin-'+v);
+    if(!btn) return;
+    btn.style.borderColor=v===n?'var(--cyan)':'var(--border)';
+    btn.style.background=v===n?'#f0f9ff':'#fff';
+    btn.style.color=v===n?'#0e7490':'inherit';
   });
   calcPreview();
   calcProxFechaPago();
@@ -1540,19 +1550,16 @@ function calcProxFechaPago(){
 }
 
 function getCuotasYDias(){
-  var tipo=document.querySelector('input[name="np-tipo"]:checked').value;
+  var el=document.getElementById('np-tipo-val');
+  var tipo=el?el.value:'Quincenal';
   var cuotas, diasPorCuota;
   if(tipo==='Diario'){
     cuotas=30; diasPorCuota=1;
   } else if(tipo==='Semanal'){
-    var semanas=parseInt(document.querySelector('input[name="np-semanas"]:checked').value)||5;
-    cuotas=semanas;
-    diasPorCuota=7; // semanal = 1 pago por semana = 7 días
+    cuotas=_npSemanas||5; diasPorCuota=7;
   } else if(tipo==='Quincenal'){
-    var quincenas=parseInt(document.querySelector('input[name="np-quincenas"]:checked').value)||2;
-    cuotas=quincenas;
-    diasPorCuota=15;
-  } else { // Mensual
+    cuotas=_npQuincenas||2; diasPorCuota=15;
+  } else {
     cuotas=1; diasPorCuota=30;
   }
   return {cuotas:cuotas, diasPorCuota:diasPorCuota, tipo:tipo};
