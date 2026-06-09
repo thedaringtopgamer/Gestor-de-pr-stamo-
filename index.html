@@ -2703,10 +2703,14 @@ function modalCancelar(){
 function _autoProximaFecha(p){
   var d=calcDerived(p);
   if(d.saldoPendiente<=0){ p.proximaFechaPago=null; return; }
-  var proxCuota=d.cuotasPagadas+1;
-  if(proxCuota>p.cantidadDeQuincenas){ p.proximaFechaPago=null; return; }
-  var next=getCuotaVencimiento(p,proxCuota);
-  p.proximaFechaPago=next.getFullYear()+'-'+String(next.getMonth()+1).padStart(2,'0')+'-'+String(next.getDate()).padStart(2,'0');
+  // Calcular próxima fecha desde el día del último pago registrado
+  var pp=pagos.filter(function(x){return x.id_prestamo===p.id;});
+  pp.sort(function(a,b){return a.fechaPago.localeCompare(b.fechaPago)||(a.id_pago.localeCompare(b.id_pago));});
+  var ultimaFecha=pp.length?pp[pp.length-1].fechaPago:p.fechaInicio;
+  var base=parseLocalDate(ultimaFecha);
+  base.setDate(base.getDate()+(p.diasPorCuota||15));
+  base=siguienteDiaHabil(base);
+  p.proximaFechaPago=base.getFullYear()+'-'+String(base.getMonth()+1).padStart(2,'0')+'-'+String(base.getDate()).padStart(2,'0');
 }
 
 function abonoRapido(id,nombre,cuota){
