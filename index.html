@@ -1561,6 +1561,11 @@ document.addEventListener('visibilitychange',function(){
   if(document.visibilityState==='visible' && localStorage.getItem('fjd_session')==='1') _verificarRevocacion();
 });
 
+// Chequeo en vivo cada 20 segundos para detectar revocación remota inmediatamente
+setInterval(function(){
+  if(localStorage.getItem('fjd_session')==='1') _verificarRevocacion();
+}, 20000);
+
 // Cerrar el menú admin si se toca fuera
 document.addEventListener('click',function(e){
   var wrap=document.getElementById('admin-menu-wrap');
