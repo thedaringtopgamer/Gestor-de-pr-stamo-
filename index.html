@@ -430,7 +430,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <input id="filtro-cobros" type="text" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none" placeholder="Buscar cliente...">
         <button class="btn btn-blue btn-sm" onclick="filtrarCobros()">Buscar</button>
       </div>
-      <button class="btn btn-cyan btn-full" style="margin-bottom:14px">🖨 Imprimir cuotas</button>
+      <button class="btn btn-cyan btn-full" style="margin-bottom:14px" onclick="imprimirCuotas()">🖨 Imprimir cuotas</button>
       <div style="display:flex;justify-content:space-between;padding:0 4px 6px;border-bottom:1px solid var(--border);margin-bottom:4px">
         <span style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em">Cliente</span>
         <span style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em">SubRuta</span>
@@ -2337,6 +2337,82 @@ function renderTarjetas(filtro){
 
 function filtrarCobros(){renderCobros(document.getElementById('filtro-cobros').value);}
 function filtrarTarjetas(){renderTarjetas(document.getElementById('filtro-tarjetas').value);}
+
+function imprimirCuotas(){
+  var hoy=hoyLocal();
+  var hoyDate=parseLocalDate(hoy);
+  var todos=prestamosVisibles().filter(function(p){return !p.incompleto&&calcDerived(p).saldoPendiente>0;});
+  var items=todos.filter(function(p){var e=getEstadoCobro(p);return e==='atrasado'||e==='hoy';});
+  items.sort(function(a,b){
+    var sa=a.subruta||'';var sb=b.subruta||'';
+    if(sa!==sb)return sa.localeCompare(sb,'es');
+    return a.cliente.localeCompare(b.cliente,'es');
+  });
+  var rutaTitulo=rutaActual==='todas'?'Todas las Rutas':rutaActual;
+  var partes=hoy.split('-');
+  var fechaDisplay=partes[2]+'/'+partes[1]+'/'+partes[0];
+  var ahora=new Date();
+  var horaDisplay=ahora.getHours()+':'+(ahora.getMinutes()<10?'0':'')+ahora.getMinutes();
+
+  var filas=items.map(function(p){
+    var d=calcDerived(p);
+    var tipo=(p.tipo||'Quincenal').toUpperCase();
+    if(tipo==='QUINCENAL')tipo='QUINCENA';
+    else if(tipo==='SEMANAL')tipo='SEMANA';
+    else if(tipo==='DIARIO')tipo='DIA';
+    var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/30:0;
+    var diasPagados=cuotaDiaria>0?Math.min(30,Math.floor(d.totalPagado/cuotaDiaria)):0;
+    var actual=tipo==='QUINCENA'
+      ?(d.cuotasPagadas+'/'+p.cantidadDeQuincenas)
+      :(diasPagados+'/30');
+    var fechaProx=p.proximaFechaPago||hoy;
+    var fp=fechaProx.split('-');
+    var fechaFmt=fp[2]+'-'+fp[1]+'-'+fp[0];
+    var fechaProxDate=parseLocalDate(fechaProx);
+    var diffDias=Math.floor((hoyDate-fechaProxDate)/86400000);
+    var atraso=diffDias>0?'Atrasado '+diffDias+' día(s)':'al día';
+    var bgRow=diffDias>0?'#fff3f3':'#fff';
+    return '<tr style="background:'+bgRow+'">'
+      +'<td>'+p.cliente+'</td>'
+      +'<td>'+( p.subruta||'')+'</td>'
+      +'<td style="text-align:right">'+p.montoPrestado.toLocaleString('es-CR')+'.00</td>'
+      +'<td style="text-align:center">'+p.cantidadDeQuincenas+'</td>'
+      +'<td style="text-align:center">'+actual+'</td>'
+      +'<td style="text-align:center">'+tipo+'</td>'
+      +'<td style="text-align:center">'+fechaFmt+'</td>'
+      +'<td style="color:'+(diffDias>0?'#cc0000':'#1a7a1a')+'">'+atraso+'</td>'
+      +'</tr>';
+  }).join('');
+
+  var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cobros '+fechaDisplay+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,sans-serif;font-size:8.5pt;padding:10mm}'
+    +'.top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px}'
+    +'.top h2{font-size:13pt;font-weight:bold}'
+    +'.top .ts{font-size:8pt;color:#555}'
+    +'table{border-collapse:collapse;width:100%}'
+    +'th{background:#ddd;border:1px solid #aaa;padding:3px 5px;font-size:8pt;text-align:left;font-weight:bold}'
+    +'td{border:1px solid #ccc;padding:2px 4px;font-size:8pt}'
+    +'tr:nth-child(even) td{background:#f7f7f7}'
+    +'@media print{body{padding:5mm}}'
+    +'</style></head><body>'
+    +'<div class="top">'
+    +'<h2>Cobros de '+rutaTitulo+' al '+fechaDisplay+'</h2>'
+    +'<div class="ts">'+fechaDisplay+', '+horaDisplay+'</div>'
+    +'</div>'
+    +'<table><thead><tr>'
+    +'<th>Cliente</th><th>SubRuta</th><th>Monto</th><th>Cuotas</th><th>Actual</th><th>Tipo</th><th>Fecha</th><th>Atraso</th>'
+    +'</tr></thead><tbody>'+filas+'</tbody></table>'
+    +'</body></html>';
+
+  var w=window.open('','_blank','width=900,height=700');
+  if(!w){toast('⚠ Permita ventanas emergentes para imprimir');return;}
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(function(){w.print();},400);
+}
 
 function eliminarCliente(id){
   var p=prestamos.find(function(x){return x.id===id;});
