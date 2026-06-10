@@ -1336,16 +1336,12 @@ function _actualizarLabelRuta(){
 }
 
 // Cobrador entra directo eligiendo ruta (sin contraseña)
-var ADMIN_WA_NUMBER='50672907197';
 function entrarComoRuta(ruta){
   rolActual='ruta';
   rutaActual=ruta;
   localStorage.setItem('fjd_rol','ruta');
   localStorage.setItem('fjd_ruta_actual',ruta);
   sessionStorage.setItem('fjd_ruta_actual',ruta);
-  var hora=new Date().toLocaleTimeString('es-CR',{hour:'2-digit',minute:'2-digit'});
-  var msg=encodeURIComponent('📲 *'+ruta+'* ha ingresado al sistema — '+hora);
-  window.open('https://wa.me/'+ADMIN_WA_NUMBER+'?text='+msg,'_blank');
   mostrarApp();
 }
 function loginMostrarAdmin(){
