@@ -1407,6 +1407,20 @@ function mostrarApp(){
   }
 }
 
+// Cierre forzado por admin: borra ruta fija, vuelve a selección
+function _forzarLogoutAdmin(){
+  localStorage.removeItem('fjd_session'); localStorage.removeItem('fjd_rol');
+  localStorage.removeItem('fjd_pantalla'); localStorage.removeItem('fjd_detalle_id');
+  localStorage.removeItem('fjd_cliente_temp'); localStorage.removeItem('fjd_login_ts');
+  localStorage.removeItem('fjd_login_user'); localStorage.removeItem('fjd_ruta_fija');
+  localStorage.removeItem('fjd_ruta_actual');
+  document.getElementById('app').style.display='none';
+  document.getElementById('splash-screen').style.display='none';
+  closeMenu();
+  document.getElementById('login-screen').style.display='flex';
+  loginMostrarRutas();
+}
+
 function _forzarLogout(){
   var eraRuta=localStorage.getItem('fjd_rol')!=='admin';
   var rutaFija=localStorage.getItem('fjd_ruta_fija');
@@ -1446,8 +1460,8 @@ function _verificarRevocacion(){
     var rev=rows[0].value||{};
     var revokeTs=rev[loginRuta]||rev['todas']||0;
     if(revokeTs>loginTs){
-      toast('⚠ Su sesión fue cerrada. Inicie sesión nuevamente.');
-      setTimeout(_forzarLogout,2000);
+      toast('⚠ Su sesión fue cerrada por el administrador.');
+      setTimeout(_forzarLogoutAdmin,2000);
     }
   }).catch(function(){});
 }
@@ -3972,7 +3986,9 @@ function fechaOffset(dias){
       if(_revocado){
         localStorage.removeItem('fjd_session'); localStorage.removeItem('fjd_rol');
         localStorage.removeItem('fjd_login_ts'); localStorage.removeItem('fjd_login_ruta');
-        mostrarEspera();
+        localStorage.removeItem('fjd_ruta_fija'); localStorage.removeItem('fjd_ruta_actual');
+        document.getElementById('login-screen').style.display='flex';
+        loginMostrarRutas();
         toast('⚠ Su sesión fue cerrada por el administrador.');
       } else {
         mostrarApp();
