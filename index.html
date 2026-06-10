@@ -2444,17 +2444,17 @@ function renderTarjetas(filtro){
     return '<div class="loan-row" style="'+borderColor+(cancelado?';opacity:0.7':'')+'">'
       +'<button class="icon-btn icon-btn-cyan btn-sm" style="width:auto;padding:7px 14px;border-radius:var(--radius)" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
       +'<div style="flex:1;padding-left:10px;min-width:0">'
-        +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+badgeTarjeta+'</div>'
-        +'<div style="font-size:11px;color:var(--text-muted)">'+estadoTag(d.estado)+' &nbsp;'+p.cantidadDeQuincenas+' cuotas</div>'
+        +'<div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+badgeTarjeta+'</div>'
+        +'<div style="font-size:13px;color:var(--text-muted)">'+estadoTag(d.estado)+' &nbsp;'+p.cantidadDeQuincenas+' cuotas</div>'
       +'</div>'
       +(cancelado
         ? '<div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
-            +'<span style="font-size:10px;font-weight:700;color:#2563eb;background:#dbeafe;padding:2px 7px;border-radius:6px">✓ CANCELADO</span>'
+            +'<span style="font-size:11px;font-weight:700;color:#2563eb;background:#dbeafe;padding:2px 7px;border-radius:6px">✓ CANCELADO</span>'
             +btnEliminar
           +'</div>'
         : '<div style="text-align:right;flex-shrink:0">'
-          +'<div style="font-size:13px;font-weight:600">₡'+fmt(p.montoPrestado)+'</div>'
-          +'<div style="font-size:12px;font-weight:600;color:#2563eb">'+(p.subruta||p.ruta||'')+'</div>'
+          +'<div style="font-size:14px;font-weight:600">₡'+fmt(p.montoPrestado)+'</div>'
+          +'<div style="font-size:13px;font-weight:600;color:#2563eb">'+(p.subruta||p.ruta||'')+'</div>'
           +'</div>')
     +'</div>';
   }).join('');
