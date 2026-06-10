@@ -234,6 +234,10 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <p style="font-size:16px;font-weight:700;color:#1e40af;margin-bottom:4px">🔐 Administrador</p>
         <div id="login-error" style="display:none;background:#fee2e2;color:#dc2626;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:12px"></div>
         <div style="margin-bottom:12px">
+          <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Usuario</label>
+          <input type="text" id="login-user-admin" placeholder="Usuario" autocomplete="username" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box" onkeydown="if(event.key==='Enter')document.getElementById('login-pass-admin').focus()">
+        </div>
+        <div style="margin-bottom:12px">
           <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Contraseña</label>
           <input type="password" id="login-pass-admin" placeholder="••••••••" autocomplete="current-password" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box" onkeydown="if(event.key==='Enter')loginAdmin()">
         </div>
@@ -1336,6 +1340,25 @@ function entrarComoRuta(ruta){
   localStorage.setItem('fjd_ruta_fija',ruta); // queda fija en este teléfono
   sessionStorage.setItem('fjd_ruta_actual',ruta);
   mostrarApp();
+}
+var ADMIN_USER='TheDaring';
+var ADMIN_PASS='Thedaring020603';
+function loginAdmin(){
+  var u=document.getElementById('login-user-admin').value.trim();
+  var p=document.getElementById('login-pass-admin').value;
+  var err=document.getElementById('login-error');
+  if(u===ADMIN_USER && p===ADMIN_PASS){
+    err.style.display='none';
+    localStorage.setItem('fjd_session','1');
+    localStorage.setItem('fjd_rol','admin');
+    rolActual='admin';
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('ruta-selector').style.display='flex';
+  } else {
+    err.textContent='Usuario o contraseña incorrectos';
+    err.style.display='block';
+    document.getElementById('login-pass-admin').value='';
+  }
 }
 function loginMostrarAdmin(){
   document.getElementById('login-rutas-panel').style.display='none';
