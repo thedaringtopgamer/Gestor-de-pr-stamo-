@@ -1724,14 +1724,17 @@ function guardarDatos(){
     localStorage.setItem('fjd_ts',ts.toString());
   }catch(e){}
 
-  // Separar fotos del resto para que el payload principal sea siempre pequeño
-  var fotosMap={};
+  // Fotos ya están en Storage como URLs — solo excluir base64 legacy del payload
   var prestamosSinFotos=prestamos.map(function(p){
-    if(p.fotos&&Object.keys(p.fotos).length){
-      fotosMap[p.id]=p.fotos;
-    }
     var copia=Object.assign({},p);
-    delete copia.fotos;
+    if(copia.fotos){
+      var fotosLimpias={};
+      Object.keys(copia.fotos).forEach(function(k){
+        // Guardar solo URLs (Storage), no base64
+        if(copia.fotos[k]&&!copia.fotos[k].startsWith('data:')) fotosLimpias[k]=copia.fotos[k];
+      });
+      copia.fotos=fotosLimpias;
+    }
     return copia;
   });
 
