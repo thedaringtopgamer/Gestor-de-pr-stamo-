@@ -3525,7 +3525,7 @@ function quitarDelPanelHoy(pagoId){
   var p=prestamos.find(function(x){return x.id===pg.id_prestamo;});
   var nombre=p?p.cliente:'cliente';
   if(!confirm('¿Quitar el cobro de ₡'+fmt(pg.montoAbonado)+' de '+nombre+' del panel de hoy?\n\nEl pago sigue registrado en la cuenta del cliente.')) return;
-  pg.fechaRegistro=pg.fechaPago;
+  pg._ocultarPanel=true;
   guardarDatos();
   renderPanelRecolector();
   toast('✓ Cobro quitado del panel de hoy');
@@ -3665,7 +3665,7 @@ function renderPanelRecolector(){
   document.getElementById('panel-nuevos-lista').innerHTML=(nuevosItems.concat(renovItems)).join('')||'<p style="font-size:13px;color:var(--text-muted)">Sin préstamos nuevos</p>';
 
   // Cobros realizados de esta ruta
-  var pagosHoy=pagos.filter(function(x){return (x.fechaRegistro||x.fechaPago)===fecha && idsRuta.indexOf(x.id_prestamo)!==-1;});
+  var pagosHoy=pagos.filter(function(x){return !x._ocultarPanel && (x.fechaRegistro||x.fechaPago)===fecha && idsRuta.indexOf(x.id_prestamo)!==-1;});
   var totalCobros=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
   document.getElementById('panel-stat-cobros').textContent=pagosHoy.length+' cobro'+(pagosHoy.length!==1?'s':'')+' · ₡'+fmt(totalCobros);
   document.getElementById('panel-cobros-lista').innerHTML=pagosHoy.length
