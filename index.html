@@ -227,29 +227,17 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       </button>
     </div>
 
-    <!-- Panel OTP admin -->
+    <!-- Panel login admin (contraseña) -->
     <div id="login-admin-panel" style="display:none;width:100%;max-width:360px">
       <button onclick="loginMostrarRutas()" style="background:none;border:none;color:#bfdbfe;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:16px;padding:0;display:block">← Volver</button>
       <div style="background:#fff;border-radius:16px;padding:24px 20px">
         <p style="font-size:16px;font-weight:700;color:#1e40af;margin-bottom:4px">🔐 Administrador</p>
-        <p style="font-size:13px;color:#6b7280;margin-bottom:16px">Ingresá tu correo para recibir el código</p>
         <div id="login-error" style="display:none;background:#fee2e2;color:#dc2626;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:12px"></div>
-        <div id="login-step-email">
-          <div style="margin-bottom:12px">
-            <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Correo electrónico</label>
-            <input type="email" id="login-email" placeholder="correo@ejemplo.com" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box" onkeydown="if(event.key==='Enter')loginEnviarCodigo()">
-          </div>
-          <button onclick="loginEnviarCodigo()" style="width:100%;padding:12px;background:#1e40af;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Enviar código</button>
+        <div style="margin-bottom:12px">
+          <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Contraseña</label>
+          <input type="password" id="login-pass-admin" placeholder="••••••••" autocomplete="current-password" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box" onkeydown="if(event.key==='Enter')loginAdmin()">
         </div>
-        <div id="login-step-codigo" style="display:none">
-          <p style="font-size:13px;color:#374151;margin-bottom:12px">Código enviado a <strong id="login-email-mostrado"></strong></p>
-          <div style="margin-bottom:12px">
-            <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Código de verificación</label>
-            <input type="text" id="login-codigo" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:20px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;letter-spacing:6px;text-align:center" onkeydown="if(event.key==='Enter')loginVerificarCodigo()">
-          </div>
-          <button onclick="loginVerificarCodigo()" style="width:100%;padding:12px;background:#1e40af;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;margin-bottom:8px">Verificar</button>
-          <button onclick="loginVolverEmail()" style="width:100%;padding:10px;background:#f3f4f6;color:#374151;border:none;border-radius:10px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer">← Cambiar correo</button>
-        </div>
+        <button onclick="loginAdmin()" style="width:100%;padding:12px;background:#1e40af;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Entrar</button>
       </div>
     </div>
   </div>
