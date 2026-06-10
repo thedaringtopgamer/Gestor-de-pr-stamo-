@@ -1749,28 +1749,13 @@ function guardarDatos(){
     {key:'ts',value:ts}
   ];
 
-  function subirFotos(){
-    if(!Object.keys(fotosMap).length) return Promise.resolve();
-    return fetch(SUPA_URL+'/rest/v1/app_data',{
-      method:'POST',
-      headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
-      body:JSON.stringify([{key:'fotos',value:fotosMap}])
-    }).then(function(r){
-      if(!r.ok) r.text().then(function(t){ toast('⚠ Error guardando fotos: '+t.substring(0,80)); });
-    }).catch(function(){ toast('⚠ Error de conexión al guardar fotos'); });
-  }
-
   fetch(SUPA_URL+'/rest/v1/app_data',{
     method:'POST',
     headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
     body:JSON.stringify(datosPrincipales)
   }).then(function(r){
     _guardandoEnNube=false;
-    if(!r.ok){
-      r.text().then(function(t){ toast('⚠ Error nube: '+t.substring(0,80)); });
-    } else {
-      subirFotos();
-    }
+    if(!r.ok) r.text().then(function(t){ toast('⚠ Error nube: '+t.substring(0,80)); });
   }).catch(function(){
     _guardandoEnNube=false;
     toast('⚠ Sin conexión — guardado local');
@@ -1778,6 +1763,31 @@ function guardarDatos(){
 }
 
 function _syncSupabase(){ guardarDatos(); }
+
+// ── Supabase Storage para fotos ──
+var FOTOS_BUCKET='fotos-fjd';
+
+function _base64ToBlob(dataUrl){
+  var parts=dataUrl.split(',');
+  var mime=parts[0].match(/:(.*?);/)[1];
+  var bin=atob(parts[1]);
+  var arr=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  return new Blob([arr],{type:mime});
+}
+
+function subirFotoStorage(prestamoId, key, dataUrl){
+  var path=prestamoId+'/'+key+'.jpg';
+  var blob=_base64ToBlob(dataUrl);
+  return fetch(SUPA_URL+'/storage/v1/object/'+FOTOS_BUCKET+'/'+path,{
+    method:'POST',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'image/jpeg','x-upsert':'true'},
+    body:blob
+  }).then(function(r){
+    if(r.ok) return SUPA_URL+'/storage/v1/object/public/'+FOTOS_BUCKET+'/'+path;
+    return null;
+  }).catch(function(){ return null; });
+}
 
 function renderInversion(){
   var activos=prestamos.filter(function(p){
@@ -2899,11 +2909,19 @@ function verFoto(key){
   var p=prestamos.find(function(x){return x.id===currentId;});
   var src=(p&&p.fotos&&p.fotos[key])||_docsNewFotos[key]||'';
   if(!src) return;
-  var nombres={'cedula-frente':'cedula-frente','cedula-detras':'cedula-detras','foto-cliente':'foto-cliente','foto-casa':'foto-casa','foto-trabajo':'foto-trabajo'};
+  var nombre=(p?p.cliente.replace(/\s+/g,'_'):'foto')+'_'+key+'.jpg';
   document.getElementById('foto-viewer-img').src=src;
   var dl=document.getElementById('foto-viewer-dl');
-  dl.href=src;
-  dl.download=(p?p.cliente.replace(/\s+/g,'_'):'foto')+'_'+(nombres[key]||key)+'.jpg';
+  // Si es URL de Storage, abrir en nueva pestaña para descargar
+  if(src.startsWith('http')){
+    dl.href=src+'?download='+nombre;
+    dl.target='_blank';
+    dl.download=nombre;
+  } else {
+    dl.href=src;
+    dl.target='';
+    dl.download=nombre;
+  }
   document.getElementById('foto-viewer').style.display='flex';
 }
 function cerrarFoto(){
@@ -3319,21 +3337,31 @@ function guardarDocumentos(){
   function finalizarDocumentos(){
     var notaCasa=(document.getElementById('doc-nota-foto-casa')||{}).value||'';
     var notaTrabajo=(document.getElementById('doc-nota-foto-trabajo')||{}).value||'';
-    clienteTemporal.coordCasa=coordCasa;
-    clienteTemporal.coordTrabajo=coordTrabajo;
-    clienteTemporal.fotos=fotos;
-    if(!clienteTemporal.notas) clienteTemporal.notas={};
-    clienteTemporal.notas['foto-casa']=notaCasa.trim();
-    clienteTemporal.notas['foto-trabajo']=notaTrabajo.trim();
-    if(ex){
-      ex.coordCasa=coordCasa;ex.coordTrabajo=coordTrabajo;ex.fotos=fotos;ex.incompleto='paso2';
-      if(!ex.notas) ex.notas={};
-      ex.notas['foto-casa']=notaCasa.trim();
-      ex.notas['foto-trabajo']=notaTrabajo.trim();
-    }
-    _docsNewFotos={};
-    guardarDatos();
-    goTo('screen-nuevo-prestamo');
+    // Subir fotos nuevas (base64) a Storage, reemplazar con URL
+    var pid=clienteTemporal._id||('tmp_'+Date.now());
+    var clavesNuevas=Object.keys(fotos).filter(function(k){return fotos[k]&&fotos[k].startsWith('data:');});
+    var promesas=clavesNuevas.map(function(k){
+      return subirFotoStorage(pid,k,fotos[k]).then(function(url){
+        if(url) fotos[k]=url;
+      });
+    });
+    Promise.all(promesas).then(function(){
+      clienteTemporal.coordCasa=coordCasa;
+      clienteTemporal.coordTrabajo=coordTrabajo;
+      clienteTemporal.fotos=fotos;
+      if(!clienteTemporal.notas) clienteTemporal.notas={};
+      clienteTemporal.notas['foto-casa']=notaCasa.trim();
+      clienteTemporal.notas['foto-trabajo']=notaTrabajo.trim();
+      if(ex){
+        ex.coordCasa=coordCasa;ex.coordTrabajo=coordTrabajo;ex.fotos=fotos;ex.incompleto='paso2';
+        if(!ex.notas) ex.notas={};
+        ex.notas['foto-casa']=notaCasa.trim();
+        ex.notas['foto-trabajo']=notaTrabajo.trim();
+      }
+      _docsNewFotos={};
+      guardarDatos();
+      goTo('screen-nuevo-prestamo');
+    });
   }
   // Si hay archivos sin comprimir todavía (fallback), comprimirlos antes de continuar
   var pendientes=0;
@@ -3972,15 +4000,6 @@ function fechaOffset(dias){
         if(row.key==='inversiones'&&Array.isArray(row.value)) inversiones=row.value;
         if(row.key==='session_revoked'&&row.value&&typeof row.value==='object') window._sessionRevoked=row.value;
       });
-      // Cargar fotos en segundo plano sin bloquear
-      fetch(SUPA_URL+'/rest/v1/app_data?select=key,value&key=eq.fotos',{headers:SUPA_HDR})
-        .then(function(rf){return rf.ok?rf.json():[];})
-        .then(function(frows){
-          if(frows&&frows[0]&&frows[0].value){
-            var fotosMap=frows[0].value;
-            prestamos.forEach(function(p){if(fotosMap[p.id]) p.fotos=fotosMap[p.id];});
-          }
-        }).catch(function(){});
     } else {
       errorConexion=true;
     }
