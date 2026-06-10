@@ -4014,13 +4014,29 @@ function fechaOffset(dias){
     } else {
       // Sin sesión: si el teléfono ya tiene ruta fija guardada, entrar directo
       var _rutaFija=localStorage.getItem('fjd_ruta_fija');
-      if(_rutaFija){
-        rolActual='ruta';
-        rutaActual=_rutaFija;
-        localStorage.setItem('fjd_rol','ruta');
-        localStorage.setItem('fjd_ruta_actual',_rutaFija);
-        sessionStorage.setItem('fjd_ruta_actual',_rutaFija);
-        mostrarApp();
+      // Escape de emergencia: si la URL tiene #admin, limpiar todo y mostrar login admin
+      if(window.location.hash==='#admin'){
+        localStorage.removeItem('fjd_ruta_fija'); localStorage.removeItem('fjd_ruta_actual');
+        localStorage.removeItem('fjd_rol'); localStorage.removeItem('fjd_session');
+        window.location.hash='';
+        document.getElementById('login-screen').style.display='flex';
+        loginMostrarAdmin();
+      } else if(_rutaFija){
+        // Verificar si fue revocado incluso sin sesión activa
+        var _rutaRevTs=(window._sessionRevoked&&(window._sessionRevoked[_rutaFija]||window._sessionRevoked['todas']))||0;
+        if(_rutaRevTs>0){
+          localStorage.removeItem('fjd_ruta_fija'); localStorage.removeItem('fjd_ruta_actual');
+          localStorage.removeItem('fjd_rol');
+          document.getElementById('login-screen').style.display='flex';
+          loginMostrarRutas();
+        } else {
+          rolActual='ruta';
+          rutaActual=_rutaFija;
+          localStorage.setItem('fjd_rol','ruta');
+          localStorage.setItem('fjd_ruta_actual',_rutaFija);
+          sessionStorage.setItem('fjd_ruta_actual',_rutaFija);
+          mostrarApp();
+        }
       } else {
         document.getElementById('login-screen').style.display='flex';
         loginMostrarRutas();
