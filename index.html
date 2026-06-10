@@ -3952,9 +3952,18 @@ function fechaOffset(dias){
   var splash=document.getElementById('splash-screen');
   var errorConexion=false;
 
+  // Cargar caché local primero — arranque instantáneo si Supabase tarda
+  try{
+    var _lp=localStorage.getItem('fjd_prestamos'); if(_lp) prestamos=JSON.parse(_lp);
+    var _lg=localStorage.getItem('fjd_pagos'); if(_lg) pagos=JSON.parse(_lg);
+    var _lc=localStorage.getItem('fjd_cobrosadmin'); if(_lc) cobrosAdmin=JSON.parse(_lc);
+    var _lgas=localStorage.getItem('fjd_gastos'); if(_lgas) gastos=JSON.parse(_lgas);
+    var _lren=localStorage.getItem('fjd_renovaciones'); if(_lren) renovaciones=JSON.parse(_lren);
+  }catch(e){}
+
   try{
     var controller=new AbortController();
-    var timeout=setTimeout(function(){controller.abort();},10000);
+    var timeout=setTimeout(function(){controller.abort();},5000);
     var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:SUPA_HDR,signal:controller.signal});
     clearTimeout(timeout);
     if(r.ok){
@@ -3987,15 +3996,20 @@ function fechaOffset(dias){
   splash.style.display='none';
 
   if(errorConexion){
-    // Mostrar pantalla de error con botón reintentar
-    var errDiv=document.createElement('div');
-    errDiv.style.cssText='position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a8a);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999';
-    errDiv.innerHTML='<div style="font-size:80px;font-weight:900;color:#fff;letter-spacing:-3px">JD</div>'
-      +'<div style="font-size:14px;font-weight:700;color:#60a5fa;letter-spacing:8px;margin-bottom:32px">FINANCIERA</div>'
-      +'<div style="color:#f87171;font-size:14px;text-align:center;padding:0 32px;margin-bottom:24px">⚠ Sin conexión a la nube.<br>Verifique su internet.</div>'
-      +'<button onclick="location.reload()" style="background:#2563eb;color:#fff;border:none;border-radius:12px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer">↺ Reintentar</button>';
-    document.body.appendChild(errDiv);
-    return;
+    // Si hay caché local, continuar con esos datos y avisar con toast
+    var tieneCacheLocal=prestamos.length>0||pagos.length>0;
+    if(!tieneCacheLocal){
+      var errDiv=document.createElement('div');
+      errDiv.style.cssText='position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a8a);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999';
+      errDiv.innerHTML='<div style="font-size:80px;font-weight:900;color:#fff;letter-spacing:-3px">JD</div>'
+        +'<div style="font-size:14px;font-weight:700;color:#60a5fa;letter-spacing:8px;margin-bottom:32px">FINANCIERA</div>'
+        +'<div style="color:#f87171;font-size:14px;text-align:center;padding:0 32px;margin-bottom:24px">⚠ Sin conexión a la nube.<br>Verifique su internet.</div>'
+        +'<button onclick="location.reload()" style="background:#2563eb;color:#fff;border:none;border-radius:12px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer">↺ Reintentar</button>';
+      document.body.appendChild(errDiv);
+      return;
+    }
+    // Continuar con caché — avisamos al usuario con un toast después de cargar
+    setTimeout(function(){ toast('⚠ Sin internet — usando datos guardados'); },1500);
   }
 
   try{ calcPreview(); }catch(e){}
