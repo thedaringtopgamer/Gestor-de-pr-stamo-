@@ -1184,7 +1184,7 @@ function loginEnviarCodigo(){
   fetch(SUPA_URL+'/auth/v1/otp',{
     method:'POST',
     headers:{'Content-Type':'application/json','apikey':SUPA_KEY},
-    body:JSON.stringify({email:email,create_user:false})
+    body:JSON.stringify({email:email,create_user:true})
   }).then(function(r){
     btn.disabled=false; btn.textContent='Enviar código';
     if(r.ok||r.status===204||r.status===200){
