@@ -1341,6 +1341,7 @@ function entrarComoRuta(ruta){
   rutaActual=ruta;
   localStorage.setItem('fjd_rol','ruta');
   localStorage.setItem('fjd_ruta_actual',ruta);
+  localStorage.setItem('fjd_ruta_fija',ruta); // queda fija en este teléfono
   sessionStorage.setItem('fjd_ruta_actual',ruta);
   mostrarApp();
 }
@@ -1408,7 +1409,7 @@ function mostrarApp(){
 
 function _forzarLogout(){
   var eraRuta=localStorage.getItem('fjd_rol')!=='admin';
-  var rutaAnterior=localStorage.getItem('fjd_login_ruta')||'';
+  var rutaFija=localStorage.getItem('fjd_ruta_fija');
   localStorage.removeItem('fjd_session'); localStorage.removeItem('fjd_rol');
   localStorage.removeItem('fjd_pantalla'); localStorage.removeItem('fjd_detalle_id');
   localStorage.removeItem('fjd_cliente_temp'); localStorage.removeItem('fjd_login_ts');
@@ -1416,8 +1417,17 @@ function _forzarLogout(){
   document.getElementById('app').style.display='none';
   document.getElementById('splash-screen').style.display='none';
   closeMenu();
-  document.getElementById('login-screen').style.display='flex';
-  loginMostrarRutas();
+  // Si el teléfono tiene ruta fija, volver directo a esa ruta
+  if(eraRuta && rutaFija){
+    rolActual='ruta';
+    rutaActual=rutaFija;
+    localStorage.setItem('fjd_rol','ruta');
+    localStorage.setItem('fjd_ruta_actual',rutaFija);
+    mostrarApp();
+  } else {
+    document.getElementById('login-screen').style.display='flex';
+    loginMostrarRutas();
+  }
 }
 
 function cerrarSesion(){
@@ -3968,9 +3978,19 @@ function fechaOffset(dias){
         mostrarApp();
       }
     } else {
-      // Sin sesión: mostrar pantalla de rutas
-      document.getElementById('login-screen').style.display='flex';
-      loginMostrarRutas();
+      // Sin sesión: si el teléfono ya tiene ruta fija guardada, entrar directo
+      var _rutaFija=localStorage.getItem('fjd_ruta_fija');
+      if(_rutaFija){
+        rolActual='ruta';
+        rutaActual=_rutaFija;
+        localStorage.setItem('fjd_rol','ruta');
+        localStorage.setItem('fjd_ruta_actual',_rutaFija);
+        sessionStorage.setItem('fjd_ruta_actual',_rutaFija);
+        mostrarApp();
+      } else {
+        document.getElementById('login-screen').style.display='flex';
+        loginMostrarRutas();
+      }
     }
   }catch(e){
     document.getElementById('login-screen').style.display='flex';
