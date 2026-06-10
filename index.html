@@ -3653,7 +3653,7 @@ function renderPanelRecolector(){
   document.getElementById('panel-nuevos-lista').innerHTML=(nuevosItems.concat(renovItems)).join('')||'<p style="font-size:13px;color:var(--text-muted)">Sin préstamos nuevos</p>';
 
   // Cobros realizados de esta ruta
-  var pagosHoy=pagos.filter(function(x){return x.fechaPago===fecha && idsRuta.indexOf(x.id_prestamo)!==-1;});
+  var pagosHoy=pagos.filter(function(x){return (x.fechaRegistro||x.fechaPago)===fecha && idsRuta.indexOf(x.id_prestamo)!==-1;});
   var totalCobros=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
   document.getElementById('panel-stat-cobros').textContent=pagosHoy.length+' cobro'+(pagosHoy.length!==1?'s':'')+' · ₡'+fmt(totalCobros);
   document.getElementById('panel-cobros-lista').innerHTML=pagosHoy.length
