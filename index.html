@@ -293,6 +293,10 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <button onclick="seleccionarRuta('San Ramón')" style="padding:14px 16px;background:#fff;color:#1e40af;border:2px solid #bfdbfe;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:10px">
         <span style="font-size:20px">📍</span><span>San Ramón</span>
       </button>
+      <!-- Cerrar todas las sesiones -->
+      <div style="margin-top:8px;border-top:1.5px solid #e5e7eb;padding-top:16px">
+        <button onclick="revocarTodas()" style="width:100%;padding:16px;background:#dc2626;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">🔐 Cerrar TODAS las sesiones</button>
+      </div>
       <!-- Gestión de contraseñas -->
       <div style="margin-top:8px;border-top:1.5px solid #e5e7eb;padding-top:16px">
         <button onclick="toggleGestionUsuarios()" style="width:100%;padding:16px;background:#f0f9ff;color:#1d4ed8;border:1.5px solid #bfdbfe;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">👥 Gestión de contraseñas</button>
@@ -1652,6 +1656,20 @@ function revocarRuta(ruta, btn){
     if(r&&r.ok){ btn.textContent='✓ Cerrado'; btn.style.background='#16a34a'; toast('✓ Sesión de ruta '+ruta+' cerrada'); }
     else{ btn.disabled=false; btn.textContent='Cerrar sesión'; toast('⚠ Error'); }
   }).catch(function(){ btn.disabled=false; btn.textContent='Cerrar sesión'; toast('⚠ Error'); });
+}
+
+function revocarTodas(){
+  if(!confirm('¿Cerrar TODAS las sesiones activas ahora mismo?')) return;
+  var ts=Date.now();
+  var rev={todas:ts,Heredia:ts,Alajuela:ts,'San Ramón':ts};
+  fetch(SUPA_URL+'/rest/v1/app_data',{
+    method:'POST',
+    headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
+    body:JSON.stringify([{key:'session_revoked',value:rev}])
+  }).then(function(r){
+    if(r&&r.ok) toast('✓ Todas las sesiones cerradas');
+    else toast('⚠ Error al cerrar sesiones');
+  }).catch(function(){ toast('⚠ Sin conexión'); });
 }
 
 // Supabase
