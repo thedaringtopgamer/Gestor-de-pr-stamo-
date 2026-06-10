@@ -3952,23 +3952,14 @@ function fechaOffset(dias){
   var splash=document.getElementById('splash-screen');
   var errorConexion=false;
 
-  // Cargar caché local primero — arranque instantáneo si Supabase tarda
-  try{
-    var _lp=localStorage.getItem('fjd_prestamos'); if(_lp) prestamos=JSON.parse(_lp);
-    var _lg=localStorage.getItem('fjd_pagos'); if(_lg) pagos=JSON.parse(_lg);
-    var _lc=localStorage.getItem('fjd_cobrosadmin'); if(_lc) cobrosAdmin=JSON.parse(_lc);
-    var _lgas=localStorage.getItem('fjd_gastos'); if(_lgas) gastos=JSON.parse(_lgas);
-    var _lren=localStorage.getItem('fjd_renovaciones'); if(_lren) renovaciones=JSON.parse(_lren);
-  }catch(e){}
-
   try{
     var controller=new AbortController();
-    var timeout=setTimeout(function(){controller.abort();},5000);
-    var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:SUPA_HDR,signal:controller.signal});
+    var timeout=setTimeout(function(){controller.abort();},8000);
+    // Excluir fotos del arranque — se cargan después en segundo plano
+    var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value&key=neq.fotos',{headers:SUPA_HDR,signal:controller.signal});
     clearTimeout(timeout);
     if(r.ok){
       var rows=await r.json();
-      var fotosMap={};
       rows.forEach(function(row){
         if(row.key==='prestamos'&&Array.isArray(row.value)) prestamos=row.value;
         if(row.key==='pagos'&&Array.isArray(row.value)) pagos=row.value;
@@ -3976,15 +3967,17 @@ function fechaOffset(dias){
         if(row.key==='gastos'&&Array.isArray(row.value)) gastos=row.value;
         if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
         if(row.key==='inversiones'&&Array.isArray(row.value)) inversiones=row.value;
-        if(row.key==='fotos'&&row.value&&typeof row.value==='object') fotosMap=row.value;
         if(row.key==='session_revoked'&&row.value&&typeof row.value==='object') window._sessionRevoked=row.value;
       });
-      // Fusionar fotos de vuelta en los préstamos
-      if(Object.keys(fotosMap).length){
-        prestamos.forEach(function(p){
-          if(fotosMap[p.id]) p.fotos=fotosMap[p.id];
-        });
-      }
+      // Cargar fotos en segundo plano sin bloquear
+      fetch(SUPA_URL+'/rest/v1/app_data?select=key,value&key=eq.fotos',{headers:SUPA_HDR})
+        .then(function(rf){return rf.ok?rf.json():[];})
+        .then(function(frows){
+          if(frows&&frows[0]&&frows[0].value){
+            var fotosMap=frows[0].value;
+            prestamos.forEach(function(p){if(fotosMap[p.id]) p.fotos=fotosMap[p.id];});
+          }
+        }).catch(function(){});
     } else {
       errorConexion=true;
     }
@@ -3996,20 +3989,14 @@ function fechaOffset(dias){
   splash.style.display='none';
 
   if(errorConexion){
-    // Si hay caché local, continuar con esos datos y avisar con toast
-    var tieneCacheLocal=prestamos.length>0||pagos.length>0;
-    if(!tieneCacheLocal){
-      var errDiv=document.createElement('div');
-      errDiv.style.cssText='position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a8a);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999';
-      errDiv.innerHTML='<div style="font-size:80px;font-weight:900;color:#fff;letter-spacing:-3px">JD</div>'
-        +'<div style="font-size:14px;font-weight:700;color:#60a5fa;letter-spacing:8px;margin-bottom:32px">FINANCIERA</div>'
-        +'<div style="color:#f87171;font-size:14px;text-align:center;padding:0 32px;margin-bottom:24px">⚠ Sin conexión a la nube.<br>Verifique su internet.</div>'
-        +'<button onclick="location.reload()" style="background:#2563eb;color:#fff;border:none;border-radius:12px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer">↺ Reintentar</button>';
-      document.body.appendChild(errDiv);
-      return;
-    }
-    // Continuar con caché — avisamos al usuario con un toast después de cargar
-    setTimeout(function(){ toast('⚠ Sin internet — usando datos guardados'); },1500);
+    var errDiv=document.createElement('div');
+    errDiv.style.cssText='position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a8a);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999';
+    errDiv.innerHTML='<div style="font-size:80px;font-weight:900;color:#fff;letter-spacing:-3px">JD</div>'
+      +'<div style="font-size:14px;font-weight:700;color:#60a5fa;letter-spacing:8px;margin-bottom:32px">FINANCIERA</div>'
+      +'<div style="color:#f87171;font-size:14px;text-align:center;padding:0 32px;margin-bottom:24px">⚠ Sin conexión a la nube.<br>Verifique su internet.</div>'
+      +'<button onclick="location.reload()" style="background:#2563eb;color:#fff;border:none;border-radius:12px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer">↺ Reintentar</button>';
+    document.body.appendChild(errDiv);
+    return;
   }
 
   try{ calcPreview(); }catch(e){}
