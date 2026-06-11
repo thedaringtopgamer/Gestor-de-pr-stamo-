@@ -3713,7 +3713,7 @@ function renderPanelRecolector(){
   // Préstamos nuevos de esta ruta (incluye renovaciones)
   var nuevos=prestamosRuta.filter(function(p){return p.fechaInicio===fecha&&!p.incompleto&&!p._ocultarPanelNuevo;});
   var renovNuevos=renovaciones.filter(function(x){return x.fecha===fecha&&idsRuta.indexOf(x.id_prestamo)!==-1&&!x._ocultarPanel;});
-  var totalNuevos=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0)+renovNuevos.reduce(function(s,x){return s+(x.montoEntregado||0);},0);
+  var totalNuevos=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0)+renovNuevos.reduce(function(s,x){return s+(x.montoNuevo||0);},0);
   var countNuevos=nuevos.length+renovNuevos.length;
   document.getElementById('panel-stat-nuevos').textContent=countNuevos+' préstamo'+(countNuevos!==1?'s':'')+' · ₡'+fmt(totalNuevos);
   var nuevosItems=nuevos.map(function(p){
