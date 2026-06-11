@@ -3770,10 +3770,18 @@ function renderPanelRecolector(){
     if(cajaAyer>0) baseGuardada=cajaAyer;
   }
   var recogidaTotal=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
-  var prestamosTotal=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0)+renovNuevos.reduce(function(s,x){return s+(x.montoEntregado||0);},0);
+
+  // Separar nuevos reales de renovaciones para caja
+  var idsRenovadosHoy=renovNuevos.map(function(x){return x.id_prestamo;});
+  var soloNuevos=nuevos.filter(function(p){return idsRenovadosHoy.indexOf(p.id)===-1;});
+  var totalSoloNuevos=soloNuevos.reduce(function(s,p){return s+p.montoPrestado;},0);
+  var totalEntregadoRenov=renovNuevos.reduce(function(s,x){return s+(x.montoEntregado||0);},0);
+  var totalAdminRenov=renovNuevos.reduce(function(s,x){return s+(x.adminMonto||0);},0);
+  // Pantalla muestra monto completo de renovaciones en préstamos
+  var prestamosTotal=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0)+totalEntregadoRenov+totalAdminRenov;
+
   var salidaKey='fjd_salida_'+rutaCajaKey+'_'+fecha;
   var salidaGuardada=parseInt(localStorage.getItem(salidaKey)||'0',10)||0;
-  var adminTotal=cobrosAdmin.filter(function(x){return x.fecha===fecha&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
 
   var inputBase=document.getElementById('caja-base');
   inputBase.value=baseGuardada>0?fmt(baseGuardada):'';
@@ -3784,7 +3792,8 @@ function renderPanelRecolector(){
   if(wrapSalida) wrapSalida.style.display=(rolActual==='admin')?'':'none';
   var inputSalida=document.getElementById('caja-salida');
   if(inputSalida) inputSalida.value=salidaGuardada>0?fmt(salidaGuardada):'';
-  var cajaTotal=recogidaTotal+baseGuardada-prestamosTotal-totalGastos;
+  // FÓRMULA: Base + Recogida - NuevosReales - EntregadoRenov - AdminRenov - Gastos
+  var cajaTotal=baseGuardada+recogidaTotal-totalSoloNuevos-totalEntregadoRenov-totalAdminRenov-totalGastos;
   document.getElementById('caja-recogida').textContent='₡'+fmt(recogidaTotal);
   document.getElementById('caja-base-display').textContent='₡'+fmt(baseGuardada);
   document.getElementById('caja-prestamos').textContent='₡'+fmt(prestamosTotal);
