@@ -3811,7 +3811,7 @@ function renderPanelRecolector(){
   var totalEntregadoRenov=renovNuevos.reduce(function(s,x){return s+(x.montoEntregado||0);},0);
   var totalAdminRenov=renovNuevos.reduce(function(s,x){return s+(x.adminMonto||0);},0);
   // Pantalla muestra monto completo de renovaciones en préstamos
-  var prestamosTotal=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0)+totalEntregadoRenov+totalAdminRenov;
+  var prestamosTotal=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0)+renovNuevos.reduce(function(s,x){return s+(x.montoNuevo||0);},0);
 
   var salidaKey='fjd_salida_'+rutaCajaKey+'_'+fecha;
   var salidaGuardada=parseInt(localStorage.getItem(salidaKey)||'0',10)||0;
