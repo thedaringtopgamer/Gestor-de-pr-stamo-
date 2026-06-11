@@ -3570,6 +3570,26 @@ function marcarVerificado(){
 }
 
 
+function quitarNuevoDeCaja(prestamoId){
+  var p=prestamos.find(function(x){return x.id===prestamoId;});
+  if(!p) return;
+  if(!confirm('¿Quitar el préstamo de '+p.cliente+' (₡'+fmt(p.montoPrestado)+') de la caja de hoy?\n\nEl cliente y su préstamo no se afectan.')) return;
+  p._ocultarPanelNuevo=true;
+  guardarDatos();
+  renderPanelRecolector();
+  toast('✓ Préstamo quitado de la caja de hoy');
+}
+
+function quitarRenovDeCaja(renovId){
+  var rv=renovaciones.find(function(x){return x.id===renovId;});
+  if(!rv) return;
+  if(!confirm('¿Quitar la renovación de '+rv.cliente+' de la caja de hoy?\n\nLa renovación no se afecta.')) return;
+  rv._ocultarPanel=true;
+  guardarDatos();
+  renderPanelRecolector();
+  toast('✓ Renovación quitada de la caja de hoy');
+}
+
 function quitarDelPanelHoy(pagoId){
   var pg=pagos.find(function(x){return x.id_pago===pagoId;});
   if(!pg) return;
@@ -3691,8 +3711,8 @@ function renderPanelRecolector(){
   document.getElementById('panel-gastos-lista').innerHTML=gastosHtml;
 
   // Préstamos nuevos de esta ruta (incluye renovaciones)
-  var nuevos=prestamosRuta.filter(function(p){return p.fechaInicio===fecha&&!p.incompleto;});
-  var renovNuevos=renovaciones.filter(function(x){return x.fecha===fecha&&idsRuta.indexOf(x.id_prestamo)!==-1;});
+  var nuevos=prestamosRuta.filter(function(p){return p.fechaInicio===fecha&&!p.incompleto&&!p._ocultarPanelNuevo;});
+  var renovNuevos=renovaciones.filter(function(x){return x.fecha===fecha&&idsRuta.indexOf(x.id_prestamo)!==-1&&!x._ocultarPanel;});
   var totalNuevos=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0)+renovNuevos.reduce(function(s,x){return s+(x.montoEntregado||0);},0);
   var countNuevos=nuevos.length+renovNuevos.length;
   document.getElementById('panel-stat-nuevos').textContent=countNuevos+' préstamo'+(countNuevos!==1?'s':'')+' · ₡'+fmt(totalNuevos);
@@ -3702,6 +3722,7 @@ function renderPanelRecolector(){
       +'<div style="display:flex;align-items:center;gap:8px">'
       +'<span style="font-size:13px;font-weight:700;color:#2563eb">₡'+fmt(p.montoPrestado)+'</span>'
       +'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
+      +(rolActual==='admin'?'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer" onclick="quitarNuevoDeCaja(\''+p.id+'\')">✕</button>':'')
       +'</div></div>';
   });
   var renovItems=renovNuevos.map(function(rv){
@@ -3710,6 +3731,7 @@ function renderPanelRecolector(){
       +'<div style="display:flex;align-items:center;gap:8px">'
       +'<span style="font-size:13px;font-weight:700;color:#2563eb">₡'+fmt(rv.montoNuevo||0)+'</span>'
       +'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+rv.id_prestamo+'\')">Ver</button>'
+      +(rolActual==='admin'?'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer" onclick="quitarRenovDeCaja(\''+rv.id+'\')">✕</button>':'')
       +'</div></div>';
   });
   document.getElementById('panel-nuevos-lista').innerHTML=(nuevosItems.concat(renovItems)).join('')||'<p style="font-size:13px;color:var(--text-muted)">Sin préstamos nuevos</p>';
