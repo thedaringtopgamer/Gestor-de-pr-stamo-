@@ -3439,6 +3439,16 @@ function previewCoordDocs(tipo){
 function verDocsCliente(){
   var p=prestamos.find(function(x){return x.id===currentId;});
   if(!p) return;
+  // Migración silenciosa: subir fotos base64 a Storage si las hay
+  if(p.fotos){
+    var tieneBase64=Object.keys(p.fotos).some(function(k){return p.fotos[k]&&p.fotos[k].startsWith('data:');});
+    if(tieneBase64){
+      Promise.all(Object.keys(p.fotos).map(function(k){
+        if(!p.fotos[k]||!p.fotos[k].startsWith('data:')) return Promise.resolve();
+        return subirFotoStorage(p.id,k,p.fotos[k]).then(function(url){if(url) p.fotos[k]=url;});
+      })).then(function(){guardarDatos();});
+    }
+  }
   document.getElementById('docs-nombre-cliente').textContent='👤 '+p.cliente;
   document.getElementById('docs-cedula').textContent=p.cedula||'—';
   document.getElementById('docs-edit-telefono').value=p.telefono||'';
@@ -3527,18 +3537,26 @@ function guardarDocsCliente(){
   if(notaCasa) p.notas['foto-casa']=notaCasa.value.trim();
   if(notaTrabajo) p.notas['foto-trabajo']=notaTrabajo.value.trim();
   p.coordTrabajo=document.getElementById('docs-edit-coord-trabajo').value.trim();
-  // Fotos nuevas
+  // Fotos nuevas — subir a Storage
   if(!p.fotos) p.fotos={};
-  Object.keys(_docsNewFotos).forEach(function(k){ p.fotos[k]=_docsNewFotos[k]; });
+  var fotasNuevas=Object.assign({},_docsNewFotos);
   _docsNewFotos={};
-  // Si ya tiene todos los docs completos, actualizar fecha de verificación
-  var verif2=clienteNecesitaVerificacion(p);
-  if(!verif2.necesita){
-    p.fechaVerificacion=hoyLocal();
+  var clavesNuevas=Object.keys(fotasNuevas).filter(function(k){return fotasNuevas[k]&&fotasNuevas[k].startsWith('data:');});
+  function finalizarGuardarDocs(){
+    var verif2=clienteNecesitaVerificacion(p);
+    if(!verif2.necesita) p.fechaVerificacion=hoyLocal();
+    guardarDatos();
+    document.getElementById('det-telefono-txt').textContent=p.telefono||'';
+    toast('✓ Datos del cliente actualizados');
   }
-  guardarDatos();
-  document.getElementById('det-telefono-txt').textContent=p.telefono||'';
-  toast('✓ Datos del cliente actualizados');
+  if(clavesNuevas.length){
+    toast('⏳ Subiendo fotos...');
+    Promise.all(clavesNuevas.map(function(k){
+      return subirFotoStorage(p.id,k,fotasNuevas[k]).then(function(url){p.fotos[k]=url||fotasNuevas[k];});
+    })).then(finalizarGuardarDocs);
+  } else {
+    finalizarGuardarDocs();
+  }
 }
 
 function marcarVerificado(){
