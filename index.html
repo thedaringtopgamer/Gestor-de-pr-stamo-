@@ -3795,7 +3795,7 @@ function renderPanelRecolector(){
     var ayerStr=ayer.toISOString().split('T')[0];
     var baseAyer=parseInt(localStorage.getItem('fjd_base_'+rutaCajaKey+'_'+ayerStr)||'0',10)||0;
     var idsAyer=prestamosRuta.map(function(p){return p.id;});
-    var recogidaAyer=pagos.filter(function(x){return x.fechaPago===ayerStr&&idsAyer.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
+    var recogidaAyer=pagos.filter(function(x){return (x.fechaRegistro||x.fechaPago)===ayerStr&&idsAyer.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
     var prestamosAyer=prestamosRuta.filter(function(p){return p.fechaInicio===ayerStr&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
     var renovAyer=renovaciones.filter(function(x){return x.fecha===ayerStr&&(rutaActual==='todas'||prestamos.find(function(p){return p.id===x.id_prestamo&&p.ruta===rutaActual;}));}).reduce(function(s,x){return s+(x.montoEntregado||0);},0);
     var gastosAyer=gastos.filter(function(x){return x.fecha===ayerStr&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
