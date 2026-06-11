@@ -343,46 +343,118 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <div style="width:70px"></div>
     </div>
     <div class="section">
-      <!-- Capital en la calle -->
-      <div class="card" style="margin-bottom:14px">
-        <p style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:12px">💸 Dinero actualmente en la calle</p>
-        <div style="font-size:32px;font-weight:900;color:#1e40af" id="inv-en-calle">₡0</div>
-        <div style="font-size:12px;color:#6b7280;margin-top:4px" id="inv-clientes-activos">0 clientes activos</div>
-      </div>
 
-      <!-- Capital invertido -->
-      <div class="card" style="margin-bottom:14px">
-        <p style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:12px">🏦 Capital invertido (de tu bolsillo)</p>
-        <div style="font-size:32px;font-weight:900;color:#166534" id="inv-capital-total">₡0</div>
-        <div style="font-size:11px;color:#6b7280;margin-top:4px">Total acumulado que has metido</div>
-      </div>
-
-      <!-- Diferencia -->
-      <div class="card" style="margin-bottom:20px;background:#f0fdf4">
-        <p style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:8px">📊 Diferencia</p>
-        <div style="font-size:22px;font-weight:800" id="inv-diferencia">₡0</div>
-        <div style="font-size:11px;color:#6b7280;margin-top:4px" id="inv-diferencia-label">—</div>
-      </div>
-
-      <!-- Registrar inversión -->
-      <div class="card">
-        <p style="font-size:13px;font-weight:700;margin-bottom:12px">➕ Registrar inversión</p>
-        <div class="field-group">
-          <label>Monto</label>
-          <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric" id="inv-monto" placeholder="0" oninput="fmtMoneyInput(this)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+      <!-- Fila 1: Inyectado | En la calle -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="card" style="margin:0;padding:14px 12px;text-align:center">
+          <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:6px">🏦 Inyectado</div>
+          <div style="font-size:22px;font-weight:900;color:#166534" id="inv-capital-total">₡0</div>
+          <div style="font-size:10px;color:#9ca3af;margin-top:2px">Capital metido</div>
         </div>
-        <div class="field-group">
-          <label>Nota (opcional)</label>
-          <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="inv-nota" placeholder="Ej: Capital inicial, inyección junio…" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+        <div class="card" style="margin:0;padding:14px 12px;text-align:center">
+          <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:6px">💸 En la calle</div>
+          <div style="font-size:22px;font-weight:900;color:#1e40af" id="inv-en-calle">₡0</div>
+          <div style="font-size:10px;color:#9ca3af;margin-top:2px" id="inv-clientes-activos">0 clientes activos</div>
         </div>
-        <button class="btn btn-blue btn-full" style="padding:12px" onclick="registrarInversion()">Registrar</button>
       </div>
 
-      <!-- Historial de inversiones -->
-      <div style="margin-top:16px">
-        <p style="font-size:13px;font-weight:700;margin-bottom:10px">📋 Historial</p>
+      <!-- Fila 2: Diferencia | Registrar inyección -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div class="card" style="margin:0;padding:14px 12px;background:#f0fdf4;text-align:center">
+          <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:6px">📊 Diferencia</div>
+          <div style="font-size:18px;font-weight:800" id="inv-diferencia">₡0</div>
+          <div style="font-size:10px;color:#6b7280;margin-top:2px" id="inv-diferencia-label">—</div>
+        </div>
+        <div class="card" style="margin:0;padding:14px 12px">
+          <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:8px">➕ Agregar</div>
+          <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric" id="inv-monto" placeholder="Monto" oninput="fmtMoneyInput(this)" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;margin-bottom:6px">
+          <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="inv-nota" placeholder="Nota (opcional)" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;margin-bottom:8px">
+          <button class="btn btn-blue btn-full" style="padding:8px;font-size:13px" onclick="registrarInversion()">Registrar</button>
+        </div>
+      </div>
+
+      <!-- Historial de inversiones (últimos 2) -->
+      <div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <p style="font-size:13px;font-weight:700;margin:0">📋 Inyecciones recientes</p>
+          <button onclick="abrirHistorialInversion()" style="background:#dbeafe;color:#1e40af;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Ver todo ▸</button>
+        </div>
         <div id="inv-historial"></div>
       </div>
+
+      <!-- Divisor -->
+      <div style="border-top:2px solid #e5e7eb;margin-bottom:16px"></div>
+
+      <!-- Cierres semanales y mensuales -->
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <p style="font-size:14px;font-weight:800;margin:0">📅 Cierres de período</p>
+          <button onclick="abrirCierre()" style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">+ Hacer cierre</button>
+        </div>
+        <!-- Tabs semana / mes -->
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button id="tab-cierre-semana" onclick="tabCierre('semana')" style="flex:1;padding:8px;border-radius:8px;border:2px solid #1e40af;background:#1e40af;color:#fff;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">📆 Semanal</button>
+          <button id="tab-cierre-mes" onclick="tabCierre('mes')" style="flex:1;padding:8px;border-radius:8px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🗓 Mensual</button>
+        </div>
+        <div id="cierres-lista"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal historial completo inversiones -->
+  <div id="modal-hist-inversion" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:8000;align-items:flex-end;justify-content:center">
+    <div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <p style="font-size:16px;font-weight:800;margin:0">📋 Todas las inyecciones</p>
+        <button onclick="document.getElementById('modal-hist-inversion').style.display='none'" style="background:#f3f4f6;border:none;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">✕ Cerrar</button>
+      </div>
+      <div id="modal-hist-inversion-lista"></div>
+    </div>
+  </div>
+
+  <!-- Modal hacer cierre -->
+  <div id="modal-hacer-cierre" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:8000;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:16px;width:92%;max-width:400px;padding:22px">
+      <p style="font-size:16px;font-weight:800;margin-bottom:16px">📅 Hacer cierre</p>
+      <div class="field-group">
+        <label>Tipo de cierre</label>
+        <select id="cierre-tipo" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none">
+          <option value="semana">Semanal</option>
+          <option value="mes">Mensual</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div class="field-group" style="margin:0">
+          <label>Desde</label>
+          <input type="date" id="cierre-desde" onchange="_actualizarPreviewCierre()" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+        </div>
+        <div class="field-group" style="margin:0">
+          <label>Hasta</label>
+          <input type="date" id="cierre-hasta" onchange="_actualizarPreviewCierre()" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Nota (opcional)</label>
+        <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="cierre-nota" placeholder="Ej: Semana buena, cierre mayo…" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+      </div>
+      <!-- Preview automático -->
+      <div id="cierre-preview" style="background:#f9fafb;border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px"></div>
+      <div style="display:flex;gap:10px">
+        <button onclick="document.getElementById('modal-hacer-cierre').style.display='none'" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid #e5e7eb;background:#fff;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Cancelar</button>
+        <button onclick="guardarCierre()" style="flex:1;padding:11px;border-radius:10px;border:none;background:#16a34a;color:#fff;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">💾 Guardar cierre</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal historial completo de cierres -->
+  <div id="modal-hist-cierres" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:8000;align-items:flex-end;justify-content:center">
+    <div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-height:88vh;overflow-y:auto;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <p style="font-size:16px;font-weight:800;margin:0">📅 Todos los cierres</p>
+        <button onclick="document.getElementById('modal-hist-cierres').style.display='none'" style="background:#f3f4f6;border:none;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">✕ Cerrar</button>
+      </div>
+      <div id="modal-hist-cierres-lista"></div>
     </div>
   </div>
 
@@ -1747,6 +1819,7 @@ function guardarDatos(){
     {key:'gastos',value:gastos},
     {key:'renovaciones',value:renovaciones},
     {key:'inversiones',value:inversiones},
+    {key:'cierres',value:cierres},
     {key:'ts',value:ts}
   ];
 
@@ -1809,18 +1882,24 @@ function renderInversion(){
   labelEl.textContent=diff>0?'Más plata en calle que invertida (ganancia de intereses acumulados)':diff<0?'Has invertido más de lo que está en calle':'Exactamente igual';
 
   var hist=document.getElementById('inv-historial');
-  if(!inversiones.length){ hist.innerHTML='<p style="color:#6b7280;font-size:13px;text-align:center;padding:16px">Sin registros</p>'; return; }
-  var sorted=inversiones.slice().sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
-  hist.innerHTML=sorted.map(function(inv){
-    return '<div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'
-      +'<div>'
-        +'<div style="font-weight:700;font-size:15px;color:#1e40af">'+_fmtCol(inv.monto)+'</div>'
-        +(inv.nota?'<div style="font-size:12px;color:#6b7280">'+inv.nota+'</div>':'')
-        +'<div style="font-size:11px;color:#9ca3af">'+inv.fecha+'</div>'
-      +'</div>'
-      +(rolActual==='admin'?'<button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:none" onclick="eliminarInversion(\''+inv.id+'\')">Eliminar</button>':'')
-      +'</div>';
-  }).join('');
+  if(!inversiones.length){ hist.innerHTML='<p style="color:#6b7280;font-size:13px;text-align:center;padding:16px">Sin inyecciones registradas</p>'; }
+  else {
+    var sorted=inversiones.slice().sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
+    var ultimas2=sorted.slice(0,2);
+    hist.innerHTML=ultimas2.map(function(inv){
+      return '<div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'
+        +'<div>'
+          +'<div style="font-weight:700;font-size:15px;color:#1e40af">'+_fmtCol(inv.monto)+'</div>'
+          +(inv.nota?'<div style="font-size:12px;color:#6b7280">'+inv.nota+'</div>':'')
+          +'<div style="font-size:11px;color:#9ca3af">'+inv.fecha+'</div>'
+        +'</div>'
+        +(rolActual==='admin'?'<button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:none" onclick="eliminarInversion(\''+inv.id+'\')">✕</button>':'')
+        +'</div>';
+    }).join('');
+  }
+  // Render cierres
+  _tabCierreActual=_tabCierreActual||'semana';
+  renderCierres(_tabCierreActual);
 }
 
 function registrarInversion(){
@@ -1842,6 +1921,152 @@ function eliminarInversion(id){
   guardarDatos();
   renderInversion();
   toast('✓ Inversión eliminada');
+}
+
+function abrirHistorialInversion(){
+  var sorted=inversiones.slice().sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
+  var lista=document.getElementById('modal-hist-inversion-lista');
+  if(!sorted.length){ lista.innerHTML='<p style="color:#6b7280;text-align:center;padding:20px">Sin inyecciones registradas</p>'; }
+  else {
+    lista.innerHTML=sorted.map(function(inv){
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #f3f4f6">'
+        +'<div>'
+          +'<div style="font-weight:700;font-size:15px;color:#1e40af">'+_fmtCol(inv.monto)+'</div>'
+          +(inv.nota?'<div style="font-size:12px;color:#6b7280">'+inv.nota+'</div>':'')
+          +'<div style="font-size:11px;color:#9ca3af">'+inv.fecha+'</div>'
+        +'</div>'
+        +(rolActual==='admin'?'<button style="background:#fee2e2;color:#991b1b;border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-family:\'DM Sans\',sans-serif;cursor:pointer" onclick="eliminarInversion(\''+inv.id+'\');abrirHistorialInversion()">✕</button>':'')
+        +'</div>';
+    }).join('');
+  }
+  document.getElementById('modal-hist-inversion').style.display='flex';
+}
+
+var _tabCierreActual='semana';
+var cierres=[];
+
+function tabCierre(tipo){
+  _tabCierreActual=tipo;
+  var btnS=document.getElementById('tab-cierre-semana');
+  var btnM=document.getElementById('tab-cierre-mes');
+  if(btnS&&btnM){
+    btnS.style.background=tipo==='semana'?'#1e40af':'#fff';
+    btnS.style.color=tipo==='semana'?'#fff':'#374151';
+    btnS.style.borderColor=tipo==='semana'?'#1e40af':'#e5e7eb';
+    btnM.style.background=tipo==='mes'?'#1e40af':'#fff';
+    btnM.style.color=tipo==='mes'?'#fff':'#374151';
+    btnM.style.borderColor=tipo==='mes'?'#1e40af':'#e5e7eb';
+  }
+  renderCierres(tipo);
+}
+
+function _calcCierreData(desde,hasta){
+  var pagosP=pagos.filter(function(x){ var f=x.fechaRegistro||x.fechaPago; return f>=desde&&f<=hasta; });
+  var recogida=pagosP.reduce(function(s,x){ return s+x.montoAbonado; },0);
+  var nuevosP=prestamos.filter(function(p){ return p.fechaInicio>=desde&&p.fechaInicio<=hasta&&!p.incompleto; });
+  var prestado=nuevosP.reduce(function(s,p){ return s+p.montoPrestado; },0);
+  var renovP=renovaciones.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta; });
+  var entregadoRenov=renovP.reduce(function(s,x){ return s+(x.montoEntregado||0); },0);
+  var adminRenov=renovP.reduce(function(s,x){ return s+(x.adminMonto||0); },0);
+  var gastosP=gastos.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta; });
+  var totalGastos=gastosP.reduce(function(s,x){ return s+x.monto; },0);
+  var utilidad=recogida-prestado-entregadoRenov-totalGastos;
+  return {recogida:recogida,prestado:prestado,entregadoRenov:entregadoRenov,adminRenov:adminRenov,totalGastos:totalGastos,utilidad:utilidad,numPrestamos:nuevosP.length,numRenov:renovP.length};
+}
+
+function renderCierres(tipo){
+  var lista=document.getElementById('cierres-lista');
+  if(!lista) return;
+  var filtrados=cierres.filter(function(c){ return c.tipo===tipo; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); });
+  if(!filtrados.length){
+    lista.innerHTML='<p style="color:#6b7280;font-size:13px;text-align:center;padding:20px">Sin cierres '+(tipo==='semana'?'semanales':'mensuales')+' registrados</p>';
+    return;
+  }
+  // Mostrar los últimos 2 + botón ver todos
+  var ultimos=filtrados.slice(0,2);
+  lista.innerHTML=ultimos.map(function(c){ return _htmlTarjetaCierre(c); }).join('')
+    +(filtrados.length>2?'<button onclick="abrirHistorialCierres()" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #1e40af;background:#fff;color:#1e40af;font-size:13px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer;margin-top:6px">Ver todos los cierres ('+filtrados.length+') ▸</button>':'');
+}
+
+function _htmlTarjetaCierre(c){
+  var d=c.data;
+  var pos=c.data.utilidad>=0;
+  return '<div class="card" style="margin-bottom:10px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+      +'<div>'
+        +'<div style="font-size:13px;font-weight:800">'+(c.tipo==='semana'?'📆':'🗓')+' '+(c.tipo==='semana'?'Semana':'Mes')+': '+c.desde+' → '+c.hasta+'</div>'
+        +(c.nota?'<div style="font-size:11px;color:#6b7280;margin-top:2px">'+c.nota+'</div>':'')
+      +'</div>'
+      +(rolActual==='admin'?'<button style="background:#fee2e2;color:#991b1b;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-family:\'DM Sans\',sans-serif;cursor:pointer" onclick="eliminarCierre(\''+c.id+'\')">✕</button>':'')
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">'
+      +'<div style="background:#f0fdf4;border-radius:8px;padding:8px"><div style="color:#6b7280">💰 Recogida</div><div style="font-weight:700;color:#166534">'+_fmtCol(d.recogida)+'</div></div>'
+      +'<div style="background:#fef2f2;border-radius:8px;padding:8px"><div style="color:#6b7280">📤 Prestado</div><div style="font-weight:700;color:#991b1b">'+_fmtCol(d.prestado+d.entregadoRenov)+'</div></div>'
+      +'<div style="background:#fef9c3;border-radius:8px;padding:8px"><div style="color:#6b7280">💸 Gastos</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(d.totalGastos)+'</div></div>'
+      +'<div style="background:'+(pos?'#dbeafe':'#fef2f2')+';border-radius:8px;padding:8px"><div style="color:#6b7280">📊 Utilidad</div><div style="font-weight:800;color:'+(pos?'#1e40af':'#991b1b')+'">'+_fmtCol(d.utilidad)+'</div></div>'
+    +'</div>'
+    +'</div>';
+}
+
+function abrirCierre(){
+  var hoy=hoyLocal();
+  document.getElementById('cierre-hasta').value=hoy;
+  // Sugerir inicio de semana (lunes)
+  var d=new Date(hoy+'T12:00:00');
+  var dia=d.getDay(); var diff=dia===0?6:dia-1;
+  d.setDate(d.getDate()-diff);
+  document.getElementById('cierre-desde').value=d.toISOString().split('T')[0];
+  document.getElementById('cierre-nota').value='';
+  document.getElementById('cierre-tipo').value='semana';
+  _actualizarPreviewCierre();
+  document.getElementById('modal-hacer-cierre').style.display='flex';
+}
+
+function _actualizarPreviewCierre(){
+  var desde=document.getElementById('cierre-desde').value;
+  var hasta=document.getElementById('cierre-hasta').value;
+  if(!desde||!hasta) return;
+  var d=_calcCierreData(desde,hasta);
+  var prev=document.getElementById('cierre-preview');
+  prev.innerHTML='<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">Vista previa del período '+desde+' → '+hasta+'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">'
+      +'<div><span style="color:#6b7280">💰 Recogida: </span><b>'+_fmtCol(d.recogida)+'</b></div>'
+      +'<div><span style="color:#6b7280">📤 Prestado: </span><b>'+_fmtCol(d.prestado+d.entregadoRenov)+'</b></div>'
+      +'<div><span style="color:#6b7280">💸 Gastos: </span><b>'+_fmtCol(d.totalGastos)+'</b></div>'
+      +'<div><span style="color:#6b7280">📊 Utilidad: </span><b style="color:'+(d.utilidad>=0?'#166534':'#991b1b')+'">'+_fmtCol(d.utilidad)+'</b></div>'
+    +'</div>';
+}
+
+function guardarCierre(){
+  var desde=document.getElementById('cierre-desde').value;
+  var hasta=document.getElementById('cierre-hasta').value;
+  var tipo=document.getElementById('cierre-tipo').value;
+  var nota=document.getElementById('cierre-nota').value.trim();
+  if(!desde||!hasta){ toast('⚠ Seleccione fechas'); return; }
+  if(desde>hasta){ toast('⚠ La fecha inicio debe ser antes del final'); return; }
+  var data=_calcCierreData(desde,hasta);
+  cierres.push({id:Date.now().toString(),tipo:tipo,desde:desde,hasta:hasta,nota:nota,data:data,fechaRegistro:hoyLocal()});
+  guardarDatos();
+  document.getElementById('modal-hacer-cierre').style.display='none';
+  renderInversion();
+  toast('✓ Cierre guardado');
+}
+
+function eliminarCierre(id){
+  if(!confirm('¿Eliminar este cierre?')) return;
+  cierres=cierres.filter(function(c){ return c.id!==id; });
+  guardarDatos();
+  renderInversion();
+  renderCierres(_tabCierreActual);
+  toast('✓ Cierre eliminado');
+}
+
+function abrirHistorialCierres(){
+  var lista=document.getElementById('modal-hist-cierres-lista');
+  var filtrados=cierres.filter(function(c){ return c.tipo===_tabCierreActual; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); });
+  if(!filtrados.length){ lista.innerHTML='<p style="color:#6b7280;text-align:center;padding:20px">Sin cierres registrados</p>'; }
+  else { lista.innerHTML=filtrados.map(function(c){ return _htmlTarjetaCierre(c); }).join(''); }
+  document.getElementById('modal-hist-cierres').style.display='flex';
 }
 
 function cargarDesdeLocalStorage(){
@@ -4059,6 +4284,7 @@ function fechaOffset(dias){
         if(row.key==='gastos'&&Array.isArray(row.value)) gastos=row.value;
         if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
         if(row.key==='inversiones'&&Array.isArray(row.value)) inversiones=row.value;
+        if(row.key==='cierres'&&Array.isArray(row.value)) cierres=row.value;
         if(row.key==='session_revoked'&&row.value&&typeof row.value==='object') window._sessionRevoked=row.value;
       });
     } else {
