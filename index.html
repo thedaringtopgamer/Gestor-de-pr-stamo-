@@ -3570,6 +3570,17 @@ function marcarVerificado(){
 }
 
 
+function quitarDelPanelHoy(pagoId){
+  var pg=pagos.find(function(x){return x.id_pago===pagoId;});
+  if(!pg) return;
+  var p=prestamos.find(function(x){return x.id===pg.id_prestamo;});
+  if(!confirm('¿Quitar el cobro de ₡'+fmt(pg.montoAbonado)+' de '+(p?p.cliente:'cliente')+' del panel de hoy?\n\nEl pago sigue en la cuenta del cliente.')) return;
+  pg._ocultarPanel=true;
+  guardarDatos();
+  renderPanelRecolector();
+  toast('✓ Cobro quitado del panel de hoy');
+}
+
 function eliminarAbono(pagoId){
   var pg=pagos.find(function(x){return x.id_pago===pagoId;});
   if(!pg) return;
@@ -3715,7 +3726,7 @@ function renderPanelRecolector(){
         +'<div style="display:flex;align-items:center;gap:8px">'
         +'<span style="font-size:13px;font-weight:700;color:#166534">₡'+fmt(pg.montoAbonado)+'</span>'
         +(p?'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button>':'')
-        +''
+        +(rolActual==='admin'?'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer" title="Quitar del panel de hoy" onclick="quitarDelPanelHoy(\''+pg.id_pago+'\')">✕</button>':'')
         +'</div></div>';
     }).join('')
     :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros registrados</p>';
