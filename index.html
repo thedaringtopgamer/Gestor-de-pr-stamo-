@@ -385,6 +385,26 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <!-- Divisor -->
       <div style="border-top:2px solid #e5e7eb;margin-bottom:16px"></div>
 
+      <!-- Metas del mes -->
+      <div class="card" style="margin-bottom:14px;background:#fefce8;border:2px solid #fde047">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <p style="font-size:14px;font-weight:800;margin:0;color:#854d0e">🎯 Metas del mes</p>
+          <button onclick="guardarMetas()" style="background:#854d0e;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">💾 Guardar</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#854d0e;display:block;margin-bottom:4px">💰 Meta préstamos/mes</label>
+            <input type="text" autocomplete="off" inputmode="numeric" id="meta-prestamos" placeholder="Ej: 20,000,000" oninput="fmtMoneyInput(this)" style="width:100%;padding:8px 10px;border:1.5px solid #fde047;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;background:#fff">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#854d0e;display:block;margin-bottom:4px">👥 Meta clientes nuevos/mes</label>
+            <input type="text" autocomplete="off" inputmode="numeric" id="meta-clientes" placeholder="Ej: 20" oninput="fmtMoneyInput(this)" style="width:100%;padding:8px 10px;border:1.5px solid #fde047;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;background:#fff">
+          </div>
+        </div>
+        <!-- Desglose automático -->
+        <div id="meta-desglose" style="margin-top:12px;font-size:12px;color:#713f12"></div>
+      </div>
+
       <!-- Cierres automáticos -->
       <div style="margin-bottom:10px">
         <p style="font-size:14px;font-weight:800;margin-bottom:12px">📅 Cierres de período</p>
@@ -396,9 +416,9 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
               <div style="font-size:13px;font-weight:800;color:#1e40af">📆 Semana en curso</div>
               <div style="font-size:11px;color:#6b7280" id="cierre-semana-rango"></div>
             </div>
-            <button onclick="cerrarSemana()" id="btn-cerrar-semana" style="background:#1e40af;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Cerrar semana</button>
+            <button onclick="cerrarSemana()" style="background:#1e40af;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Cerrar semana</button>
           </div>
-          <div id="cierre-semana-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px"></div>
+          <div id="cierre-semana-stats"></div>
         </div>
 
         <!-- Mes en curso -->
@@ -408,9 +428,9 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
               <div style="font-size:13px;font-weight:800;color:#166534">🗓 Mes en curso</div>
               <div style="font-size:11px;color:#6b7280" id="cierre-mes-rango"></div>
             </div>
-            <button onclick="cerrarMes()" id="btn-cerrar-mes" style="background:#166534;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Cerrar mes</button>
+            <button onclick="cerrarMes()" style="background:#166534;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Cerrar mes</button>
           </div>
-          <div id="cierre-mes-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px"></div>
+          <div id="cierre-mes-stats"></div>
         </div>
 
         <!-- Historial cierres guardados -->
@@ -1946,6 +1966,49 @@ function abrirHistorialInversion(){
 }
 
 var cierres=[];
+var metaPrestamos=0;
+var metaClientes=0;
+
+function guardarMetas(){
+  metaPrestamos=parseInt((document.getElementById('meta-prestamos').value||'').replace(/[^\d]/g,'')||'0',10);
+  metaClientes=parseInt((document.getElementById('meta-clientes').value||'').replace(/[^\d]/g,'')||'0',10);
+  localStorage.setItem('fjd_meta_prestamos',metaPrestamos);
+  localStorage.setItem('fjd_meta_clientes',metaClientes);
+  renderInversion();
+  toast('✓ Metas guardadas');
+}
+
+function _cargarMetas(){
+  metaPrestamos=parseInt(localStorage.getItem('fjd_meta_prestamos')||'0',10)||0;
+  metaClientes=parseInt(localStorage.getItem('fjd_meta_clientes')||'0',10)||0;
+  var elP=document.getElementById('meta-prestamos');
+  var elC=document.getElementById('meta-clientes');
+  if(elP&&metaPrestamos) elP.value=fmt(metaPrestamos);
+  if(elC&&metaClientes) elC.value=metaClientes;
+}
+
+function _renderMetaDesglose(){
+  var el=document.getElementById('meta-desglose');
+  if(!el) return;
+  if(!metaPrestamos&&!metaClientes){ el.innerHTML=''; return; }
+  var semP=Math.round(metaPrestamos/4);
+  var diaP=Math.round(metaPrestamos/24); // 6 días x 4 semanas
+  var semC=Math.round(metaClientes/4);
+  var diaC=Math.ceil(metaClientes/24);
+  var html='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center">';
+  if(metaPrestamos){
+    html+='<div style="background:#fff;border-radius:8px;padding:8px"><div style="color:#854d0e;font-weight:700;font-size:10px">💰 MES</div><div style="font-weight:800;font-size:13px">'+_fmtCol(metaPrestamos)+'</div></div>'
+      +'<div style="background:#fff;border-radius:8px;padding:8px"><div style="color:#854d0e;font-weight:700;font-size:10px">📆 SEMANA</div><div style="font-weight:800;font-size:13px">'+_fmtCol(semP)+'</div></div>'
+      +'<div style="background:#fff;border-radius:8px;padding:8px"><div style="color:#854d0e;font-weight:700;font-size:10px">📅 DÍA</div><div style="font-weight:800;font-size:13px">'+_fmtCol(diaP)+'</div></div>';
+  }
+  if(metaClientes){
+    html+='<div style="background:#fff;border-radius:8px;padding:8px"><div style="color:#854d0e;font-weight:700;font-size:10px">👥 MES</div><div style="font-weight:800;font-size:13px">'+metaClientes+' clientes</div></div>'
+      +'<div style="background:#fff;border-radius:8px;padding:8px"><div style="color:#854d0e;font-weight:700;font-size:10px">📆 SEMANA</div><div style="font-weight:800;font-size:13px">'+semC+' clientes</div></div>'
+      +'<div style="background:#fff;border-radius:8px;padding:8px"><div style="color:#854d0e;font-weight:700;font-size:10px">📅 DÍA</div><div style="font-weight:800;font-size:13px">'+diaC+' clientes</div></div>';
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
 
 function _calcCierreData(desde,hasta){
   var pagosP=pagos.filter(function(x){ var f=x.fechaRegistro||x.fechaPago; return f>=desde&&f<=hasta; });
