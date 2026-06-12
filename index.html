@@ -2076,7 +2076,7 @@ function renderCierres(){
   if(elRangoSem) elRangoSem.textContent=inicioSem+' → '+hoy;
   if(elStatsSem) elStatsSem.innerHTML=_statsHtml(dSem)
     +_barMeta(dSem.prestado+dSem.montoRenov,metaSem,'Meta préstamos semana',true)
-    +_barMeta(dSem.numPrestamos+dSem.numRenov,metaSemC,'Meta clientes nuevos semana',false);
+    +_barMeta(dSem.numPrestamos,metaSemC,'Meta clientes nuevos semana',false);
 
   // Mes en curso
   var dMes=_calcCierreData(inicioMes,hoy);
@@ -2085,7 +2085,7 @@ function renderCierres(){
   if(elRangoMes) elRangoMes.textContent=inicioMes+' → '+hoy;
   if(elStatsMes) elStatsMes.innerHTML=_statsHtml(dMes)
     +_barMeta(dMes.prestado+dMes.montoRenov,metaPrestamos,'Meta préstamos mes',true)
-    +_barMeta(dMes.numPrestamos+dMes.numRenov,metaClientes,'Meta clientes nuevos mes',false);
+    +_barMeta(dMes.numPrestamos,metaClientes,'Meta clientes nuevos mes',false);
 
   // Historial guardado
   var lista=document.getElementById('cierres-lista');
