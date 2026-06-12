@@ -1922,6 +1922,8 @@ function renderInversion(){
         +'</div>';
     }).join('');
   }
+  _cargarMetas();
+  _renderMetaDesglose();
   renderCierres();
 }
 
@@ -2032,12 +2034,31 @@ function _inicioSemana(hoy){
 function _inicioMes(hoy){ return hoy.substring(0,7)+'-01'; }
 
 function _statsHtml(d){
-  var pos=d.utilidad>=0;
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">'
     +'<div style="background:#f0fdf4;border-radius:8px;padding:8px"><div style="color:#6b7280">💰 Recogida</div><div style="font-weight:700;color:#166534">'+_fmtCol(d.recogida)+'</div></div>'
-    +'<div style="background:#fef2f2;border-radius:8px;padding:8px"><div style="color:#6b7280">📤 Prestado</div><div style="font-weight:700;color:#991b1b">'+_fmtCol(d.prestado+d.montoRenov)+'</div></div>'
-    +'<div style="background:#fef9c3;border-radius:8px;padding:8px"><div style="color:#6b7280">💸 Gastos</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(d.totalGastos)+'</div></div>'
-    +'<div style="background:'+(pos?'#dbeafe':'#fef2f2')+';border-radius:8px;padding:8px"><div style="color:#6b7280">📊 Utilidad</div><div style="font-weight:800;color:'+(pos?'#1e40af':'#991b1b')+'">'+_fmtCol(d.utilidad)+'</div></div>'
+    +'<div style="background:#dbeafe;border-radius:8px;padding:8px"><div style="color:#6b7280">📤 Total prestado</div><div style="font-weight:700;color:#1e40af">'+_fmtCol(d.prestado+d.montoRenov)+'</div></div>'
+    +'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">📄 Préstamos nuevos</div><div style="font-weight:700;color:#374151">'+d.numPrestamos+'</div></div>'
+    +'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">🔄 Renovaciones</div><div style="font-weight:700;color:#374151">'+d.numRenov+'</div></div>'
+    +(d.totalGastos?'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💸 Gastos</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(d.totalGastos)+'</div></div>':'')
+    +'</div>';
+}
+
+function _barMeta(actual,meta,etiqueta,esDinero){
+  if(!meta) return '';
+  var pct=Math.min(Math.round(actual/meta*100),100);
+  var ok=actual>=meta;
+  var color=ok?'#16a34a':'#dc2626';
+  var bgBar=ok?'#dcfce7':'#fee2e2';
+  var fmtActual=esDinero?_fmtCol(actual):actual;
+  var fmtMeta=esDinero?_fmtCol(meta):meta;
+  return '<div style="margin-top:10px">'
+    +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">'
+      +'<span style="font-weight:700;color:#374151">🎯 '+etiqueta+'</span>'
+      +'<span style="font-weight:800;color:'+color+'">'+(ok?'✅ ':'🔴 ')+fmtActual+' / '+fmtMeta+' ('+pct+'%)</span>'
+    +'</div>'
+    +'<div style="background:#e5e7eb;border-radius:99px;height:8px">'
+      +'<div style="background:'+color+';border-radius:99px;height:8px;width:'+pct+'%;transition:width 0.3s"></div>'
+    +'</div>'
     +'</div>';
 }
 
@@ -2045,19 +2066,28 @@ function renderCierres(){
   var hoy=hoyLocal();
   var inicioSem=_inicioSemana(hoy);
   var inicioMes=_inicioMes(hoy);
+  var metaSem=Math.round(metaPrestamos/4);
+  var metaSemC=Math.round(metaClientes/4);
+
   // Semana en curso
   var dSem=_calcCierreData(inicioSem,hoy);
   var elRangoSem=document.getElementById('cierre-semana-rango');
   var elStatsSem=document.getElementById('cierre-semana-stats');
   if(elRangoSem) elRangoSem.textContent=inicioSem+' → '+hoy;
-  if(elStatsSem) elStatsSem.innerHTML=_statsHtml(dSem);
+  if(elStatsSem) elStatsSem.innerHTML=_statsHtml(dSem)
+    +_barMeta(dSem.prestado+dSem.montoRenov,metaSem,'Meta préstamos semana',true)
+    +_barMeta(dSem.numPrestamos+dSem.numRenov,metaSemC,'Meta clientes nuevos semana',false);
+
   // Mes en curso
   var dMes=_calcCierreData(inicioMes,hoy);
   var elRangoMes=document.getElementById('cierre-mes-rango');
   var elStatsMes=document.getElementById('cierre-mes-stats');
   if(elRangoMes) elRangoMes.textContent=inicioMes+' → '+hoy;
-  if(elStatsMes) elStatsMes.innerHTML=_statsHtml(dMes);
-  // Historial guardado (últimos 2 de cada tipo juntos, más recientes primero)
+  if(elStatsMes) elStatsMes.innerHTML=_statsHtml(dMes)
+    +_barMeta(dMes.prestado+dMes.montoRenov,metaPrestamos,'Meta préstamos mes',true)
+    +_barMeta(dMes.numPrestamos+dMes.numRenov,metaClientes,'Meta clientes nuevos mes',false);
+
+  // Historial guardado
   var lista=document.getElementById('cierres-lista');
   if(!lista) return;
   var todos=cierres.slice().sort(function(a,b){ return b.hasta.localeCompare(a.hasta); });
