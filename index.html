@@ -38,6 +38,45 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
   .app{width:390px;max-width:100%;min-height:100vh;background:var(--bg);position:relative;box-shadow:0 0 40px rgba(0,0,0,0.18);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   .app input,.app textarea,.app select{-webkit-user-select:text;user-select:text}
 
+  /* ===== DESKTOP LAYOUT ===== */
+  @media(min-width:768px){
+    html,body{background:#1e293b;align-items:stretch;justify-content:flex-start}
+    .app{width:100%;max-width:100%;display:flex;flex-direction:row;box-shadow:none;min-height:100vh}
+
+    /* Sidebar izquierdo */
+    #desktop-sidebar{display:flex;flex-direction:column;width:220px;min-width:220px;background:#1e293b;padding:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+    #desktop-sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,0.1)}
+    #desktop-sidebar-logo div:first-child{font-size:16px;font-weight:900;color:#fff}
+    #desktop-sidebar-logo div:last-child{font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px}
+    #desktop-nav{padding:12px 0;flex:1}
+    .desktop-nav-item{padding:11px 20px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.7);cursor:pointer;display:flex;align-items:center;gap:10px;transition:all 0.15s;border-left:3px solid transparent}
+    .desktop-nav-item:hover{background:rgba(255,255,255,0.07);color:#fff}
+    .desktop-nav-item.active{background:rgba(255,255,255,0.1);color:#fff;border-left-color:#38bdf8}
+    #desktop-sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,0.1);font-size:11px;color:rgba(255,255,255,0.3)}
+
+    /* Área de contenido */
+    #desktop-content{flex:1;overflow-y:auto;background:#f3f4f6;min-height:100vh}
+
+    /* Ocultar elementos mobile */
+    .menu-icon{display:none!important}
+    .menu-dropdown{display:none!important}
+    .btn.btn-cyan.btn-sm[onclick="goBack()"]{display:none!important}
+
+    /* Pantallas dentro del desktop-content */
+    .screen{max-width:720px;margin:0 auto}
+    .section{padding:20px 24px}
+
+    /* Navbar en desktop */
+    .navbar{padding:14px 24px;background:#fff;border-bottom:1px solid #e5e7eb}
+    .navbar-title{font-size:18px}
+
+    /* Cards en 2 columnas en desktop para secciones que aplique */
+    .desktop-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  }
+  @media(max-width:767px){
+    #desktop-sidebar{display:none}
+  }
+
   /* NAVBAR */
   .navbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
   .navbar-title{font-size:16px;font-weight:600;color:var(--text)}
@@ -301,6 +340,27 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
 </div>
 
 <div class="app" id="app" style="display:none">
+
+  <!-- SIDEBAR DESKTOP -->
+  <div id="desktop-sidebar">
+    <div id="desktop-sidebar-logo">
+      <div>💰 Financiera JD</div>
+      <div id="desktop-sidebar-ruta">Admin</div>
+    </div>
+    <div id="desktop-nav">
+      <div class="desktop-nav-item" onclick="goTo('screen-home');_deskNav(this)">🏠 Inicio</div>
+      <div class="desktop-nav-item" onclick="goTo('screen-panel-recolector');_deskNav(this)">📊 Panel Recolector</div>
+      <div class="desktop-nav-item" onclick="goTo('screen-nuevo-cliente');_deskNav(this)">➕ Nuevo Cliente</div>
+      <div class="desktop-nav-item" id="dsk-menu-inversion" onclick="goTo('screen-inversion');_deskNav(this)" style="display:none">💰 Inversión</div>
+    </div>
+    <div id="desktop-sidebar-footer">
+      <div id="dsk-usuario-label"></div>
+      <div onclick="cerrarSesion()" style="margin-top:8px;cursor:pointer;color:rgba(255,100,100,0.7)">🔒 Cerrar sesión</div>
+    </div>
+  </div>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <div id="desktop-content">
 
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
@@ -1238,6 +1298,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     </div>
   </div>
 
+  </div><!-- /desktop-content -->
 </div><!-- /app -->
 
 <script>
@@ -1497,6 +1558,7 @@ function mostrarApp(){
   if(menuInv) menuInv.style.display=rolActual==='admin'?'block':'none';
   var menuCerrar=document.getElementById('menu-cerrar-sesion');
   if(menuCerrar) menuCerrar.style.display=rolActual==='admin'?'block':'none';
+  _syncDesktopSidebar();
   _iniciarHeartbeat();
   // sessionStorage se borra al cerrar la app completamente, pero sobrevive recargas en segundo plano
   // → Si no hay pantalla en sessionStorage, la app fue cerrada: ir a cobros
@@ -2354,6 +2416,19 @@ function goBack(){
 
 function toggleMenu(){
   document.getElementById('menu-dropdown').classList.toggle('open');
+}
+function _deskNav(el){
+  document.querySelectorAll('.desktop-nav-item').forEach(function(x){ x.classList.remove('active'); });
+  if(el) el.classList.add('active');
+}
+function _syncDesktopSidebar(){
+  var esAdmin=rolActual==='admin';
+  var invEl=document.getElementById('dsk-menu-inversion');
+  if(invEl) invEl.style.display=esAdmin?'flex':'none';
+  var lblEl=document.getElementById('dsk-usuario-label');
+  if(lblEl) lblEl.textContent=esAdmin?'👑 Admin':(rutaActual||'Ruta');
+  var rutaEl=document.getElementById('desktop-sidebar-ruta');
+  if(rutaEl) rutaEl.textContent=esAdmin?'Administrador':(rutaActual||'');
 }
 function toggleAdminMenu(){
   var d=document.getElementById('admin-menu-drop');
