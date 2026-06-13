@@ -266,19 +266,19 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     <!-- Panel login admin (contraseña) -->
     <div id="login-admin-panel" style="display:none;width:100%;max-width:360px">
       <button onclick="loginMostrarRutas()" style="background:none;border:none;color:#bfdbfe;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:16px;padding:0;display:block">← Volver</button>
-      <div style="background:#fff;border-radius:16px;padding:24px 20px">
+      <form style="background:#fff;border-radius:16px;padding:24px 20px" onsubmit="loginAdmin();return false;" autocomplete="on">
         <p style="font-size:16px;font-weight:700;color:#1e40af;margin-bottom:4px">🔐 Administrador</p>
         <div id="login-error" style="display:none;background:#fee2e2;color:#dc2626;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:12px"></div>
         <div style="margin-bottom:12px">
           <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Usuario</label>
-          <input type="text" id="login-user-admin" placeholder="Usuario" autocomplete="username" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box" onkeydown="if(event.key==='Enter')document.getElementById('login-pass-admin').focus()">
+          <input type="text" name="username" id="login-user-admin" placeholder="Usuario" autocomplete="username" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
         </div>
         <div style="margin-bottom:12px">
           <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Contraseña</label>
-          <input type="password" id="login-pass-admin" placeholder="••••••••" autocomplete="current-password" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box" onkeydown="if(event.key==='Enter')loginAdmin()">
+          <input type="password" name="password" id="login-pass-admin" placeholder="••••••••" autocomplete="current-password" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
         </div>
-        <button onclick="loginAdmin()" style="width:100%;padding:12px;background:#1e40af;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Entrar</button>
-      </div>
+        <button type="submit" style="width:100%;padding:12px;background:#1e40af;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Entrar</button>
+      </form>
     </div>
   </div>
 </div>
@@ -1508,6 +1508,8 @@ function loginAdmin(){
     err.style.display='none';
     localStorage.setItem('fjd_session','1');
     localStorage.setItem('fjd_rol','admin');
+    localStorage.setItem('fjd_login_ts',Date.now().toString());
+    localStorage.setItem('fjd_login_ruta','todas');
     rolActual='admin';
     document.getElementById('login-screen').style.display='none';
     document.getElementById('ruta-selector').style.display='flex';
