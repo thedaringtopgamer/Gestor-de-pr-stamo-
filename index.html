@@ -360,9 +360,9 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
 
       <!-- Fila 2: Diferencia | Registrar inyección -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-        <div class="card" style="margin:0;padding:14px 12px;background:#f0fdf4;text-align:center">
-          <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:6px">📊 Diferencia</div>
-          <div style="font-size:18px;font-weight:800" id="inv-diferencia">₡0</div>
+        <div class="card" style="margin:0;padding:14px 12px;background:#fefce8;text-align:center">
+          <div style="font-size:11px;font-weight:700;color:#854d0e;text-transform:uppercase;margin-bottom:6px">📈 Intereses por cobrar</div>
+          <div style="font-size:18px;font-weight:800;color:#92400e" id="inv-diferencia">₡0</div>
           <div style="font-size:10px;color:#6b7280;margin-top:2px" id="inv-diferencia-label">—</div>
         </div>
         <div class="card" style="margin:0;padding:14px 12px">
@@ -1893,8 +1893,9 @@ function renderInversion(){
     var d=calcDerived(p); return d.saldoPendiente>0;
   });
   var enCalle=activos.reduce(function(s,p){ return s+calcDerived(p).saldoPendiente; },0);
+  var capitalPrestado=activos.reduce(function(s,p){ return s+p.montoPrestado; },0);
+  var interesesPendientes=enCalle-capitalPrestado;
   var capitalTotal=inversiones.reduce(function(s,i){ return s+i.monto; },0);
-  var diff=enCalle-capitalTotal;
 
   document.getElementById('inv-en-calle').textContent=_fmtCol(enCalle);
   document.getElementById('inv-clientes-activos').textContent=activos.length+' cliente'+(activos.length===1?'':'s')+' activo'+(activos.length===1?'':'s');
@@ -1902,9 +1903,8 @@ function renderInversion(){
 
   var diffEl=document.getElementById('inv-diferencia');
   var labelEl=document.getElementById('inv-diferencia-label');
-  diffEl.textContent=(diff>=0?'+':'')+_fmtCol(diff);
-  diffEl.style.color=diff>=0?'#166534':'#991b1b';
-  labelEl.textContent=diff>0?'Más plata en calle que invertida (ganancia de intereses acumulados)':diff<0?'Has invertido más de lo que está en calle':'Exactamente igual';
+  diffEl.textContent=_fmtCol(interesesPendientes);
+  labelEl.textContent='De ₡'+_fmtCol(capitalPrestado)+' prestado';
 
   var hist=document.getElementById('inv-historial');
   if(!inversiones.length){ hist.innerHTML='<p style="color:#6b7280;font-size:13px;text-align:center;padding:16px">Sin inyecciones registradas</p>'; }
