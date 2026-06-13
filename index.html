@@ -4582,7 +4582,7 @@ function fechaOffset(dias){
 
   // Doble seguro
   setTimeout(function(){
-    var appV=document.getElementById('app').style.display==='block';
+    var appV=document.getElementById('app').style.display==='block'||document.getElementById('app').style.display==='flex';
     var loginV=document.getElementById('login-screen').style.display==='flex';
     var esperaV=document.getElementById('espera-screen').style.display==='flex';
     if(!appV&&!loginV&&!esperaV) document.getElementById('login-screen').style.display='flex';
