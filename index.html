@@ -1494,7 +1494,8 @@ function entrarComoRuta(ruta){
   rutaActual=ruta;
   localStorage.setItem('fjd_rol','ruta');
   localStorage.setItem('fjd_ruta_actual',ruta);
-  localStorage.setItem('fjd_ruta_fija',ruta); // queda fija en este teléfono
+  localStorage.setItem('fjd_ruta_fija',ruta);
+  localStorage.setItem('fjd_ruta_fija_ts',Date.now().toString());
   sessionStorage.setItem('fjd_ruta_actual',ruta);
   mostrarApp();
 }
@@ -1536,6 +1537,7 @@ function loginMostrarRutas(){
 
 function seleccionarRuta(ruta){
   rutaActual=ruta;
+  localStorage.setItem('fjd_ruta_actual',ruta);
   sessionStorage.setItem('fjd_ruta_actual',ruta);
   document.getElementById('ruta-selector').style.display='none';
   mostrarApp();
@@ -1587,7 +1589,7 @@ function _forzarLogoutAdmin(){
   localStorage.removeItem('fjd_pantalla'); localStorage.removeItem('fjd_detalle_id');
   localStorage.removeItem('fjd_cliente_temp'); localStorage.removeItem('fjd_login_ts');
   localStorage.removeItem('fjd_login_user'); localStorage.removeItem('fjd_ruta_fija');
-  localStorage.removeItem('fjd_ruta_actual');
+  localStorage.removeItem('fjd_ruta_fija_ts'); localStorage.removeItem('fjd_ruta_actual');
   document.getElementById('app').style.display='none';
   document.getElementById('splash-screen').style.display='none';
   closeMenu();
@@ -4538,7 +4540,8 @@ function fechaOffset(dias){
       if(_revocado){
         localStorage.removeItem('fjd_session'); localStorage.removeItem('fjd_rol');
         localStorage.removeItem('fjd_login_ts'); localStorage.removeItem('fjd_login_ruta');
-        localStorage.removeItem('fjd_ruta_fija'); localStorage.removeItem('fjd_ruta_actual');
+        localStorage.removeItem('fjd_ruta_fija'); localStorage.removeItem('fjd_ruta_fija_ts');
+        localStorage.removeItem('fjd_ruta_actual');
         document.getElementById('login-screen').style.display='flex';
         loginMostrarRutas();
         toast('⚠ Su sesión fue cerrada por el administrador.');
@@ -4558,9 +4561,12 @@ function fechaOffset(dias){
       } else if(_rutaFija){
         // Verificar si fue revocado incluso sin sesión activa
         var _rutaRevTs=(window._sessionRevoked&&(window._sessionRevoked[_rutaFija]||window._sessionRevoked['todas']))||0;
-        if(_rutaRevTs>0){
-          localStorage.removeItem('fjd_ruta_fija'); localStorage.removeItem('fjd_ruta_actual');
-          localStorage.removeItem('fjd_rol');
+        var _rutaFijaTs=parseInt(localStorage.getItem('fjd_ruta_fija_ts')||'0');
+        // Primera vez con código nuevo: registrar ahora para no revocar por eventos pasados
+        if(!_rutaFijaTs){_rutaFijaTs=Date.now();localStorage.setItem('fjd_ruta_fija_ts',_rutaFijaTs.toString());}
+        if(_rutaRevTs>0&&_rutaRevTs>_rutaFijaTs){
+          localStorage.removeItem('fjd_ruta_fija'); localStorage.removeItem('fjd_ruta_fija_ts');
+          localStorage.removeItem('fjd_ruta_actual'); localStorage.removeItem('fjd_rol');
           document.getElementById('login-screen').style.display='flex';
           loginMostrarRutas();
         } else {
