@@ -1774,7 +1774,25 @@ function _enviarHeartbeat(){
   var ruta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
   var user=localStorage.getItem('fjd_login_user')||ruta;
   var ua=navigator.userAgent;
-  var dispositivo=ua.indexOf('iPhone')!==-1?'iPhone':ua.indexOf('Android')!==-1?'Android':ua.indexOf('iPad')!==-1?'iPad':'Otro';
+  // Detectar modelo específico
+  var dispositivo='Otro';
+  var modeloMatch;
+  if(ua.indexOf('iPhone')!==-1){
+    modeloMatch=ua.match(/iPhone OS ([\d_]+)/);
+    dispositivo='iPhone'+(modeloMatch?' (iOS '+modeloMatch[1].replace(/_/g,'.')+')'  :'');
+  } else if(ua.indexOf('iPad')!==-1){
+    modeloMatch=ua.match(/CPU OS ([\d_]+)/);
+    dispositivo='iPad'+(modeloMatch?' (iOS '+modeloMatch[1].replace(/_/g,'.')+')'  :'');
+  } else if(ua.indexOf('Android')!==-1){
+    // Intenta extraer el modelo: "Android X.X; <Modelo>) "
+    modeloMatch=ua.match(/Android[\s\d.]+;\s*([^)]+)\)/);
+    if(modeloMatch){
+      var modelo=modeloMatch[1].trim();
+      // Eliminar "Build/..." si aparece en el modelo
+      modelo=modelo.replace(/\s*Build\/.*/,'').trim();
+      dispositivo=modelo||'Android';
+    } else { dispositivo='Android'; }
+  }
   var sesion={deviceId:deviceId,ruta:ruta,user:user,lastSeen:Date.now(),dispositivo:dispositivo,lat:_deviceLat,lng:_deviceLng};
   // Leer sesiones actuales, actualizar esta, guardar
   fetch(SUPA_URL+'/rest/v1/app_data?key=eq.device_sessions&select=value',{headers:SUPA_HDR})
