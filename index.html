@@ -231,6 +231,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
   <div class="splash-jd">JD</div>
   <div class="splash-sub">FINANCIERA</div>
   <div class="splash-spinner"></div>
+  <div id="splash-status" style="color:#94a3b8;font-size:12px;margin-top:16px;text-align:center"></div>
 </div>
 
 <!-- PANTALLA DE ENTRADA -->
@@ -4995,9 +4996,13 @@ function fechaOffset(dias){
   var splash=document.getElementById('splash-screen');
   var errorConexion=false;
 
+  var _splashStatus=document.getElementById('splash-status');
+  // Esperar 1 segundo para que la red móvil se estabilice
+  await new Promise(function(res){setTimeout(res,1000);});
   var _intentos=0;
   var _cargado=false;
   while(_intentos<4){
+    if(_intentos>0 && _splashStatus) _splashStatus.textContent='Reconectando... (intento '+(_intentos+1)+'/4)';
     try{
       var controller=new AbortController();
       var timeout=setTimeout(function(){controller.abort();},20000);
