@@ -5014,25 +5014,18 @@ function fechaOffset(dias){
         if(row.key==='session_revoked'&&row.value&&typeof row.value==='object') window._sessionRevoked=row.value;
       });
     } else {
-      errorConexion=true;
+      cargarDesdeLocalStorage();
+      setTimeout(function(){toast('⚠ Cargado desde caché — sincronizando...');},1500);
     }
   }catch(e){
-    errorConexion=true;
+    cargarDesdeLocalStorage();
+    setTimeout(function(){toast('⚠ Sin conexión — datos del caché local');},1500);
   }
 
   // Siempre ocultar splash — nunca dejar pantalla en blanco
   splash.style.display='none';
 
-  if(errorConexion){
-    var errDiv=document.createElement('div');
-    errDiv.style.cssText='position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a8a);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999';
-    errDiv.innerHTML='<div style="font-size:80px;font-weight:900;color:#fff;letter-spacing:-3px">JD</div>'
-      +'<div style="font-size:14px;font-weight:700;color:#60a5fa;letter-spacing:8px;margin-bottom:32px">FINANCIERA</div>'
-      +'<div style="color:#f87171;font-size:14px;text-align:center;padding:0 32px;margin-bottom:24px">⚠ Sin conexión a la nube.<br>Verifique su internet.</div>'
-      +'<button onclick="location.reload()" style="background:#2563eb;color:#fff;border:none;border-radius:12px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer">↺ Reintentar</button>';
-    document.body.appendChild(errDiv);
-    return;
-  }
+  if(errorConexion){ /* continúa con datos de caché */ }
 
   try{ calcPreview(); }catch(e){}
   try{ updateHome(); }catch(e){}
