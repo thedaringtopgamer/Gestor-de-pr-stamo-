@@ -2525,7 +2525,13 @@ function renderCierres(){
   var dMes=_calcCierreData(inicioMes,hoy);
   var elRangoMes=document.getElementById('cierre-mes-rango');
   var elStatsMes=document.getElementById('cierre-mes-stats');
-  if(elRangoMes) elRangoMes.textContent=inicioMes+' → '+hoy;
+  // Contar semanas cerradas desde inicio del mes actual
+  var rFiltroMes=rutaInvFiltro||'todas';
+  var semsMes=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===rFiltroMes&&c.hasta>=inicioMes&&c.hasta<=hoy; }).length;
+  var puntosM='';
+  for(var _i=0;_i<4;_i++) puntosM+=(_i<semsMes?'■':'□');
+  var semMesTag=' <span style="font-size:11px;font-weight:700;color:#166534;background:#bbf7d0;border-radius:20px;padding:2px 8px;margin-left:4px">'+puntosM+' '+semsMes+'/4</span>';
+  if(elRangoMes) elRangoMes.innerHTML=inicioMes+' → '+hoy+semMesTag;
   if(elStatsMes) elStatsMes.innerHTML=_statsHtml(dMes,'mes')
     +_barMeta(dMes.prestado+dMes.montoRenov,metaPrestamos,'Meta préstamos mes',true)
     +_barMeta(dMes.numPrestamos,metaClientes,'Meta clientes nuevos mes',false);
@@ -2704,10 +2710,21 @@ function abrirHistorialTipo(tipo){
     lista.innerHTML=filtrados.map(function(c){
       var uid='cierre-det-'+c.id;
       var label=esSem?'Semana':'Mes';
+      // Para cierres mensuales: contar semanas dentro del rango
+      var semTag='';
+      if(!esSem){
+        var semsEnMes=cierres.filter(function(s){
+          return s.tipo==='semana'&&(s.ruta||'todas')===rFiltro&&s.hasta>=c.desde&&s.hasta<=c.hasta;
+        }).length;
+        var total=4;
+        var puntos='';
+        for(var i=0;i<total;i++) puntos+=(i<semsEnMes?'■':'□');
+        semTag=' <span style="font-size:11px;font-weight:700;color:#166534;background:#dcfce7;border-radius:20px;padding:2px 8px;margin-left:4px">'+puntos+' '+semsEnMes+'/'+total+'</span>';
+      }
       return '<div style="border-bottom:1px solid #f3f4f6">'
         +'<div onclick="toggleRenEntry(\''+uid+'\')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;cursor:pointer">'
           +'<div>'
-            +'<div style="font-size:14px;font-weight:800;color:#1e293b">'+label+': '+c.desde+' → '+c.hasta+'</div>'
+            +'<div style="font-size:14px;font-weight:800;color:#1e293b">'+label+': '+c.desde+' → '+c.hasta+semTag+'</div>'
             +(c.nota?'<div style="font-size:11px;color:#6b7280;margin-top:2px">'+c.nota+'</div>':'')
           +'</div>'
           +'<span style="font-size:14px;color:#9ca3af" id="arr-'+uid+'">▶</span>'
