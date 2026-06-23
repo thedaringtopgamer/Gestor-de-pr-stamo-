@@ -5024,12 +5024,12 @@ function renderPanelRecolector(){
   var wrapSalida=document.getElementById('caja-salida-wrap');
   if(wrapSalida) wrapSalida.style.display=(rolActual==='admin')?'':'none';
   var inputSalida=document.getElementById('caja-salida');
-  if(inputSalida) inputSalida.value=salidaGuardada>0?fmt(salidaGuardada):'';
-  // FÓRMULA: Base + Recogida - NuevosReales - EntregadoRenov - AdminRenov - Gastos
-  // (Inyección es cálculo interno del admin, no se muestra al cobrador)
-  var cajaTotal=baseGuardada+recogidaTotal-totalSoloNuevos-totalEntregadoRenov-totalAdminRenov-totalGastos;
+  if(inputSalida) inputSalida.value=fmt(salidaGuardada+inyeccionHoy)||'';
+  // FÓRMULA: (Base + Inyección) + Recogida - NuevosReales - EntregadoRenov - AdminRenov - Gastos
+  var baseConInyeccion=baseGuardada+inyeccionHoy;
+  var cajaTotal=baseConInyeccion+recogidaTotal-totalSoloNuevos-totalEntregadoRenov-totalAdminRenov-totalGastos;
   document.getElementById('caja-recogida').textContent='₡'+fmt(recogidaTotal);
-  document.getElementById('caja-base-display').textContent='₡'+fmt(baseGuardada);
+  document.getElementById('caja-base-display').textContent='₡'+fmt(baseConInyeccion);
   document.getElementById('caja-prestamos').textContent='₡'+fmt(prestamosTotal);
   document.getElementById('caja-gastos').textContent='₡'+fmt(totalGastos);
   document.getElementById('caja-total').textContent='₡'+fmt(cajaTotal);
