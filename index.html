@@ -1236,11 +1236,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
               <span style="font-size:15px;color:#d1d5db">+ Base</span>
               <span style="font-size:15px;font-weight:600;color:#4ade80" id="caja-base-display">₡0</span>
             </div>
-            <div id="caja-inyeccion-row" style="display:none;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
-              <span style="font-size:15px;color:#d1d5db">+ Inyección capital</span>
-              <span style="font-size:15px;font-weight:600;color:#60a5fa" id="caja-inyeccion-display">₡0</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
+              <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
               <span style="font-size:15px;color:#f87171">− Préstamos nuevos</span>
               <span style="font-size:15px;font-weight:600;color:#f87171" id="caja-prestamos">₡0</span>
             </div>
@@ -1252,7 +1248,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
               <span style="font-size:16px;font-weight:700;color:#fff">Caja</span>
               <span style="font-size:22px;font-weight:700;color:#fff" id="caja-total">₡0</span>
             </div>
-            <p style="font-size:10px;color:#6b7280;text-align:center;margin-top:2px">📌 Recogida + Base + Inyección − Préstamos − Gastos − Salida inyección</p>
+            <p style="font-size:10px;color:#6b7280;text-align:center;margin-top:2px">📌 Recogida + Base − Préstamos − Gastos</p>
             <p style="font-size:10px;color:#6b7280;text-align:center;margin-top:0">📌 Base − Salida + Efectivo − Administrativo</p>
           </div>
         </div>
@@ -2342,11 +2338,14 @@ function _calcCierreData(desde,hasta,rutaParam){
   var entregadoRenov=renovP.reduce(function(s,x){ return s+Math.max(0,x.montoEntregado||0); },0);
   var gastosP=gastos.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||x.ruta===ruta); });
   var totalGastos=gastosP.reduce(function(s,x){ return s+x.monto; },0);
+  // Inyecciones de capital en el período
+  var invP=inversiones.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===ruta); });
+  var totalInyeccion=invP.reduce(function(s,x){ return s+x.monto; },0);
   // Ganancia = recogida - plata realmente entregada (préstamos nuevos + entregado en renovaciones) - gastos
   var utilidad=recogida-(prestado+entregadoRenov)-totalGastos;
   var cobrosAdmP=cobrosAdmin.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
   var totalCobroAdm=cobrosAdmP.reduce(function(s,x){ return s+(x.monto||0); },0);
-  return {recogida:recogida,prestado:prestado,montoRenov:montoRenov,entregadoRenov:entregadoRenov,totalGastos:totalGastos,utilidad:utilidad,numPrestamos:nuevosP.length,numRenov:renovP.length,totalCobroAdm:totalCobroAdm,idsNuevos:nuevosP.map(function(p){return p.id;})};
+  return {recogida:recogida,prestado:prestado,montoRenov:montoRenov,entregadoRenov:entregadoRenov,totalGastos:totalGastos,utilidad:utilidad,totalInyeccion:totalInyeccion,numPrestamos:nuevosP.length,numRenov:renovP.length,totalCobroAdm:totalCobroAdm,idsNuevos:nuevosP.map(function(p){return p.id;})};
 
 }
 
@@ -2463,6 +2462,7 @@ function _statsHtml(d,tipo){
     +'<div style="background:#f3f4f6;border-radius:8px;padding:8px;'+editStyle+'" onclick="_editarStatInv(\''+tipo+'\',\'clientes\',\'Clientes nuevos\',false,'+clientesCalc+')"><div style="color:#6b7280">👥 Clientes nuevos'+editHint+'</div><div style="font-weight:700;color:#374151">'+clientesVal+'</div></div>'
     +(d.totalCobroAdm?'<div style="background:#ede9fe;border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:#7c3aed">'+_fmtCol(d.totalCobroAdm)+'</div></div>':'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:#9ca3af">₡0</div></div>')
     +'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💸 Gastos</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(d.totalGastos||0)+'</div></div>'
+    +(d.totalInyeccion?'<div style="background:#e0f2fe;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💉 Capital inyectado</div><div style="font-weight:700;color:#0369a1">+'+_fmtCol(d.totalInyeccion)+'</div></div>':'')
     +'<div style="border-radius:8px;padding:10px;grid-column:span 2;background:'+(pos?'#dcfce7':'#fee2e2')+';border:2px solid '+(pos?'#86efac':'#fca5a5')+'">'
       +'<div style="color:#6b7280;font-size:11px">📊 Ganancia neta</div>'
       +'<div style="font-weight:900;font-size:16px;color:'+(pos?'#166534':'#dc2626')+'">'+(pos?'+':'')+_fmtCol(utilidad)+'</div>'
@@ -5024,11 +5024,9 @@ function renderPanelRecolector(){
   var wrapSalida=document.getElementById('caja-salida-wrap');
   if(wrapSalida) wrapSalida.style.display=(rolActual==='admin')?'':'none';
   var inputSalida=document.getElementById('caja-salida');
-  // Salida total = salida manual + inyección (la inyección entra y sale de inmediato)
-  var salidaTotal=salidaGuardada+inyeccionHoy;
-  if(inputSalida) inputSalida.value=salidaTotal>0?fmt(salidaTotal):'';
+  if(inputSalida) inputSalida.value=salidaGuardada>0?fmt(salidaGuardada):'';
   // FÓRMULA: Base + Recogida - NuevosReales - EntregadoRenov - AdminRenov - Gastos
-  // Inyección entra a base y sale como salida → neto cero, no afecta caja
+  // (Inyección es cálculo interno del admin, no se muestra al cobrador)
   var cajaTotal=baseGuardada+recogidaTotal-totalSoloNuevos-totalEntregadoRenov-totalAdminRenov-totalGastos;
   document.getElementById('caja-recogida').textContent='₡'+fmt(recogidaTotal);
   document.getElementById('caja-base-display').textContent='₡'+fmt(baseGuardada);
@@ -5036,10 +5034,6 @@ function renderPanelRecolector(){
   document.getElementById('caja-gastos').textContent='₡'+fmt(totalGastos);
   document.getElementById('caja-total').textContent='₡'+fmt(cajaTotal);
   document.getElementById('panel-stat-caja').textContent='Total: ₡'+fmt(cajaTotal);
-  var rowInv=document.getElementById('caja-inyeccion-row');
-  var dispInv=document.getElementById('caja-inyeccion-display');
-  if(rowInv) rowInv.style.display=inyeccionHoy>0?'flex':'none';
-  if(dispInv) dispInv.textContent='₡'+fmt(inyeccionHoy);
 
 }
 
