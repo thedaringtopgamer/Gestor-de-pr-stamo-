@@ -481,7 +481,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
               <div style="font-size:13px;font-weight:800;color:#1e40af">📆 Semana en curso</div>
               <div style="font-size:11px;color:#6b7280" id="cierre-semana-rango"></div>
             </div>
-            <button onclick="cerrarSemana()" style="background:#1e40af;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Cerrar semana</button>
+            <button id="btn-cerrar-semana" onclick="cerrarSemana()" style="background:#1e40af;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Cerrar semana</button>
           </div>
           <div id="cierre-semana-stats"></div>
         </div>
@@ -493,7 +493,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
               <div style="font-size:13px;font-weight:800;color:#166534">🗓 Mes en curso</div>
               <div style="font-size:11px;color:#6b7280" id="cierre-mes-rango"></div>
             </div>
-            <button onclick="cerrarMes()" style="background:#166534;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Cerrar mes</button>
+            <button id="btn-cerrar-mes" onclick="cerrarMes()" style="background:#166534;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Cerrar mes</button>
           </div>
           <div id="cierre-mes-stats"></div>
         </div>
@@ -2199,6 +2199,22 @@ function _barMeta(actual,meta,etiqueta,esDinero){
 }
 
 function renderCierres(){
+  // Activar/desactivar botones de cierre según día y hora
+  var puedesSem=_esFridayNight();
+  var puedesMes=_puedesCerrarMes();
+  var btnSem=document.getElementById('btn-cerrar-semana');
+  var btnMes=document.getElementById('btn-cerrar-mes');
+  var _estiloBtnCierre=function(btn,activo,bg){
+    if(!btn) return;
+    btn.style.background=activo?bg:'#d1d5db';
+    btn.style.color=activo?'#fff':'#9ca3af';
+    btn.style.opacity=activo?'1':'0.5';
+    btn.style.cursor=activo?'pointer':'not-allowed';
+    btn.style.pointerEvents=activo?'auto':'none';
+  };
+  _estiloBtnCierre(btnSem,puedesSem,'#1e40af');
+  _estiloBtnCierre(btnMes,puedesMes,'#166534');
+
   var hoy=hoyLocal();
   var inicioSem=_inicioSemana(hoy);
   var inicioMes=_inicioMes(hoy);
@@ -2296,13 +2312,32 @@ function imprimirCierre(id){
   win.document.close();
 }
 
+function _esFridayNight(){
+  var now=new Date();
+  return now.getDay()===5 && now.getHours()>=20;
+}
+
+function _puedesCerrarMes(){
+  if(!_esFridayNight()) return false;
+  var rFiltro=rutaInvFiltro||'todas';
+  var ciorresMes=cierres.filter(function(c){ return c.tipo==='mes'&&(c.ruta||'todas')===rFiltro; })
+    .sort(function(a,b){ return b.hasta.localeCompare(a.hasta); });
+  var desdeStr=ciorresMes.length?ciorresMes[0].hasta:'0000-00-00';
+  var semanasDesde=cierres.filter(function(c){
+    return c.tipo==='semana'&&(c.ruta||'todas')===rFiltro&&c.hasta>desdeStr;
+  }).length;
+  return semanasDesde>=4;
+}
+
 function cerrarSemana(){
+  if(!_esFridayNight()){ toast('⏳ Solo podés cerrar la semana los viernes después de las 8pm'); return; }
   var hoy=hoyLocal();
   var desde=_inicioSemana(hoy);
   _abrirConfirmarCierre('semana',desde,hoy);
 }
 
 function cerrarMes(){
+  if(!_puedesCerrarMes()){ toast('⏳ El cierre mensual está disponible el viernes de la 4ta semana después de las 8pm'); return; }
   var hoy=hoyLocal();
   var desde=_inicioMes(hoy);
   _abrirConfirmarCierre('mes',desde,hoy);
