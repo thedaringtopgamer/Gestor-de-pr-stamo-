@@ -2359,7 +2359,8 @@ function _statsHtml(d,tipo){
   // Ajuste se resta del calculado; si vienen préstamos nuevos encima, se suman correctamente
   var prestadoVal=Math.max(0,prestadoCalc-adjP);
   var clientesVal=Math.max(0,clientesCalc-adjC);
-  var utilidad=d.recogida-prestadoVal-d.totalGastos;
+  // Ganancia = recogida - préstamos nuevos - plata entregada en renovaciones - gastos
+  var utilidad=d.recogida-(d.prestado+(d.entregadoRenov||0))-d.totalGastos;
   var pos=utilidad>=0;
   var periodo=tipo==='mes'?'Mes':'Semana';
   var editStyle=rolActual==='admin'?'cursor:pointer;' :'';
