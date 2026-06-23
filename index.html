@@ -2212,8 +2212,8 @@ function renderCierres(){
     btn.style.cursor=activo?'pointer':'not-allowed';
     btn.style.pointerEvents=activo?'auto':'none';
   };
-  _estiloBtnCierre(btnSem,puedesSem,'#1e40af');
-  _estiloBtnCierre(btnMes,puedesMes,'#166534');
+  _estiloBtnCierre(btnSem,true,'#1e40af');
+  _estiloBtnCierre(btnMes,true,'#166534');
 
   var hoy=hoyLocal();
   var inicioSem=_inicioSemana(hoy);
@@ -2330,14 +2330,12 @@ function _puedesCerrarMes(){
 }
 
 function cerrarSemana(){
-  if(!_esFridayNight()){ toast('⏳ Solo podés cerrar la semana los viernes después de las 8pm'); return; }
   var hoy=hoyLocal();
   var desde=_inicioSemana(hoy);
   _abrirConfirmarCierre('semana',desde,hoy);
 }
 
 function cerrarMes(){
-  if(!_puedesCerrarMes()){ toast('⏳ El cierre mensual está disponible el viernes de la 4ta semana después de las 8pm'); return; }
   var hoy=hoyLocal();
   var desde=_inicioMes(hoy);
   _abrirConfirmarCierre('mes',desde,hoy);
