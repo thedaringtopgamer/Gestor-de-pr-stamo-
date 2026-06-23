@@ -2208,7 +2208,7 @@ function _calcCierreData(desde,hasta,rutaParam){
     var f=x.fechaRegistro||x.fechaPago; return f>=desde&&f<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0);
   });
   var recogida=pagosP.reduce(function(s,x){ return s+x.montoAbonado; },0);
-  var nuevosP=prestamos.filter(function(p){ return porRuta(p)&&p.fechaInicio>=desde&&p.fechaInicio<=hasta&&!p.incompleto; });
+  var nuevosP=prestamos.filter(function(p){ var fc=p._fechaCreacion||p.fechaInicio; return porRuta(p)&&fc>=desde&&fc<=hasta&&!p.incompleto; });
   var prestado=nuevosP.reduce(function(s,p){ return s+p.montoPrestado; },0);
   var renovP=renovaciones.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
   var montoRenov=renovP.reduce(function(s,x){ return s+Math.max(0,(x.montoNuevo||0)-(x.saldoAnterior||0)); },0);
@@ -2799,6 +2799,7 @@ function guardarPrestamo(){
     existente.diasPorCuota=cd.diasPorCuota;
     existente.tipo=cd.tipo;
     existente.fechaInicio=fecha;
+    existente._fechaCreacion=fecha;
     existente.estado='Activo';
     existente.Cuota_Quincenal=cuotaVal;
     existente.Total_Intereses=intereses;
@@ -2822,6 +2823,7 @@ function guardarPrestamo(){
       diasPorCuota:cd.diasPorCuota,
       tipo:cd.tipo,
       fechaInicio:fecha,
+      _fechaCreacion:fecha,
       estado:'Activo',
       Cuota_Quincenal:cuotaVal,
       Total_Intereses:intereses,
@@ -3897,6 +3899,7 @@ function confirmarRenovacion(){
   p.diasPorCuota=diasPorCuota;
   p.tipo=tipo;
   p.fechaInicio=fecha;
+  p._fechaCreacion=fecha;
   p.estado='Activo';
   var adminMonto=readMoneyInput('ren-cobro-admin');
   var fechaHoy=hoyLocal();
