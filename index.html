@@ -3368,15 +3368,16 @@ function renderCobros(filtro){
     var badgeVerif=verif.necesita
       ?'<span title="'+verif.razon+'" style="font-size:16px;cursor:pointer" onclick="verDetalle(\''+p.id+'\')">⚠️</span>'
       :'';
-    var bordeLateral=esAtrasado?'border-left:3px solid #dc2626':'border-left:3px solid #16a34a';
-    return '<div class="loan-row" style="'+bordeLateral+'">'
+    var bordeLateral=p.bloqueado?'border-left:3px solid #991b1b':(esAtrasado?'border-left:3px solid #dc2626':'border-left:3px solid #16a34a');
+    var bgBloq=p.bloqueado?'background:#dc2626;':'';
+    var txtBloq=p.bloqueado?'color:#fff;':'';
+    return '<div class="loan-row" style="'+bordeLateral+';'+bgBloq+'">'
       +badgeVerif
-      +'<button class="icon-btn icon-btn-blue" onclick="verDetalle(\''+p.id+'\')" title="Ver detalle">✓</button>'
+      +'<button class="icon-btn icon-btn-blue" style="'+(p.bloqueado?'background:#fff;color:#dc2626;':'')+'" onclick="verDetalle(\''+p.id+'\')" title="Ver detalle">✓</button>'
       +btnRenovar
-      +'<button class="icon-btn icon-btn-green" onclick="abonoRapido(\''+p.id+'\',\''+p.cliente+'\','+d.pendienteProxima+')" title="Abonar cuota">🐷</button>'
       +'<div style="flex:1;padding-left:6px;min-width:0">'
-        +'<div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+'</div>'
-        +'<div style="font-size:13px;margin-top:2px">Cuota: ₡'+fmt(d.pendienteProxima)+'&nbsp;&nbsp;<span style="background:'+colorEtiqueta+';color:#fff;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:600">'+etiqueta+'</span></div>'
+        +'<div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+txtBloq+'">'+p.cliente+(p.bloqueado?' 🚫':'')+'</div>'
+        +'<div style="font-size:13px;margin-top:2px;'+txtBloq+'">'+(p.bloqueado?'<span style="font-weight:700">Cliente bloqueado</span>':'Cuota: ₡'+fmt(d.pendienteProxima)+'&nbsp;&nbsp;<span style="background:'+colorEtiqueta+';color:#fff;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:600">'+etiqueta+'</span>')+'</div>'
       +'</div>'
     +'</div>';
   }
@@ -4315,7 +4316,7 @@ function confirmarBloqueo(){
   if(!p) return;
   p.bloqueado=true; p.motivoBloqueo=motivo;
   document.getElementById('modal-bloqueo').style.display='none';
-  guardarDatos(); renderTarjetas(); verDetalle(currentId);
+  guardarDatos(); renderTarjetas(); renderCobros(); verDetalle(currentId);
   toast('🚫 Cliente bloqueado');
 }
 
@@ -4323,7 +4324,7 @@ function desbloquearCliente(){
   var p=prestamos.find(function(x){ return x.id===currentId; });
   if(!p) return;
   p.bloqueado=false; p.motivoBloqueo='';
-  guardarDatos(); renderTarjetas(); verDetalle(currentId);
+  guardarDatos(); renderTarjetas(); renderCobros(); verDetalle(currentId);
   toast('✅ Cliente desbloqueado');
 }
 
