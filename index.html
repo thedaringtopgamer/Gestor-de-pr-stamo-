@@ -394,6 +394,19 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
   </div>
 
   <!-- ==================== INVERSIÓN ==================== -->
+  <!-- ==================== NUEVOS DEL PERÍODO ==================== -->
+  <div id="screen-nuevos-periodo" class="screen">
+    <div class="navbar">
+      <button class="btn btn-cyan btn-sm" onclick="goBack()">← Volver</button>
+      <span class="navbar-title" id="nuevos-periodo-titulo">Clientes nuevos</span>
+      <div style="width:70px"></div>
+    </div>
+    <div class="section" style="padding-top:10px">
+      <p style="font-size:12px;color:#6b7280;margin-bottom:12px" id="nuevos-periodo-rango"></p>
+      <div id="nuevos-periodo-lista"></div>
+    </div>
+  </div>
+
   <div id="screen-inversion" class="screen">
     <div class="navbar">
       <button class="btn btn-cyan btn-sm" onclick="goBack()">← Volver</button>
@@ -2232,7 +2245,7 @@ function _calcCierreData(desde,hasta,rutaParam){
   var utilidad=recogida-(prestado+montoRenov)-totalGastos;
   var cobrosAdmP=cobrosAdmin.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
   var totalCobroAdm=cobrosAdmP.reduce(function(s,x){ return s+(x.monto||0); },0);
-  return {recogida:recogida,prestado:prestado,montoRenov:montoRenov,totalGastos:totalGastos,utilidad:utilidad,numPrestamos:nuevosP.length,numRenov:renovP.length,totalCobroAdm:totalCobroAdm,listaNuevos:nuevosP.map(function(p){var fi=(p._fechaCreacion||p.fechaInicio||'').split('-');var fd=fi.length===3?fi[2]+'/'+fi[1]+'/'+fi[0]:p.fechaInicio;return p.cliente+' — ₡'+fmt(p.montoPrestado)+' — '+fd;})};
+  return {recogida:recogida,prestado:prestado,montoRenov:montoRenov,totalGastos:totalGastos,utilidad:utilidad,numPrestamos:nuevosP.length,numRenov:renovP.length,totalCobroAdm:totalCobroAdm,idsNuevos:nuevosP.map(function(p){return p.id;})};
 
 }
 
@@ -2245,11 +2258,31 @@ function _inicioSemana(hoy){
 function _inicioMes(hoy){ return hoy.substring(0,7)+'-01'; }
 
 function _abrirListaNuevos(el){
-  var lista=JSON.parse(el.getAttribute('data-nuevos')||'[]');
-  var body=document.getElementById('modal-lista-nuevos-body');
-  if(!lista.length){ body.innerHTML='<p style="color:#6b7280;font-size:14px">Ningún cliente nuevo en este período.</p>'; }
-  else { body.innerHTML=lista.map(function(txt){ return '<div style="padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:14px;font-weight:600">'+txt+'</div>'; }).join(''); }
-  document.getElementById('modal-lista-nuevos').style.display='flex';
+  var ids=JSON.parse(el.getAttribute('data-ids')||'[]');
+  var rango=el.getAttribute('data-rango')||'';
+  var titulo=el.getAttribute('data-titulo')||'Clientes nuevos';
+  document.getElementById('nuevos-periodo-titulo').textContent=titulo;
+  document.getElementById('nuevos-periodo-rango').textContent=rango;
+  var lista=document.getElementById('nuevos-periodo-lista');
+  if(!ids.length){
+    lista.innerHTML='<p style="color:#6b7280;font-size:14px;text-align:center;margin-top:40px">Ningún cliente nuevo en este período.</p>';
+  } else {
+    lista.innerHTML=ids.map(function(id){
+      var p=prestamos.find(function(x){return x.id===id;});
+      if(!p) return '';
+      var fi=(p._fechaCreacion||p.fechaInicio||'').split('-');
+      var fd=fi.length===3?fi[2]+'/'+fi[1]+'/'+fi[0]:p.fechaInicio;
+      return '<div onclick="verDetalle(\''+id+'\')" style="background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.08);cursor:pointer;border-left:4px solid #3b82f6">'
+        +'<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:4px">'+p.cliente+'</div>'
+        +'<div style="display:flex;gap:16px;font-size:13px;color:#6b7280">'
+        +'<span>💰 ₡'+fmt(p.montoPrestado)+'</span>'
+        +'<span>📅 '+fd+'</span>'
+        +(p.ruta?'<span>📍 '+p.ruta+'</span>':'')
+        +'</div>'
+        +'</div>';
+    }).join('');
+  }
+  goTo('screen-nuevos-periodo');
 }
 function _statsHtml(d,tipo){
   var utilidad=d.recogida-(d.prestado+d.montoRenov)-d.totalGastos;
