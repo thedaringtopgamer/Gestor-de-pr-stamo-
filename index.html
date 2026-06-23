@@ -4181,26 +4181,29 @@ function renderPanelRecolector(){
   var totalCobros=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
   document.getElementById('panel-stat-cobros').textContent=pagosHoy.length+' cobro'+(pagosHoy.length!==1?'s':'')+' · ₡'+fmt(totalCobros);
   document.getElementById('panel-cobros-lista').innerHTML=pagosHoy.length
-    ?'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
+    ?'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="min-width:480px;border-collapse:collapse;font-size:12px">'
       +'<thead><tr style="border-bottom:2px solid #bbf7d0">'
-      +'<th style="text-align:left;padding:6px 4px;color:#166534;font-weight:700">Cliente</th>'
-      +'<th style="text-align:left;padding:6px 4px;color:#166534;font-weight:700">SubRuta</th>'
-      +'<th style="text-align:left;padding:6px 4px;color:#166534;font-weight:700">Fecha</th>'
-      +'<th style="text-align:right;padding:6px 4px;color:#166534;font-weight:700">Monto</th>'
-      +(rolActual==='admin'?'<th></th>':'')
+      +'<th style="text-align:left;padding:6px 8px;color:#166534;font-weight:700;white-space:nowrap">Cliente</th>'
+      +'<th style="text-align:left;padding:6px 8px;color:#166534;font-weight:700;white-space:nowrap">SubRuta</th>'
+      +'<th style="text-align:left;padding:6px 8px;color:#166534;font-weight:700;white-space:nowrap">Fecha</th>'
+      +'<th style="text-align:right;padding:6px 8px;color:#166534;font-weight:700;white-space:nowrap">Monto</th>'
+      +'<th style="padding:6px 8px"></th>'
       +'</tr></thead><tbody>'
       +pagosHoy.map(function(pg){
         var p=prestamos.find(function(x){return x.id===pg.id_prestamo;});
         var fechaD=(pg.fechaRegistro||pg.fechaPago||'');
         var partes=fechaD.split('-');
         var fechaFmt=partes.length===3?partes[2]+'-'+partes[1]+'-'+partes[0]:fechaD;
-        return '<tr style="border-bottom:1px solid #f0fdf4;cursor:pointer" onclick="verDetalle(\''+(p?p.id:'')+'\')">'+
-          '<td style="padding:7px 4px;font-weight:600;color:#1e293b">'+(p?p.cliente:'—')+'</td>'+
-          '<td style="padding:7px 4px;color:#6b7280">'+(p&&p.subruta?p.subruta:'—')+'</td>'+
-          '<td style="padding:7px 4px;color:#6b7280">'+fechaFmt+'</td>'+
-          '<td style="padding:7px 4px;text-align:right;font-weight:700;color:#166534">₡'+fmt(pg.montoAbonado)+'</td>'+
-          (rolActual==='admin'?'<td style="padding:7px 4px;text-align:center"><button style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer" onclick="event.stopPropagation();quitarDelPanelHoy(\''+pg.id_pago+'\')">✕</button></td>':'')
-          +'</tr>';
+        return '<tr style="border-bottom:1px solid #f0fdf4">'+
+          '<td style="padding:8px 8px;font-weight:600;color:#1e293b;white-space:nowrap">'+(p?p.cliente:'—')+'</td>'+
+          '<td style="padding:8px 8px;color:#6b7280;white-space:nowrap">'+(p&&p.subruta?p.subruta:'—')+'</td>'+
+          '<td style="padding:8px 8px;color:#6b7280;white-space:nowrap">'+fechaFmt+'</td>'+
+          '<td style="padding:8px 8px;text-align:right;font-weight:700;color:#166534;white-space:nowrap">₡'+fmt(pg.montoAbonado)+'</td>'+
+          '<td style="padding:8px 8px;text-align:center;white-space:nowrap">'+
+            (p?'<button style="background:#dbeafe;color:#1e40af;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-right:3px" onclick="verDetalle(\''+p.id+'\')">Ver</button>':'')+
+            (rolActual==='admin'?'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer" onclick="quitarDelPanelHoy(\''+pg.id_pago+'\')">✕</button>':'')+
+          '</td>'+
+          '</tr>';
       }).join('')
       +'</tbody></table></div>'
     :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros registrados</p>';
