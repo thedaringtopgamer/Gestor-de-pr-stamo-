@@ -4995,37 +4995,43 @@ function fechaOffset(dias){
   var splash=document.getElementById('splash-screen');
   var errorConexion=false;
 
-  try{
-    var controller=new AbortController();
-    var timeout=setTimeout(function(){controller.abort();},8000);
-    // Excluir fotos del arranque — se cargan después en segundo plano
-    var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value&key=neq.fotos',{headers:SUPA_HDR,signal:controller.signal});
-    clearTimeout(timeout);
-    if(r.ok){
-      var rows=await r.json();
-      rows.forEach(function(row){
-        if(row.key==='prestamos'&&Array.isArray(row.value)) prestamos=row.value;
-        if(row.key==='pagos'&&Array.isArray(row.value)) pagos=row.value;
-        if(row.key==='cobrosadmin'&&Array.isArray(row.value)) cobrosAdmin=row.value;
-        if(row.key==='gastos'&&Array.isArray(row.value)) gastos=row.value;
-        if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
-        if(row.key==='inversiones'&&Array.isArray(row.value)) inversiones=row.value;
-        if(row.key==='cierres'&&Array.isArray(row.value)) cierres=row.value;
-        if(row.key==='session_revoked'&&row.value&&typeof row.value==='object') window._sessionRevoked=row.value;
-      });
-    } else {
-      cargarDesdeLocalStorage();
-      setTimeout(function(){toast('⚠ Cargado desde caché — sincronizando...');},1500);
-    }
-  }catch(e){
-    cargarDesdeLocalStorage();
-    setTimeout(function(){toast('⚠ Sin conexión — datos del caché local');},1500);
+  var _intentos=0;
+  while(_intentos<3){
+    try{
+      var controller=new AbortController();
+      var timeout=setTimeout(function(){controller.abort();},15000);
+      var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value&key=neq.fotos',{headers:SUPA_HDR,signal:controller.signal});
+      clearTimeout(timeout);
+      if(r.ok){
+        var rows=await r.json();
+        rows.forEach(function(row){
+          if(row.key==='prestamos'&&Array.isArray(row.value)) prestamos=row.value;
+          if(row.key==='pagos'&&Array.isArray(row.value)) pagos=row.value;
+          if(row.key==='cobrosadmin'&&Array.isArray(row.value)) cobrosAdmin=row.value;
+          if(row.key==='gastos'&&Array.isArray(row.value)) gastos=row.value;
+          if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
+          if(row.key==='inversiones'&&Array.isArray(row.value)) inversiones=row.value;
+          if(row.key==='cierres'&&Array.isArray(row.value)) cierres=row.value;
+          if(row.key==='session_revoked'&&row.value&&typeof row.value==='object') window._sessionRevoked=row.value;
+        });
+        break;
+      } else { errorConexion=true; _intentos++; }
+    }catch(e){ errorConexion=(_intentos>=2); _intentos++; if(_intentos<3) await new Promise(function(res){setTimeout(res,2000);}); }
   }
 
   // Siempre ocultar splash — nunca dejar pantalla en blanco
   splash.style.display='none';
 
-  if(errorConexion){ /* continúa con datos de caché */ }
+  if(errorConexion){
+    var errDiv=document.createElement('div');
+    errDiv.style.cssText='position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a8a);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999';
+    errDiv.innerHTML='<div style="font-size:80px;font-weight:900;color:#fff;letter-spacing:-3px">JD</div>'
+      +'<div style="font-size:14px;font-weight:700;color:#60a5fa;letter-spacing:8px;margin-bottom:32px">FINANCIERA</div>'
+      +'<div style="color:#f87171;font-size:14px;text-align:center;padding:0 32px;margin-bottom:24px">⚠ Sin conexión a la nube.<br>Verifique su internet e intente de nuevo.</div>'
+      +'<button onclick="location.reload()" style="background:#2563eb;color:#fff;border:none;border-radius:12px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer">↺ Reintentar</button>';
+    document.body.appendChild(errDiv);
+    return;
+  }
 
   try{ calcPreview(); }catch(e){}
   try{ updateHome(); }catch(e){}
