@@ -2005,6 +2005,13 @@ function subirFotoStorage(prestamoId, key, dataUrl){
 }
 
 function renderInversion(){
+  // Sincronizar pills con la ruta guardada
+  ['todas','Heredia','Alajuela','San Ramón'].forEach(function(r){
+    var btn=document.getElementById('inv-rbtn-'+r);
+    if(!btn) return;
+    btn.style.background=r===rutaInvFiltro?'#1e40af':'#e5e7eb';
+    btn.style.color=r===rutaInvFiltro?'#fff':'#374151';
+  });
   var basePrestamos=rutaInvFiltro==='todas'?prestamos:prestamos.filter(function(p){return p.ruta===rutaInvFiltro;});
   var activos=basePrestamos.filter(function(p){
     var d=calcDerived(p); return d.saldoPendiente>0;
@@ -2087,10 +2094,11 @@ function abrirHistorialInversion(){
 var cierres=[];
 var metaPrestamos=0;
 var metaClientes=0;
-var rutaInvFiltro='todas';
+var rutaInvFiltro=localStorage.getItem('fjd_inv_ruta')||'todas';
 
 function setRutaInv(ruta){
   rutaInvFiltro=ruta;
+  localStorage.setItem('fjd_inv_ruta',ruta);
   // Update pill buttons
   ['todas','Heredia','Alajuela','San Ramón'].forEach(function(r){
     var btn=document.getElementById('inv-rbtn-'+r);
