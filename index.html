@@ -2240,7 +2240,7 @@ function _calcCierreData(desde,hasta,rutaParam){
   var nuevosP=prestamos.filter(function(p){ var fc=p._fechaCreacion||p.fechaInicio; return porRuta(p)&&fc>=desde&&fc<=hasta&&!p.incompleto&&idsRenovados.indexOf(p.id)<0; });
   var prestado=nuevosP.reduce(function(s,p){ return s+p.montoPrestado; },0);
   var renovP=renovaciones.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
-  var montoRenov=renovP.reduce(function(s,x){ return s+Math.max(0,(x.montoNuevo||0)-(x.saldoAnterior||0)); },0);
+  var montoRenov=renovP.reduce(function(s,x){ return s+(x.montoNuevo||0); },0);
   var gastosP=gastos.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||x.ruta===ruta); });
   var totalGastos=gastosP.reduce(function(s,x){ return s+x.monto; },0);
   var utilidad=recogida-(prestado+montoRenov)-totalGastos;
