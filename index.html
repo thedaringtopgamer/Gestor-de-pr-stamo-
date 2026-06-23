@@ -2176,12 +2176,19 @@ function _inicioSemana(hoy){
 function _inicioMes(hoy){ return hoy.substring(0,7)+'-01'; }
 
 function _statsHtml(d){
+  var utilidad=d.recogida-(d.prestado+d.montoRenov)-d.totalGastos;
+  var pos=utilidad>=0;
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">'
     +'<div style="background:#f0fdf4;border-radius:8px;padding:8px"><div style="color:#6b7280">💰 Recogida</div><div style="font-weight:700;color:#166534">'+_fmtCol(d.recogida)+'</div></div>'
-    +'<div style="background:#dbeafe;border-radius:8px;padding:8px"><div style="color:#6b7280">📤 Total prestado</div><div style="font-weight:700;color:#1e40af">'+_fmtCol(d.prestado+d.montoRenov)+'</div></div>'
-    +'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">📄 Préstamos nuevos</div><div style="font-weight:700;color:#374151">'+d.numPrestamos+'</div></div>'
+    +'<div style="background:#dbeafe;border-radius:8px;padding:8px"><div style="color:#6b7280">📤 Prestado</div><div style="font-weight:700;color:#1e40af">'+_fmtCol(d.prestado+d.montoRenov)+'</div></div>'
+    +'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">👥 Clientes nuevos</div><div style="font-weight:700;color:#374151">'+d.numPrestamos+'</div></div>'
     +'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">🔄 Renovaciones</div><div style="font-weight:700;color:#374151">'+d.numRenov+'</div></div>'
     +(d.totalGastos?'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💸 Gastos</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(d.totalGastos)+'</div></div>':'')
+    +'<div style="border-radius:8px;padding:10px;grid-column:span 2;background:'+(pos?'#dcfce7':'#fee2e2')+';border:2px solid '+(pos?'#86efac':'#fca5a5')+'">'
+      +'<div style="color:#6b7280;font-size:11px">📊 Ganancia neta</div>'
+      +'<div style="font-weight:900;font-size:16px;color:'+(pos?'#166534':'#dc2626')+'">'+(pos?'+':'')+_fmtCol(utilidad)+'</div>'
+      +'<div style="font-size:10px;color:'+(pos?'#16a34a':'#dc2626')+';font-weight:700;margin-top:2px">'+(pos?'✅ Semana positiva':'🔴 Semana en pérdida')+'</div>'
+    +'</div>'
     +'</div>';
 }
 
