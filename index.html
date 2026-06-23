@@ -863,9 +863,10 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <!-- Sub-opciones Semanal -->
         <div id="sub-semanal" style="display:none;margin-top:8px">
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Seleccione período:</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <button type="button" id="btn-sem-5" onclick="selSemanas(5)" style="padding:10px;border:1.5px solid var(--cyan);border-radius:var(--radius);font-size:13px;font-weight:600;background:#f0f9ff;color:#0e7490;cursor:pointer;font-family:'DM Sans',sans-serif">5 semanas</button>
-            <button type="button" id="btn-sem-6" onclick="selSemanas(6)" style="padding:10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-weight:600;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif">6 semanas</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button type="button" id="btn-sem-5" onclick="selSemanas(5)" style="padding:8px 10px;border:1.5px solid var(--cyan);border-radius:var(--radius);font-size:12px;font-weight:700;background:#f0f9ff;color:#0e7490;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">5 sem</button>
+            <button type="button" id="btn-sem-6" onclick="selSemanas(6)" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:12px;font-weight:700;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">6 sem</button>
+            <input type="number" id="np-sem-custom" placeholder="Otra" min="1" max="52" oninput="selSemanasCustom(this.value)" style="width:72px;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;outline:none;text-align:center">
           </div>
         </div>
         <!-- Sub-opciones Quincenal -->
@@ -1336,9 +1337,10 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         </div>
         <!-- Sub opciones Semanal -->
         <div id="ren-sub-semanal" style="display:none;margin-bottom:10px">
-          <div style="display:flex;gap:6px">
-            <label style="flex:1"><input type="radio" name="ren-sem" value="6" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rsem-6">6 sem</div></label>
-            <label style="flex:1"><input type="radio" name="ren-sem" value="5" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rsem-5">5 sem</div></label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <label style="flex:0 0 auto"><input type="radio" name="ren-sem" value="6" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rsem-6">6 sem</div></label>
+            <label style="flex:0 0 auto"><input type="radio" name="ren-sem" value="5" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rsem-5">5 sem</div></label>
+            <input type="number" id="ren-sem-custom" placeholder="Otra" min="1" max="52" oninput="calcRenovar()" style="width:72px;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;outline:none;text-align:center">
           </div>
         </div>
         <!-- Sub opciones Quincenal -->
@@ -2786,6 +2788,8 @@ function selTipo(tipo){
 
 function selSemanas(n){
   _npSemanas=n;
+  var customEl=document.getElementById('np-sem-custom');
+  if(customEl) customEl.value='';
   [5,6].forEach(function(v){
     var btn=document.getElementById('btn-sem-'+v);
     if(!btn) return;
@@ -2793,6 +2797,28 @@ function selSemanas(n){
     btn.style.background=v===n?'#f0f9ff':'#fff';
     btn.style.color=v===n?'#0e7490':'inherit';
   });
+  // ≤6 semanas → 20%, >6 → 44%
+  var tasaEl=document.getElementById('np-tasa');
+  if(tasaEl) tasaEl.value=n>6?'44':'20';
+  calcPreview();
+  calcProxFechaPago();
+}
+
+function selSemanasCustom(val){
+  var n=parseInt(val)||0;
+  if(n<1) return;
+  _npSemanas=n;
+  // Deseleccionar botones 5/6
+  [5,6].forEach(function(v){
+    var btn=document.getElementById('btn-sem-'+v);
+    if(!btn) return;
+    btn.style.borderColor='var(--border)';
+    btn.style.background='#fff';
+    btn.style.color='inherit';
+  });
+  // >6 semanas → 44%
+  var tasaEl=document.getElementById('np-tasa');
+  if(tasaEl) tasaEl.value=n>6?'44':'20';
   calcPreview();
   calcProxFechaPago();
 }
@@ -3838,15 +3864,21 @@ function abrirRenovar(){
   document.getElementById('ren-entregar').textContent='—';
   document.getElementById('ren-cuota-manual').style.display='none';
   document.getElementById('ren-digitar-check').checked=false;
+  var _rsc=document.getElementById('ren-sem-custom'); if(_rsc) _rsc.value='';
   // Seleccionar mismo tipo que préstamo actual
   var tipo=p.tipo||'Quincenal';
   var radioTipo=document.querySelector('input[name="ren-tipo"][value="'+tipo+'"]');
   if(radioTipo) radioTipo.checked=true;
   actualizarSubTiposRen(tipo);
   if(tipo==='Semanal'){
-    var semVal=p.cantidadDeQuincenas===6?'6':'5';
-    var rs=document.querySelector('input[name="ren-sem"][value="'+semVal+'"]');
-    if(rs) rs.checked=true;
+    var semCuotas=p.cantidadDeQuincenas||6;
+    if(semCuotas>6){
+      var _rscEl=document.getElementById('ren-sem-custom'); if(_rscEl) _rscEl.value=semCuotas;
+    } else {
+      var semVal=semCuotas===5?'5':'6';
+      var rs=document.querySelector('input[name="ren-sem"][value="'+semVal+'"]');
+      if(rs) rs.checked=true;
+    }
   } else if(tipo==='Quincenal'){
     var qVal=p.cantidadDeQuincenas===3?'3':'2';
     var rq=document.querySelector('input[name="ren-quin"][value="'+qVal+'"]');
@@ -3885,9 +3917,23 @@ function calcRenovar(){
   var cuotas=1,diasPorCuota=30;
   if(tipo==='Diario'){cuotas=30;diasPorCuota=1;}
   else if(tipo==='Semanal'){
-    var sem=document.querySelector('input[name="ren-sem"]:checked');
-    var semVal=sem?parseInt(sem.value):6;
-    cuotas=semVal; diasPorCuota=7;
+    var customSemEl=document.getElementById('ren-sem-custom');
+    var customSemVal=customSemEl?parseInt(customSemEl.value)||0:0;
+    if(customSemVal>0){
+      cuotas=customSemVal; diasPorCuota=7;
+      // deseleccionar radios
+      document.querySelectorAll('input[name="ren-sem"]').forEach(function(r){r.checked=false;});
+      document.querySelectorAll('[id^="rsem-"]').forEach(function(el){el.classList.remove('selected');});
+      // ajustar tasa automático
+      var tasaRenEl=document.getElementById('ren-tasa');
+      if(tasaRenEl && !document.getElementById('ren-digitar-check').checked) tasaRenEl.value=customSemVal>6?'44':'20';
+    } else {
+      var sem=document.querySelector('input[name="ren-sem"]:checked');
+      var semVal=sem?parseInt(sem.value):6;
+      cuotas=semVal; diasPorCuota=7;
+      var tasaRenEl2=document.getElementById('ren-tasa');
+      if(tasaRenEl2 && !document.getElementById('ren-digitar-check').checked) tasaRenEl2.value=semVal>6?'44':'20';
+    }
   } else if(tipo==='Quincenal'){
     var quin=document.querySelector('input[name="ren-quin"]:checked');
     cuotas=quin?parseInt(quin.value):2; diasPorCuota=15;
@@ -3951,7 +3997,7 @@ function confirmarRenovacion(){
   var fecha=document.getElementById('ren-fecha').value||hoyLocal();
   var cuotas=1,diasPorCuota=30;
   if(tipo==='Diario'){cuotas=30;diasPorCuota=1;}
-  else if(tipo==='Semanal'){var sem=document.querySelector('input[name="ren-sem"]:checked');var sv=sem?parseInt(sem.value):6;cuotas=sv;diasPorCuota=7;}
+  else if(tipo==='Semanal'){var _cse=document.getElementById('ren-sem-custom');var _csv=_cse?parseInt(_cse.value)||0:0;if(_csv>0){cuotas=_csv;}else{var sem=document.querySelector('input[name="ren-sem"]:checked');cuotas=sem?parseInt(sem.value):6;}diasPorCuota=7;}
   else if(tipo==='Quincenal'){var quin=document.querySelector('input[name="ren-quin"]:checked');cuotas=quin?parseInt(quin.value):2;diasPorCuota=15;}
   var total=Math.round(monto*(1+tasa));
   var intereses=total-monto;
