@@ -3955,11 +3955,11 @@ function confirmarRenovacion(){
   p.cantidadDeQuincenas=cuotas;
   p.diasPorCuota=diasPorCuota;
   p.tipo=tipo;
-  p.fechaInicio=fecha;
-  p._fechaCreacion=fecha;
+  var fechaHoy=hoyLocal();
+  p.fechaInicio=fechaHoy;
+  p._fechaCreacion=fechaHoy;
   p.estado='Activo';
   var adminMonto=readMoneyInput('ren-cobro-admin');
-  var fechaHoy=hoyLocal();
   if(adminMonto>0){
     cobrosAdmin.push({id:Date.now().toString(),id_prestamo:p.id,cliente:p.cliente,fecha:fechaHoy,monto:adminMonto});
   }
