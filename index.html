@@ -3360,24 +3360,33 @@ function renderCobros(filtro){
     var etiqueta=esAtrasado?'Atrasado':'Hoy';
     var colorEtiqueta=esAtrasado?'#dc2626':'#16a34a';
     var d=calcDerived(p);
-    var puedeRenovar=d.saldoPendiente<=p.montoPrestado;
-    var btnRenovar=puedeRenovar
-      ?'<button class="icon-btn icon-btn-cyan" onclick="renovarDesdeLista(\''+p.id+'\')" title="Renovar">↻</button>'
-      :'<button class="icon-btn" style="background:#e5e7eb;color:#9ca3af;cursor:not-allowed" title="Pague los intereses primero">↻</button>';
     var verif=clienteNecesitaVerificacion(p);
     var badgeVerif=verif.necesita
       ?'<span title="'+verif.razon+'" style="font-size:16px;cursor:pointer" onclick="verDetalle(\''+p.id+'\')">⚠️</span>'
       :'';
-    var bordeLateral=p.bloqueado?'border-left:3px solid #991b1b':(esAtrasado?'border-left:3px solid #dc2626':'border-left:3px solid #16a34a');
-    var bgBloq=p.bloqueado?'background:#dc2626;':'';
-    var txtBloq=p.bloqueado?'color:#fff;':'';
-    return '<div class="loan-row" style="'+bordeLateral+';'+bgBloq+'">'
+    if(p.bloqueado){
+      return '<div class="loan-row" style="background:#dc2626;border-left:3px solid #991b1b">'
+        +'<button class="icon-btn" style="background:#fff;color:#dc2626;font-size:13px;width:auto;padding:6px 10px;" onclick="verDetalle(\''+p.id+'\')" title="Ver detalle">Ver</button>'
+        +'<button class="icon-btn" style="background:#991b1b;color:#fff;cursor:not-allowed;font-size:18px" onclick="toast(\'🚫 Cliente bloqueado — no se puede renovar\')" title="Bloqueado">↻</button>'
+        +'<div style="flex:1;padding-left:6px;min-width:0">'
+          +'<div style="font-size:15px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+' 🚫</div>'
+          +'<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.9)">BLOQUEADO'+(p.motivoBloqueo?' · '+p.motivoBloqueo:'')+'</div>'
+        +'</div>'
+      +'</div>';
+    }
+    var puedeRenovar=d.saldoPendiente<=p.montoPrestado;
+    var btnRenovar=puedeRenovar
+      ?'<button class="icon-btn icon-btn-cyan" onclick="renovarDesdeLista(\''+p.id+'\')" title="Renovar">↻</button>'
+      :'<button class="icon-btn" style="background:#e5e7eb;color:#9ca3af;cursor:not-allowed" title="Pague los intereses primero">↻</button>';
+    var bordeLateral=esAtrasado?'border-left:3px solid #dc2626':'border-left:3px solid #16a34a';
+    return '<div class="loan-row" style="'+bordeLateral+'">'
       +badgeVerif
-      +'<button class="icon-btn icon-btn-blue" style="'+(p.bloqueado?'background:#fff;color:#dc2626;':'')+'" onclick="verDetalle(\''+p.id+'\')" title="Ver detalle">✓</button>'
+      +'<button class="icon-btn icon-btn-blue" onclick="verDetalle(\''+p.id+'\')" title="Ver detalle">✓</button>'
       +btnRenovar
+      +'<button class="icon-btn icon-btn-green" onclick="abonoRapido(\''+p.id+'\',\''+p.cliente+'\','+d.pendienteProxima+')" title="Abonar cuota">🐷</button>'
       +'<div style="flex:1;padding-left:6px;min-width:0">'
-        +'<div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+txtBloq+'">'+p.cliente+(p.bloqueado?' 🚫':'')+'</div>'
-        +'<div style="font-size:13px;margin-top:2px;'+txtBloq+'">'+(p.bloqueado?'<span style="font-weight:700">Cliente bloqueado</span>':'Cuota: ₡'+fmt(d.pendienteProxima)+'&nbsp;&nbsp;<span style="background:'+colorEtiqueta+';color:#fff;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:600">'+etiqueta+'</span>')+'</div>'
+        +'<div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+'</div>'
+        +'<div style="font-size:13px;margin-top:2px">Cuota: ₡'+fmt(d.pendienteProxima)+'&nbsp;&nbsp;<span style="background:'+colorEtiqueta+';color:#fff;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:600">'+etiqueta+'</span></div>'
       +'</div>'
     +'</div>';
   }
