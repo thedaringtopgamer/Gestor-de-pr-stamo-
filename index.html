@@ -2855,7 +2855,8 @@ function sincronizarSupabaseFondo(){
       localStorage.setItem('fjd_ts',tsRemoto.toString());
     }catch(e){}
     var pantalla=localStorage.getItem('fjd_pantalla')||'screen-cobros';
-    if(pantalla==='screen-cobros') renderTarjetas();
+    if(pantalla==='screen-cobros') { renderCobros(); renderTarjetas(); }
+    else if(pantalla==='screen-tarjetas') renderTarjetas();
     else if(pantalla==='screen-home') updateHome();
     else if(pantalla==='screen-panel') renderPanel();
   }).catch(function(){});
