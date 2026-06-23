@@ -2088,8 +2088,8 @@ function renderInversion(){
   document.getElementById('inv-capital-total').textContent=_fmtCol(capitalTotal);
   var elCapP=document.getElementById('inv-capital-prestado');
   if(elCapP) elCapP.textContent=_fmtCol(capitalPrestado);
-  var enMora=activos.filter(function(p){ return calcDerived(p).estado==='Atrasado'; });
-  var moraMonto=enMora.reduce(function(s,p){ return s+calcDerived(p).saldoPendiente; },0);
+  var enMora=activos.filter(function(p){ return getEstadoCobro(p)==='atrasado'; });
+  var moraMonto=enMora.reduce(function(s,p){ return s+calcDerived(p).pendienteProxima; },0);
   var elMM=document.getElementById('inv-mora-monto');
   var elMC=document.getElementById('inv-mora-count');
   if(elMM) elMM.textContent=_fmtCol(moraMonto);
