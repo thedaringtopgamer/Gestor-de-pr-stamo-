@@ -545,6 +545,17 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
   </div>
 
   <!-- Modal confirmar cierre -->
+  <!-- Modal lista clientes nuevos -->
+  <div id="modal-lista-nuevos" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9100;align-items:flex-end;justify-content:center" onclick="document.getElementById('modal-lista-nuevos').style.display='none'">
+    <div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-height:80vh;overflow-y:auto;padding:20px" onclick="event.stopPropagation()">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <p style="font-size:15px;font-weight:800;margin:0">👥 Clientes nuevos</p>
+        <button onclick="document.getElementById('modal-lista-nuevos').style.display='none'" style="background:#f3f4f6;border:none;border-radius:8px;padding:7px 13px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">✕</button>
+      </div>
+      <div id="modal-lista-nuevos-body"></div>
+    </div>
+  </div>
+
   <div id="modal-confirmar-cierre" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:8000;align-items:center;justify-content:center">
     <div style="background:#fff;border-radius:16px;width:92%;max-width:400px;padding:22px">
       <p style="font-size:16px;font-weight:800;margin-bottom:4px" id="confirmar-cierre-titulo">Cerrar semana</p>
@@ -2221,7 +2232,7 @@ function _calcCierreData(desde,hasta,rutaParam){
   var utilidad=recogida-(prestado+montoRenov)-totalGastos;
   var cobrosAdmP=cobrosAdmin.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
   var totalCobroAdm=cobrosAdmP.reduce(function(s,x){ return s+(x.monto||0); },0);
-  return {recogida:recogida,prestado:prestado,montoRenov:montoRenov,totalGastos:totalGastos,utilidad:utilidad,numPrestamos:nuevosP.length,numRenov:renovP.length,totalCobroAdm:totalCobroAdm,listaNuevos:nuevosP.map(function(p){return p.cliente+' ₡'+fmt(p.montoPrestado)+' ('+p.fechaInicio+')';})};
+  return {recogida:recogida,prestado:prestado,montoRenov:montoRenov,totalGastos:totalGastos,utilidad:utilidad,numPrestamos:nuevosP.length,numRenov:renovP.length,totalCobroAdm:totalCobroAdm,listaNuevos:nuevosP.map(function(p){var fi=(p._fechaCreacion||p.fechaInicio||'').split('-');var fd=fi.length===3?fi[2]+'/'+fi[1]+'/'+fi[0]:p.fechaInicio;return p.cliente+' — ₡'+fmt(p.montoPrestado)+' — '+fd;})};
 
 }
 
@@ -2233,6 +2244,13 @@ function _inicioSemana(hoy){
 }
 function _inicioMes(hoy){ return hoy.substring(0,7)+'-01'; }
 
+function _abrirListaNuevos(el){
+  var lista=JSON.parse(el.getAttribute('data-nuevos')||'[]');
+  var body=document.getElementById('modal-lista-nuevos-body');
+  if(!lista.length){ body.innerHTML='<p style="color:#6b7280;font-size:14px">Ningún cliente nuevo en este período.</p>'; }
+  else { body.innerHTML=lista.map(function(txt){ return '<div style="padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:14px;font-weight:600">'+txt+'</div>'; }).join(''); }
+  document.getElementById('modal-lista-nuevos').style.display='flex';
+}
 function _statsHtml(d,tipo){
   var utilidad=d.recogida-(d.prestado+d.montoRenov)-d.totalGastos;
   var pos=utilidad>=0;
@@ -2240,7 +2258,7 @@ function _statsHtml(d,tipo){
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">'
     +'<div style="background:#f0fdf4;border-radius:8px;padding:8px"><div style="color:#6b7280">💰 Recogida</div><div style="font-weight:700;color:#166534">'+_fmtCol(d.recogida)+'</div></div>'
     +'<div style="background:#dbeafe;border-radius:8px;padding:8px"><div style="color:#6b7280">📤 Prestado</div><div style="font-weight:700;color:#1e40af">'+_fmtCol(d.prestado+d.montoRenov)+'</div></div>'
-    +'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">👥 Clientes nuevos</div><div style="font-weight:700;color:#374151">'+d.numPrestamos+'</div>'+(d.listaNuevos&&d.listaNuevos.length?'<div style="font-size:10px;color:#6b7280;margin-top:3px">'+d.listaNuevos.join('<br>')+'</div>':'')+'</div>'
+    +'<div style="background:#f3f4f6;border-radius:8px;padding:8px;cursor:pointer" onclick="_abrirListaNuevos(this)" data-nuevos=\''+JSON.stringify(d.listaNuevos||[]).replace(/'/g,"&#39;")+'\'><div style="color:#6b7280">👥 Clientes nuevos</div><div style="font-weight:700;color:#374151">'+d.numPrestamos+(d.numPrestamos>0?' 🔍':'')+'</div></div>'
     +(d.totalCobroAdm?'<div style="background:#ede9fe;border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:#7c3aed">'+_fmtCol(d.totalCobroAdm)+'</div></div>':'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:#9ca3af">₡0</div></div>')
     +'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💸 Gastos</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(d.totalGastos||0)+'</div></div>'
     +'<div style="border-radius:8px;padding:10px;grid-column:span 2;background:'+(pos?'#dcfce7':'#fee2e2')+';border:2px solid '+(pos?'#86efac':'#fca5a5')+'">'
