@@ -1420,11 +1420,7 @@ var USUARIOS=[
   {user:'Ruta Alajuela', pass:'financierajd',    rol:'ruta', ruta:'Alajuela'},
   {user:'Ruta San Ramón',pass:'financierajd',    rol:'ruta', ruta:'San Ramón'}
 ];
-// Cargar contraseñas personalizadas si existen
-(function(){
-  var saved=localStorage.getItem('fjd_passwords');
-  if(saved){try{var arr=JSON.parse(saved);arr.forEach(function(p,i){if(USUARIOS[i]&&p)USUARIOS[i].pass=p;});}catch(e){}}
-})();
+
 var rolActual=localStorage.getItem('fjd_rol')||'ruta';
 var rutaActual=localStorage.getItem('fjd_ruta_actual')||'todas';
 
@@ -1970,6 +1966,8 @@ var inversiones = [];
 var gastos = [];
 var bases = {};
 var salidas = {};
+var metas = {};
+var invOverrides = {};
 var renovaciones = [];
 var currentId = null;
 var historial = ['screen-cobros'];
@@ -2027,6 +2025,9 @@ function guardarDatos(){
     {key:'cierres',value:cierres},
     {key:'bases',value:bases},
     {key:'salidas',value:salidas},
+    {key:'metas',value:metas},
+    {key:'inv_overrides',value:invOverrides},
+    {key:'passwords',value:USUARIOS.map(function(u){return u.pass;})},
     {key:'ts',value:ts}
   ];
 
@@ -2199,15 +2200,16 @@ function _metaKey(sufijo){
 function guardarMetas(){
   metaPrestamos=parseInt((document.getElementById('meta-prestamos').value||'').replace(/[^\d]/g,'')||'0',10);
   metaClientes=parseInt((document.getElementById('meta-clientes').value||'').replace(/[^\d]/g,'')||'0',10);
-  localStorage.setItem(_metaKey('prestamos'),metaPrestamos);
-  localStorage.setItem(_metaKey('clientes'),metaClientes);
+  metas[_metaKey('prestamos')]=metaPrestamos;
+  metas[_metaKey('clientes')]=metaClientes;
+  guardarDatos();
   renderInversion();
   toast('✓ Metas guardadas');
 }
 
 function _cargarMetas(){
-  metaPrestamos=parseInt(localStorage.getItem(_metaKey('prestamos'))||'0',10)||0;
-  metaClientes=parseInt(localStorage.getItem(_metaKey('clientes'))||'0',10)||0;
+  metaPrestamos=parseInt(metas[_metaKey('prestamos')])||0;
+  metaClientes=parseInt(metas[_metaKey('clientes')])||0;
   var elP=document.getElementById('meta-prestamos');
   var elC=document.getElementById('meta-clientes');
   if(elP) elP.value=metaPrestamos?fmt(metaPrestamos):'';
@@ -2323,11 +2325,11 @@ function _abrirListaNuevos(el){
   }
   goTo('screen-nuevos-periodo');
 }
-function _invOverrideKey(tipo,campo){ return 'fjd_inv_override2_'+tipo+'_'+campo; }
+function _invOverrideKey(tipo,campo){ return tipo+'_'+campo; }
 function _editarStatInv(tipo,campo,label,esMonto,calcActual){
   if(rolActual!=='admin') return;
   var keyAdj=_invOverrideKey(tipo,campo);
-  var adj=parseInt(localStorage.getItem(keyAdj))||0;
+  var adj=parseInt(invOverrides[keyAdj])||0;
   var valorMostrado=Math.max(0,calcActual-adj);
   var overlay=document.getElementById('modal-overlay');
   document.getElementById('modal-subtitulo').textContent='Corregir '+label;
@@ -2345,12 +2347,12 @@ function _editarStatInv(tipo,campo,label,esMonto,calcActual){
     document.getElementById('modal-btn-si').style.background='#16a34a';
     inp.style.display='none';
     var val=inp.value.trim().replace(/,/g,'');
-    if(val===''){ localStorage.removeItem(keyAdj); }
+    if(val===''){ delete invOverrides[keyAdj]; }
     else {
       var quiere=parseInt(val)||0;
-      // Guardar el ajuste = diferencia entre el calculado AHORA y lo que quiere
-      localStorage.setItem(keyAdj, String(calcActual-quiere));
+      invOverrides[keyAdj]=calcActual-quiere;
     }
+    guardarDatos();
     renderInversion();
   };
   document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
@@ -2358,8 +2360,8 @@ function _editarStatInv(tipo,campo,label,esMonto,calcActual){
 function _statsHtml(d,tipo){
   var prestadoCalc=d.prestado+d.montoRenov;
   var clientesCalc=d.numPrestamos;
-  var adjP=parseInt(localStorage.getItem(_invOverrideKey(tipo,'prestado')))||0;
-  var adjC=parseInt(localStorage.getItem(_invOverrideKey(tipo,'clientes')))||0;
+  var adjP=parseInt(invOverrides[_invOverrideKey(tipo,'prestado')])||0;
+  var adjC=parseInt(invOverrides[_invOverrideKey(tipo,'clientes')])||0;
   // Ajuste se resta del calculado; si vienen préstamos nuevos encima, se suman correctamente
   var prestadoVal=Math.max(0,prestadoCalc-adjP);
   var clientesVal=Math.max(0,clientesCalc-adjC);
@@ -2689,6 +2691,9 @@ function sincronizarSupabaseFondo(){
       if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
       if(row.key==='bases'&&row.value&&typeof row.value==='object') bases=row.value;
       if(row.key==='salidas'&&row.value&&typeof row.value==='object') salidas=row.value;
+      if(row.key==='metas'&&row.value&&typeof row.value==='object') metas=row.value;
+      if(row.key==='inv_overrides'&&row.value&&typeof row.value==='object') invOverrides=row.value;
+      if(row.key==='passwords'&&Array.isArray(row.value)) row.value.forEach(function(p,i){if(USUARIOS[i]&&p) USUARIOS[i].pass=p;});
       if(row.key==='fotos'&&row.value&&typeof row.value==='object') fotosMapBg=row.value;
     });
     if(Object.keys(fotosMapBg).length){
@@ -5015,8 +5020,7 @@ function cambiarPassword(idx){
   if(!nueva){toast('⚠ Escribí la nueva contraseña');return;}
   if(nueva.length<6){toast('⚠ Mínimo 6 caracteres');return;}
   USUARIOS[idx].pass=nueva;
-  var passes=USUARIOS.map(function(u){return u.pass;});
-  localStorage.setItem('fjd_passwords',JSON.stringify(passes));
+  guardarDatos();
   input.value='';
   toast('✓ Contraseña de '+USUARIOS[idx].user+' actualizada');
 }
@@ -5155,6 +5159,9 @@ function fechaOffset(dias){
           if(row.key==='cierres'&&Array.isArray(row.value)) cierres=row.value;
           if(row.key==='bases'&&row.value&&typeof row.value==='object') bases=row.value;
           if(row.key==='salidas'&&row.value&&typeof row.value==='object') salidas=row.value;
+          if(row.key==='metas'&&row.value&&typeof row.value==='object') metas=row.value;
+          if(row.key==='inv_overrides'&&row.value&&typeof row.value==='object') invOverrides=row.value;
+          if(row.key==='passwords'&&Array.isArray(row.value)) row.value.forEach(function(p,i){if(USUARIOS[i]&&p) USUARIOS[i].pass=p;});
           if(row.key==='session_revoked'&&row.value&&typeof row.value==='object') window._sessionRevoked=row.value;
         });
         _cargado=true;
