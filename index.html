@@ -461,11 +461,15 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           <div style="font-size:18px;font-weight:800;color:#92400e" id="inv-diferencia">₡0</div>
           <div style="font-size:10px;color:#6b7280;margin-top:2px" id="inv-diferencia-label">—</div>
         </div>
-        <div class="card" style="margin:0;padding:14px 12px">
-          <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:8px">➕ Agregar</div>
-          <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric" id="inv-monto" placeholder="Monto" oninput="fmtMoneyInput(this)" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;margin-bottom:6px">
-          <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="inv-nota" placeholder="Nota (opcional)" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;margin-bottom:8px">
-          <button class="btn btn-blue btn-full" style="padding:8px;font-size:13px" onclick="registrarInversion()">Registrar</button>
+        <div class="card" style="margin:0;padding:0;overflow:hidden">
+          <button onclick="toggleSecInv()" style="width:100%;padding:12px 14px;background:none;border:none;text-align:left;font-size:13px;font-weight:700;color:#1e40af;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+            <span>➕ Registrar inyección de capital</span><span id="inv-agregar-arrow">▼</span>
+          </button>
+          <div id="inv-agregar-sec" style="display:none;padding:0 14px 14px">
+            <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric" id="inv-monto" placeholder="Monto" oninput="fmtMoneyInput(this)" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;margin-bottom:6px">
+            <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="inv-nota" placeholder="Nota (opcional)" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;margin-bottom:8px">
+            <button class="btn btn-blue btn-full" style="padding:8px;font-size:13px" onclick="registrarInversion()">Registrar</button>
+          </div>
         </div>
       </div>
 
@@ -2122,6 +2126,13 @@ function renderInversion(){
   renderCierres();
 }
 
+function toggleSecInv(){
+  var sec=document.getElementById('inv-agregar-sec');
+  var arr=document.getElementById('inv-agregar-arrow');
+  var open=sec.style.display==='none';
+  sec.style.display=open?'block':'none';
+  if(arr) arr.textContent=open?'▲':'▼';
+}
 function registrarInversion(){
   var montoRaw=document.getElementById('inv-monto').value.replace(/[^\d]/g,'');
   var monto=parseInt(montoRaw,10);
