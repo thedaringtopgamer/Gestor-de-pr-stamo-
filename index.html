@@ -5007,7 +5007,7 @@ function fechaOffset(dias){
     if(_splashStatus) _splashStatus.textContent=(_intentos===0?'Conectando...':'Reintentando... ('+(_intentos+1)+'/3)');
     try{
       var controller=new AbortController();
-      var timeout=setTimeout(function(){controller.abort();},12000);
+      var timeout=setTimeout(function(){controller.abort();},8000);
       var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value&key=neq.fotos',{headers:SUPA_HDR,signal:controller.signal});
       clearTimeout(timeout);
       if(r.ok){
@@ -5026,8 +5026,8 @@ function fechaOffset(dias){
         });
         _cargado=true;
         break;
-      } else { _ultimoCodigo='HTTP '+r.status; _intentos++; if(_intentos<3) await new Promise(function(res){setTimeout(res,3000);}); }
-    }catch(e){ _ultimoError=e&&e.name==='AbortError'?'Tiempo agotado':String(e&&e.message||e); _intentos++; if(_intentos<3) await new Promise(function(res){setTimeout(res,3000);}); }
+      } else { _ultimoCodigo=r.status; _intentos++; if(_intentos<3) await new Promise(function(res){setTimeout(res,3000);}); }
+    }catch(e){ _ultimoError=e&&e.name==='AbortError'?'timeout':'network'; _intentos++; if(_intentos<3) await new Promise(function(res){setTimeout(res,3000);}); }
   }
   errorConexion=!_cargado;
 
@@ -5035,12 +5035,17 @@ function fechaOffset(dias){
   splash.style.display='none';
 
   if(errorConexion){
-    var _detalle=_ultimoCodigo?'Código: '+_ultimoCodigo:(_ultimoError?_ultimoError:'Sin respuesta');
+    var _msg, _sub;
+    if(_ultimoError==='network'){ _msg='⚠ Sin conexión a internet.'; _sub='Verifique su señal e intente de nuevo.'; }
+    else if(_ultimoError==='timeout'||!_ultimoCodigo){ _msg='⚠ Problemas en la nube (Supabase).'; _sub='El servidor no respondió. Intente en unos minutos.'; }
+    else if(_ultimoCodigo===503||_ultimoCodigo===502){ _msg='⚠ Servidor caído (Supabase).'; _sub='Error '+_ultimoCodigo+' — el servicio está con problemas. Intente más tarde.'; }
+    else { _msg='⚠ Error de conexión.'; _sub='Código '+_ultimoCodigo+' — intente de nuevo.'; }
     var errDiv=document.createElement('div');
     errDiv.style.cssText='position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a8a);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999';
     errDiv.innerHTML='<div style="font-size:80px;font-weight:900;color:#fff;letter-spacing:-3px">JD</div>'
       +'<div style="font-size:14px;font-weight:700;color:#60a5fa;letter-spacing:8px;margin-bottom:32px">FINANCIERA</div>'
-      +'<div style="color:#f87171;font-size:14px;text-align:center;padding:0 32px;margin-bottom:24px">⚠ No se pudo conectar.<br><span style="color:#94a3b8;font-size:11px">'+_detalle+'</span></div>'
+      +'<div style="color:#f87171;font-size:15px;font-weight:600;text-align:center;padding:0 32px;margin-bottom:8px">'+_msg+'</div>'
+      +'<div style="color:#94a3b8;font-size:12px;text-align:center;padding:0 32px;margin-bottom:24px">'+_sub+'</div>'
       +'<button onclick="location.reload()" style="background:#2563eb;color:#fff;border:none;border-radius:12px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px">↺ Reintentar</button>';
     document.body.appendChild(errDiv);
     return;
