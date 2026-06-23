@@ -2821,10 +2821,7 @@ function cargarDesdeLocalStorage(){
 function sincronizarSupabaseFondo(){
   // Nunca sincronizar si hay un guardado en curso
   if(_guardandoEnNube) return;
-  // Si localStorage tiene datos, protegerlos: solo actualizar si Supabase es más nuevo
   var tsLocal=parseInt(localStorage.getItem('fjd_ts')||'0');
-  // Si localStorage tiene datos recientes (menos de 5 min), no tocar nada
-  if(tsLocal>0 && (Date.now()-tsLocal)<300000) return;
   fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:SUPA_HDR})
   .then(function(r){return r.ok?r.json():null;})
   .then(function(rows){
@@ -2981,6 +2978,11 @@ document.addEventListener('visibilitychange',function(){
 setInterval(function(){
   if(localStorage.getItem('fjd_session')==='1') _verificarRevocacion();
 }, 5000);
+
+// Sincronización de datos en fondo cada 30 segundos (para que bloqueos y cambios lleguen a todos los dispositivos)
+setInterval(function(){
+  if(localStorage.getItem('fjd_session')==='1') sincronizarSupabaseFondo();
+}, 30000);
 
 // Cerrar el menú admin si se toca fuera
 document.addEventListener('click',function(e){
