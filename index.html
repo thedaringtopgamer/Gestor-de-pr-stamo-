@@ -1223,7 +1223,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           <span style="font-size:18px;color:#9ca3af" id="arr-panel-caja">▶</span>
         </div>
         <div id="panel-sec-caja" style="display:none;padding:16px;background:#1f2937">
-          <div class="field-group" style="margin-bottom:10px">
+          <div class="field-group" id="caja-base-wrap" style="margin-bottom:10px">
             <label style="color:#9ca3af">Base (efectivo inicial)</label>
             <div style="display:flex;gap:8px">
               <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric" id="caja-base" placeholder="0" oninput="fmtMoneyInput(this)" style="flex:1;padding:9px 12px;border:1.5px solid #374151;background:#374151;color:#fff;border-radius:var(--radius);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;font-weight:600">
@@ -5073,11 +5073,10 @@ function renderPanelRecolector(){
     return x.fecha===fecha&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);
   }).reduce(function(s,x){return s+x.monto;},0);
 
+  var wrapBase=document.getElementById('caja-base-wrap');
+  if(wrapBase) wrapBase.style.display=(rolActual==='admin')?'':'none';
   var inputBase=document.getElementById('caja-base');
   inputBase.value=baseGuardada>0?fmt(baseGuardada):'';
-  inputBase.readOnly=(rolActual!=='admin');
-  inputBase.style.opacity=(rolActual!=='admin')?'0.6':'1';
-  inputBase.style.cursor=(rolActual!=='admin')?'not-allowed':'text';
   var wrapSalida=document.getElementById('caja-salida-wrap');
   if(wrapSalida) wrapSalida.style.display=(rolActual==='admin')?'':'none';
   var inputSalida=document.getElementById('caja-salida');
