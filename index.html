@@ -961,7 +961,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <!-- Botones admin: Corregir y Bloquear -->
       <div id="wrap-admin-btns" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
         <button onclick="abrirModalCorregir()" style="padding:10px 6px;background:#fff;color:#92400e;border:2px solid #fcd34d;border-radius:10px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🔧 Corregir</button>
-        <button id="btn-bloquear-toggle" onclick="abrirModalBloqueo()" style="padding:10px 6px;background:#7f1d1d;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🚫 Bloquear</button>
+        <button id="btn-bloquear-toggle" onclick="abrirModalBloqueo()" style="padding:10px 6px;background:#fff;color:#dc2626;border:2px solid #fca5a5;border-radius:10px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🚫 Bloquear</button>
       </div>
       <!-- Badge bloqueado visible -->
       <div id="bloqueo-badge" style="display:none;margin-top:8px;background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;padding:10px 12px">
@@ -3115,7 +3115,7 @@ function renderTarjetas(filtro){
     var verif=clienteNecesitaVerificacion(p);
     var badgeTarjeta=verif.necesita?'<span title="'+verif.razon+'" style="font-size:15px;margin-left:4px">⚠️</span>':'';
     var cancelado=d.saldoPendiente<=0;
-    var borderColor=p.bloqueado?'border-left:4px solid #dc2626':(cancelado?'border-left:4px solid #93c5fd':'');
+    var borderColor=p.bloqueado?'border-left:5px solid #991b1b':(cancelado?'border-left:4px solid #93c5fd':'');
     var bgBloq=p.bloqueado?'background:#fef2f2;':'';
     return '<div class="loan-row" style="'+borderColor+';'+bgBloq+(cancelado&&!p.bloqueado?'opacity:0.7':''+'')+'">'
       +'<button class="icon-btn icon-btn-cyan btn-sm" style="width:auto;padding:7px 14px;border-radius:var(--radius)" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
