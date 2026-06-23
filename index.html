@@ -2230,7 +2230,8 @@ function registrarInversion(){
 }
 
 function eliminarInversion(id){
-  if(!confirm('¿Eliminar esta inversión?')) return;
+  if(!confirm('¿Eliminar esta inyección de capital?')) return;
+  if(!confirm('⚠ Segunda confirmación — ¿está seguro? Esta acción no se puede deshacer.')) return;
   inversiones=inversiones.filter(function(i){ return i.id!==id; });
   guardarDatos();
   renderInversion();
