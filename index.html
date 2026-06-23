@@ -2051,6 +2051,7 @@ var bases = {};
 var salidas = {};
 var metas = {};
 var invOverrides = {};
+var clientesBloqueados = {}; // {id: {motivo:'', ts:0}}
 var renovaciones = [];
 var currentId = null;
 var historial = ['screen-cobros'];
@@ -2110,6 +2111,7 @@ function guardarDatos(){
     {key:'salidas',value:salidas},
     {key:'metas',value:metas},
     {key:'inv_overrides',value:invOverrides},
+    {key:'clientes_bloqueados',value:clientesBloqueados},
     {key:'passwords',value:USUARIOS.map(function(u){return u.pass;})},
     {key:'ts',value:ts}
   ];
@@ -2840,6 +2842,7 @@ function sincronizarSupabaseFondo(){
       if(row.key==='salidas'&&row.value&&typeof row.value==='object') salidas=row.value;
       if(row.key==='metas'&&row.value&&typeof row.value==='object') metas=row.value;
       if(row.key==='inv_overrides'&&row.value&&typeof row.value==='object') invOverrides=row.value;
+      if(row.key==='clientes_bloqueados'&&row.value&&typeof row.value==='object') clientesBloqueados=row.value;
       if(row.key==='passwords'&&Array.isArray(row.value)) row.value.forEach(function(p,i){if(USUARIOS[i]&&p) USUARIOS[i].pass=p;});
       if(row.key==='fotos'&&row.value&&typeof row.value==='object') fotosMapBg=row.value;
     });
@@ -3368,7 +3371,9 @@ function renderCobros(filtro){
       ?'<span title="'+verif.razon+'" style="font-size:16px;cursor:pointer" onclick="verDetalle(\''+pFresh.id+'\')">⚠️</span>'
       :'';
     p=pFresh;
-    if(p.bloqueado){
+    var esBloqueado=!!(p.bloqueado||clientesBloqueados[p.id]);
+    if(p.motivoBloqueo||clientesBloqueados[p.id]) p.motivoBloqueo=p.motivoBloqueo||(clientesBloqueados[p.id]&&clientesBloqueados[p.id].motivo)||'';
+    if(esBloqueado){
       return '<div class="loan-row" style="background:#dc2626;border-left:3px solid #991b1b">'
         +'<button class="icon-btn" style="background:#fff;color:#dc2626;font-size:13px;width:auto;padding:6px 10px;" onclick="verDetalle(\''+p.id+'\')" title="Ver detalle">Ver</button>'
         +'<button class="icon-btn" style="background:#991b1b;color:#fff;cursor:not-allowed;font-size:18px" onclick="toast(\'🚫 Cliente bloqueado — no se puede renovar\')" title="Bloqueado">↻</button>'
@@ -4329,6 +4334,7 @@ function confirmarBloqueo(){
   var p=prestamos.find(function(x){ return x.id===currentId; });
   if(!p) return;
   p.bloqueado=true; p.motivoBloqueo=motivo;
+  clientesBloqueados[p.id]={motivo:motivo,ts:Date.now()};
   document.getElementById('modal-bloqueo').style.display='none';
   guardarDatos(); renderTarjetas(); renderCobros(); verDetalle(currentId);
   toast('🚫 Cliente bloqueado');
@@ -4338,6 +4344,7 @@ function desbloquearCliente(){
   var p=prestamos.find(function(x){ return x.id===currentId; });
   if(!p) return;
   p.bloqueado=false; p.motivoBloqueo='';
+  delete clientesBloqueados[p.id];
   guardarDatos(); renderTarjetas(); renderCobros(); verDetalle(currentId);
   toast('✅ Cliente desbloqueado');
 }
@@ -5361,6 +5368,7 @@ function fechaOffset(dias){
           if(row.key==='salidas'&&row.value&&typeof row.value==='object') salidas=row.value;
           if(row.key==='metas'&&row.value&&typeof row.value==='object') metas=row.value;
           if(row.key==='inv_overrides'&&row.value&&typeof row.value==='object') invOverrides=row.value;
+          if(row.key==='clientes_bloqueados'&&row.value&&typeof row.value==='object') clientesBloqueados=row.value;
           if(row.key==='passwords'&&Array.isArray(row.value)) row.value.forEach(function(p,i){if(USUARIOS[i]&&p) USUARIOS[i].pass=p;});
           if(row.key==='session_revoked'&&row.value&&typeof row.value==='object') window._sessionRevoked=row.value;
         });
