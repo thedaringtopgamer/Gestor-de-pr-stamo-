@@ -2729,7 +2729,7 @@ function eliminarCierre(id){
   if(objetivo&&objetivo.ruta==='todas'){
     // Si se elimina el cierre de "todas", eliminar también los de las rutas individuales del mismo grupo
     cierres=cierres.filter(function(c){
-      return !(c.tipo===objetivo.tipo&&c.desde===objetivo.desde&&c.hasta===objetivo.hasta&&c.fechaRegistro===objetivo.fechaRegistro);
+      return !(c.tipo===objetivo.tipo&&c.desde===objetivo.desde&&c.hasta===objetivo.hasta);
     });
   } else {
     cierres=cierres.filter(function(c){ return c.id!==id; });
