@@ -1561,6 +1561,32 @@ function _actualizarPendiente(deviceId,ruta,dispositivo){
   }).catch(function(){});
 }
 
+function _registrarLoginNube(deviceId,ruta){
+  var ua=navigator.userAgent;
+  var dispositivo='Otro';
+  var m;
+  if(ua.indexOf('iPhone')!==-1){ m=ua.match(/iPhone OS ([\d_]+)/); dispositivo='iPhone'+(m?' (iOS '+m[1].replace(/_/g,'.')+')':''); }
+  else if(ua.indexOf('iPad')!==-1){ m=ua.match(/CPU OS ([\d_]+)/); dispositivo='iPad'+(m?' (iOS '+m[1].replace(/_/g,'.')+')':''); }
+  else if(ua.indexOf('Android')!==-1){ m=ua.match(/Android[\s\d.]+;\s*([^)]+)\)/); dispositivo=m?m[1].replace(/\s*Build\/.*/,'').trim()||'Android':'Android'; }
+  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.logged_sessions&select=value',{headers:SUPA_HDR})
+  .then(function(r){return r.ok?r.json():[];})
+  .then(function(rows){
+    var ls=(rows&&rows[0]&&rows[0].value)||{};
+    ls[deviceId]={deviceId:deviceId,ruta:ruta,dispositivo:dispositivo,loginTs:Date.now()};
+    return fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'logged_sessions',value:ls}])});
+  }).catch(function(){});
+}
+
+function _eliminarLoginNube(deviceId){
+  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.logged_sessions&select=value',{headers:SUPA_HDR})
+  .then(function(r){return r.ok?r.json():[];})
+  .then(function(rows){
+    var ls=(rows&&rows[0]&&rows[0].value)||{};
+    delete ls[deviceId];
+    return fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'logged_sessions',value:ls}])});
+  }).catch(function(){});
+}
+
 function _activarSesionRuta(ruta,deviceId){
   var loginTs=Date.now();
   localStorage.setItem('fjd_session','1');
@@ -1571,6 +1597,7 @@ function _activarSesionRuta(ruta,deviceId){
   localStorage.setItem('fjd_ruta_actual',ruta);
   rolActual='ruta';
   rutaActual=ruta;
+  _registrarLoginNube(deviceId||_getDeviceId(),ruta);
   document.getElementById('espera-screen').style.display='none';
   mostrarApp();
 }
@@ -1710,6 +1737,7 @@ function _forzarLogoutAdmin(){
 function _forzarLogout(){
   var eraRuta=localStorage.getItem('fjd_rol')!=='admin';
   var rutaFija=localStorage.getItem('fjd_ruta_fija');
+  _eliminarLoginNube(_getDeviceId());
   localStorage.removeItem('fjd_session'); localStorage.removeItem('fjd_rol');
   localStorage.removeItem('fjd_pantalla'); localStorage.removeItem('fjd_detalle_id');
   localStorage.removeItem('fjd_cliente_temp'); localStorage.removeItem('fjd_login_ts');
@@ -1746,6 +1774,7 @@ function _verificarRevocacion(){
     var rev=rows[0].value||{};
     var revokeTs=rev[loginRuta]||rev['todas']||0;
     if(revokeTs>loginTs){
+      _eliminarLoginNube(_getDeviceId());
       toast('⚠ Su sesión fue cerrada por el administrador.');
       setTimeout(_forzarLogoutAdmin,2000);
     }
@@ -1909,13 +1938,13 @@ function verDispositivosConectados(){
 function abrirRevocarSesiones(){
   Promise.all([
     fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value',{headers:SUPA_HDR}).then(function(r){return r.ok?r.json():[];}),
-    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.device_sessions&select=value',{headers:SUPA_HDR}).then(function(r){return r.ok?r.json():[]; })
+    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.device_sessions&select=value',{headers:SUPA_HDR}).then(function(r){return r.ok?r.json():[];}),
+    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.logged_sessions&select=value',{headers:SUPA_HDR}).then(function(r){return r.ok?r.json():[];})
   ]).then(function(results){
     var rev=(results[0]&&results[0][0]&&results[0][0].value)||{};
-    var sesiones=(results[1]&&results[1][0]&&results[1][0].value)||{};
-    // Dispositivos activos = heartbeat en los últimos 45 segundos
-    var cutoff=Date.now()-45000;
-    var activos=Object.values(sesiones).filter(function(s){return s.lastSeen>=cutoff;});
+    var heartbeats=(results[1]&&results[1][0]&&results[1][0].value)||{};
+    var loggeados=(results[2]&&results[2][0]&&results[2][0].value)||{};
+    var cutoff=Date.now()-45000; // activo = heartbeat en últimos 45s
     var rutas=[]; var vistas={};
     USUARIOS.forEach(function(u){
       if(u.rol==='admin') return;
@@ -1926,28 +1955,38 @@ function abrirRevocarSesiones(){
     modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
     var filas=rutas.map(function(ruta){
       var ts=rev[ruta]||0;
-      var estado=ts?'Última revocación: '+new Date(ts).toLocaleString():'Sin revocaciones';
-      var dispositivosRuta=activos.filter(function(s){return s.ruta===ruta;});
-      var numDev=dispositivosRuta.length;
-      var devTag=numDev>0
-        ?'<span style="display:inline-flex;align-items:center;gap:4px;background:#dcfce7;color:#16a34a;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">📱 '+numDev+' teléfono'+(numDev>1?'s':'')+' activo'+(numDev>1?'s':'')+'</span>'
-        :'<span style="display:inline-flex;align-items:center;gap:4px;background:#f3f4f6;color:#9ca3af;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">Sin sesión activa</span>';
+      var ultimaRev=ts?'Última revocación: '+new Date(ts).toLocaleString():'';
+      // Teléfonos logueados en esta ruta (app abierta o cerrada)
+      var devsLogueados=Object.values(loggeados).filter(function(s){return s.ruta===ruta;});
+      var numLog=devsLogueados.length;
+      var filaDevs=devsLogueados.map(function(s){
+        var hb=heartbeats[s.deviceId];
+        var appAbierta=hb&&hb.lastSeen>=cutoff;
+        var loginDate=new Date(s.loginTs);
+        var loginStr=loginDate.toLocaleDateString('es-CR',{day:'2-digit',month:'2-digit'})
+          +' '+loginDate.toLocaleTimeString('es-CR',{hour:'2-digit',minute:'2-digit'});
+        return '<div style="display:flex;align-items:center;gap:8px;margin-top:6px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:8px 10px">'
+          +'<span style="font-size:18px">'+(appAbierta?'🟢':'🔴')+'</span>'
+          +'<div style="flex:1;min-width:0">'
+          +'<div style="font-size:12px;font-weight:700;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📱 '+s.dispositivo+'</div>'
+          +'<div style="font-size:10px;color:#6b7280">'+(appAbierta?'App abierta ahora':'App cerrada')+' · Entró '+loginStr+'</div>'
+          +'</div></div>';
+      }).join('');
+      var badge=numLog>0
+        ?'<span style="background:'+(numLog>0?'#dbeafe':'#f3f4f6')+';color:'+(numLog>0?'#1d4ed8':'#9ca3af')+';border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700">'+numLog+' logueado'+(numLog>1?'s':'')+'</span>'
+        :'<span style="background:#f3f4f6;color:#9ca3af;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:600">Nadie logueado</span>';
       return '<div style="padding:12px 0;border-bottom:1px solid #f3f4f6">'
         +'<div style="display:flex;justify-content:space-between;align-items:center">'
-        +'<div><div style="font-weight:700;font-size:15px">📍 '+ruta+'</div>'
-        +'<div style="font-size:11px;color:#6b7280;margin-top:2px">'+estado+'</div></div>'
-        +'<button onclick="revocarRuta(\''+ruta+'\',this)" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">Cerrar sesión</button>'
+        +'<div><div style="font-weight:700;font-size:15px">📍 '+ruta+' '+badge+'</div>'
+        +(ultimaRev?'<div style="font-size:10px;color:#9ca3af;margin-top:2px">'+ultimaRev+'</div>':'')+'</div>'
+        +'<button onclick="revocarRuta(\''+ruta+'\',this)" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif;white-space:nowrap;margin-left:8px">Cerrar sesión</button>'
         +'</div>'
-        +(numDev>0?'<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">'+devTag
-          +dispositivosRuta.map(function(s){
-            var min=Math.round((Date.now()-s.lastSeen)/60000);
-            return '<span style="font-size:11px;color:#374151;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:2px 8px">'+s.dispositivo+(min<1?' — ahora mismo':' — hace '+min+' min')+'</span>';
-          }).join('')+'</div>':'')
+        +filaDevs
         +'</div>';
     }).join('');
-    modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:24px;max-width:380px;width:100%;max-height:80vh;overflow-y:auto">'
-      +'<p style="font-size:16px;font-weight:800;margin-bottom:4px">🔐 Sesiones activas</p>'
-      +'<p style="font-size:12px;color:#6b7280;margin-bottom:16px">Teléfonos conectados ahora mismo por ruta.</p>'
+    modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:24px;max-width:400px;width:100%;max-height:85vh;overflow-y:auto">'
+      +'<p style="font-size:16px;font-weight:800;margin-bottom:2px">🔐 Sesiones por ruta</p>'
+      +'<p style="font-size:11px;color:#6b7280;margin-bottom:16px">🟢 App abierta · 🔴 Logueado pero app cerrada</p>'
       +filas
       +'<div style="display:flex;gap:8px;margin-top:16px">'
       +'<button onclick="revocarTodas()" style="flex:1;padding:12px;background:#ef4444;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">Cerrar todas</button>'
