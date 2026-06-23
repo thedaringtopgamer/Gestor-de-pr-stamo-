@@ -2149,8 +2149,8 @@ function _renderMetaDesglose(){
   el.innerHTML=html;
 }
 
-function _calcCierreData(desde,hasta){
-  var ruta=rutaInvFiltro||'todas';
+function _calcCierreData(desde,hasta,rutaParam){
+  var ruta=rutaParam||(rutaInvFiltro||'todas');
   var porRuta=function(p){ return ruta==='todas'||(p.ruta===ruta); };
   var idsPorRuta=prestamos.filter(porRuta).map(function(p){return p.id;});
   var pagosP=pagos.filter(function(x){
@@ -2379,10 +2379,17 @@ function _abrirConfirmarCierre(tipo,desde,hasta){
   document.getElementById('modal-confirmar-cierre').style.display='flex';
 }
 
+var _RUTAS_TODAS=['todas','Heredia','Alajuela','San Ramón'];
+
 function _guardarCierre(tipo,desde,hasta){
   var nota=document.getElementById('confirmar-cierre-nota').value.trim();
-  var data=_calcCierreData(desde,hasta);
-  cierres.push({id:Date.now().toString(),tipo:tipo,desde:desde,hasta:hasta,nota:nota,data:data,fechaRegistro:hoyLocal(),ruta:rutaInvFiltro||'todas'});
+  var rutaActiva=rutaInvFiltro||'todas';
+  var rutasAGuardar=rutaActiva==='todas'?_RUTAS_TODAS:[rutaActiva];
+  var ahora=Date.now();
+  rutasAGuardar.forEach(function(ruta,i){
+    var data=_calcCierreData(desde,hasta,ruta);
+    cierres.push({id:(ahora+i).toString(),tipo:tipo,desde:desde,hasta:hasta,nota:nota,data:data,fechaRegistro:hoyLocal(),ruta:ruta});
+  });
   guardarDatos();
   document.getElementById('modal-confirmar-cierre').style.display='none';
   renderInversion();
