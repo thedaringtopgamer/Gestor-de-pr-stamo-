@@ -1012,7 +1012,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
             <div style="font-size:12px;font-weight:800;color:#dc2626">🚫 Cliente bloqueado</div>
             <div style="font-size:11px;color:#7f1d1d;margin-top:2px" id="bloqueo-motivo-txt">—</div>
           </div>
-          <button onclick="desbloquearCliente()" style="padding:6px 12px;background:#fff;color:#dc2626;border:1.5px solid #fca5a5;border-radius:8px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">✅ Desbloquear</button>
+          <button id="btn-desbloquear" onclick="desbloquearCliente()" style="padding:6px 12px;background:#fff;color:#dc2626;border:1.5px solid #fca5a5;border-radius:8px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">✅ Desbloquear</button>
         </div>
       </div>
 
@@ -3706,10 +3706,14 @@ function verDetalle(id){
   var bloqBadge=document.getElementById('bloqueo-badge');
   if(wrapAdm) wrapAdm.style.display=esAdmin?'grid':'none';
   if(bloqBadge){
-    bloqBadge.style.display=(esAdmin&&p.bloqueado)?'':'none';
-    if(p.bloqueado){
+    var esBloqueadoDetalle=!!(p.bloqueado||clientesBloqueados[p.id]);
+    bloqBadge.style.display=esBloqueadoDetalle?'':'none';
+    if(esBloqueadoDetalle){
       var mtvEl=document.getElementById('bloqueo-motivo-txt');
-      if(mtvEl) mtvEl.textContent=p.motivoBloqueo||'Sin motivo';
+      var motivoDetalle=p.motivoBloqueo||(clientesBloqueados[p.id]&&clientesBloqueados[p.id].motivo)||'Sin motivo';
+      if(mtvEl) mtvEl.textContent=motivoDetalle;
+      var btnDesbloquear=document.getElementById('btn-desbloquear');
+      if(btnDesbloquear) btnDesbloquear.style.display=esAdmin?'':'none';
       var btnBloqToggle=document.getElementById('btn-bloquear-toggle');
       if(btnBloqToggle){ btnBloqToggle.textContent='🔓 Desbloquear'; btnBloqToggle.style.color='#dc2626'; btnBloqToggle.style.borderColor='#fca5a5'; btnBloqToggle.onclick=desbloquearCliente; }
     } else {
