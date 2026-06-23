@@ -5091,9 +5091,9 @@ function renderPanelRecolector(){
   document.getElementById('caja-gastos').textContent='₡'+fmt(totalGastos);
   document.getElementById('caja-total').textContent='₡'+fmt(cajaTotal);
   document.getElementById('panel-stat-caja').textContent='Total: ₡'+fmt(cajaTotal);
-  // Auto-guardar caja del día para que mañana sea la base heredada
+  // Auto-guardar caja del día en la nube para que mañana sea la base heredada
   var _cajaKey=rutaCajaKey+'_'+fecha;
-  if(!bases[_cajaKey]&&cajaTotal>0){
+  if(cajaTotal>0&&bases[_cajaKey]!==cajaTotal){
     bases[_cajaKey]=cajaTotal;
     guardarDatos();
   }
