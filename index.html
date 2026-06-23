@@ -1199,8 +1199,16 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
               <span style="font-size:15px;font-weight:600;color:#4ade80" id="caja-base-display">₡0</span>
             </div>
             <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
-              <span style="font-size:15px;color:#f87171">− Préstamos realizados</span>
+              <span style="font-size:15px;color:#f87171">− Préstamos nuevos</span>
               <span style="font-size:15px;font-weight:600;color:#f87171" id="caja-prestamos">₡0</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px" id="caja-renov-row" style="display:none">
+              <span style="font-size:15px;color:#f87171">− Entregado renovaciones</span>
+              <span style="font-size:15px;font-weight:600;color:#f87171" id="caja-renov">₡0</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px" id="caja-admin-row" style="display:none">
+              <span style="font-size:15px;color:#f87171">− Administrativo</span>
+              <span style="font-size:15px;font-weight:600;color:#f87171" id="caja-admin">₡0</span>
             </div>
             <div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px">
               <span style="font-size:15px;color:#f87171">− Gastos</span>
@@ -4690,7 +4698,7 @@ function renderPanelRecolector(){
   var cajaTotal=baseGuardada+recogidaTotal-totalSoloNuevos-totalEntregadoRenov-totalAdminRenov-totalGastos;
   document.getElementById('caja-recogida').textContent='₡'+fmt(recogidaTotal);
   document.getElementById('caja-base-display').textContent='₡'+fmt(baseGuardada);
-  document.getElementById('caja-prestamos').textContent='₡'+fmt(totalSoloNuevos+totalEntregadoRenov+totalAdminRenov);
+  document.getElementById('caja-prestamos').textContent='₡'+fmt(prestamosTotal);
   document.getElementById('caja-gastos').textContent='₡'+fmt(totalGastos);
   document.getElementById('caja-total').textContent='₡'+fmt(cajaTotal);
   document.getElementById('panel-stat-caja').textContent='Total: ₡'+fmt(cajaTotal);
