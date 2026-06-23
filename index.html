@@ -1632,6 +1632,7 @@ function entrarComoRuta(ruta){
   localStorage.setItem('fjd_ruta_fija',ruta);
   localStorage.setItem('fjd_ruta_fija_ts',Date.now().toString());
   sessionStorage.setItem('fjd_ruta_actual',ruta);
+  _registrarLoginNube(_getDeviceId(),ruta);
   mostrarApp();
 }
 var ADMIN_USER='TheDaring';
@@ -5321,6 +5322,7 @@ function fechaOffset(dias){
           localStorage.setItem('fjd_rol','ruta');
           localStorage.setItem('fjd_ruta_actual',_rutaFija);
           sessionStorage.setItem('fjd_ruta_actual',_rutaFija);
+          _registrarLoginNube(_getDeviceId(),_rutaFija);
           mostrarApp();
         }
       } else {
