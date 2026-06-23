@@ -4028,11 +4028,8 @@ function confirmarRenovacion(){
     montoNuevo:monto,cuotaNueva:cuotaVal,tipo:tipo,cuotas:cuotas,tasa:Math.round(tasa*100),
     adminMonto:adminMonto,saldoAnterior:saldoAnterior,montoEntregado:montoEntregado,
     _prevState:_prevState});
-  // Calcular y guardar próxima fecha de cobro automáticamente (fechaInicio + 1 período)
-  var proxFecha=new Date(parseLocalDate(fecha));
-  proxFecha.setDate(proxFecha.getDate()+diasPorCuota);
-  proxFecha=siguienteDiaHabil(proxFecha);
-  p.proximaFechaPago=proxFecha.toISOString().split('T')[0];
+  // ren-fecha ya ES la próxima fecha de pago, guardarla directo
+  p.proximaFechaPago=fecha;
   guardarDatos();
   currentId=p.id;
   toast('✓ Préstamo renovado correctamente');
