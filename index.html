@@ -4870,6 +4870,10 @@ function togglePanelSec(sec){
   // Si estaba cerrado, abrir este
   if(!abierto){
     el.style.display='block';
+    if(sec==='caja'){
+      var wb=document.getElementById('caja-base-wrap');
+      if(wb) wb.style.display=(rolActual==='admin')?'':'none';
+    }
     var arr=document.getElementById('arr-panel-'+sec);
     if(arr) arr.textContent='▼';
   }
