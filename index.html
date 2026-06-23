@@ -4160,11 +4160,11 @@ function renderPanelRecolector(){
     var partes=(p.fechaInicio||'').split('-');
     var fechaFmt=partes.length===3?partes[2]+'-'+partes[1]+'-'+partes[0]:p.fechaInicio;
     return '<tr style="border-bottom:1px solid #eff6ff">'+
-      '<td style="padding:13px 10px;text-align:right;font-weight:700;color:#2563eb;white-space:nowrap">₡'+fmt(p.montoPrestado)+'</td>'+
-      '<td style="padding:13px 10px;font-weight:600;color:#1e293b;white-space:nowrap">'+p.cliente+'</td>'+
-      '<td style="padding:13px 10px;color:#6b7280;white-space:nowrap">'+fechaFmt+'</td>'+
-      '<td style="padding:13px 10px;color:#6b7280;white-space:nowrap">'+(p.subruta||'—')+'</td>'+
-      '<td style="padding:13px 10px;text-align:center;white-space:nowrap">'+
+      '<td style="padding:16px 12px;text-align:right;font-weight:700;color:#2563eb;white-space:nowrap">₡'+fmt(p.montoPrestado)+'</td>'+
+      '<td style="padding:16px 12px;font-weight:600;color:#1e293b;white-space:nowrap">'+p.cliente+'</td>'+
+      '<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">'+fechaFmt+'</td>'+
+      '<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">'+(p.subruta||'—')+'</td>'+
+      '<td style="padding:16px 12px;text-align:center;white-space:nowrap">'+
         '<button style="background:#dbeafe;color:#1e40af;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-right:3px" onclick="verDetalle(\''+p.id+'\')">Ver</button>'+
         (rolActual==='admin'?'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer" onclick="quitarNuevoDeCaja(\''+p.id+'\')">✕</button>':'')+
       '</td>'+
@@ -4175,11 +4175,11 @@ function renderPanelRecolector(){
     var partes=(rv.fecha||'').split('-');
     var fechaFmt=partes.length===3?partes[2]+'-'+partes[1]+'-'+partes[0]:rv.fecha;
     return '<tr style="border-bottom:1px solid #eff6ff">'+
-      '<td style="padding:13px 10px;text-align:right;font-weight:700;color:#7c3aed;white-space:nowrap">₡'+fmt(rv.montoNuevo||0)+'</td>'+
-      '<td style="padding:13px 10px;white-space:nowrap"><span style="font-weight:600;color:#1e293b">'+rv.cliente+'</span> <span style="font-size:10px;color:#7c3aed;font-weight:600">🔄</span></td>'+
-      '<td style="padding:13px 10px;color:#6b7280;white-space:nowrap">'+fechaFmt+'</td>'+
-      '<td style="padding:13px 10px;color:#6b7280;white-space:nowrap">'+(pr&&pr.subruta?pr.subruta:'—')+'</td>'+
-      '<td style="padding:13px 10px;text-align:center;white-space:nowrap">'+
+      '<td style="padding:16px 12px;text-align:right;font-weight:700;color:#7c3aed;white-space:nowrap">₡'+fmt(rv.montoNuevo||0)+'</td>'+
+      '<td style="padding:16px 12px;white-space:nowrap"><span style="font-weight:600;color:#1e293b">'+rv.cliente+'</span> <span style="font-size:10px;color:#7c3aed;font-weight:600">🔄</span></td>'+
+      '<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">'+fechaFmt+'</td>'+
+      '<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">'+(pr&&pr.subruta?pr.subruta:'—')+'</td>'+
+      '<td style="padding:16px 12px;text-align:center;white-space:nowrap">'+
         '<button style="background:#dbeafe;color:#1e40af;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-right:3px" onclick="verDetalle(\''+rv.id_prestamo+'\')">Ver</button>'+
         (rolActual==='admin'?'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer" onclick="quitarRenovDeCaja(\''+rv.id+'\')">✕</button>':'')+
       '</td>'+
@@ -4187,7 +4187,7 @@ function renderPanelRecolector(){
   });
   var allNuevos=nuevosItems.concat(renovItems);
   document.getElementById('panel-nuevos-lista').innerHTML=allNuevos.length
-    ?'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="min-width:440px;border-collapse:collapse;font-size:13px">'
+    ?'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="min-width:440px;border-collapse:collapse;font-size:15px">'
       +'<thead><tr style="border-bottom:2px solid #bfdbfe">'
       +'<th style="text-align:right;padding:6px 8px;color:#1d4ed8;font-weight:700;white-space:nowrap">Monto</th>'
       +'<th style="text-align:left;padding:6px 8px;color:#1d4ed8;font-weight:700;white-space:nowrap">Cliente</th>'
@@ -4202,7 +4202,7 @@ function renderPanelRecolector(){
   var totalCobros=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
   document.getElementById('panel-stat-cobros').textContent=pagosHoy.length+' cobro'+(pagosHoy.length!==1?'s':'')+' · ₡'+fmt(totalCobros);
   document.getElementById('panel-cobros-lista').innerHTML=pagosHoy.length
-    ?'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="min-width:420px;border-collapse:collapse;font-size:13px">'
+    ?'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="min-width:420px;border-collapse:collapse;font-size:15px">'
       +'<thead><tr style="border-bottom:2px solid #bbf7d0">'
       +'<th style="text-align:right;padding:6px 8px;color:#166534;font-weight:700;white-space:nowrap">Monto</th>'
       +'<th style="text-align:left;padding:6px 8px;color:#166534;font-weight:700;white-space:nowrap">Cliente</th>'
@@ -4215,10 +4215,10 @@ function renderPanelRecolector(){
         var partes=fechaD.split('-');
         var fechaFmt=partes.length===3?partes[2]+'-'+partes[1]+'-'+partes[0]:fechaD;
         return '<tr style="border-bottom:1px solid #f0fdf4">'+
-          '<td style="padding:13px 10px;text-align:right;font-weight:700;color:#166534;white-space:nowrap">₡'+fmt(pg.montoAbonado)+'</td>'+
-          '<td style="padding:13px 10px;font-weight:600;color:#1e293b;white-space:nowrap">'+(p?p.cliente:'—')+'</td>'+
-          '<td style="padding:13px 10px;color:#6b7280;white-space:nowrap">'+fechaFmt+'</td>'+
-          '<td style="padding:13px 10px;text-align:center;white-space:nowrap">'+
+          '<td style="padding:16px 12px;text-align:right;font-weight:700;color:#166534;white-space:nowrap">₡'+fmt(pg.montoAbonado)+'</td>'+
+          '<td style="padding:16px 12px;font-weight:600;color:#1e293b;white-space:nowrap">'+(p?p.cliente:'—')+'</td>'+
+          '<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">'+fechaFmt+'</td>'+
+          '<td style="padding:16px 12px;text-align:center;white-space:nowrap">'+
             (p?'<button style="background:#dbeafe;color:#1e40af;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-right:3px" onclick="verDetalle(\''+p.id+'\')">Ver</button>':'')+
             (rolActual==='admin'?'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer" onclick="quitarDelPanelHoy(\''+pg.id_pago+'\')">✕</button>':'')+
           '</td>'+
@@ -4232,7 +4232,7 @@ function renderPanelRecolector(){
   var totalAdmin=adminHoy.reduce(function(s,x){return s+x.monto;},0);
   document.getElementById('panel-stat-admin').textContent='₡'+fmt(totalAdmin);
   document.getElementById('panel-admin-lista').innerHTML=adminHoy.length
-    ?'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="min-width:400px;border-collapse:collapse;font-size:13px">'
+    ?'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="min-width:400px;border-collapse:collapse;font-size:15px">'
       +'<thead><tr style="border-bottom:2px solid #ddd6fe">'
       +'<th style="text-align:right;padding:6px 8px;color:#5b21b6;font-weight:700;white-space:nowrap">Cobro Adm.</th>'
       +'<th style="text-align:right;padding:6px 8px;color:#5b21b6;font-weight:700;white-space:nowrap">Monto</th>'
@@ -4247,11 +4247,11 @@ function renderPanelRecolector(){
         var partes=(ca.fecha||'').split('-');
         var fechaFmt=partes.length===3?partes[2]+'-'+partes[1]+'-'+partes[0]:ca.fecha;
         return '<tr style="border-bottom:1px solid #f5f3ff">'+
-          '<td style="padding:13px 10px;text-align:right;font-weight:700;color:#5b21b6;white-space:nowrap">₡'+fmt(ca.monto)+'</td>'+
-          '<td style="padding:13px 10px;text-align:right;font-weight:600;color:#1e293b;white-space:nowrap">₡'+fmt(montoRenov)+'</td>'+
-          '<td style="padding:13px 10px;font-weight:600;color:#1e293b;white-space:nowrap">'+ca.cliente+'</td>'+
-          '<td style="padding:13px 10px;color:#6b7280;white-space:nowrap">'+fechaFmt+'</td>'+
-          '<td style="padding:13px 10px;text-align:center;white-space:nowrap">'+
+          '<td style="padding:16px 12px;text-align:right;font-weight:700;color:#5b21b6;white-space:nowrap">₡'+fmt(ca.monto)+'</td>'+
+          '<td style="padding:16px 12px;text-align:right;font-weight:600;color:#1e293b;white-space:nowrap">₡'+fmt(montoRenov)+'</td>'+
+          '<td style="padding:16px 12px;font-weight:600;color:#1e293b;white-space:nowrap">'+ca.cliente+'</td>'+
+          '<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">'+fechaFmt+'</td>'+
+          '<td style="padding:16px 12px;text-align:center;white-space:nowrap">'+
             (p?'<button style="background:#dbeafe;color:#1e40af;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-right:3px" onclick="verDetalle(\''+p.id+'\')">Ver</button>':'')+
             (rolActual==='admin'?'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer" onclick="eliminarCobroAdmin(\''+ca.id+'\')">✕</button>':'')+
           '</td>'+
