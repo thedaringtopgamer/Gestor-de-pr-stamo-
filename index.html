@@ -4997,8 +4997,6 @@ function fechaOffset(dias){
   var errorConexion=false;
 
   var _splashStatus=document.getElementById('splash-status');
-  // Esperar 1.5 segundos para que la red móvil se estabilice
-  await new Promise(function(res){setTimeout(res,1500);});
   var _intentos=0;
   var _cargado=false;
   var _ultimoError='';
@@ -5007,11 +5005,9 @@ function fechaOffset(dias){
     if(_splashStatus) _splashStatus.textContent=(_intentos===0?'Conectando...':'Reintentando... ('+(_intentos+1)+'/3)');
     try{
       var controller=new AbortController();
-      var timeout=setTimeout(function(){controller.abort();},8000);
+      var timeout=setTimeout(function(){controller.abort();},15000);
       var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value&key=neq.fotos',{headers:SUPA_HDR,signal:controller.signal});
       clearTimeout(timeout);
-      if(r.ok){
-        var rows=await r.json();
       if(r.ok){
         var rows=await r.json();
         rows.forEach(function(row){
