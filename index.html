@@ -3348,6 +3348,10 @@ function renderCobros(filtro){
     return !p.incompleto && (estado==='hoy'||estado==='atrasado');
   });
   var items=todos.filter(function(p){return !f||p.cliente.toLowerCase().includes(f);});
+  // Aplicar bloqueos desde fuente autoritativa
+  items.forEach(function(p){
+    if(clientesBloqueados[p.id]){p.bloqueado=true;p.motivoBloqueo=p.motivoBloqueo||clientesBloqueados[p.id].motivo||'';}
+  });
 
   var totalHoy=items.filter(function(p){return getEstadoCobro(p)==='hoy';}).length;
   var totalAtrasados=items.filter(function(p){return getEstadoCobro(p)==='atrasado';}).length;
