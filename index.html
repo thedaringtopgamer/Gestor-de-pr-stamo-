@@ -2209,7 +2209,7 @@ function _calcCierreData(desde,hasta,rutaParam){
   var porRuta=function(p){ return ruta==='todas'||(p.ruta===ruta); };
   var idsPorRuta=prestamos.filter(porRuta).map(function(p){return p.id;});
   var pagosP=pagos.filter(function(x){
-    var f=x.fechaRegistro||x.fechaPago; return f>=desde&&f<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0);
+    var f=x.fechaRegistro||x.fechaPago; return !x._ocultarPanel&&f>=desde&&f<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0);
   });
   var recogida=pagosP.reduce(function(s,x){ return s+x.montoAbonado; },0);
   var nuevosP=prestamos.filter(function(p){ var fc=p._fechaCreacion||p.fechaInicio; return porRuta(p)&&fc>=desde&&fc<=hasta&&!p.incompleto; });
