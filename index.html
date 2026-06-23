@@ -3368,6 +3368,7 @@ function renderCobros(filtro){
       return '<div class="loan-row" style="background:#dc2626;border-left:3px solid #991b1b">'
         +'<button class="icon-btn" style="background:#fff;color:#dc2626;font-size:13px;width:auto;padding:6px 10px;" onclick="verDetalle(\''+p.id+'\')" title="Ver detalle">Ver</button>'
         +'<button class="icon-btn" style="background:#991b1b;color:#fff;cursor:not-allowed;font-size:18px" onclick="toast(\'🚫 Cliente bloqueado — no se puede renovar\')" title="Bloqueado">↻</button>'
+        +'<button class="icon-btn icon-btn-green" onclick="abonoRapido(\''+p.id+'\',\''+p.cliente+'\','+d.pendienteProxima+')" title="Abonar cuota">🐷</button>'
         +'<div style="flex:1;padding-left:6px;min-width:0">'
           +'<div style="font-size:15px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+' 🚫</div>'
           +'<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.9)">BLOQUEADO'+(p.motivoBloqueo?' · '+p.motivoBloqueo:'')+'</div>'
