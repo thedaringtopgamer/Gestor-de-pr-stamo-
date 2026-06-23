@@ -4649,9 +4649,10 @@ function renderPanelRecolector(){
     :'<p style="font-size:13px;color:var(--text-muted)">Sin gastos registrados</p>';
   document.getElementById('panel-gastos-lista').innerHTML=gastosHtml;
 
-  // Préstamos nuevos de esta ruta (incluye renovaciones)
-  var nuevos=prestamosRuta.filter(function(p){return p.fechaInicio===fecha&&!p.incompleto&&!p._ocultarPanelNuevo;});
+  // Préstamos nuevos de esta ruta (excluye renovaciones para no contar doble)
   var renovNuevos=renovaciones.filter(function(x){return x.fecha===fecha&&idsRuta.indexOf(x.id_prestamo)!==-1&&!x._ocultarPanel;});
+  var _idsRenovHoy=renovNuevos.map(function(x){return x.id_prestamo;});
+  var nuevos=prestamosRuta.filter(function(p){return p.fechaInicio===fecha&&!p.incompleto&&!p._ocultarPanelNuevo&&_idsRenovHoy.indexOf(p.id)===-1;});
   var totalNuevos=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0)+renovNuevos.reduce(function(s,x){return s+(x.montoNuevo||0);},0);
   var countNuevos=nuevos.length+renovNuevos.length;
   document.getElementById('panel-stat-nuevos').textContent=countNuevos+' préstamo'+(countNuevos!==1?'s':'')+' · ₡'+fmt(totalNuevos);
