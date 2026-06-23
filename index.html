@@ -428,6 +428,19 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         </div>
       </div>
 
+      <!-- Mora -->
+      <div class="card" style="margin-bottom:10px;background:#fef2f2;border:2px solid #fca5a5;display:flex;justify-content:space-between;align-items:center;padding:12px 16px">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#dc2626;text-transform:uppercase;margin-bottom:4px">⚠️ En mora</div>
+          <div style="font-size:20px;font-weight:900;color:#dc2626" id="inv-mora-monto">₡0</div>
+          <div style="font-size:10px;color:#9ca3af">Saldo pendiente</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:28px;font-weight:900;color:#dc2626" id="inv-mora-count">0</div>
+          <div style="font-size:11px;color:#9ca3af">clientes atrasados</div>
+        </div>
+      </div>
+
       <!-- Fila 2: Diferencia | Registrar inyección -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
         <div class="card" style="margin:0;padding:14px 12px;background:#fefce8;text-align:center">
@@ -950,6 +963,22 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           </div>
         </div>
         <button onclick="guardarCorreccion()" style="width:100%;padding:11px;background:#f59e0b;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">💾 Guardar corrección</button>
+        </div>
+      </div>
+
+      <!-- Bloquear cliente (solo admin) -->
+      <div id="wrap-bloqueo" style="display:none;margin-top:8px">
+        <div id="bloqueo-info" style="display:none;background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;padding:12px;margin-bottom:6px">
+          <div style="font-size:13px;font-weight:800;color:#dc2626;margin-bottom:4px">🚫 Cliente bloqueado</div>
+          <div style="font-size:12px;color:#7f1d1d;margin-bottom:10px" id="bloqueo-motivo-txt">—</div>
+          <button onclick="desbloquearCliente()" style="width:100%;padding:9px;background:#fff;color:#dc2626;border:2px solid #fca5a5;border-radius:8px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">✅ Desbloquear</button>
+        </div>
+        <div id="bloqueo-btn-area">
+          <button onclick="toggleFormBloqueo()" style="width:100%;padding:10px;background:#fff;color:#dc2626;border:2px solid #fca5a5;border-radius:8px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:left">🚫 Bloquear cliente <span id="bloqueo-arrow" style="float:right">▼</span></button>
+          <div id="form-bloqueo" style="display:none;margin-top:6px">
+            <input type="text" id="bloqueo-motivo-input" placeholder="Motivo del bloqueo (ej: mal pagador, documentos)..." style="width:100%;padding:9px 12px;border:1.5px solid #fca5a5;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;margin-bottom:6px">
+            <button onclick="confirmarBloqueo()" style="width:100%;padding:10px;background:#dc2626;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🚫 Confirmar bloqueo</button>
+          </div>
         </div>
       </div>
 
@@ -2031,6 +2060,12 @@ function renderInversion(){
   document.getElementById('inv-capital-total').textContent=_fmtCol(capitalTotal);
   var elCapP=document.getElementById('inv-capital-prestado');
   if(elCapP) elCapP.textContent=_fmtCol(capitalPrestado);
+  var enMora=activos.filter(function(p){ return calcDerived(p).estado==='Atrasado'; });
+  var moraMonto=enMora.reduce(function(s,p){ return s+calcDerived(p).saldoPendiente; },0);
+  var elMM=document.getElementById('inv-mora-monto');
+  var elMC=document.getElementById('inv-mora-count');
+  if(elMM) elMM.textContent=_fmtCol(moraMonto);
+  if(elMC) elMC.textContent=enMora.length;
 
   var diffEl=document.getElementById('inv-diferencia');
   var labelEl=document.getElementById('inv-diferencia-label');
@@ -3088,11 +3123,12 @@ function renderTarjetas(filtro){
     var verif=clienteNecesitaVerificacion(p);
     var badgeTarjeta=verif.necesita?'<span title="'+verif.razon+'" style="font-size:15px;margin-left:4px">⚠️</span>':'';
     var cancelado=d.saldoPendiente<=0;
-    var borderColor=cancelado?'border-left:4px solid #93c5fd':'';
-    return '<div class="loan-row" style="'+borderColor+(cancelado?';opacity:0.7':'')+'">'
+    var borderColor=p.bloqueado?'border-left:4px solid #dc2626':(cancelado?'border-left:4px solid #93c5fd':'');
+    var bgBloq=p.bloqueado?'background:#fef2f2;':'';
+    return '<div class="loan-row" style="'+borderColor+';'+bgBloq+(cancelado&&!p.bloqueado?'opacity:0.7':''+'')+'">'
       +'<button class="icon-btn icon-btn-cyan btn-sm" style="width:auto;padding:7px 14px;border-radius:var(--radius)" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
       +'<div style="flex:1;padding-left:10px;min-width:0">'
-        +'<div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+badgeTarjeta+'</div>'
+        +'<div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+(p.bloqueado?' 🚫':'')+badgeTarjeta+'</div>'
         +'<div style="font-size:13px;color:var(--text-muted)">'+estadoTag(d.estado)+' &nbsp;'+p.cantidadDeQuincenas+' cuotas</div>'
       +'</div>'
       +(cancelado
@@ -3282,6 +3318,28 @@ function verDetalle(id){
     document.getElementById('corr-base').value=fmt(p.baseRenovacion||0);
     var selTipo=document.getElementById('corr-tipo');
     if(selTipo) selTipo.value=p.tipo||'Quincenal';
+  }
+  // Bloqueo de cliente — solo admin
+  var wrapBloq=document.getElementById('wrap-bloqueo');
+  if(wrapBloq) wrapBloq.style.display=esAdmin?'':'none';
+  if(esAdmin){
+    var bloqInfo=document.getElementById('bloqueo-info');
+    var bloqBtnArea=document.getElementById('bloqueo-btn-area');
+    var bloqForm=document.getElementById('form-bloqueo');
+    var bloqArrow=document.getElementById('bloqueo-arrow');
+    if(p.bloqueado){
+      if(bloqInfo) bloqInfo.style.display='';
+      if(bloqBtnArea) bloqBtnArea.style.display='none';
+      var mtvEl=document.getElementById('bloqueo-motivo-txt');
+      if(mtvEl) mtvEl.textContent=p.motivoBloqueo||'Sin motivo';
+    } else {
+      if(bloqInfo) bloqInfo.style.display='none';
+      if(bloqBtnArea) bloqBtnArea.style.display='';
+      if(bloqForm) bloqForm.style.display='none';
+      if(bloqArrow) bloqArrow.textContent='▼';
+      var minpEl=document.getElementById('bloqueo-motivo-input');
+      if(minpEl) minpEl.value='';
+    }
   }
   renderCuotasGrid(p,d);
   renderPagosLista(p);
@@ -3671,6 +3729,7 @@ function abrirRenovar(){
   if(!currentId) return;
   var p=prestamos.find(function(x){return x.id===currentId;});
   if(!p) return;
+  if(p.bloqueado){ toast('🚫 Cliente bloqueado'+(p.motivoBloqueo?': '+p.motivoBloqueo:'')); return; }
   var d=calcDerived(p);
   // Cobro admin = 4% del monto prestado (₡2,000 por cada ₡50,000)
   var cobroAdmin=Math.round(p.montoPrestado*0.04);
@@ -3873,6 +3932,33 @@ function confirmarRenovacion(){
   verDetalle(p.id);
   // Ofrecer WhatsApp si tiene teléfono
   setTimeout(function(){ ofrecerWhatsApp(p.id,'renovacion'); },400);
+}
+
+function toggleFormBloqueo(){
+  var form=document.getElementById('form-bloqueo');
+  var arrow=document.getElementById('bloqueo-arrow');
+  if(!form) return;
+  var open=form.style.display==='none';
+  form.style.display=open?'block':'none';
+  if(arrow) arrow.textContent=open?'▲':'▼';
+}
+
+function confirmarBloqueo(){
+  var motivo=(document.getElementById('bloqueo-motivo-input').value||'').trim();
+  if(!motivo){ toast('⚠️ Escribí el motivo del bloqueo'); return; }
+  var p=prestamos.find(function(x){ return x.id===currentId; });
+  if(!p) return;
+  p.bloqueado=true; p.motivoBloqueo=motivo;
+  guardarDatos(); renderTarjetas(); verDetalle(currentId);
+  toast('🚫 Cliente bloqueado');
+}
+
+function desbloquearCliente(){
+  var p=prestamos.find(function(x){ return x.id===currentId; });
+  if(!p) return;
+  p.bloqueado=false; p.motivoBloqueo='';
+  guardarDatos(); renderTarjetas(); verDetalle(currentId);
+  toast('✅ Cliente desbloqueado');
 }
 
 function toggleCorregir(){
