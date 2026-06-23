@@ -930,6 +930,10 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
             <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Modalidad</div>
             <span id="det-modalidad" style="display:inline-block;background:#f3f4f6;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;color:#1f2937;line-height:1.3"></span>
           </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Inicio</div>
+            <span id="det-fecha-inicio" style="display:inline-block;background:#f0fdf4;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;color:#166534;line-height:1.3"></span>
+          </div>
         </div>
       </div>
 
@@ -3276,6 +3280,7 @@ function verDetalle(id){
   else if(tipo==='Semanal') linea2=n+(n===1?' semana':' semanas');
   else if(tipo==='Diario') linea2='30 días';
   document.getElementById('det-modalidad').innerHTML=linea1+(linea2?'<br><span style="font-size:11px;font-weight:500;color:#6b7280">'+linea2+'</span>':'');
+  var fi=(p.fechaInicio||'').split('-'); document.getElementById('det-fecha-inicio').textContent=fi.length===3?fi[2]+'/'+fi[1]+'/'+fi[0]:'';
   document.getElementById('abonar-cuota').textContent='₡'+fmt(d.pendienteProxima);
   var proxCuotaNum=d.cuotasPagadas+1;
   var fechaInput;
@@ -3999,7 +4004,7 @@ function guardarCorreccion(){
   p.cantidadDeQuincenas=ncuotas;
   p.baseRenovacion=base;
   p.tipo=tipo;
-  if(fechaInicioCorr) p.fechaInicio=fechaInicioCorr;
+  if(fechaInicioCorr){ p.fechaInicio=fechaInicioCorr; p._fechaCreacion=fechaInicioCorr; }
   document.getElementById('modal-corregir').style.display='none';
   guardarDatos();
   toast('✓ Datos corregidos');
