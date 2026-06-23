@@ -2005,7 +2005,7 @@ function renderInversion(){
   });
   var enCalle=activos.reduce(function(s,p){ return s+calcDerived(p).saldoPendiente; },0);
   var capitalPrestado=activos.reduce(function(s,p){ return s+p.montoPrestado; },0);
-  var interesesPendientes=enCalle-capitalPrestado;
+  var interesesPendientes=Math.max(0,enCalle-capitalPrestado);
   var capitalTotal=inversiones.reduce(function(s,i){ return s+i.monto; },0);
 
   document.getElementById('inv-en-calle').textContent=_fmtCol(enCalle);
