@@ -572,6 +572,37 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     </div>
   </div>
 
+  <!-- Modal Corregir préstamo -->
+  <div id="modal-corregir" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9000;align-items:flex-end;justify-content:center">
+    <div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <p style="font-size:15px;font-weight:800;margin:0;color:#92400e">🔧 Corregir préstamo</p>
+        <button onclick="document.getElementById('modal-corregir').style.display='none'" style="background:#f3f4f6;border:none;border-radius:8px;padding:7px 13px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Monto prestado</div><input type="text" inputmode="numeric" id="corr-monto" oninput="fmtMoneyInput(this)" placeholder="0" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box"></div>
+        <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Total a cobrar</div><input type="text" inputmode="numeric" id="corr-total" oninput="fmtMoneyInput(this)" placeholder="0" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box"></div>
+        <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Cuota</div><input type="text" inputmode="numeric" id="corr-cuota" oninput="fmtMoneyInput(this)" placeholder="0" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box"></div>
+        <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">N° cuotas</div><input type="number" id="corr-ncuotas" placeholder="0" min="1" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box"></div>
+        <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Base renovación</div><input type="text" inputmode="numeric" id="corr-base" oninput="fmtMoneyInput(this)" placeholder="0" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box"></div>
+        <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Tipo</div><select id="corr-tipo" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;background:#fff;box-sizing:border-box"><option value="Diario">Diario</option><option value="Semanal">Semanal</option><option value="Quincenal">Quincenal</option><option value="Mensual">Mensual</option></select></div>
+      </div>
+      <button onclick="guardarCorreccion()" style="width:100%;padding:12px;background:#f59e0b;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">💾 Guardar corrección</button>
+    </div>
+  </div>
+
+  <!-- Modal Bloquear cliente -->
+  <div id="modal-bloqueo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9000;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:16px;width:92%;max-width:400px;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <p style="font-size:15px;font-weight:800;margin:0;color:#dc2626">🚫 Bloquear cliente</p>
+        <button onclick="document.getElementById('modal-bloqueo').style.display='none'" style="background:#f3f4f6;border:none;border-radius:8px;padding:7px 13px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">✕</button>
+      </div>
+      <textarea id="bloqueo-motivo-input" placeholder="Motivo del bloqueo (ej: mal pagador, documentos pendientes...)" rows="3" style="width:100%;padding:10px 12px;border:1.5px solid #fca5a5;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;resize:none;margin-bottom:12px"></textarea>
+      <button onclick="confirmarBloqueo()" style="width:100%;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🚫 Confirmar bloqueo</button>
+    </div>
+  </div>
+
   <!-- ==================== HOME ==================== -->
   <div id="screen-home" class="screen active">
     <div class="navbar">
@@ -927,58 +958,19 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <button class="btn btn-cyan btn-full" style="padding:12px;margin-top:4px" onclick="abrirRenovar()">🔄 Renovar</button>
 <button id="btn-eliminar-prestamo" class="btn btn-red btn-full" style="padding:11px;margin-top:8px" onclick="eliminarPrestamo()">🗑 Eliminar préstamo</button>
 
-      <!-- Corregir datos financieros (solo admin) -->
-      <div id="wrap-corregir" style="display:none;margin-top:8px">
-        <button onclick="toggleCorregir()" id="btn-corregir-toggle" style="width:100%;padding:11px;background:#fff;color:#92400e;border:2px dashed #fcd34d;border-radius:10px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:left">🔧 Corregir préstamo <span id="corregir-arrow" style="float:right">▼</span></button>
-        <div id="panel-corregir" style="display:none;margin-top:6px;border:2px dashed #f59e0b;border-radius:12px;padding:14px;background:#fffbeb">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-          <div>
-            <div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Monto prestado</div>
-            <input type="text" inputmode="numeric" id="corr-monto" oninput="fmtMoneyInput(this)" placeholder="0" style="width:100%;padding:7px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
-          </div>
-          <div>
-            <div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Total a cobrar</div>
-            <input type="text" inputmode="numeric" id="corr-total" oninput="fmtMoneyInput(this)" placeholder="0" style="width:100%;padding:7px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
-          </div>
-          <div>
-            <div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Cuota</div>
-            <input type="text" inputmode="numeric" id="corr-cuota" oninput="fmtMoneyInput(this)" placeholder="0" style="width:100%;padding:7px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
-          </div>
-          <div>
-            <div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">N° cuotas</div>
-            <input type="number" id="corr-ncuotas" placeholder="0" min="1" style="width:100%;padding:7px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
-          </div>
-          <div>
-            <div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Base renovación</div>
-            <input type="text" inputmode="numeric" id="corr-base" oninput="fmtMoneyInput(this)" placeholder="0" style="width:100%;padding:7px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
-          </div>
-          <div>
-            <div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Tipo</div>
-            <select id="corr-tipo" style="width:100%;padding:7px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;background:#fff;box-sizing:border-box">
-              <option value="Diario">Diario</option>
-              <option value="Semanal">Semanal</option>
-              <option value="Quincenal">Quincenal</option>
-              <option value="Mensual">Mensual</option>
-            </select>
-          </div>
-        </div>
-        <button onclick="guardarCorreccion()" style="width:100%;padding:11px;background:#f59e0b;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">💾 Guardar corrección</button>
-        </div>
+      <!-- Botones admin: Corregir y Bloquear -->
+      <div id="wrap-admin-btns" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <button onclick="abrirModalCorregir()" style="padding:10px 6px;background:#fff;color:#92400e;border:2px solid #fcd34d;border-radius:10px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🔧 Corregir</button>
+        <button id="btn-bloquear-toggle" onclick="abrirModalBloqueo()" style="padding:10px 6px;background:#fff;color:#dc2626;border:2px solid #fca5a5;border-radius:10px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🚫 Bloquear</button>
       </div>
-
-      <!-- Bloquear cliente (solo admin) -->
-      <div id="wrap-bloqueo" style="display:none;margin-top:8px">
-        <div id="bloqueo-info" style="display:none;background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;padding:12px;margin-bottom:6px">
-          <div style="font-size:13px;font-weight:800;color:#dc2626;margin-bottom:4px">🚫 Cliente bloqueado</div>
-          <div style="font-size:12px;color:#7f1d1d;margin-bottom:10px" id="bloqueo-motivo-txt">—</div>
-          <button onclick="desbloquearCliente()" style="width:100%;padding:9px;background:#fff;color:#dc2626;border:2px solid #fca5a5;border-radius:8px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">✅ Desbloquear</button>
-        </div>
-        <div id="bloqueo-btn-area">
-          <button onclick="toggleFormBloqueo()" style="width:100%;padding:10px;background:#fff;color:#dc2626;border:2px solid #fca5a5;border-radius:8px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:left">🚫 Bloquear cliente <span id="bloqueo-arrow" style="float:right">▼</span></button>
-          <div id="form-bloqueo" style="display:none;margin-top:6px">
-            <input type="text" id="bloqueo-motivo-input" placeholder="Motivo del bloqueo (ej: mal pagador, documentos)..." style="width:100%;padding:9px 12px;border:1.5px solid #fca5a5;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;margin-bottom:6px">
-            <button onclick="confirmarBloqueo()" style="width:100%;padding:10px;background:#dc2626;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🚫 Confirmar bloqueo</button>
+      <!-- Badge bloqueado visible -->
+      <div id="bloqueo-badge" style="display:none;margin-top:8px;background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;padding:10px 12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:12px;font-weight:800;color:#dc2626">🚫 Cliente bloqueado</div>
+            <div style="font-size:11px;color:#7f1d1d;margin-top:2px" id="bloqueo-motivo-txt">—</div>
           </div>
+          <button onclick="desbloquearCliente()" style="padding:6px 12px;background:#fff;color:#dc2626;border:1.5px solid #fca5a5;border-radius:8px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">✅ Desbloquear</button>
         </div>
       </div>
 
@@ -3303,13 +3295,7 @@ function verDetalle(id){
   var btnEliminar=document.getElementById('btn-eliminar-prestamo');
   if(btnGuardar) btnGuardar.style.display=esAdmin?'':'none';
   if(btnEliminar) btnEliminar.style.display=esAdmin?'':'none';
-  // Panel corregir datos — solo admin (collapsed by default)
-  var wrapCorr=document.getElementById('wrap-corregir');
-  var panelCorr=document.getElementById('panel-corregir');
-  var arrowCorr=document.getElementById('corregir-arrow');
-  if(wrapCorr) wrapCorr.style.display=esAdmin?'':'none';
-  if(panelCorr) panelCorr.style.display='none';
-  if(arrowCorr) arrowCorr.textContent='▼';
+  // Precargar campos del modal corregir (siempre, para cuando se abra)
   if(esAdmin){
     document.getElementById('corr-monto').value=fmt(p.montoPrestado||0);
     document.getElementById('corr-total').value=fmt(p.Total_A_Cobrar||0);
@@ -3319,26 +3305,20 @@ function verDetalle(id){
     var selTipo=document.getElementById('corr-tipo');
     if(selTipo) selTipo.value=p.tipo||'Quincenal';
   }
-  // Bloqueo de cliente — solo admin
-  var wrapBloq=document.getElementById('wrap-bloqueo');
-  if(wrapBloq) wrapBloq.style.display=esAdmin?'':'none';
-  if(esAdmin){
-    var bloqInfo=document.getElementById('bloqueo-info');
-    var bloqBtnArea=document.getElementById('bloqueo-btn-area');
-    var bloqForm=document.getElementById('form-bloqueo');
-    var bloqArrow=document.getElementById('bloqueo-arrow');
+  // Botones admin y badge de bloqueo
+  var wrapAdm=document.getElementById('wrap-admin-btns');
+  var bloqBadge=document.getElementById('bloqueo-badge');
+  if(wrapAdm) wrapAdm.style.display=esAdmin?'grid':'none';
+  if(bloqBadge){
+    bloqBadge.style.display=(esAdmin&&p.bloqueado)?'':'none';
     if(p.bloqueado){
-      if(bloqInfo) bloqInfo.style.display='';
-      if(bloqBtnArea) bloqBtnArea.style.display='none';
       var mtvEl=document.getElementById('bloqueo-motivo-txt');
       if(mtvEl) mtvEl.textContent=p.motivoBloqueo||'Sin motivo';
+      var btnBloqToggle=document.getElementById('btn-bloquear-toggle');
+      if(btnBloqToggle){ btnBloqToggle.textContent='✅ Desbloquear'; btnBloqToggle.style.color='#166534'; btnBloqToggle.style.borderColor='#86efac'; btnBloqToggle.onclick=desbloquearCliente; }
     } else {
-      if(bloqInfo) bloqInfo.style.display='none';
-      if(bloqBtnArea) bloqBtnArea.style.display='';
-      if(bloqForm) bloqForm.style.display='none';
-      if(bloqArrow) bloqArrow.textContent='▼';
-      var minpEl=document.getElementById('bloqueo-motivo-input');
-      if(minpEl) minpEl.value='';
+      var btnBloqToggle2=document.getElementById('btn-bloquear-toggle');
+      if(btnBloqToggle2){ btnBloqToggle2.textContent='🚫 Bloquear'; btnBloqToggle2.style.color='#dc2626'; btnBloqToggle2.style.borderColor='#fca5a5'; btnBloqToggle2.onclick=abrirModalBloqueo; }
     }
   }
   renderCuotasGrid(p,d);
@@ -3934,13 +3914,14 @@ function confirmarRenovacion(){
   setTimeout(function(){ ofrecerWhatsApp(p.id,'renovacion'); },400);
 }
 
-function toggleFormBloqueo(){
-  var form=document.getElementById('form-bloqueo');
-  var arrow=document.getElementById('bloqueo-arrow');
-  if(!form) return;
-  var open=form.style.display==='none';
-  form.style.display=open?'block':'none';
-  if(arrow) arrow.textContent=open?'▲':'▼';
+function abrirModalCorregir(){
+  document.getElementById('modal-corregir').style.display='flex';
+}
+
+function abrirModalBloqueo(){
+  var inp=document.getElementById('bloqueo-motivo-input');
+  if(inp) inp.value='';
+  document.getElementById('modal-bloqueo').style.display='flex';
 }
 
 function confirmarBloqueo(){
@@ -3949,6 +3930,7 @@ function confirmarBloqueo(){
   var p=prestamos.find(function(x){ return x.id===currentId; });
   if(!p) return;
   p.bloqueado=true; p.motivoBloqueo=motivo;
+  document.getElementById('modal-bloqueo').style.display='none';
   guardarDatos(); renderTarjetas(); verDetalle(currentId);
   toast('🚫 Cliente bloqueado');
 }
@@ -3992,6 +3974,7 @@ function guardarCorreccion(){
   p.cantidadDeQuincenas=ncuotas;
   p.baseRenovacion=base;
   p.tipo=tipo;
+  document.getElementById('modal-corregir').style.display='none';
   guardarDatos();
   toast('✓ Datos corregidos');
   verDetalle(currentId);
