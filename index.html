@@ -2243,7 +2243,7 @@ function _calcCierreData(desde,hasta,rutaParam){
   });
   var recogida=pagosP.reduce(function(s,x){ return s+x.montoAbonado; },0);
   var idsRenovados=renovaciones.map(function(rv){return rv.id_prestamo;});
-  var nuevosP=prestamos.filter(function(p){ var fc=p._fechaCreacion||p.fechaInicio; return porRuta(p)&&fc>=desde&&fc<=hasta&&!p.incompleto&&idsRenovados.indexOf(p.id)<0; });
+  var nuevosP=prestamos.filter(function(p){ var fc=p._fechaCreacion||p.fechaInicio; return porRuta(p)&&fc>=desde&&fc<=hasta&&!p.incompleto&&!p._ocultarPanelNuevo&&idsRenovados.indexOf(p.id)<0; });
   var prestado=nuevosP.reduce(function(s,p){ return s+p.montoPrestado; },0);
   var renovP=renovaciones.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
   var montoRenov=renovP.reduce(function(s,x){ return s+(x.montoNuevo||0); },0);
