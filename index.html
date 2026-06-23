@@ -499,11 +499,17 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         </div>
 
         <!-- Historial cierres guardados -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;margin-top:16px">
-          <p style="font-size:13px;font-weight:700;margin:0">🗂 Cierres guardados</p>
-          <button onclick="abrirHistorialCierres()" style="background:#f3f4f6;color:#374151;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Ver todos ▸</button>
+        <div style="margin-top:16px">
+          <p style="font-size:13px;font-weight:700;margin-bottom:10px">🗂 Historial de cierres</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <button onclick="abrirHistorialTipo('semana')" style="padding:16px 10px;background:#dbeafe;color:#1e40af;border:2px solid #93c5fd;border-radius:12px;font-size:15px;font-weight:800;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center">
+              📆 Semana<div id="cnt-semana" style="font-size:11px;font-weight:600;margin-top:4px;color:#3b82f6"></div>
+            </button>
+            <button onclick="abrirHistorialTipo('mes')" style="padding:16px 10px;background:#dcfce7;color:#166534;border:2px solid #86efac;border-radius:12px;font-size:15px;font-weight:800;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center">
+              🗓 Mensual<div id="cnt-mes" style="font-size:11px;font-weight:600;margin-top:4px;color:#16a34a"></div>
+            </button>
+          </div>
         </div>
-        <div id="cierres-lista"></div>
       </div>
 
     </div>
@@ -541,7 +547,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
   <div id="modal-hist-cierres" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:8000;align-items:flex-end;justify-content:center">
     <div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-height:88vh;overflow-y:auto;padding:20px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <p style="font-size:16px;font-weight:800;margin:0">📅 Todos los cierres</p>
+        <p style="font-size:16px;font-weight:800;margin:0" id="modal-cierres-titulo">📅 Cierres</p>
         <button onclick="document.getElementById('modal-hist-cierres').style.display='none'" style="background:#f3f4f6;border:none;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">✕ Cerrar</button>
       </div>
       <div id="modal-hist-cierres-lista"></div>
@@ -2249,17 +2255,14 @@ function renderCierres(){
     +_barMeta(dMes.prestado+dMes.montoRenov,metaPrestamos,'Meta préstamos mes',true)
     +_barMeta(dMes.numPrestamos,metaClientes,'Meta clientes nuevos mes',false);
 
-  // Historial guardado — filtrado por ruta actual
-  var lista=document.getElementById('cierres-lista');
-  if(!lista) return;
-  var todos=cierres.filter(function(c){ return (c.ruta||'todas')===rFiltro; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); });
-  if(!todos.length){
-    lista.innerHTML='<p style="color:#6b7280;font-size:13px;text-align:center;padding:16px">Sin cierres guardados</p>';
-    return;
-  }
-  var ultimos=todos.slice(0,2);
-  lista.innerHTML=ultimos.map(function(c){ return _htmlTarjetaCierre(c); }).join('')
-    +(todos.length>2?'<button onclick="abrirHistorialCierres()" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #374151;background:#fff;color:#374151;font-size:13px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer;margin-top:4px">Ver todos los cierres ('+todos.length+') ▸</button>':'');
+  // Actualizar contadores en botones de historial
+  var rFiltroC=rutaInvFiltro||'todas';
+  var nSem=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===rFiltroC; }).length;
+  var nMes=cierres.filter(function(c){ return c.tipo==='mes'&&(c.ruta||'todas')===rFiltroC; }).length;
+  var cntSem=document.getElementById('cnt-semana');
+  var cntMes=document.getElementById('cnt-mes');
+  if(cntSem) cntSem.textContent=nSem?nSem+' guardado'+(nSem===1?'':'s'):'Sin cierres';
+  if(cntMes) cntMes.textContent=nMes?nMes+' guardado'+(nMes===1?'':'s'):'Sin cierres';
 }
 
 function _htmlTarjetaCierre(c){
@@ -2387,14 +2390,42 @@ function eliminarCierre(id){
   toast('✓ Cierre eliminado');
 }
 
-function abrirHistorialCierres(){
-  var lista=document.getElementById('modal-hist-cierres-lista');
+function abrirHistorialTipo(tipo){
   var rFiltro=rutaInvFiltro||'todas';
-  var todos=cierres.filter(function(c){ return (c.ruta||'todas')===rFiltro; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); });
-  if(!todos.length){ lista.innerHTML='<p style="color:#6b7280;text-align:center;padding:20px">Sin cierres guardados</p>'; }
-  else { lista.innerHTML=todos.map(function(c){ return _htmlTarjetaCierre(c); }).join(''); }
+  var esSem=tipo==='semana';
+  var titulo=esSem?'📆 Historial semanal':'🗓 Historial mensual';
+  document.getElementById('modal-cierres-titulo').textContent=titulo;
+  var lista=document.getElementById('modal-hist-cierres-lista');
+  var filtrados=cierres.filter(function(c){ return c.tipo===tipo&&(c.ruta||'todas')===rFiltro; })
+    .sort(function(a,b){ return b.hasta.localeCompare(a.hasta); });
+  if(!filtrados.length){
+    lista.innerHTML='<p style="color:#6b7280;text-align:center;padding:20px">Sin cierres guardados</p>';
+  } else {
+    lista.innerHTML=filtrados.map(function(c){
+      var uid='cierre-det-'+c.id;
+      var label=esSem?'Semana':'Mes';
+      return '<div style="border-bottom:1px solid #f3f4f6">'
+        +'<div onclick="toggleRenEntry(\''+uid+'\')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;cursor:pointer">'
+          +'<div>'
+            +'<div style="font-size:14px;font-weight:800;color:#1e293b">'+label+': '+c.desde+' → '+c.hasta+'</div>'
+            +(c.nota?'<div style="font-size:11px;color:#6b7280;margin-top:2px">'+c.nota+'</div>':'')
+          +'</div>'
+          +'<span style="font-size:14px;color:#9ca3af" id="arr-'+uid+'">▶</span>'
+        +'</div>'
+        +'<div id="'+uid+'" style="display:none;padding-bottom:12px">'
+          +_statsHtml(c.data)
+          +'<div style="display:flex;gap:8px;margin-top:10px">'
+            +'<button onclick="imprimirCierre(\''+c.id+'\')" style="background:#dbeafe;color:#1e40af;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🖨 Imprimir</button>'
+            +(rolActual==='admin'?'<button onclick="eliminarCierre(\''+c.id+'\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🗑 Eliminar</button>':'')
+          +'</div>'
+        +'</div>'
+      +'</div>';
+    }).join('');
+  }
   document.getElementById('modal-hist-cierres').style.display='flex';
 }
+
+function abrirHistorialCierres(){ abrirHistorialTipo('semana'); }
 
 function cargarDesdeLocalStorage(){
   try{
