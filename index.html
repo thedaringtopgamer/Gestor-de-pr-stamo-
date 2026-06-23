@@ -540,9 +540,6 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
               🗓 Mensual<div id="cnt-mes" style="font-size:11px;font-weight:600;margin-top:4px;color:#16a34a"></div>
             </button>
           </div>
-          <div id="wrap-reiniciar-cierres" style="display:none;margin-top:12px">
-            <button onclick="reiniciarCierres()" style="width:100%;padding:10px;background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:10px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🗑 Reiniciar historial — empezar desde hoy</button>
-          </div>
         </div>
       </div>
 
@@ -2239,7 +2236,8 @@ function _calcCierreData(desde,hasta,rutaParam){
     var f=x.fechaRegistro||x.fechaPago; return !x._ocultarPanel&&f>=desde&&f<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0);
   });
   var recogida=pagosP.reduce(function(s,x){ return s+x.montoAbonado; },0);
-  var nuevosP=prestamos.filter(function(p){ var fc=p._fechaCreacion||p.fechaInicio; return porRuta(p)&&fc>=desde&&fc<=hasta&&!p.incompleto; });
+  var idsRenovados=renovaciones.map(function(rv){return rv.id_prestamo;});
+  var nuevosP=prestamos.filter(function(p){ var fc=p._fechaCreacion||p.fechaInicio; return porRuta(p)&&fc>=desde&&fc<=hasta&&!p.incompleto&&idsRenovados.indexOf(p.id)<0; });
   var prestado=nuevosP.reduce(function(s,p){ return s+p.montoPrestado; },0);
   var renovP=renovaciones.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
   var montoRenov=renovP.reduce(function(s,x){ return s+Math.max(0,(x.montoNuevo||0)-(x.saldoAnterior||0)); },0);
