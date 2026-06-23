@@ -507,6 +507,10 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
             <label style="font-size:11px;font-weight:700;color:#854d0e;display:block;margin-bottom:4px">👥 Meta clientes nuevos/mes</label>
             <input type="text" autocomplete="off" inputmode="numeric" id="meta-clientes" placeholder="Ej: 20" oninput="fmtMoneyInput(this)" style="width:100%;padding:8px 10px;border:1.5px solid #fde047;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;background:#fff">
           </div>
+          <div style="grid-column:span 2">
+            <label style="font-size:11px;font-weight:700;color:#854d0e;display:block;margin-bottom:4px">🃏 Meta tarjetas activas (total cartera)</label>
+            <input type="text" autocomplete="off" inputmode="numeric" id="meta-tarjetas" placeholder="Ej: 200" oninput="fmtMoneyInput(this)" style="width:100%;padding:8px 10px;border:1.5px solid #fde047;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;background:#fff">
+          </div>
         </div>
         <!-- Desglose automático -->
         <div id="meta-desglose" style="margin-top:12px;font-size:12px;color:#713f12"></div>
@@ -2260,6 +2264,7 @@ function abrirHistorialInversion(){
 var cierres=[];
 var metaPrestamos=0;
 var metaClientes=0;
+var metaTarjetas=0;
 var rutaInvFiltro=localStorage.getItem('fjd_inv_ruta')||'todas';
 
 function setRutaInv(ruta){
@@ -2283,8 +2288,10 @@ function _metaKey(sufijo){
 function guardarMetas(){
   metaPrestamos=parseInt((document.getElementById('meta-prestamos').value||'').replace(/[^\d]/g,'')||'0',10);
   metaClientes=parseInt((document.getElementById('meta-clientes').value||'').replace(/[^\d]/g,'')||'0',10);
+  metaTarjetas=parseInt((document.getElementById('meta-tarjetas').value||'').replace(/[^\d]/g,'')||'0',10);
   metas[_metaKey('prestamos')]=metaPrestamos;
   metas[_metaKey('clientes')]=metaClientes;
+  metas[_metaKey('tarjetas')]=metaTarjetas;
   guardarDatos();
   renderInversion();
   toast('✓ Metas guardadas');
@@ -2293,10 +2300,13 @@ function guardarMetas(){
 function _cargarMetas(){
   metaPrestamos=parseInt(metas[_metaKey('prestamos')])||0;
   metaClientes=parseInt(metas[_metaKey('clientes')])||0;
+  metaTarjetas=parseInt(metas[_metaKey('tarjetas')])||0;
   var elP=document.getElementById('meta-prestamos');
   var elC=document.getElementById('meta-clientes');
+  var elT=document.getElementById('meta-tarjetas');
   if(elP) elP.value=metaPrestamos?fmt(metaPrestamos):'';
   if(elC) elC.value=metaClientes||'';
+  if(elT) elT.value=metaTarjetas||'';
   var lbl=document.getElementById('meta-ruta-label');
   if(lbl) lbl.textContent=rutaInvFiltro==='todas'?'Todas':rutaInvFiltro;
 }
@@ -2473,6 +2483,29 @@ function _statsHtml(d,tipo){
     +'</div>';
 }
 
+function _barMetaTarjetas(activos,meta){
+  if(!meta) return '';
+  var faltan=Math.max(0,meta-activos);
+  var sobran=Math.max(0,activos-meta);
+  var pct=Math.min(Math.round(activos/meta*100),100);
+  var ok=activos>=meta;
+  var color=ok?'#16a34a':'#d97706';
+  var bgBar=ok?'#dcfce7':'#fef9c3';
+  var estado=ok
+    ?'✅ Meta alcanzada — '+sobran+' tarjeta'+(sobran===1?'':'s')+' por encima'
+    :'⚠ Faltan '+faltan+' tarjeta'+(faltan===1?'':'s')+' para la meta';
+  return '<div style="margin-top:8px;background:#f9fafb;border-radius:10px;padding:10px 12px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+      +'<span style="font-size:12px;font-weight:700;color:#374151">🃏 Tarjetas activas</span>'
+      +'<span style="font-size:12px;font-weight:800;color:'+color+'">'+activos+' / '+meta+'</span>'
+    +'</div>'
+    +'<div style="background:#e5e7eb;border-radius:99px;height:8px;overflow:hidden">'
+      +'<div style="background:'+color+';border-radius:99px;height:8px;width:'+pct+'%;transition:width 0.3s"></div>'
+    +'</div>'
+    +'<div style="font-size:10px;color:'+color+';font-weight:600;margin-top:4px">'+estado+'</div>'
+    +'</div>';
+}
+
 function _barMeta(actual,meta,etiqueta,esDinero){
   if(!meta) return '';
   var pct=Math.min(Math.round(actual/meta*100),100);
@@ -2545,9 +2578,14 @@ function renderCierres(){
   for(var _i=0;_i<4;_i++) puntosM+=(_i<semsMes?'■':'□');
   var semMesTag=' <span style="font-size:11px;font-weight:700;color:#166534;background:#bbf7d0;border-radius:20px;padding:2px 8px;margin-left:4px">'+puntosM+' '+semsMes+'/4</span>';
   if(elRangoMes) elRangoMes.innerHTML=inicioMes+' → '+hoy+semMesTag;
+  // Tarjetas activas actuales para esta ruta
+  var activosCartera=prestamos.filter(function(p){
+    return !p.incompleto&&p.estado!=='Cancelado'&&(rFiltroMes==='todas'||p.ruta===rFiltroMes);
+  }).length;
   if(elStatsMes) elStatsMes.innerHTML=_statsHtml(dMes,'mes')
     +_barMeta(dMes.prestado+dMes.montoRenov,metaPrestamos,'Meta préstamos mes',true)
-    +_barMeta(dMes.numPrestamos,metaClientes,'Meta clientes nuevos mes',false);
+    +_barMeta(dMes.numPrestamos,metaClientes,'Meta clientes nuevos mes',false)
+    +_barMetaTarjetas(activosCartera,metaTarjetas);
 
   // Actualizar contadores en botones de historial
   var rFiltroC=rutaInvFiltro||'todas';
