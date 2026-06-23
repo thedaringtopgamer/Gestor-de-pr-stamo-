@@ -498,18 +498,18 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           <p style="font-size:14px;font-weight:800;margin:0;color:#854d0e">🎯 Metas del mes — <span id="meta-ruta-label" style="font-weight:600">Todas</span></p>
           <button onclick="guardarMetas()" style="background:#854d0e;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">💾 Guardar</button>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="display:flex;flex-direction:column;gap:10px">
           <div>
-            <label style="font-size:11px;font-weight:700;color:#854d0e;display:block;margin-bottom:4px">💰 Meta préstamos/mes</label>
+            <label style="font-size:11px;font-weight:700;color:#854d0e;display:block;margin-bottom:4px">💰 Meta prestado/mes</label>
             <input type="text" autocomplete="off" inputmode="numeric" id="meta-prestamos" placeholder="Ej: 20,000,000" oninput="fmtMoneyInput(this)" style="width:100%;padding:8px 10px;border:1.5px solid #fde047;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;background:#fff">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#854d0e;display:block;margin-bottom:4px">🃏 Meta tarjetas activas (total cartera)</label>
+            <input type="text" autocomplete="off" inputmode="numeric" id="meta-tarjetas" placeholder="Ej: 200" oninput="fmtMoneyInput(this)" style="width:100%;padding:8px 10px;border:1.5px solid #fde047;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;background:#fff">
           </div>
           <div>
             <label style="font-size:11px;font-weight:700;color:#854d0e;display:block;margin-bottom:4px">👥 Meta clientes nuevos/mes</label>
             <input type="text" autocomplete="off" inputmode="numeric" id="meta-clientes" placeholder="Ej: 20" oninput="fmtMoneyInput(this)" style="width:100%;padding:8px 10px;border:1.5px solid #fde047;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;background:#fff">
-          </div>
-          <div style="grid-column:span 2">
-            <label style="font-size:11px;font-weight:700;color:#854d0e;display:block;margin-bottom:4px">🃏 Meta tarjetas activas (total cartera)</label>
-            <input type="text" autocomplete="off" inputmode="numeric" id="meta-tarjetas" placeholder="Ej: 200" oninput="fmtMoneyInput(this)" style="width:100%;padding:8px 10px;border:1.5px solid #fde047;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;background:#fff">
           </div>
         </div>
         <!-- Desglose automático -->
