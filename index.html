@@ -2682,8 +2682,14 @@ function clienteNecesitaVerificacion(p){
 function calcDerived(p){
   var pagosP=pagos.filter(function(x){return x.id_prestamo===p.id;});
   var totalPagadoGlobal=pagosP.reduce(function(s,x){return s+x.montoAbonado;},0);
-  // baseRenovacion: total acumulado antes de la última renovación (pagos viejos no cuentan)
-  var totalPagado=totalPagadoGlobal-(p.baseRenovacion||0);
+  // Auto-reparar baseRenovacion corrompida: si supera el total de pagos y no hay renovaciones activas
+  var baseRenov=p.baseRenovacion||0;
+  if(baseRenov>totalPagadoGlobal){
+    var tieneRenov=renovaciones.some(function(rv){return rv.id_prestamo===p.id;});
+    if(!tieneRenov){ p.baseRenovacion=0; baseRenov=0; setTimeout(guardarDatos,100); }
+    else { baseRenov=totalPagadoGlobal; }
+  }
+  var totalPagado=Math.max(0,totalPagadoGlobal-baseRenov);
   var saldoPendiente=Math.max(0,p.Total_A_Cobrar-totalPagado);
   var cuotasPagadas=Math.min(p.cantidadDeQuincenas,Math.floor(totalPagado/p.Cuota_Quincenal));
   var adelanto=totalPagado-(cuotasPagadas*p.Cuota_Quincenal); // pagado de más hacia próxima cuota
