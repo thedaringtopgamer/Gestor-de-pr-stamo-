@@ -3116,7 +3116,7 @@ function renderTarjetas(filtro){
     var badgeTarjeta=verif.necesita?'<span title="'+verif.razon+'" style="font-size:15px;margin-left:4px">⚠️</span>':'';
     var cancelado=d.saldoPendiente<=0;
     var borderColor=p.bloqueado?'border-left:5px solid #991b1b':(cancelado?'border-left:4px solid #93c5fd':'');
-    var bgBloq=p.bloqueado?'background:#fef2f2;':'';
+    var bgBloq=p.bloqueado?'background:#fee2e2;':'';
     return '<div class="loan-row" style="'+borderColor+';'+bgBloq+(cancelado&&!p.bloqueado?'opacity:0.7':''+'')+'">'
       +'<button class="icon-btn icon-btn-cyan btn-sm" style="width:auto;padding:7px 14px;border-radius:var(--radius)" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
       +'<div style="flex:1;padding-left:10px;min-width:0">'
