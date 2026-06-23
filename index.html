@@ -400,6 +400,13 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <span class="navbar-title">Inversión</span>
       <div style="width:70px"></div>
     </div>
+    <!-- Filtro de ruta -->
+    <div style="display:flex;gap:8px;padding:10px 16px 0;flex-wrap:wrap">
+      <button id="inv-rbtn-todas" onclick="setRutaInv('todas')" style="padding:6px 14px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;background:#1e40af;color:#fff">Todas</button>
+      <button id="inv-rbtn-Heredia" onclick="setRutaInv('Heredia')" style="padding:6px 14px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;background:#e5e7eb;color:#374151">Heredia</button>
+      <button id="inv-rbtn-Alajuela" onclick="setRutaInv('Alajuela')" style="padding:6px 14px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;background:#e5e7eb;color:#374151">Alajuela</button>
+      <button id="inv-rbtn-San Ramón" onclick="setRutaInv('San Ramón')" style="padding:6px 14px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;background:#e5e7eb;color:#374151">San Ramón</button>
+    </div>
     <div class="section">
 
       <!-- Fila 1: Inyectado | En la calle -->
@@ -446,7 +453,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <!-- Metas del mes -->
       <div class="card" style="margin-bottom:14px;background:#fefce8;border:2px solid #fde047">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <p style="font-size:14px;font-weight:800;margin:0;color:#854d0e">🎯 Metas del mes</p>
+          <p style="font-size:14px;font-weight:800;margin:0;color:#854d0e">🎯 Metas del mes — <span id="meta-ruta-label" style="font-weight:600">Todas</span></p>
           <button onclick="guardarMetas()" style="background:#854d0e;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">💾 Guardar</button>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -1992,7 +1999,8 @@ function subirFotoStorage(prestamoId, key, dataUrl){
 }
 
 function renderInversion(){
-  var activos=prestamos.filter(function(p){
+  var basePrestamos=rutaInvFiltro==='todas'?prestamos:prestamos.filter(function(p){return p.ruta===rutaInvFiltro;});
+  var activos=basePrestamos.filter(function(p){
     var d=calcDerived(p); return d.saldoPendiente>0;
   });
   var enCalle=activos.reduce(function(s,p){ return s+calcDerived(p).saldoPendiente; },0);
@@ -2073,23 +2081,43 @@ function abrirHistorialInversion(){
 var cierres=[];
 var metaPrestamos=0;
 var metaClientes=0;
+var rutaInvFiltro='todas';
+
+function setRutaInv(ruta){
+  rutaInvFiltro=ruta;
+  // Update pill buttons
+  ['todas','Heredia','Alajuela','San Ramón'].forEach(function(r){
+    var btn=document.getElementById('inv-rbtn-'+r);
+    if(!btn) return;
+    btn.style.background=r===ruta?'#1e40af':'#e5e7eb';
+    btn.style.color=r===ruta?'#fff':'#374151';
+  });
+  renderInversion();
+}
+
+function _metaKey(sufijo){
+  var k=rutaInvFiltro==='todas'?'todas':rutaInvFiltro.toLowerCase().replace(/\s+/g,'_');
+  return 'fjd_meta_'+sufijo+'_'+k;
+}
 
 function guardarMetas(){
   metaPrestamos=parseInt((document.getElementById('meta-prestamos').value||'').replace(/[^\d]/g,'')||'0',10);
   metaClientes=parseInt((document.getElementById('meta-clientes').value||'').replace(/[^\d]/g,'')||'0',10);
-  localStorage.setItem('fjd_meta_prestamos',metaPrestamos);
-  localStorage.setItem('fjd_meta_clientes',metaClientes);
+  localStorage.setItem(_metaKey('prestamos'),metaPrestamos);
+  localStorage.setItem(_metaKey('clientes'),metaClientes);
   renderInversion();
   toast('✓ Metas guardadas');
 }
 
 function _cargarMetas(){
-  metaPrestamos=parseInt(localStorage.getItem('fjd_meta_prestamos')||'0',10)||0;
-  metaClientes=parseInt(localStorage.getItem('fjd_meta_clientes')||'0',10)||0;
+  metaPrestamos=parseInt(localStorage.getItem(_metaKey('prestamos'))||'0',10)||0;
+  metaClientes=parseInt(localStorage.getItem(_metaKey('clientes'))||'0',10)||0;
   var elP=document.getElementById('meta-prestamos');
   var elC=document.getElementById('meta-clientes');
-  if(elP&&metaPrestamos) elP.value=fmt(metaPrestamos);
-  if(elC&&metaClientes) elC.value=metaClientes;
+  if(elP) elP.value=metaPrestamos?fmt(metaPrestamos):'';
+  if(elC) elC.value=metaClientes||'';
+  var lbl=document.getElementById('meta-ruta-label');
+  if(lbl) lbl.textContent=rutaInvFiltro==='todas'?'Todas':rutaInvFiltro;
 }
 
 function _renderMetaDesglose(){
