@@ -4157,24 +4157,45 @@ function renderPanelRecolector(){
   var countNuevos=nuevos.length+renovNuevos.length;
   document.getElementById('panel-stat-nuevos').textContent=countNuevos+' préstamo'+(countNuevos!==1?'s':'')+' · ₡'+fmt(totalNuevos);
   var nuevosItems=nuevos.map(function(p){
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">'
-      +'<div><div style="font-size:13px;font-weight:600">'+p.cliente+'</div><div style="font-size:11px;color:var(--text-muted)">'+p.tipo+' · Nuevo</div></div>'
-      +'<div style="display:flex;align-items:center;gap:8px">'
-      +'<span style="font-size:13px;font-weight:700;color:#2563eb">₡'+fmt(p.montoPrestado)+'</span>'
-      +'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
-      +(rolActual==='admin'?'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer" onclick="quitarNuevoDeCaja(\''+p.id+'\')">✕</button>':'')
-      +'</div></div>';
+    var partes=(p.fechaInicio||'').split('-');
+    var fechaFmt=partes.length===3?partes[2]+'-'+partes[1]+'-'+partes[0]:p.fechaInicio;
+    return '<tr style="border-bottom:1px solid #eff6ff">'+
+      '<td style="padding:8px 8px;text-align:right;font-weight:700;color:#2563eb;white-space:nowrap">₡'+fmt(p.montoPrestado)+'</td>'+
+      '<td style="padding:8px 8px;font-weight:600;color:#1e293b;white-space:nowrap">'+p.cliente+'</td>'+
+      '<td style="padding:8px 8px;color:#6b7280;white-space:nowrap">'+fechaFmt+'</td>'+
+      '<td style="padding:8px 8px;color:#6b7280;white-space:nowrap">'+(p.subruta||'—')+'</td>'+
+      '<td style="padding:8px 8px;text-align:center;white-space:nowrap">'+
+        '<button style="background:#dbeafe;color:#1e40af;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-right:3px" onclick="verDetalle(\''+p.id+'\')">Ver</button>'+
+        (rolActual==='admin'?'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer" onclick="quitarNuevoDeCaja(\''+p.id+'\')">✕</button>':'')+
+      '</td>'+
+      '</tr>';
   });
   var renovItems=renovNuevos.map(function(rv){
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">'
-      +'<div><div style="font-size:13px;font-weight:600">'+rv.cliente+'</div><div style="font-size:11px;color:#7c3aed">🔄 Renovación · '+rv.tipo+'</div></div>'
-      +'<div style="display:flex;align-items:center;gap:8px">'
-      +'<span style="font-size:13px;font-weight:700;color:#2563eb">₡'+fmt(rv.montoNuevo||0)+'</span>'
-      +'<button class="btn btn-cyan btn-sm" style="padding:4px 10px;font-size:11px" onclick="verDetalle(\''+rv.id_prestamo+'\')">Ver</button>'
-      +(rolActual==='admin'?'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer" onclick="quitarRenovDeCaja(\''+rv.id+'\')">✕</button>':'')
-      +'</div></div>';
+    var pr=prestamos.find(function(x){return x.id===rv.id_prestamo;});
+    var partes=(rv.fecha||'').split('-');
+    var fechaFmt=partes.length===3?partes[2]+'-'+partes[1]+'-'+partes[0]:rv.fecha;
+    return '<tr style="border-bottom:1px solid #eff6ff">'+
+      '<td style="padding:8px 8px;text-align:right;font-weight:700;color:#7c3aed;white-space:nowrap">₡'+fmt(rv.montoNuevo||0)+'</td>'+
+      '<td style="padding:8px 8px;white-space:nowrap"><span style="font-weight:600;color:#1e293b">'+rv.cliente+'</span> <span style="font-size:10px;color:#7c3aed;font-weight:600">🔄</span></td>'+
+      '<td style="padding:8px 8px;color:#6b7280;white-space:nowrap">'+fechaFmt+'</td>'+
+      '<td style="padding:8px 8px;color:#6b7280;white-space:nowrap">'+(pr&&pr.subruta?pr.subruta:'—')+'</td>'+
+      '<td style="padding:8px 8px;text-align:center;white-space:nowrap">'+
+        '<button style="background:#dbeafe;color:#1e40af;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-right:3px" onclick="verDetalle(\''+rv.id_prestamo+'\')">Ver</button>'+
+        (rolActual==='admin'?'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer" onclick="quitarRenovDeCaja(\''+rv.id+'\')">✕</button>':'')+
+      '</td>'+
+      '</tr>';
   });
-  document.getElementById('panel-nuevos-lista').innerHTML=(nuevosItems.concat(renovItems)).join('')||'<p style="font-size:13px;color:var(--text-muted)">Sin préstamos nuevos</p>';
+  var allNuevos=nuevosItems.concat(renovItems);
+  document.getElementById('panel-nuevos-lista').innerHTML=allNuevos.length
+    ?'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="min-width:440px;border-collapse:collapse;font-size:12px">'
+      +'<thead><tr style="border-bottom:2px solid #bfdbfe">'
+      +'<th style="text-align:right;padding:6px 8px;color:#1d4ed8;font-weight:700;white-space:nowrap">Monto</th>'
+      +'<th style="text-align:left;padding:6px 8px;color:#1d4ed8;font-weight:700;white-space:nowrap">Cliente</th>'
+      +'<th style="text-align:left;padding:6px 8px;color:#1d4ed8;font-weight:700;white-space:nowrap">Fecha</th>'
+      +'<th style="text-align:left;padding:6px 8px;color:#1d4ed8;font-weight:700;white-space:nowrap">Lugar</th>'
+      +'<th style="padding:6px 8px"></th>'
+      +'</tr></thead><tbody>'+allNuevos.join('')+'</tbody></table></div>'
+    :'<p style="font-size:13px;color:var(--text-muted)">Sin préstamos nuevos</p>';
 
   // Cobros realizados de esta ruta
   var pagosHoy=pagos.filter(function(x){return !x._ocultarPanel && (x.fechaRegistro||x.fechaPago)===fecha && idsRuta.indexOf(x.id_prestamo)!==-1;});
