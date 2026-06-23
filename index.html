@@ -3378,7 +3378,7 @@ function renderCobros(filtro){
     var esBloqueado=!!(p.bloqueado||clientesBloqueados[p.id]);
     if(p.motivoBloqueo||clientesBloqueados[p.id]) p.motivoBloqueo=p.motivoBloqueo||(clientesBloqueados[p.id]&&clientesBloqueados[p.id].motivo)||'';
     if(esBloqueado){
-      return '<div class="loan-row" style="background:#dc2626;border-left:3px solid #991b1b">'
+      return '<div style="display:flex;gap:8px;align-items:center;padding:12px 16px;border-bottom:1px solid #991b1b;background:#dc2626 !important;border-left:4px solid #7f1d1d">'
         +'<button class="icon-btn" style="background:#fff;color:#dc2626;font-size:13px;width:auto;padding:6px 10px;" onclick="verDetalle(\''+p.id+'\')" title="Ver detalle">Ver</button>'
         +'<button class="icon-btn" style="background:#991b1b;color:#fff;cursor:not-allowed;font-size:18px" onclick="toast(\'🚫 Cliente bloqueado — no se puede renovar\')" title="Bloqueado">↻</button>'
         +'<button class="icon-btn icon-btn-green" onclick="abonoRapido(\''+p.id+'\',\''+p.cliente+'\','+d.pendienteProxima+')" title="Abonar cuota">🐷</button>'
