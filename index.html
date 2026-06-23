@@ -2797,9 +2797,6 @@ function selSemanas(n){
     btn.style.background=v===n?'#f0f9ff':'#fff';
     btn.style.color=v===n?'#0e7490':'inherit';
   });
-  // ≤6 semanas → 20%, >6 → 44%
-  var tasaEl=document.getElementById('np-tasa');
-  if(tasaEl) tasaEl.value=n>6?'44':'20';
   calcPreview();
   calcProxFechaPago();
 }
@@ -3931,8 +3928,6 @@ function calcRenovar(){
       var sem=document.querySelector('input[name="ren-sem"]:checked');
       var semVal=sem?parseInt(sem.value):6;
       cuotas=semVal; diasPorCuota=7;
-      var tasaRenEl2=document.getElementById('ren-tasa');
-      if(tasaRenEl2 && !document.getElementById('ren-digitar-check').checked) tasaRenEl2.value=semVal>6?'44':'20';
     }
   } else if(tipo==='Quincenal'){
     var quin=document.querySelector('input[name="ren-quin"]:checked');
