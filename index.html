@@ -467,6 +467,12 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
             <span>➕ Registrar inyección de capital</span><span id="inv-agregar-arrow">▼</span>
           </button>
           <div id="inv-agregar-sec" style="display:none;padding:0 14px 14px">
+            <select id="inv-ruta" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;margin-bottom:6px;background:#fff;color:#111">
+              <option value="todas">🌐 Todas las rutas</option>
+              <option value="Heredia">📍 Heredia</option>
+              <option value="Alajuela">📍 Alajuela</option>
+              <option value="San Ramón">📍 San Ramón</option>
+            </select>
             <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric" id="inv-monto" placeholder="Monto" oninput="fmtMoneyInput(this)" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;margin-bottom:6px">
             <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="inv-nota" placeholder="Nota (opcional)" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;margin-bottom:8px">
             <button class="btn btn-blue btn-full" style="padding:8px;font-size:13px" onclick="registrarInversion()">Registrar</button>
@@ -2213,12 +2219,13 @@ function registrarInversion(){
   var monto=parseInt(montoRaw,10);
   if(!monto||monto<=0){ toast('⚠ Ingrese un monto válido'); return; }
   var nota=document.getElementById('inv-nota').value.trim();
-  inversiones.push({id:Date.now().toString(),monto:monto,nota:nota,fecha:hoyLocal()});
+  var rutaInv=document.getElementById('inv-ruta').value||'todas';
+  inversiones.push({id:Date.now().toString(),monto:monto,nota:nota,fecha:hoyLocal(),ruta:rutaInv});
   guardarDatos();
   document.getElementById('inv-monto').value='';
   document.getElementById('inv-nota').value='';
   renderInversion();
-  toast('✓ Inversión registrada');
+  toast('✓ Inyección registrada: ₡'+fmt(monto)+' → '+(rutaInv==='todas'?'Todas':rutaInv));
 }
 
 function eliminarInversion(id){
@@ -4983,7 +4990,8 @@ function renderPanelRecolector(){
     var prestamosAyer=prestamosRuta.filter(function(p){return p.fechaInicio===ayerStr&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
     var renovAyer=renovaciones.filter(function(x){return x.fecha===ayerStr&&(rutaActual==='todas'||prestamos.find(function(p){return p.id===x.id_prestamo&&p.ruta===rutaActual;}));}).reduce(function(s,x){return s+(x.montoEntregado||0);},0);
     var gastosAyer=gastos.filter(function(x){return x.fecha===ayerStr&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
-    var cajaAyer=recogidaAyer+baseAyer-(prestamosAyer+renovAyer)-gastosAyer;
+    var inyeccionAyer=inversiones.filter(function(x){return x.fecha===ayerStr&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
+    var cajaAyer=recogidaAyer+baseAyer+inyeccionAyer-(prestamosAyer+renovAyer)-gastosAyer;
     if(cajaAyer>0) baseGuardada=cajaAyer;
   }
   var recogidaTotal=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
@@ -4999,6 +5007,11 @@ function renderPanelRecolector(){
 
   var salidaGuardada=parseInt(salidas[rutaCajaKey+'_'+fecha])||0;
 
+  // Inyecciones de capital del día para esta ruta
+  var inyeccionHoy=inversiones.filter(function(x){
+    return x.fecha===fecha&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);
+  }).reduce(function(s,x){return s+x.monto;},0);
+
   var inputBase=document.getElementById('caja-base');
   inputBase.value=baseGuardada>0?fmt(baseGuardada):'';
   inputBase.readOnly=(rolActual!=='admin');
@@ -5008,10 +5021,10 @@ function renderPanelRecolector(){
   if(wrapSalida) wrapSalida.style.display=(rolActual==='admin')?'':'none';
   var inputSalida=document.getElementById('caja-salida');
   if(inputSalida) inputSalida.value=salidaGuardada>0?fmt(salidaGuardada):'';
-  // FÓRMULA: Base + Recogida - NuevosReales - EntregadoRenov - AdminRenov - Gastos
-  var cajaTotal=baseGuardada+recogidaTotal-totalSoloNuevos-totalEntregadoRenov-totalAdminRenov-totalGastos;
+  // FÓRMULA: Base + Inyección + Recogida - NuevosReales - EntregadoRenov - AdminRenov - Gastos
+  var cajaTotal=baseGuardada+inyeccionHoy+recogidaTotal-totalSoloNuevos-totalEntregadoRenov-totalAdminRenov-totalGastos;
   document.getElementById('caja-recogida').textContent='₡'+fmt(recogidaTotal);
-  document.getElementById('caja-base-display').textContent='₡'+fmt(baseGuardada);
+  document.getElementById('caja-base-display').textContent='₡'+fmt(baseGuardada+(inyeccionHoy?inyeccionHoy:0));
   document.getElementById('caja-prestamos').textContent='₡'+fmt(prestamosTotal);
   document.getElementById('caja-gastos').textContent='₡'+fmt(totalGastos);
   document.getElementById('caja-total').textContent='₡'+fmt(cajaTotal);
