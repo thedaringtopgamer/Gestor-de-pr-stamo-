@@ -586,6 +586,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">N° cuotas</div><input type="number" id="corr-ncuotas" placeholder="0" min="1" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box"></div>
         <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Base renovación</div><input type="text" inputmode="numeric" id="corr-base" oninput="fmtMoneyInput(this)" placeholder="0" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box"></div>
         <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Tipo</div><select id="corr-tipo" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;background:#fff;box-sizing:border-box"><option value="Diario">Diario</option><option value="Semanal">Semanal</option><option value="Quincenal">Quincenal</option><option value="Mensual">Mensual</option></select></div>
+        <div style="grid-column:span 2"><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Fecha de inicio</div><input type="date" id="corr-fecha-inicio" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box"></div>
       </div>
       <button onclick="guardarCorreccion()" style="width:100%;padding:12px;background:#f59e0b;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">💾 Guardar corrección</button>
     </div>
@@ -3917,6 +3918,17 @@ function confirmarRenovacion(){
 }
 
 function abrirModalCorregir(){
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(p){
+    var fmtV=function(id,val){ var el=document.getElementById(id); if(el) el.value=val||''; };
+    fmtV('corr-monto',fmt(p.montoPrestado||0));
+    fmtV('corr-total',fmt(p.Total_A_Cobrar||0));
+    fmtV('corr-cuota',fmt(p.Cuota_Quincenal||0));
+    document.getElementById('corr-ncuotas').value=p.cantidadDeQuincenas||'';
+    fmtV('corr-base',fmt(p.baseRenovacion||0));
+    document.getElementById('corr-tipo').value=p.tipo||'Quincenal';
+    document.getElementById('corr-fecha-inicio').value=p.fechaInicio||'';
+  }
   document.getElementById('modal-corregir').style.display='flex';
 }
 
@@ -3969,6 +3981,7 @@ function guardarCorreccion(){
     toast('⚠️ Completá todos los campos');
     return;
   }
+  var fechaInicioCorr=document.getElementById('corr-fecha-inicio').value;
   p.montoPrestado=monto;
   p.Total_A_Cobrar=total;
   p.Total_Intereses=total-monto;
@@ -3976,6 +3989,7 @@ function guardarCorreccion(){
   p.cantidadDeQuincenas=ncuotas;
   p.baseRenovacion=base;
   p.tipo=tipo;
+  if(fechaInicioCorr) p.fechaInicio=fechaInicioCorr;
   document.getElementById('modal-corregir').style.display='none';
   guardarDatos();
   toast('✓ Datos corregidos');
