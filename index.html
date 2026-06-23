@@ -2291,14 +2291,48 @@ function _abrirListaNuevos(el){
   }
   goTo('screen-nuevos-periodo');
 }
+function _invOverrideKey(tipo,campo){ return 'fjd_inv_override_'+tipo+'_'+campo; }
+function _editarStatInv(tipo,campo,label,esMonto){
+  if(rolActual!=='admin') return;
+  var key=_invOverrideKey(tipo,campo);
+  var actual=localStorage.getItem(key)||'';
+  var overlay=document.getElementById('modal-overlay');
+  document.getElementById('modal-subtitulo').textContent='Corregir '+label;
+  document.getElementById('modal-mensaje').textContent='Ingrese el valor correcto para "'+label+'" (deje en blanco para usar el calculado automáticamente):';
+  document.getElementById('modal-btn-si').textContent='Guardar';
+  document.getElementById('modal-btn-si').style.background='#2563eb';
+  overlay.style.display='flex';
+  // Agregar input temporal
+  var inp=document.getElementById('_inv_edit_inp');
+  if(!inp){ inp=document.createElement('input'); inp.id='_inv_edit_inp'; inp.autocomplete='off'; inp.inputMode=esMonto?'numeric':'numeric'; inp.style.cssText='width:100%;padding:10px;border:1.5px solid #d1d5db;border-radius:10px;font-size:16px;font-family:\'DM Sans\',sans-serif;outline:none;box-sizing:border-box;margin-top:10px;text-align:center'; document.getElementById('modal-mensaje').after(inp); }
+  inp.style.display='block'; inp.value=actual; inp.placeholder=esMonto?'Ej: 0':'Ej: 0';
+  setTimeout(function(){inp.focus();},200);
+  _modalCallback=function(){
+    overlay.style.display='none';
+    document.getElementById('modal-btn-si').style.background='#16a34a';
+    inp.style.display='none';
+    var val=inp.value.trim().replace(/,/g,'');
+    if(val===''){ localStorage.removeItem(key); } else { localStorage.setItem(key,val); }
+    renderInversion();
+  };
+  document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
+}
 function _statsHtml(d,tipo){
-  var utilidad=d.recogida-(d.prestado+d.montoRenov)-d.totalGastos;
+  var prestadoCalc=d.prestado+d.montoRenov;
+  var clientesCalc=d.numPrestamos;
+  var ovPrestado=localStorage.getItem(_invOverrideKey(tipo,'prestado'));
+  var ovClientes=localStorage.getItem(_invOverrideKey(tipo,'clientes'));
+  var prestadoVal=ovPrestado!==null?parseInt(ovPrestado)||0:prestadoCalc;
+  var clientesVal=ovClientes!==null?parseInt(ovClientes)||0:clientesCalc;
+  var utilidad=d.recogida-prestadoVal-d.totalGastos;
   var pos=utilidad>=0;
   var periodo=tipo==='mes'?'Mes':'Semana';
+  var editStyle=rolActual==='admin'?'cursor:pointer;' :'';
+  var editHint=rolActual==='admin'?' ✏️':'';
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">'
     +'<div style="background:#f0fdf4;border-radius:8px;padding:8px"><div style="color:#6b7280">💰 Recogida</div><div style="font-weight:700;color:#166534">'+_fmtCol(d.recogida)+'</div></div>'
-    +'<div style="background:#dbeafe;border-radius:8px;padding:8px"><div style="color:#6b7280">📤 Prestado</div><div style="font-weight:700;color:#1e40af">'+_fmtCol(d.prestado+d.montoRenov)+'</div></div>'
-    +'<div style="background:#f3f4f6;border-radius:8px;padding:8px;cursor:pointer" onclick="_abrirListaNuevos(this)" data-nuevos=\''+JSON.stringify(d.listaNuevos||[]).replace(/'/g,"&#39;")+'\'><div style="color:#6b7280">👥 Clientes nuevos</div><div style="font-weight:700;color:#374151">'+d.numPrestamos+(d.numPrestamos>0?' 🔍':'')+'</div></div>'
+    +'<div style="background:#dbeafe;border-radius:8px;padding:8px;'+editStyle+'" onclick="_editarStatInv(\''+tipo+'\',\'prestado\',\'Prestado\',true)"><div style="color:#6b7280">📤 Prestado'+editHint+'</div><div style="font-weight:700;color:#1e40af">'+_fmtCol(prestadoVal)+'</div></div>'
+    +'<div style="background:#f3f4f6;border-radius:8px;padding:8px;'+editStyle+'" onclick="_editarStatInv(\''+tipo+'\',\'clientes\',\'Clientes nuevos\',false)"><div style="color:#6b7280">👥 Clientes nuevos'+editHint+'</div><div style="font-weight:700;color:#374151">'+clientesVal+'</div></div>'
     +(d.totalCobroAdm?'<div style="background:#ede9fe;border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:#7c3aed">'+_fmtCol(d.totalCobroAdm)+'</div></div>':'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:#9ca3af">₡0</div></div>')
     +'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💸 Gastos</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(d.totalGastos||0)+'</div></div>'
     +'<div style="border-radius:8px;padding:10px;grid-column:span 2;background:'+(pos?'#dcfce7':'#fee2e2')+';border:2px solid '+(pos?'#86efac':'#fca5a5')+'">'
