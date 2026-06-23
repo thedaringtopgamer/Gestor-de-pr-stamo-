@@ -3186,12 +3186,18 @@ function mostrarInfoCelda(dia,fechaPago,totalCobrar){
 
 function renderPagosLista(p){
   var lista=document.getElementById('pagos-lista');
-  var pp=pagos.filter(function(x){return x.id_prestamo===p.id;}).map(function(x){return {tipo:'abono',fecha:x.fechaPago,id:x.id_pago,data:x};});
-  var rr=renovaciones.filter(function(x){return x.id_prestamo===p.id;}).map(function(x){return {tipo:'renovacion',fecha:x.fecha,id:x.id,data:x};});
+  var ppRaw=pagos.filter(function(x){return x.id_prestamo===p.id;});
+  var rrRaw=renovaciones.filter(function(x){return x.id_prestamo===p.id;});
+  var pp=ppRaw.map(function(x,i){return {tipo:'abono',fecha:x.fechaPago,ts:x.fechaRegistro||x.fechaPago||'',idx:i,data:x};});
+  var rrOffset=ppRaw.length;
+  var rr=rrRaw.map(function(x,i){return {tipo:'renovacion',fecha:x.fecha,ts:x.fecha||'',idx:rrOffset+i,data:x};});
   var todos=pp.concat(rr).sort(function(a,b){
-    var cmp=b.fecha.localeCompare(a.fecha);
-    if(cmp!==0) return cmp;
-    return b.id.localeCompare(a.id);
+    // Sort by registration timestamp desc, then by payment/action date desc, then insertion order desc
+    var cmpTs=(b.ts||'').localeCompare(a.ts||'');
+    if(cmpTs!==0) return cmpTs;
+    var cmpF=(b.fecha||'').localeCompare(a.fecha||'');
+    if(cmpF!==0) return cmpF;
+    return b.idx-a.idx;
   });
   if(!todos.length){
     lista.innerHTML='<p style="font-size:13px;color:var(--text-muted);padding:8px 0">Sin movimientos registrados</p>';
