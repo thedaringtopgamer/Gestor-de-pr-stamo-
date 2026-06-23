@@ -3115,13 +3115,14 @@ function renderTarjetas(filtro){
     var verif=clienteNecesitaVerificacion(p);
     var badgeTarjeta=verif.necesita?'<span title="'+verif.razon+'" style="font-size:15px;margin-left:4px">⚠️</span>':'';
     var cancelado=d.saldoPendiente<=0;
-    var borderColor=p.bloqueado?'border-left:5px solid #991b1b':(cancelado?'border-left:4px solid #93c5fd':'');
-    var bgBloq=p.bloqueado?'background:#fecaca;':'';
+    var borderColor=p.bloqueado?'':(cancelado?'border-left:4px solid #93c5fd':'');
+    var bgBloq=p.bloqueado?'background:#dc2626;':'';
+    var txtBloq=p.bloqueado?'color:#fff;':'';
     return '<div class="loan-row" style="'+borderColor+';'+bgBloq+(cancelado&&!p.bloqueado?'opacity:0.7':''+'')+'">'
-      +'<button class="icon-btn icon-btn-cyan btn-sm" style="width:auto;padding:7px 14px;border-radius:var(--radius)" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
+      +'<button class="icon-btn icon-btn-cyan btn-sm" style="width:auto;padding:7px 14px;border-radius:var(--radius);'+(p.bloqueado?'background:#fff;color:#dc2626;':'')+'" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
       +'<div style="flex:1;padding-left:10px;min-width:0">'
-        +'<div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+(p.bloqueado?' 🚫':'')+badgeTarjeta+'</div>'
-        +'<div style="font-size:13px;color:var(--text-muted)">'+estadoTag(d.estado)+' &nbsp;'+p.cantidadDeQuincenas+' cuotas</div>'
+        +'<div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+txtBloq+'">'+p.cliente+(p.bloqueado?' 🚫':'')+badgeTarjeta+'</div>'
+        +'<div style="font-size:13px;color:'+(p.bloqueado?'rgba(255,255,255,0.85)':'var(--text-muted)')+'">'+estadoTag(d.estado)+' &nbsp;'+p.cantidadDeQuincenas+' cuotas</div>'
       +'</div>'
       +(cancelado
         ? '<div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
@@ -3129,8 +3130,8 @@ function renderTarjetas(filtro){
             +btnEliminar
           +'</div>'
         : '<div style="text-align:right;flex-shrink:0">'
-          +'<div style="font-size:14px;font-weight:600">₡'+fmt(p.montoPrestado)+'</div>'
-          +'<div style="font-size:13px;font-weight:600;color:#2563eb">'+(p.subruta||p.ruta||'')+'</div>'
+          +'<div style="font-size:14px;font-weight:600;'+(p.bloqueado?'color:#fff;':'')+'">₡'+fmt(p.montoPrestado)+'</div>'
+          +'<div style="font-size:13px;font-weight:600;color:'+(p.bloqueado?'rgba(255,255,255,0.8)':'#2563eb')+'">'+(p.subruta||p.ruta||'')+'</div>'
           +'</div>')
     +'</div>';
   }).join('');
