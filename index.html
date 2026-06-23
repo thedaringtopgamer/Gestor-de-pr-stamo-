@@ -5033,18 +5033,13 @@ function renderPanelRecolector(){
   var rutaCajaKey=rutaActual||'todas';
   var baseGuardada=parseInt(bases[rutaCajaKey+'_'+fecha])||0;
   if(!baseGuardada){
-    var ayer=new Date(fecha+'T12:00:00');
-    ayer.setDate(ayer.getDate()-1);
-    var ayerStr=ayer.toISOString().split('T')[0];
-    var baseAyer=parseInt(bases[rutaCajaKey+'_'+ayerStr])||0;
-    var idsAyer=prestamosRuta.map(function(p){return p.id;});
-    var recogidaAyer=pagos.filter(function(x){return (x.fechaRegistro||x.fechaPago)===ayerStr&&idsAyer.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
-    var prestamosAyer=prestamosRuta.filter(function(p){return p.fechaInicio===ayerStr&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
-    var renovAyer=renovaciones.filter(function(x){return x.fecha===ayerStr&&(rutaActual==='todas'||prestamos.find(function(p){return p.id===x.id_prestamo&&p.ruta===rutaActual;}));}).reduce(function(s,x){return s+(x.montoEntregado||0);},0);
-    var gastosAyer=gastos.filter(function(x){return x.fecha===ayerStr&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
-    var inyeccionAyer=inversiones.filter(function(x){return x.fecha===ayerStr&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
-    var cajaAyer=recogidaAyer+baseAyer+inyeccionAyer-(prestamosAyer+renovAyer)-gastosAyer;
-    if(cajaAyer>0) baseGuardada=cajaAyer;
+    // Heredar la última base guardada (hasta 30 días atrás)
+    for(var _d=1;_d<=30;_d++){
+      var _prev=new Date(fecha+'T12:00:00'); _prev.setDate(_prev.getDate()-_d);
+      var _prevStr=_prev.toISOString().split('T')[0];
+      var _baseAnterior=parseInt(bases[rutaCajaKey+'_'+_prevStr])||0;
+      if(_baseAnterior>0){ baseGuardada=_baseAnterior; break; }
+    }
   }
   var recogidaTotal=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
 
