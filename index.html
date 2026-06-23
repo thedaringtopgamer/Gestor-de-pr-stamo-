@@ -2205,7 +2205,7 @@ function _calcCierreData(desde,hasta,rutaParam){
   var porRuta=function(p){ return ruta==='todas'||(p.ruta===ruta); };
   var idsPorRuta=prestamos.filter(porRuta).map(function(p){return p.id;});
   var pagosP=pagos.filter(function(x){
-    var f=x.fechaRegistro||x.fechaPago; return f>=desde&&f<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0);
+    var f=x.fechaPago; return f>=desde&&f<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0);
   });
   var recogida=pagosP.reduce(function(s,x){ return s+x.montoAbonado; },0);
   var nuevosP=prestamos.filter(function(p){ return porRuta(p)&&p.fechaInicio>=desde&&p.fechaInicio<=hasta&&!p.incompleto; });
@@ -4577,7 +4577,7 @@ function renderPanelRecolector(){
     :'<p style="font-size:13px;color:var(--text-muted)">Sin préstamos nuevos</p>';
 
   // Cobros realizados de esta ruta
-  var pagosHoy=pagos.filter(function(x){return !x._ocultarPanel && (x.fechaRegistro||x.fechaPago)===fecha && idsRuta.indexOf(x.id_prestamo)!==-1;});
+  var pagosHoy=pagos.filter(function(x){return !x._ocultarPanel && x.fechaPago===fecha && idsRuta.indexOf(x.id_prestamo)!==-1;});
   var totalCobros=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
   document.getElementById('panel-stat-cobros').textContent=pagosHoy.length+' cobro'+(pagosHoy.length!==1?'s':'')+' · ₡'+fmt(totalCobros);
   document.getElementById('panel-cobros-lista').innerHTML=pagosHoy.length
