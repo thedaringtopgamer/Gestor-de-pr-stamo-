@@ -896,6 +896,43 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <button class="btn btn-cyan btn-full" style="padding:12px;margin-top:4px" onclick="abrirRenovar()">🔄 Renovar</button>
 <button id="btn-eliminar-prestamo" class="btn btn-red btn-full" style="padding:11px;margin-top:8px" onclick="eliminarPrestamo()">🗑 Eliminar préstamo</button>
 
+      <!-- Corregir datos financieros (solo admin) -->
+      <div id="panel-corregir" style="display:none;margin-top:10px;border:2px dashed #f59e0b;border-radius:12px;padding:14px;background:#fffbeb">
+        <p style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px">🔧 Corregir datos del préstamo</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div>
+            <div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Monto prestado</div>
+            <input type="text" inputmode="numeric" id="corr-monto" oninput="fmtMoneyInput(this)" placeholder="0" style="width:100%;padding:7px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+          </div>
+          <div>
+            <div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Total a cobrar</div>
+            <input type="text" inputmode="numeric" id="corr-total" oninput="fmtMoneyInput(this)" placeholder="0" style="width:100%;padding:7px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+          </div>
+          <div>
+            <div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Cuota</div>
+            <input type="text" inputmode="numeric" id="corr-cuota" oninput="fmtMoneyInput(this)" placeholder="0" style="width:100%;padding:7px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+          </div>
+          <div>
+            <div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">N° cuotas</div>
+            <input type="number" id="corr-ncuotas" placeholder="0" min="1" style="width:100%;padding:7px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+          </div>
+          <div>
+            <div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Base renovación</div>
+            <input type="text" inputmode="numeric" id="corr-base" oninput="fmtMoneyInput(this)" placeholder="0" style="width:100%;padding:7px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+          </div>
+          <div>
+            <div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Tipo</div>
+            <select id="corr-tipo" style="width:100%;padding:7px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;background:#fff;box-sizing:border-box">
+              <option value="Diario">Diario</option>
+              <option value="Semanal">Semanal</option>
+              <option value="Quincenal">Quincenal</option>
+              <option value="Mensual">Mensual</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="guardarCorreccion()" style="width:100%;padding:11px;background:#f59e0b;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">💾 Guardar corrección</button>
+      </div>
+
       <!-- Cuotas — al final -->
       <div class="card" style="margin-top:8px">
         <p style="font-size:14px;font-weight:600;margin-bottom:10px">📅 Cuotas</p>
@@ -3079,6 +3116,22 @@ function verDetalle(id){
   var btnEliminar=document.getElementById('btn-eliminar-prestamo');
   if(btnGuardar) btnGuardar.style.display=esAdmin?'':'none';
   if(btnEliminar) btnEliminar.style.display=esAdmin?'':'none';
+  // Panel corregir datos — solo admin
+  var panelCorr=document.getElementById('panel-corregir');
+  if(panelCorr){
+    panelCorr.style.display=esAdmin?'':'none';
+    if(esAdmin){
+      // Populate inputs with current values so admin can review and edit
+      var unFmt=function(v){return String(v||0).replace(/[^0-9]/g,'');};
+      document.getElementById('corr-monto').value=fmt(p.montoPrestado||0);
+      document.getElementById('corr-total').value=fmt(p.Total_A_Cobrar||0);
+      document.getElementById('corr-cuota').value=fmt(p.Cuota_Quincenal||0);
+      document.getElementById('corr-ncuotas').value=p.cantidadDeQuincenas||0;
+      document.getElementById('corr-base').value=fmt(p.baseRenovacion||0);
+      var selTipo=document.getElementById('corr-tipo');
+      if(selTipo) selTipo.value=p.tipo||'Quincenal';
+    }
+  }
   renderCuotasGrid(p,d);
   renderPagosLista(p);
   switchTab('tarjeta');
@@ -3663,6 +3716,33 @@ function confirmarRenovacion(){
   verDetalle(p.id);
   // Ofrecer WhatsApp si tiene teléfono
   setTimeout(function(){ ofrecerWhatsApp(p.id,'renovacion'); },400);
+}
+
+function guardarCorreccion(){
+  if(!currentId) return;
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  var parseMoney=function(id){return parseInt((document.getElementById(id).value||'0').replace(/[^0-9]/g,''))||0;};
+  var monto=parseMoney('corr-monto');
+  var total=parseMoney('corr-total');
+  var cuota=parseMoney('corr-cuota');
+  var ncuotas=parseInt(document.getElementById('corr-ncuotas').value)||0;
+  var base=parseMoney('corr-base');
+  var tipo=document.getElementById('corr-tipo').value||p.tipo||'Quincenal';
+  if(!monto||!total||!cuota||!ncuotas){
+    toast('⚠️ Completá todos los campos');
+    return;
+  }
+  p.montoPrestado=monto;
+  p.Total_A_Cobrar=total;
+  p.Total_Intereses=total-monto;
+  p.Cuota_Quincenal=cuota;
+  p.cantidadDeQuincenas=ncuotas;
+  p.baseRenovacion=base;
+  p.tipo=tipo;
+  guardarDatos();
+  toast('✓ Datos corregidos');
+  verDetalle(currentId);
 }
 
 function eliminarPrestamo(){
