@@ -409,17 +409,22 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     </div>
     <div class="section">
 
-      <!-- Fila 1: Inyectado | En la calle -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-        <div class="card" style="margin:0;padding:14px 12px;text-align:center">
-          <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:6px">🏦 Inyectado</div>
-          <div style="font-size:22px;font-weight:900;color:#166534" id="inv-capital-total">₡0</div>
+      <!-- Fila 1: Inyectado | En la calle | Capital prestado -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="card" style="margin:0;padding:14px 10px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:6px">🏦 Inyectado</div>
+          <div style="font-size:18px;font-weight:900;color:#166534" id="inv-capital-total">₡0</div>
           <div style="font-size:10px;color:#9ca3af;margin-top:2px">Capital metido</div>
         </div>
-        <div class="card" style="margin:0;padding:14px 12px;text-align:center">
-          <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:6px">💸 En la calle</div>
-          <div style="font-size:22px;font-weight:900;color:#1e40af" id="inv-en-calle">₡0</div>
-          <div style="font-size:10px;color:#9ca3af;margin-top:2px" id="inv-clientes-activos">0 clientes activos</div>
+        <div class="card" style="margin:0;padding:14px 10px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:6px">💸 En la calle</div>
+          <div style="font-size:18px;font-weight:900;color:#1e40af" id="inv-en-calle">₡0</div>
+          <div style="font-size:10px;color:#9ca3af;margin-top:2px" id="inv-clientes-activos">0 clientes</div>
+        </div>
+        <div class="card" style="margin:0;padding:14px 10px;text-align:center;background:#f0f9ff">
+          <div style="font-size:10px;font-weight:700;color:#0369a1;text-transform:uppercase;margin-bottom:6px">💵 Prestado</div>
+          <div style="font-size:18px;font-weight:900;color:#0c4a6e" id="inv-capital-prestado">₡0</div>
+          <div style="font-size:10px;color:#9ca3af;margin-top:2px">Sin intereses</div>
         </div>
       </div>
 
@@ -2022,8 +2027,10 @@ function renderInversion(){
   var capitalTotal=inversiones.reduce(function(s,i){ return s+i.monto; },0);
 
   document.getElementById('inv-en-calle').textContent=_fmtCol(enCalle);
-  document.getElementById('inv-clientes-activos').textContent=activos.length+' cliente'+(activos.length===1?'':'s')+' activo'+(activos.length===1?'':'s');
+  document.getElementById('inv-clientes-activos').textContent=activos.length+' cliente'+(activos.length===1?'':'s');
   document.getElementById('inv-capital-total').textContent=_fmtCol(capitalTotal);
+  var elCapP=document.getElementById('inv-capital-prestado');
+  if(elCapP) elCapP.textContent=_fmtCol(capitalPrestado);
 
   var diffEl=document.getElementById('inv-diferencia');
   var labelEl=document.getElementById('inv-diferencia-label');
