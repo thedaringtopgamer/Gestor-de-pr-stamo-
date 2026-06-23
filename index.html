@@ -3315,7 +3315,7 @@ function verDetalle(id){
       var mtvEl=document.getElementById('bloqueo-motivo-txt');
       if(mtvEl) mtvEl.textContent=p.motivoBloqueo||'Sin motivo';
       var btnBloqToggle=document.getElementById('btn-bloquear-toggle');
-      if(btnBloqToggle){ btnBloqToggle.textContent='✅ Desbloquear'; btnBloqToggle.style.color='#166534'; btnBloqToggle.style.borderColor='#86efac'; btnBloqToggle.onclick=desbloquearCliente; }
+      if(btnBloqToggle){ btnBloqToggle.textContent='🔓 Desbloquear'; btnBloqToggle.style.color='#dc2626'; btnBloqToggle.style.borderColor='#fca5a5'; btnBloqToggle.onclick=desbloquearCliente; }
     } else {
       var btnBloqToggle2=document.getElementById('btn-bloquear-toggle');
       if(btnBloqToggle2){ btnBloqToggle2.textContent='🚫 Bloquear'; btnBloqToggle2.style.color='#dc2626'; btnBloqToggle2.style.borderColor='#fca5a5'; btnBloqToggle2.onclick=abrirModalBloqueo; }
