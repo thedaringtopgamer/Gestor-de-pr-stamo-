@@ -3612,6 +3612,14 @@ function confirmarRenovacion(){
   var cuotaVal=digitar?readMoneyInput('ren-cuota-manual'):Math.round(total/cuotas);
   if(!cuotaVal){toast('⚠ Ingrese la cuota manual');return;}
   var d=calcDerived(p);
+  // Snapshot completo del estado anterior (para poder revertir al eliminar)
+  var _prevState={
+    montoPrestado:p.montoPrestado,tasaInteres:p.tasaInteres,
+    Total_A_Cobrar:p.Total_A_Cobrar,Total_Intereses:p.Total_Intereses,
+    Cuota_Quincenal:p.Cuota_Quincenal,cantidadDeQuincenas:p.cantidadDeQuincenas,
+    diasPorCuota:p.diasPorCuota,tipo:p.tipo,fechaInicio:p.fechaInicio,
+    proximaFechaPago:p.proximaFechaPago,baseRenovacion:p.baseRenovacion||0,estado:p.estado
+  };
   // Guardar cuánto se había pagado antes de renovar (para que calcDerived ignore esos pagos)
   p.baseRenovacion=(p.baseRenovacion||0)+d.totalPagado;
   // Actualizar la misma tarjeta con los nuevos valores
@@ -3636,7 +3644,8 @@ function confirmarRenovacion(){
   var renId=Date.now().toString();
   renovaciones.push({id:renId,id_prestamo:p.id,cliente:p.cliente,fecha:fechaHoy,
     montoNuevo:monto,cuotaNueva:cuotaVal,tipo:tipo,cuotas:cuotas,tasa:Math.round(tasa*100),
-    adminMonto:adminMonto,saldoAnterior:saldoAnterior,montoEntregado:montoEntregado});
+    adminMonto:adminMonto,saldoAnterior:saldoAnterior,montoEntregado:montoEntregado,
+    _prevState:_prevState});
   // Calcular y guardar próxima fecha de cobro automáticamente (fechaInicio + 1 período)
   var proxFecha=new Date(parseLocalDate(fecha));
   proxFecha.setDate(proxFecha.getDate()+diasPorCuota);
@@ -4095,11 +4104,37 @@ function eliminarRenovacion(renId){
   _modalCallback=function(){
     overlay.style.display='none';
     document.getElementById('modal-btn-si').style.background='#16a34a';
+    // Restaurar el préstamo al estado anterior a la renovación
+    var p=prestamos.find(function(x){return x.id===rv.id_prestamo;});
+    if(p){
+      if(rv._prevState){
+        // Restauración completa desde snapshot guardado
+        p.montoPrestado=rv._prevState.montoPrestado;
+        p.tasaInteres=rv._prevState.tasaInteres;
+        p.Total_A_Cobrar=rv._prevState.Total_A_Cobrar;
+        p.Total_Intereses=rv._prevState.Total_Intereses;
+        p.Cuota_Quincenal=rv._prevState.Cuota_Quincenal;
+        p.cantidadDeQuincenas=rv._prevState.cantidadDeQuincenas;
+        p.diasPorCuota=rv._prevState.diasPorCuota;
+        p.tipo=rv._prevState.tipo;
+        p.fechaInicio=rv._prevState.fechaInicio;
+        p.proximaFechaPago=rv._prevState.proximaFechaPago;
+        p.baseRenovacion=rv._prevState.baseRenovacion;
+        p.estado=rv._prevState.estado||'Activo';
+      } else {
+        // Renovación antigua sin snapshot: restaurar usando saldoAnterior
+        var sumPagos=pagos.filter(function(x){return x.id_prestamo===p.id;}).reduce(function(s,x){return s+x.montoAbonado;},0);
+        p.Total_A_Cobrar=rv.saldoAnterior;
+        p.montoPrestado=rv.saldoAnterior;
+        p.Total_Intereses=0;
+        p.baseRenovacion=sumPagos;
+      }
+    }
     renovaciones=renovaciones.filter(function(x){return x.id!==renId;});
     cobrosAdmin=cobrosAdmin.filter(function(x){return !(x.id_prestamo===rv.id_prestamo&&x.fecha===rv.fecha);});
     guardarDatos();
     if(currentId) verDetalle(currentId); else renderPanelRecolector();
-    toast('✓ Renovación eliminada');
+    toast('✓ Renovación eliminada — préstamo restaurado al estado anterior');
   };
   document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
 }
