@@ -3632,11 +3632,17 @@ function mensajeAbonoAt(p, targetPagoId){
 }
 
 function mensajeRenovacion(p, rv){
-  var fp=getCuotaVencimiento(p,1);
-  var dd=String(fp.getDate()).padStart(2,'0');
-  var mm=String(fp.getMonth()+1).padStart(2,'0');
   var diasSemRen=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-  var fechaProx=dd+'-'+mm+'-'+fp.getFullYear()+' ('+diasSemRen[fp.getDay()]+')';
+  var fechaProx;
+  if(p.proximaFechaPago){
+    var fp=parseLocalDate(p.proximaFechaPago);
+    var dd=String(fp.getDate()).padStart(2,'0');
+    var mm=String(fp.getMonth()+1).padStart(2,'0');
+    fechaProx=dd+'-'+mm+'-'+fp.getFullYear()+' ('+diasSemRen[fp.getDay()]+')';
+  } else {
+    var fp2=getCuotaVencimiento(p,2);
+    fechaProx=String(fp2.getDate()).padStart(2,'0')+'-'+String(fp2.getMonth()+1).padStart(2,'0')+'-'+fp2.getFullYear()+' ('+diasSemRen[fp2.getDay()]+')';
+  }
   var fparts=rv.fecha.split('-');
   var fechaFmt=parseInt(fparts[2])+'/'+parseInt(fparts[1])+'/'+fparts[0];
   var tipoAbrev=rv.tipo==='Diario'?'DIA':rv.tipo.toUpperCase();
