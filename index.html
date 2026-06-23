@@ -1968,6 +1968,8 @@ var pagos = [];
 var cobrosAdmin = [];
 var inversiones = [];
 var gastos = [];
+var bases = {};
+var salidas = {};
 var renovaciones = [];
 var currentId = null;
 var historial = ['screen-cobros'];
@@ -2023,6 +2025,8 @@ function guardarDatos(){
     {key:'renovaciones',value:renovaciones},
     {key:'inversiones',value:inversiones},
     {key:'cierres',value:cierres},
+    {key:'bases',value:bases},
+    {key:'salidas',value:salidas},
     {key:'ts',value:ts}
   ];
 
@@ -2683,6 +2687,8 @@ function sincronizarSupabaseFondo(){
       if(row.key==='cobrosadmin'&&Array.isArray(row.value)) cobrosAdmin=row.value;
       if(row.key==='gastos'&&Array.isArray(row.value)) gastos=row.value;
       if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
+      if(row.key==='bases'&&row.value&&typeof row.value==='object') bases=row.value;
+      if(row.key==='salidas'&&row.value&&typeof row.value==='object') salidas=row.value;
       if(row.key==='fotos'&&row.value&&typeof row.value==='object') fotosMapBg=row.value;
     });
     if(Object.keys(fotosMapBg).length){
@@ -4870,13 +4876,12 @@ function renderPanelRecolector(){
 
   // Resumen de caja (por ruta)
   var rutaCajaKey=rutaActual||'todas';
-  var baseKey='fjd_base_'+rutaCajaKey+'_'+fecha;
-  var baseGuardada=parseInt(localStorage.getItem(baseKey)||'0',10)||0;
+  var baseGuardada=parseInt(bases[rutaCajaKey+'_'+fecha])||0;
   if(!baseGuardada){
     var ayer=new Date(fecha+'T12:00:00');
     ayer.setDate(ayer.getDate()-1);
     var ayerStr=ayer.toISOString().split('T')[0];
-    var baseAyer=parseInt(localStorage.getItem('fjd_base_'+rutaCajaKey+'_'+ayerStr)||'0',10)||0;
+    var baseAyer=parseInt(bases[rutaCajaKey+'_'+ayerStr])||0;
     var idsAyer=prestamosRuta.map(function(p){return p.id;});
     var recogidaAyer=pagos.filter(function(x){return (x.fechaRegistro||x.fechaPago)===ayerStr&&idsAyer.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
     var prestamosAyer=prestamosRuta.filter(function(p){return p.fechaInicio===ayerStr&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
@@ -4896,8 +4901,7 @@ function renderPanelRecolector(){
   // Pantalla muestra monto completo de renovaciones en préstamos
   var prestamosTotal=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0)+renovNuevos.reduce(function(s,x){return s+(x.montoNuevo||0);},0);
 
-  var salidaKey='fjd_salida_'+rutaCajaKey+'_'+fecha;
-  var salidaGuardada=parseInt(localStorage.getItem(salidaKey)||'0',10)||0;
+  var salidaGuardada=parseInt(salidas[rutaCajaKey+'_'+fecha])||0;
 
   var inputBase=document.getElementById('caja-base');
   inputBase.value=baseGuardada>0?fmt(baseGuardada):'';
@@ -5070,8 +5074,7 @@ function mostrarResumenCaja(){
   var recogida=pagos.filter(function(x){return x.fechaPago===fecha&&idsR.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
   var prestamosHoy=pRuta.filter(function(p){return p.fechaInicio===fecha&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
   var totalGastos=gastos.filter(function(x){return x.fecha===fecha&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
-  var baseKey='fjd_base_'+(rutaActual||'todas')+'_'+fecha;
-  var baseGuardada=parseInt(localStorage.getItem(baseKey)||'0',10)||0;
+  var baseGuardada=parseInt(bases[(rutaActual||'todas')+'_'+fecha])||0;
   document.getElementById('caja-base').value=baseGuardada>0?fmt(baseGuardada):'';
   document.getElementById('caja-recogida').textContent='₡'+fmt(recogida);
   document.getElementById('caja-prestamos').textContent='₡'+fmt(prestamosHoy);
@@ -5086,10 +5089,11 @@ function guardarBase(){
   var base=readMoneyInput('caja-base');
   var rutas=['todas','Heredia','Alajuela','San Ramón'];
   if(rutaActual==='todas'){
-    rutas.forEach(function(r){ localStorage.setItem('fjd_base_'+r+'_'+fecha, base); });
+    rutas.forEach(function(r){ bases[r+'_'+fecha]=base; });
   } else {
-    localStorage.setItem('fjd_base_'+rutaActual+'_'+fecha, base);
+    bases[(rutaActual||'todas')+'_'+fecha]=base;
   }
+  guardarDatos();
   renderPanelRecolector();
   toast('✓ Base guardada: ₡'+fmt(base));
 }
@@ -5097,14 +5101,14 @@ function guardarSalida(){
   if(rolActual!=='admin'){toast('⚠ Solo el admin puede editar la salida');return;}
   var fecha=document.getElementById('panel-fecha').value||hoyLocal();
   var salida=readMoneyInput('caja-salida');
-  localStorage.setItem('fjd_salida_'+(rutaActual||'todas')+'_'+fecha, salida);
+  salidas[(rutaActual||'todas')+'_'+fecha]=salida; guardarDatos();
   renderPanelRecolector();
   toast('✓ Salida guardada: ₡'+fmt(salida));
 }
 function calcCaja(){
   var fecha=document.getElementById('panel-fecha').value||hoyLocal();
   var base=readMoneyInput('caja-base');
-  localStorage.setItem('fjd_base_'+(rutaActual||'todas')+'_'+fecha,base);
+  bases[(rutaActual||'todas')+'_'+fecha]=base; guardarDatos();
   var recogida=pagos.filter(function(x){return x.fechaPago===fecha;}).reduce(function(s,x){return s+x.montoAbonado;},0);
   var prestamosHoy=prestamos.filter(function(p){return p.fechaInicio===fecha;}).reduce(function(s,p){return s+p.montoPrestado;},0);
   var totalGastos=gastos.filter(function(x){return x.fecha===fecha;}).reduce(function(s,x){return s+x.monto;},0);
@@ -5149,6 +5153,8 @@ function fechaOffset(dias){
           if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
           if(row.key==='inversiones'&&Array.isArray(row.value)) inversiones=row.value;
           if(row.key==='cierres'&&Array.isArray(row.value)) cierres=row.value;
+          if(row.key==='bases'&&row.value&&typeof row.value==='object') bases=row.value;
+          if(row.key==='salidas'&&row.value&&typeof row.value==='object') salidas=row.value;
           if(row.key==='session_revoked'&&row.value&&typeof row.value==='object') window._sessionRevoked=row.value;
         });
         _cargado=true;
