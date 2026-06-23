@@ -4996,10 +4996,11 @@ function fechaOffset(dias){
   var errorConexion=false;
 
   var _intentos=0;
-  while(_intentos<3){
+  var _cargado=false;
+  while(_intentos<4){
     try{
       var controller=new AbortController();
-      var timeout=setTimeout(function(){controller.abort();},15000);
+      var timeout=setTimeout(function(){controller.abort();},20000);
       var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value&key=neq.fotos',{headers:SUPA_HDR,signal:controller.signal});
       clearTimeout(timeout);
       if(r.ok){
@@ -5014,10 +5015,12 @@ function fechaOffset(dias){
           if(row.key==='cierres'&&Array.isArray(row.value)) cierres=row.value;
           if(row.key==='session_revoked'&&row.value&&typeof row.value==='object') window._sessionRevoked=row.value;
         });
+        _cargado=true;
         break;
-      } else { errorConexion=true; _intentos++; }
-    }catch(e){ errorConexion=(_intentos>=2); _intentos++; if(_intentos<3) await new Promise(function(res){setTimeout(res,2000);}); }
+      } else { _intentos++; if(_intentos<4) await new Promise(function(res){setTimeout(res,3000);}); }
+    }catch(e){ _intentos++; if(_intentos<4) await new Promise(function(res){setTimeout(res,3000);}); }
   }
+  errorConexion=!_cargado;
 
   // Siempre ocultar splash — nunca dejar pantalla en blanco
   splash.style.display='none';
@@ -5027,8 +5030,8 @@ function fechaOffset(dias){
     errDiv.style.cssText='position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a8a);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999';
     errDiv.innerHTML='<div style="font-size:80px;font-weight:900;color:#fff;letter-spacing:-3px">JD</div>'
       +'<div style="font-size:14px;font-weight:700;color:#60a5fa;letter-spacing:8px;margin-bottom:32px">FINANCIERA</div>'
-      +'<div style="color:#f87171;font-size:14px;text-align:center;padding:0 32px;margin-bottom:24px">⚠ Sin conexión a la nube.<br>Verifique su internet e intente de nuevo.</div>'
-      +'<button onclick="location.reload()" style="background:#2563eb;color:#fff;border:none;border-radius:12px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer">↺ Reintentar</button>';
+      +'<div style="color:#f87171;font-size:14px;text-align:center;padding:0 32px;margin-bottom:24px">⚠ No se pudo conectar al servidor.<br><span style="color:#94a3b8;font-size:12px">Se intentó 4 veces. Verifique su internet.</span></div>'
+      +'<button onclick="location.reload()" style="background:#2563eb;color:#fff;border:none;border-radius:12px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px">↺ Reintentar</button>';
     document.body.appendChild(errDiv);
     return;
   }
