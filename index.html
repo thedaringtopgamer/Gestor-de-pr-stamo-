@@ -4005,6 +4005,7 @@ function confirmarRenovacion(){
     Total_A_Cobrar:p.Total_A_Cobrar,Total_Intereses:p.Total_Intereses,
     Cuota_Quincenal:p.Cuota_Quincenal,cantidadDeQuincenas:p.cantidadDeQuincenas,
     diasPorCuota:p.diasPorCuota,tipo:p.tipo,fechaInicio:p.fechaInicio,
+    _fechaCreacion:p._fechaCreacion,
     proximaFechaPago:p.proximaFechaPago,baseRenovacion:p.baseRenovacion||0,estado:p.estado
   };
   // Guardar cuánto se había pagado antes de renovar (para que calcDerived ignore esos pagos)
@@ -4582,6 +4583,7 @@ function eliminarRenovacion(renId){
         p.diasPorCuota=rv._prevState.diasPorCuota;
         p.tipo=rv._prevState.tipo;
         p.fechaInicio=rv._prevState.fechaInicio;
+        p._fechaCreacion=rv._prevState._fechaCreacion||rv._prevState.fechaInicio;
         p.proximaFechaPago=rv._prevState.proximaFechaPago;
         p.baseRenovacion=rv._prevState.baseRenovacion;
         p.estado=rv._prevState.estado||'Activo';
