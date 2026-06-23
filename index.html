@@ -5033,13 +5033,27 @@ function renderPanelRecolector(){
   var rutaCajaKey=rutaActual||'todas';
   var baseGuardada=parseInt(bases[rutaCajaKey+'_'+fecha])||0;
   if(!baseGuardada){
-    // Heredar la última base guardada (hasta 30 días atrás)
-    for(var _d=1;_d<=30;_d++){
-      var _prev=new Date(fecha+'T12:00:00'); _prev.setDate(_prev.getDate()-_d);
-      var _prevStr=_prev.toISOString().split('T')[0];
-      var _baseAnterior=parseInt(bases[rutaCajaKey+'_'+_prevStr])||0;
-      if(_baseAnterior>0){ baseGuardada=_baseAnterior; break; }
+    // Calcular caja de ayer como base de hoy (si no fue guardada manualmente)
+    var _ayer=new Date(fecha+'T12:00:00'); _ayer.setDate(_ayer.getDate()-1);
+    var _ayerStr=_ayer.toISOString().split('T')[0];
+    // Base de ayer: usar la guardada o buscar hasta 30 días atrás
+    var _baseAyer=parseInt(bases[rutaCajaKey+'_'+_ayerStr])||0;
+    if(!_baseAyer){
+      for(var _d=2;_d<=30;_d++){
+        var _p=new Date(fecha+'T12:00:00'); _p.setDate(_p.getDate()-_d);
+        var _pStr=_p.toISOString().split('T')[0];
+        _baseAyer=parseInt(bases[rutaCajaKey+'_'+_pStr])||0;
+        if(_baseAyer>0) break;
+      }
     }
+    var _idsR=prestamosRuta.map(function(p){return p.id;});
+    var _recAyer=pagos.filter(function(x){return (x.fechaRegistro||x.fechaPago)===_ayerStr&&_idsR.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
+    var _presAyer=prestamosRuta.filter(function(p){return p.fechaInicio===_ayerStr&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
+    var _renovAyer=renovaciones.filter(function(x){return x.fecha===_ayerStr&&(rutaActual==='todas'||prestamos.find(function(p){return p.id===x.id_prestamo&&p.ruta===rutaActual;}));}).reduce(function(s,x){return s+(x.montoEntregado||0);},0);
+    var _gastosAyer=gastos.filter(function(x){return x.fecha===_ayerStr&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
+    var _inyecAyer=inversiones.filter(function(x){return x.fecha===_ayerStr&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
+    var _cajaAyer=_recAyer+_baseAyer+_inyecAyer-_presAyer-_renovAyer-_gastosAyer;
+    if(_cajaAyer>0) baseGuardada=_cajaAyer;
   }
   var recogidaTotal=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
 
@@ -5077,6 +5091,12 @@ function renderPanelRecolector(){
   document.getElementById('caja-gastos').textContent='₡'+fmt(totalGastos);
   document.getElementById('caja-total').textContent='₡'+fmt(cajaTotal);
   document.getElementById('panel-stat-caja').textContent='Total: ₡'+fmt(cajaTotal);
+  // Auto-guardar caja del día para que mañana sea la base heredada
+  var _cajaKey=rutaCajaKey+'_'+fecha;
+  if(!bases[_cajaKey]&&cajaTotal>0){
+    bases[_cajaKey]=cajaTotal;
+    guardarDatos();
+  }
 
 }
 
