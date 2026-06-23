@@ -2225,6 +2225,7 @@ function registrarInversion(){
   document.getElementById('inv-monto').value='';
   document.getElementById('inv-nota').value='';
   renderInversion();
+  try{ renderPanelRecolector(); }catch(e){}
   toast('✓ Inyección registrada: ₡'+fmt(monto)+' → '+(rutaInv==='todas'?'Todas':rutaInv));
 }
 
@@ -2233,6 +2234,7 @@ function eliminarInversion(id){
   inversiones=inversiones.filter(function(i){ return i.id!==id; });
   guardarDatos();
   renderInversion();
+  try{ renderPanelRecolector(); }catch(e){}
   toast('✓ Inversión eliminada');
 }
 
