@@ -2216,10 +2216,20 @@ function renderCierres(){
   _estiloBtnCierre(btnMes,true,'#166534');
 
   var hoy=hoyLocal();
-  var inicioSem=_inicioSemana(hoy);
-  var inicioMes=_inicioMes(hoy);
+  var rFiltro=rutaInvFiltro||'todas';
   var metaSem=Math.round(metaPrestamos/4);
   var metaSemC=Math.round(metaClientes/4);
+
+  // Calcular inicio del período actual: día siguiente al último cierre guardado (o inicio natural)
+  function _diasiguiente(fecha){
+    var d=new Date(fecha+'T12:00:00'); d.setDate(d.getDate()+1);
+    return d.toISOString().split('T')[0];
+  }
+  var ciorresPorRuta=cierres.filter(function(c){ return (c.ruta||'todas')===rFiltro; });
+  var ultimoSem=ciorresPorRuta.filter(function(c){ return c.tipo==='semana'; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); })[0];
+  var ultimoMes=ciorresPorRuta.filter(function(c){ return c.tipo==='mes'; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); })[0];
+  var inicioSem=ultimoSem?_diasiguiente(ultimoSem.hasta):_inicioSemana(hoy);
+  var inicioMes=ultimoMes?_diasiguiente(ultimoMes.hasta):_inicioMes(hoy);
 
   // Semana en curso
   var dSem=_calcCierreData(inicioSem,hoy);
@@ -2242,7 +2252,6 @@ function renderCierres(){
   // Historial guardado — filtrado por ruta actual
   var lista=document.getElementById('cierres-lista');
   if(!lista) return;
-  var rFiltro=rutaInvFiltro||'todas';
   var todos=cierres.filter(function(c){ return (c.ruta||'todas')===rFiltro; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); });
   if(!todos.length){
     lista.innerHTML='<p style="color:#6b7280;font-size:13px;text-align:center;padding:16px">Sin cierres guardados</p>';
@@ -2329,15 +2338,24 @@ function _puedesCerrarMes(){
   return semanasDesde>=4;
 }
 
+function _diaSigniente(fecha){
+  var d=new Date(fecha+'T12:00:00'); d.setDate(d.getDate()+1);
+  return d.toISOString().split('T')[0];
+}
+
 function cerrarSemana(){
   var hoy=hoyLocal();
-  var desde=_inicioSemana(hoy);
+  var rFiltro=rutaInvFiltro||'todas';
+  var ultimo=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===rFiltro; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); })[0];
+  var desde=ultimo?_diaSigniente(ultimo.hasta):_inicioSemana(hoy);
   _abrirConfirmarCierre('semana',desde,hoy);
 }
 
 function cerrarMes(){
   var hoy=hoyLocal();
-  var desde=_inicioMes(hoy);
+  var rFiltro=rutaInvFiltro||'todas';
+  var ultimo=cierres.filter(function(c){ return c.tipo==='mes'&&(c.ruta||'todas')===rFiltro; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); })[0];
+  var desde=ultimo?_diaSigniente(ultimo.hasta):_inicioMes(hoy);
   _abrirConfirmarCierre('mes',desde,hoy);
 }
 
