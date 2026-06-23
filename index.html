@@ -3843,16 +3843,9 @@ function abrirRenovar(){
     var manana=new Date(); manana.setDate(manana.getDate()+1);
     proximaFechaRen=siguienteDiaHabil(manana);
   } else {
-    // Usar la fecha que aparece en la tarjeta (guardada o calculada)
-    var fechaEnTarjeta;
-    if(p.proximaFechaPago){
-      fechaEnTarjeta=parseLocalDate(p.proximaFechaPago);
-    } else {
-      var proxN=d.cuotasPagadas+1;
-      fechaEnTarjeta=(proxN<=p.cantidadDeQuincenas&&d.saldoPendiente>0)?getCuotaVencimiento(p,proxN):new Date();
-    }
-    // Sumar un intervalo a esa fecha
-    var firstNew=new Date(fechaEnTarjeta);
+    // Renovación desde HOY: próxima fecha = hoy + un intervalo
+    var hoyBase=new Date();
+    var firstNew=new Date(hoyBase);
     firstNew.setDate(firstNew.getDate()+p.diasPorCuota);
     proximaFechaRen=siguienteDiaHabil(firstNew);
   }
