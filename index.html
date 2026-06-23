@@ -4487,21 +4487,41 @@ function marcarVerificado(){
 function quitarNuevoDeCaja(prestamoId){
   var p=prestamos.find(function(x){return x.id===prestamoId;});
   if(!p) return;
-  if(!confirm('¿Quitar el préstamo de '+p.cliente+' (₡'+fmt(p.montoPrestado)+') de la caja de hoy?\n\nEl cliente y su préstamo no se afectan.')) return;
-  p._ocultarPanelNuevo=true;
-  guardarDatos();
-  renderPanelRecolector();
-  toast('✓ Préstamo quitado de la caja de hoy');
+  var overlay=document.getElementById('modal-overlay');
+  document.getElementById('modal-subtitulo').textContent='Quitar del panel';
+  document.getElementById('modal-mensaje').textContent='¿Quitar el préstamo de '+p.cliente+' (₡'+fmt(p.montoPrestado)+') del panel de hoy? El préstamo no se afecta.';
+  document.getElementById('modal-btn-si').textContent='Sí, quitar';
+  document.getElementById('modal-btn-si').style.background='#dc2626';
+  overlay.style.display='flex';
+  _modalCallback=function(){
+    overlay.style.display='none';
+    document.getElementById('modal-btn-si').style.background='#16a34a';
+    p._ocultarPanelNuevo=true;
+    guardarDatos();
+    renderPanelRecolector();
+    toast('✓ Préstamo quitado del panel de hoy');
+  };
+  document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
 }
 
 function quitarRenovDeCaja(renovId){
   var rv=renovaciones.find(function(x){return x.id===renovId;});
   if(!rv) return;
-  if(!confirm('¿Quitar la renovación de '+rv.cliente+' de la caja de hoy?\n\nLa renovación no se afecta.')) return;
-  rv._ocultarPanel=true;
-  guardarDatos();
-  renderPanelRecolector();
-  toast('✓ Renovación quitada de la caja de hoy');
+  var overlay=document.getElementById('modal-overlay');
+  document.getElementById('modal-subtitulo').textContent='Quitar del panel';
+  document.getElementById('modal-mensaje').textContent='¿Quitar la renovación de '+rv.cliente+' del panel de hoy? La renovación no se afecta.';
+  document.getElementById('modal-btn-si').textContent='Sí, quitar';
+  document.getElementById('modal-btn-si').style.background='#dc2626';
+  overlay.style.display='flex';
+  _modalCallback=function(){
+    overlay.style.display='none';
+    document.getElementById('modal-btn-si').style.background='#16a34a';
+    rv._ocultarPanel=true;
+    guardarDatos();
+    renderPanelRecolector();
+    toast('✓ Renovación quitada del panel de hoy');
+  };
+  document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
 }
 
 function quitarDelPanelHoy(pagoId){
