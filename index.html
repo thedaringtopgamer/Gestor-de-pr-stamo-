@@ -5003,13 +5003,11 @@ function fechaOffset(dias){
   var _cargado=false;
   var _ultimoError='';
   var _ultimoCodigo='';
-  while(_intentos<5){
-    if(_splashStatus) _splashStatus.textContent=(_intentos===0?'Conectando...':'Reconectando... (intento '+(_intentos+1)+'/5)');
+  while(_intentos<3){
+    if(_splashStatus) _splashStatus.textContent=(_intentos===0?'Conectando...':'Reintentando... ('+(_intentos+1)+'/3)');
     try{
       var controller=new AbortController();
-      // Primer intento: 30s (por si el servidor está durmiendo), siguientes: 20s
-      var toutMs=_intentos===0?30000:20000;
-      var timeout=setTimeout(function(){controller.abort();},toutMs);
+      var timeout=setTimeout(function(){controller.abort();},12000);
       var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value&key=neq.fotos',{headers:SUPA_HDR,signal:controller.signal});
       clearTimeout(timeout);
       if(r.ok){
@@ -5028,8 +5026,8 @@ function fechaOffset(dias){
         });
         _cargado=true;
         break;
-      } else { _ultimoCodigo='HTTP '+r.status; _intentos++; if(_intentos<5) await new Promise(function(res){setTimeout(res,4000);}); }
-    }catch(e){ _ultimoError=e&&e.name==='AbortError'?'Tiempo agotado':String(e&&e.message||e); _intentos++; if(_intentos<5) await new Promise(function(res){setTimeout(res,4000);}); }
+      } else { _ultimoCodigo='HTTP '+r.status; _intentos++; if(_intentos<3) await new Promise(function(res){setTimeout(res,3000);}); }
+    }catch(e){ _ultimoError=e&&e.name==='AbortError'?'Tiempo agotado':String(e&&e.message||e); _intentos++; if(_intentos<3) await new Promise(function(res){setTimeout(res,3000);}); }
   }
   errorConexion=!_cargado;
 
@@ -5037,7 +5035,7 @@ function fechaOffset(dias){
   splash.style.display='none';
 
   if(errorConexion){
-    var _detalle=_ultimoCodigo||(_ultimoError?'Error: '+_ultimoError:'Sin respuesta del servidor');
+    var _detalle=_ultimoCodigo?'Código: '+_ultimoCodigo:(_ultimoError?_ultimoError:'Sin respuesta');
     var errDiv=document.createElement('div');
     errDiv.style.cssText='position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a8a);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999';
     errDiv.innerHTML='<div style="font-size:80px;font-weight:900;color:#fff;letter-spacing:-3px">JD</div>'
