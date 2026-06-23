@@ -2979,10 +2979,18 @@ setInterval(function(){
   if(localStorage.getItem('fjd_session')==='1') _verificarRevocacion();
 }, 5000);
 
-// Sincronización de datos en fondo cada 30 segundos (para que bloqueos y cambios lleguen a todos los dispositivos)
+// Chequeo rápido de timestamp cada 5s — si la nube tiene datos más nuevos, sincroniza inmediatamente
 setInterval(function(){
-  if(localStorage.getItem('fjd_session')==='1') sincronizarSupabaseFondo();
-}, 30000);
+  if(localStorage.getItem('fjd_session')!=='1') return;
+  var tsLocal=parseInt(localStorage.getItem('fjd_ts')||'0');
+  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.ts&select=value',{headers:SUPA_HDR})
+  .then(function(r){return r.ok?r.json():null;})
+  .then(function(rows){
+    if(!rows||!rows[0]) return;
+    var tsRemoto=Number(rows[0].value)||0;
+    if(tsRemoto>tsLocal) sincronizarSupabaseFondo();
+  }).catch(function(){});
+}, 5000);
 
 // Cerrar el menú admin si se toca fuera
 document.addEventListener('click',function(e){
