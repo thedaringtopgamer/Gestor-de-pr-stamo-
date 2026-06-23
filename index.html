@@ -897,8 +897,9 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
 <button id="btn-eliminar-prestamo" class="btn btn-red btn-full" style="padding:11px;margin-top:8px" onclick="eliminarPrestamo()">🗑 Eliminar préstamo</button>
 
       <!-- Corregir datos financieros (solo admin) -->
-      <div id="panel-corregir" style="display:none;margin-top:10px;border:2px dashed #f59e0b;border-radius:12px;padding:14px;background:#fffbeb">
-        <p style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px">🔧 Corregir datos del préstamo</p>
+      <div id="wrap-corregir" style="display:none;margin-top:8px">
+        <button onclick="toggleCorregir()" id="btn-corregir-toggle" style="width:100%;padding:11px;background:#fff;color:#92400e;border:2px dashed #fcd34d;border-radius:10px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:left">🔧 Corregir préstamo <span id="corregir-arrow" style="float:right">▼</span></button>
+        <div id="panel-corregir" style="display:none;margin-top:6px;border:2px dashed #f59e0b;border-radius:12px;padding:14px;background:#fffbeb">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <div>
             <div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Monto prestado</div>
@@ -931,6 +932,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           </div>
         </div>
         <button onclick="guardarCorreccion()" style="width:100%;padding:11px;background:#f59e0b;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">💾 Guardar corrección</button>
+        </div>
       </div>
 
       <!-- Cuotas — al final -->
@@ -3116,21 +3118,21 @@ function verDetalle(id){
   var btnEliminar=document.getElementById('btn-eliminar-prestamo');
   if(btnGuardar) btnGuardar.style.display=esAdmin?'':'none';
   if(btnEliminar) btnEliminar.style.display=esAdmin?'':'none';
-  // Panel corregir datos — solo admin
+  // Panel corregir datos — solo admin (collapsed by default)
+  var wrapCorr=document.getElementById('wrap-corregir');
   var panelCorr=document.getElementById('panel-corregir');
-  if(panelCorr){
-    panelCorr.style.display=esAdmin?'':'none';
-    if(esAdmin){
-      // Populate inputs with current values so admin can review and edit
-      var unFmt=function(v){return String(v||0).replace(/[^0-9]/g,'');};
-      document.getElementById('corr-monto').value=fmt(p.montoPrestado||0);
-      document.getElementById('corr-total').value=fmt(p.Total_A_Cobrar||0);
-      document.getElementById('corr-cuota').value=fmt(p.Cuota_Quincenal||0);
-      document.getElementById('corr-ncuotas').value=p.cantidadDeQuincenas||0;
-      document.getElementById('corr-base').value=fmt(p.baseRenovacion||0);
-      var selTipo=document.getElementById('corr-tipo');
-      if(selTipo) selTipo.value=p.tipo||'Quincenal';
-    }
+  var arrowCorr=document.getElementById('corregir-arrow');
+  if(wrapCorr) wrapCorr.style.display=esAdmin?'':'none';
+  if(panelCorr) panelCorr.style.display='none';
+  if(arrowCorr) arrowCorr.textContent='▼';
+  if(esAdmin){
+    document.getElementById('corr-monto').value=fmt(p.montoPrestado||0);
+    document.getElementById('corr-total').value=fmt(p.Total_A_Cobrar||0);
+    document.getElementById('corr-cuota').value=fmt(p.Cuota_Quincenal||0);
+    document.getElementById('corr-ncuotas').value=p.cantidadDeQuincenas||0;
+    document.getElementById('corr-base').value=fmt(p.baseRenovacion||0);
+    var selTipo=document.getElementById('corr-tipo');
+    if(selTipo) selTipo.value=p.tipo||'Quincenal';
   }
   renderCuotasGrid(p,d);
   renderPagosLista(p);
@@ -3716,6 +3718,15 @@ function confirmarRenovacion(){
   verDetalle(p.id);
   // Ofrecer WhatsApp si tiene teléfono
   setTimeout(function(){ ofrecerWhatsApp(p.id,'renovacion'); },400);
+}
+
+function toggleCorregir(){
+  var panel=document.getElementById('panel-corregir');
+  var arrow=document.getElementById('corregir-arrow');
+  if(!panel) return;
+  var open=panel.style.display==='none';
+  panel.style.display=open?'block':'none';
+  if(arrow) arrow.textContent=open?'▲':'▼';
 }
 
 function guardarCorreccion(){
