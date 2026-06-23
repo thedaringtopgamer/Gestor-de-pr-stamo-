@@ -540,6 +540,9 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
               🗓 Mensual<div id="cnt-mes" style="font-size:11px;font-weight:600;margin-top:4px;color:#16a34a"></div>
             </button>
           </div>
+          <div id="wrap-reiniciar-cierres" style="display:none;margin-top:12px">
+            <button onclick="reiniciarCierres()" style="width:100%;padding:10px;background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:10px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🗑 Reiniciar historial — empezar desde hoy</button>
+          </div>
         </div>
       </div>
 
@@ -2380,6 +2383,8 @@ function renderCierres(){
   var cntMes=document.getElementById('cnt-mes');
   if(cntSem) cntSem.textContent=nSem?nSem+' guardado'+(nSem===1?'':'s'):'Sin cierres';
   if(cntMes) cntMes.textContent=nMes?nMes+' guardado'+(nMes===1?'':'s'):'Sin cierres';
+  var wrapReinicio=document.getElementById('wrap-reiniciar-cierres');
+  if(wrapReinicio) wrapReinicio.style.display=(rolActual==='admin')?'block':'none';
 }
 
 function _htmlTarjetaCierre(c){
@@ -2512,6 +2517,22 @@ function eliminarCierre(id){
   guardarDatos();
   renderCierres();
   toast('✓ Cierre eliminado');
+}
+
+function reiniciarCierres(){
+  if(!confirm('¿Eliminar TODO el historial de cierres y empezar desde hoy?\n\nEsto no afecta clientes ni pagos, solo el historial de cierres.')) return;
+  cierres=[];
+  // Crear punto de inicio en ayer para que el período actual empiece hoy
+  var ayer=new Date(); ayer.setDate(ayer.getDate()-1);
+  var ayerStr=ayer.getFullYear()+'-'+String(ayer.getMonth()+1).padStart(2,'0')+'-'+String(ayer.getDate()).padStart(2,'0');
+  var ahora=Date.now();
+  ['todas','Heredia','Alajuela','San Ramón'].forEach(function(ruta,i){
+    cierres.push({id:(ahora+i).toString(),tipo:'semana',desde:ayerStr,hasta:ayerStr,nota:'Reinicio',data:{recogida:0,prestado:0,montoRenov:0,totalGastos:0,utilidad:0,numPrestamos:0,numRenov:0,totalCobroAdm:0},fechaRegistro:hoyLocal(),ruta:ruta});
+    cierres.push({id:(ahora+10+i).toString(),tipo:'mes',desde:ayerStr,hasta:ayerStr,nota:'Reinicio',data:{recogida:0,prestado:0,montoRenov:0,totalGastos:0,utilidad:0,numPrestamos:0,numRenov:0,totalCobroAdm:0},fechaRegistro:hoyLocal(),ruta:ruta});
+  });
+  guardarDatos();
+  renderInversion();
+  toast('✓ Historial reiniciado — período comienza hoy');
 }
 
 function abrirHistorialTipo(tipo){
