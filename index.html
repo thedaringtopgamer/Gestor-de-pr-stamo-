@@ -5090,7 +5090,36 @@ function renderPanelRecolector(){
 
   // Resumen de caja (por ruta)
   var rutaCajaKey=rutaActual||'todas';
-  var baseGuardada=parseInt(bases[rutaCajaKey+'_'+fecha])||0;
+  var _baseKey=rutaCajaKey+'_'+fecha;
+  var baseGuardada;
+  if(_baseKey in bases){
+    // Base ya guardada (manual o carry-forward previo) — no tocar
+    baseGuardada=parseInt(bases[_baseKey])||0;
+  } else {
+    // No hay base para hoy — calcular caja de ayer como base inicial del día
+    var _ayer=new Date(fecha+'T12:00:00'); _ayer.setDate(_ayer.getDate()-1);
+    var _ayerStr=_ayer.toISOString().split('T')[0];
+    var _baseAyer=parseInt(bases[rutaCajaKey+'_'+_ayerStr])||0;
+    if(!_baseAyer){
+      for(var _d=2;_d<=30;_d++){
+        var _p=new Date(fecha+'T12:00:00'); _p.setDate(_p.getDate()-_d);
+        var _pStr=_p.toISOString().split('T')[0];
+        _baseAyer=parseInt(bases[rutaCajaKey+'_'+_pStr])||0;
+        if(_baseAyer>0) break;
+      }
+    }
+    var _idsR=prestamosRuta.map(function(p){return p.id;});
+    var _recAyer=pagos.filter(function(x){return (x.fechaRegistro||x.fechaPago)===_ayerStr&&_idsR.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
+    var _presAyer=prestamosRuta.filter(function(p){return p.fechaInicio===_ayerStr&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
+    var _renovAyer=renovaciones.filter(function(x){return x.fecha===_ayerStr&&(rutaActual==='todas'||prestamos.find(function(p){return p.id===x.id_prestamo&&p.ruta===rutaActual;}));}).reduce(function(s,x){return s+(x.montoEntregado||0);},0);
+    var _gastosAyer=gastos.filter(function(x){return x.fecha===_ayerStr&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
+    var _inyecAyer=inversiones.filter(function(x){return x.fecha===_ayerStr&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
+    var _cajaAyer=_recAyer+_baseAyer+_inyecAyer-_presAyer-_renovAyer-_gastosAyer;
+    baseGuardada=_cajaAyer>0?_cajaAyer:0;
+    // Guardar carry-forward una sola vez para que no recalcule en próximos renders
+    bases[_baseKey]=baseGuardada;
+    guardarDatos();
+  }
   var recogidaTotal=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
 
   // Separar nuevos reales de renovaciones para caja
