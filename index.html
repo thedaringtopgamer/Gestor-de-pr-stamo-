@@ -5226,10 +5226,21 @@ function renderPanelRecolector(){
   var wrapSalida=document.getElementById('caja-salida-wrap');
   if(wrapSalida) wrapSalida.style.display=(rolActual==='admin')?'':'none';
   var inputSalida=document.getElementById('caja-salida');
-  if(inputSalida) inputSalida.value=salidaGuardada>0?fmt(salidaGuardada):'';
-  // Si la base es manual, la inyección ya está considerada por el admin — no sumar dos veces
-  var baseEsManual=!!(bases['_m_'+_baseKey]);
-  var baseConInyeccion=baseEsManual?baseGuardada:baseGuardada+inyeccionHoy;
+  // BASE: si es manual, sumar solo inyecciones POSTERIORES al save (inyecHoy - inyecAlSave)
+  var baseEsManual=(bases['_m_'+_baseKey]!==undefined&&bases['_m_'+_baseKey]!==null&&bases['_m_'+_baseKey]!=='');
+  var inyecAlSaveBase=baseEsManual?(parseInt(bases['_mi_'+_baseKey])||0):0;
+  var baseConInyeccion=baseEsManual
+    ?(baseGuardada+Math.max(0,inyeccionHoy-inyecAlSaveBase))
+    :(baseGuardada+inyeccionHoy);
+  if(inputBase) inputBase.value=baseConInyeccion>0?fmt(baseConInyeccion):'';
+  // SALIDA: misma lógica — si es manual, sumar solo inyecciones posteriores
+  var salidaKey=rutaCajaKey+'_'+fecha;
+  var salidaEsManual=(salidas['_m_'+salidaKey]!==undefined&&salidas['_m_'+salidaKey]!==null&&salidas['_m_'+salidaKey]!=='');
+  var inyecAlSaveSalida=salidaEsManual?(parseInt(salidas['_mi_'+salidaKey])||0):0;
+  var salidaDisplay=salidaEsManual
+    ?(salidaGuardada+Math.max(0,inyeccionHoy-inyecAlSaveSalida))
+    :(salidaGuardada+inyeccionHoy);
+  if(inputSalida) inputSalida.value=salidaDisplay>0?fmt(salidaDisplay):'';
   var cajaTotal=baseConInyeccion+recogidaTotal-totalSoloNuevos-totalEntregadoRenov-totalAdminRenov-totalGastos;
   document.getElementById('caja-recogida').textContent='₡'+fmt(recogidaTotal);
   document.getElementById('caja-base-display').textContent='₡'+fmt(baseConInyeccion);
@@ -5407,16 +5418,19 @@ function mostrarResumenCaja(){
 function guardarBase(){
   var fecha=document.getElementById('panel-fecha').value||hoyLocal();
   var base=readMoneyInput('caja-base');
+  var rk=rutaActual||'todas';
+  var inyecActual=inversiones.filter(function(x){return x.fecha===fecha&&(rk==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rk);}).reduce(function(s,x){return s+x.monto;},0);
   var rutas=['todas','Heredia','Alajuela','San Ramón'];
   if(rutaActual==='todas'){
     rutas.forEach(function(r){
       bases[r+'_'+fecha]=base;
-      bases['_m_'+r+'_'+fecha]=1; // marcar como guardada manualmente
+      bases['_m_'+r+'_'+fecha]=1;
+      bases['_mi_'+r+'_'+fecha]=inyecActual;
     });
   } else {
-    var rk=(rutaActual||'todas');
     bases[rk+'_'+fecha]=base;
     bases['_m_'+rk+'_'+fecha]=1;
+    bases['_mi_'+rk+'_'+fecha]=inyecActual;
   }
   guardarDatos();
   renderPanelRecolector();
@@ -5426,7 +5440,12 @@ function guardarSalida(){
   if(rolActual!=='admin'){toast('⚠ Solo el admin puede editar la salida');return;}
   var fecha=document.getElementById('panel-fecha').value||hoyLocal();
   var salida=readMoneyInput('caja-salida');
-  salidas[(rutaActual||'todas')+'_'+fecha]=salida; guardarDatos();
+  var rk=rutaActual||'todas';
+  var inyecActual=inversiones.filter(function(x){return x.fecha===fecha&&(rk==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rk);}).reduce(function(s,x){return s+x.monto;},0);
+  salidas[rk+'_'+fecha]=salida;
+  salidas['_m_'+rk+'_'+fecha]=1;
+  salidas['_mi_'+rk+'_'+fecha]=inyecActual;
+  guardarDatos();
   renderPanelRecolector();
   toast('✓ Salida guardada: ₡'+fmt(salida));
 }
@@ -5442,16 +5461,19 @@ function calcCaja(){
 function guardarBaseModal(){
   var fecha=document.getElementById('panel-fecha').value||hoyLocal();
   var base=readMoneyInput('caja-base-modal');
+  var rk=rutaActual||'todas';
+  var inyecActual=inversiones.filter(function(x){return x.fecha===fecha&&(rk==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rk);}).reduce(function(s,x){return s+x.monto;},0);
   var rutas=['todas','Heredia','Alajuela','San Ramón'];
   if(rutaActual==='todas'){
     rutas.forEach(function(r){
       bases[r+'_'+fecha]=base;
       bases['_m_'+r+'_'+fecha]=1;
+      bases['_mi_'+r+'_'+fecha]=inyecActual;
     });
   } else {
-    var rk=(rutaActual||'todas');
     bases[rk+'_'+fecha]=base;
     bases['_m_'+rk+'_'+fecha]=1;
+    bases['_mi_'+rk+'_'+fecha]=inyecActual;
   }
   guardarDatos();
   renderPanelRecolector();
