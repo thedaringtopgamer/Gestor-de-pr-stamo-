@@ -1283,7 +1283,10 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <p style="font-size:16px;font-weight:700;margin-bottom:4px">🗂 Resumen Caja</p>
       <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px" id="caja-fecha-txt"></p>
       <div class="field-group"><label>Base (efectivo inicial)</label>
-        <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric" id="caja-base" placeholder="0" oninput="fmtMoneyInput(this);calcCaja()" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;font-weight:600">
+        <div style="display:flex;gap:8px">
+          <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric" id="caja-base-modal" placeholder="0" oninput="fmtMoneyInput(this);calcCaja()" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;font-weight:600">
+          <button onclick="guardarBaseModal()" style="background:#16a34a;color:#fff;border:none;border-radius:var(--radius);padding:9px 14px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap">💾 Guardar</button>
+        </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;margin:16px 0">
         <div style="display:flex;justify-content:space-between;padding:10px 12px;background:#f9fafb;border-radius:8px">
@@ -2501,12 +2504,20 @@ function _statsHtml(d,tipo){
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">'
     +'<div style="background:#f0fdf4;border-radius:8px;padding:8px"><div style="color:#6b7280">💰 Recogida</div><div style="font-weight:700;color:#166534">'+_fmtCol(d.recogida)+'</div></div>'
     +'<div style="background:#dbeafe;border-radius:8px;padding:8px;'+editStyle+'" onclick="_editarStatInv(\''+tipo+'\',\'prestado\',\'Prestado\',true,'+prestadoCalc+')"><div style="color:#6b7280">📤 Prestado'+editHint+'</div><div style="font-weight:700;color:#1e40af">'+_fmtCol(prestadoVal)+'</div></div>'
-    +'<div style="background:#f3f4f6;border-radius:8px;padding:8px;cursor:pointer;position:relative" onclick="_verListaNuevos(\''+tipo+'\')">'
-      +'<div style="display:flex;justify-content:space-between;align-items:center;pointer-events:none">'
-        +'<div style="color:#6b7280">👥 Clientes nuevos 🔍</div>'
-      +'</div>'
-      +'<div style="font-weight:700;color:#374151;pointer-events:none">'+clientesVal+'</div>'
-      +(rolActual==='admin'?'<span onclick="event.stopPropagation();_editarStatInv(\''+tipo+'\',\'clientes\',\'Clientes nuevos\',false,'+clientesCalc+')" style="position:absolute;top:4px;right:4px;font-size:14px;cursor:pointer;padding:4px 6px;pointer-events:all;z-index:1">✏️</span>':'')
+    +'<div style="background:#f3f4f6;border-radius:8px;overflow:hidden">'
+      +(rolActual==='admin'
+        ?'<div style="display:flex">'
+          +'<div style="flex:1;padding:8px;cursor:pointer" onclick="_verListaNuevos(\''+tipo+'\')">'
+            +'<div style="color:#6b7280">👥 Clientes nuevos 🔍</div>'
+            +'<div style="font-weight:700;color:#374151">'+clientesVal+'</div>'
+          +'</div>'
+          +'<button onclick="_editarStatInv(\''+tipo+'\',\'clientes\',\'Clientes nuevos\',false,'+clientesCalc+')" style="background:none;border:none;border-left:1px solid #e5e7eb;padding:8px 10px;font-size:16px;cursor:pointer;color:#6b7280;font-family:inherit">✏️</button>'
+        +'</div>'
+        :'<div style="padding:8px;cursor:pointer" onclick="_verListaNuevos(\''+tipo+'\')">'
+          +'<div style="color:#6b7280">👥 Clientes nuevos 🔍</div>'
+          +'<div style="font-weight:700;color:#374151">'+clientesVal+'</div>'
+        +'</div>'
+      )
     +'</div>'
     +(d.totalCobroAdm?'<div style="background:#ede9fe;border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:#7c3aed">'+_fmtCol(d.totalCobroAdm)+'</div></div>':'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:#9ca3af">₡0</div></div>')
     +'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💸 Gastos</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(d.totalGastos||0)+'</div></div>'
@@ -5379,7 +5390,7 @@ function mostrarResumenCaja(){
   var prestamosHoy=pRuta.filter(function(p){return p.fechaInicio===fecha&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
   var totalGastos=gastos.filter(function(x){return x.fecha===fecha&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
   var baseGuardada=parseInt(bases[(rutaActual||'todas')+'_'+fecha])||0;
-  document.getElementById('caja-base').value=baseGuardada>0?fmt(baseGuardada):'';
+  document.getElementById('caja-base-modal').value=baseGuardada>0?fmt(baseGuardada):'';
   document.getElementById('caja-recogida').textContent='₡'+fmt(recogida);
   document.getElementById('caja-prestamos').textContent='₡'+fmt(prestamosHoy);
   document.getElementById('caja-gastos').textContent='₡'+fmt(totalGastos);
@@ -5416,13 +5427,31 @@ function guardarSalida(){
 }
 function calcCaja(){
   var fecha=document.getElementById('panel-fecha').value||hoyLocal();
-  var base=readMoneyInput('caja-base');
-  bases[(rutaActual||'todas')+'_'+fecha]=base; guardarDatos();
+  var base=readMoneyInput('caja-base-modal');
   var recogida=pagos.filter(function(x){return x.fechaPago===fecha;}).reduce(function(s,x){return s+x.montoAbonado;},0);
   var prestamosHoy=prestamos.filter(function(p){return p.fechaInicio===fecha;}).reduce(function(s,p){return s+p.montoPrestado;},0);
   var totalGastos=gastos.filter(function(x){return x.fecha===fecha;}).reduce(function(s,x){return s+x.monto;},0);
   document.getElementById('caja-base-display').textContent='₡'+fmt(base);
   document.getElementById('caja-total').textContent='₡'+fmt(recogida+base-prestamosHoy-totalGastos);
+}
+function guardarBaseModal(){
+  var fecha=document.getElementById('panel-fecha').value||hoyLocal();
+  var base=readMoneyInput('caja-base-modal');
+  var rutas=['todas','Heredia','Alajuela','San Ramón'];
+  if(rutaActual==='todas'){
+    rutas.forEach(function(r){
+      bases[r+'_'+fecha]=base;
+      bases['_m_'+r+'_'+fecha]=1;
+    });
+  } else {
+    var rk=(rutaActual||'todas');
+    bases[rk+'_'+fecha]=base;
+    bases['_m_'+rk+'_'+fecha]=1;
+  }
+  guardarDatos();
+  renderPanelRecolector();
+  cerrarCajaModal();
+  toast('✓ Base guardada: ₡'+fmt(base));
 }
 function cerrarCajaModal(){ document.getElementById('caja-modal').style.display='none'; }
 
