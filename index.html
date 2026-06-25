@@ -2396,6 +2396,34 @@ function abrirListaMora(){
   goTo('screen-nuevos-periodo');
 }
 
+function _verListaNuevos(tipo){
+  var ids=window['_idsNuevos_'+tipo]||[];
+  var rango=window['_rangoNuevos_'+tipo]||'';
+  var titulo='👥 Clientes nuevos — '+(tipo==='semana'?'Semana':'Mes');
+  document.getElementById('nuevos-periodo-titulo').textContent=titulo;
+  document.getElementById('nuevos-periodo-rango').textContent=rango+' ('+ids.length+' cliente'+(ids.length!==1?'s':'')+')';
+  var lista=document.getElementById('nuevos-periodo-lista');
+  if(!ids.length){
+    lista.innerHTML='<p style="color:#6b7280;font-size:14px;text-align:center;margin-top:40px">Ningún cliente nuevo en este período.</p>';
+  } else {
+    lista.innerHTML=ids.map(function(id){
+      var p=prestamos.find(function(x){return x.id===id;});
+      if(!p) return '';
+      var fi=(p._fechaCreacion||p.fechaInicio||'').split('-');
+      var fd=fi.length===3?fi[2]+'/'+fi[1]+'/'+fi[0]:p.fechaInicio;
+      return '<div onclick="verDetalle(\''+id+'\')" style="background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.08);cursor:pointer;border-left:4px solid #3b82f6">'
+        +'<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:4px">'+p.cliente+'</div>'
+        +'<div style="display:flex;gap:16px;font-size:13px;color:#6b7280">'
+        +'<span>💰 ₡'+fmt(p.montoPrestado)+'</span>'
+        +'<span>📅 '+fd+'</span>'
+        +(p.subruta?'<span>📍 '+p.subruta+'</span>':'')
+        +'</div>'
+        +'</div>';
+    }).join('');
+  }
+  goTo('screen-nuevos-periodo');
+}
+
 function _abrirListaNuevos(el){
   var ids=JSON.parse(el.getAttribute('data-ids')||'[]');
   var rango=el.getAttribute('data-rango')||'';
@@ -2473,7 +2501,13 @@ function _statsHtml(d,tipo){
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">'
     +'<div style="background:#f0fdf4;border-radius:8px;padding:8px"><div style="color:#6b7280">💰 Recogida</div><div style="font-weight:700;color:#166534">'+_fmtCol(d.recogida)+'</div></div>'
     +'<div style="background:#dbeafe;border-radius:8px;padding:8px;'+editStyle+'" onclick="_editarStatInv(\''+tipo+'\',\'prestado\',\'Prestado\',true,'+prestadoCalc+')"><div style="color:#6b7280">📤 Prestado'+editHint+'</div><div style="font-weight:700;color:#1e40af">'+_fmtCol(prestadoVal)+'</div></div>'
-    +'<div style="background:#f3f4f6;border-radius:8px;padding:8px;'+editStyle+'" onclick="_editarStatInv(\''+tipo+'\',\'clientes\',\'Clientes nuevos\',false,'+clientesCalc+')"><div style="color:#6b7280">👥 Clientes nuevos'+editHint+'</div><div style="font-weight:700;color:#374151">'+clientesVal+'</div></div>'
+    +'<div style="background:#f3f4f6;border-radius:8px;padding:8px;cursor:pointer" onclick="_verListaNuevos(\''+tipo+'\')">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center">'
+        +'<div style="color:#6b7280">👥 Clientes nuevos 🔍</div>'
+        +(rolActual==='admin'?'<span onclick="event.stopPropagation();_editarStatInv(\''+tipo+'\',\'clientes\',\'Clientes nuevos\',false,'+clientesCalc+')" style="font-size:13px;cursor:pointer;padding:2px 4px">✏️</span>':'')
+      +'</div>'
+      +'<div style="font-weight:700;color:#374151">'+clientesVal+'</div>'
+    +'</div>'
     +(d.totalCobroAdm?'<div style="background:#ede9fe;border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:#7c3aed">'+_fmtCol(d.totalCobroAdm)+'</div></div>':'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:#9ca3af">₡0</div></div>')
     +'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💸 Gastos</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(d.totalGastos||0)+'</div></div>'
     +(d.totalInyeccion?'<div style="background:#e0f2fe;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💉 Capital inyectado</div><div style="font-weight:700;color:#0369a1">+'+_fmtCol(d.totalInyeccion)+'</div></div>':'')
@@ -2565,6 +2599,8 @@ function renderCierres(){
   var elRangoSem=document.getElementById('cierre-semana-rango');
   var elStatsSem=document.getElementById('cierre-semana-stats');
   if(elRangoSem) elRangoSem.textContent=inicioSem+' → '+hoy;
+  window._idsNuevos_semana=dSem.idsNuevos||[];
+  window._rangoNuevos_semana=inicioSem+' → '+hoy;
   if(elStatsSem) elStatsSem.innerHTML=_statsHtml(dSem,'semana')
     +_barMeta(dSem.prestado+dSem.montoRenov,metaSem,'Meta préstamos semana',true)
     +_barMeta(dSem.numPrestamos,metaSemC,'Meta clientes nuevos semana',false);
@@ -2584,6 +2620,8 @@ function renderCierres(){
   var activosCartera=prestamos.filter(function(p){
     return !p.incompleto&&p.estado!=='Cancelado'&&(rFiltroMes==='todas'||p.ruta===rFiltroMes);
   }).length;
+  window._idsNuevos_mes=dMes.idsNuevos||[];
+  window._rangoNuevos_mes=inicioMes+' → '+hoy;
   if(elStatsMes) elStatsMes.innerHTML=_statsHtml(dMes,'mes')
     +_barMeta(dMes.prestado+dMes.montoRenov,metaPrestamos,'Meta préstamos mes',true)
     +_barMeta(dMes.numPrestamos,metaClientes,'Meta clientes nuevos mes',false)
