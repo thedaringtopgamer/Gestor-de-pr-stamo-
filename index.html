@@ -4837,6 +4837,21 @@ function eliminarAbono(pagoId){
     overlay.style.display='none';
     document.getElementById('modal-btn-si').style.background='#16a34a';
     pagos=pagos.filter(function(x){return x.id_pago!==pagoId;});
+    // Recalcular proximaFechaPago desde el calendario (sin el abono borrado)
+    if(p){
+      var dPost=calcDerived(p);
+      if(dPost.saldoPendiente<=0){
+        p.proximaFechaPago=null;
+      } else {
+        var proxCuotaPost=dPost.cuotasPagadas+1;
+        if(proxCuotaPost<=p.cantidadDeQuincenas){
+          var vencPost=getCuotaVencimiento(p,proxCuotaPost);
+          p.proximaFechaPago=vencPost.getFullYear()+'-'+String(vencPost.getMonth()+1).padStart(2,'0')+'-'+String(vencPost.getDate()).padStart(2,'0');
+        } else {
+          p.proximaFechaPago=null;
+        }
+      }
+    }
     guardarDatos();
     if(currentId) verDetalle(currentId); else renderPanelRecolector();
     toast('✓ Abono eliminado');
