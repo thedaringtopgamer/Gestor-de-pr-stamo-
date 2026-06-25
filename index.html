@@ -5092,26 +5092,32 @@ function renderPanelRecolector(){
   var rutaCajaKey=rutaActual||'todas';
   var _baseKey=rutaCajaKey+'_'+fecha;
   var baseGuardada;
+
   if(bases['_m_'+_baseKey]){
-    // Admin guardó manualmente esta base — respetar sin recalcular
+    // Admin cambió la base manualmente este día — respetar
     baseGuardada=parseInt(bases[_baseKey])||0;
+  } else if(bases['_cf_'+_baseKey]!==undefined){
+    // Ya se calculó el carry-forward para este día — usar valor cacheado
+    baseGuardada=parseInt(bases['_cf_'+_baseKey])||0;
   } else {
-    // Calcular carry-forward de ayer (siempre dinámico, no persiste)
+    // Calcular carry-forward: base hoy = cajaTotal de ayer
     var _ayer=new Date(fecha+'T12:00:00'); _ayer.setDate(_ayer.getDate()-1);
     var _ayerStr=_ayer.toISOString().split('T')[0];
-    // Base de ayer: solo respetar si fue guardada manualmente
-    var _baseAyer=bases['_m_'+rutaCajaKey+'_'+_ayerStr]?parseInt(bases[rutaCajaKey+'_'+_ayerStr])||0:0;
-    if(!_baseAyer){
-      // Buscar hasta 30 días atrás la última base manual
-      for(var _d=2;_d<=30;_d++){
-        var _p=new Date(fecha+'T12:00:00'); _p.setDate(_p.getDate()-_d);
-        var _pStr=_p.toISOString().split('T')[0];
-        if(bases['_m_'+rutaCajaKey+'_'+_pStr]){
-          _baseAyer=parseInt(bases[rutaCajaKey+'_'+_pStr])||0;
-          break;
-        }
+    var _ayerKey=rutaCajaKey+'_'+_ayerStr;
+    // Obtener base de ayer (manual tiene prioridad, luego carry-forward cacheado, luego buscar atrás)
+    var _baseAyer=0;
+    if(bases['_m_'+_ayerKey]) _baseAyer=parseInt(bases[_ayerKey])||0;
+    else if(bases['_cf_'+_ayerKey]!==undefined) _baseAyer=parseInt(bases['_cf_'+_ayerKey])||0;
+    else {
+      for(var _d=2;_d<=60;_d++){
+        var _pd=new Date(fecha+'T12:00:00'); _pd.setDate(_pd.getDate()-_d);
+        var _pdStr=_pd.toISOString().split('T')[0];
+        var _pdk=rutaCajaKey+'_'+_pdStr;
+        if(bases['_m_'+_pdk]){ _baseAyer=parseInt(bases[_pdk])||0; break; }
+        if(bases['_cf_'+_pdk]!==undefined){ _baseAyer=parseInt(bases['_cf_'+_pdk])||0; break; }
       }
     }
+    // CajaTotal de ayer = base de ayer + movimientos de ayer
     var _idsR=prestamosRuta.map(function(p){return p.id;});
     var _recAyer=pagos.filter(function(x){return (x.fechaRegistro||x.fechaPago)===_ayerStr&&_idsR.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
     var _presAyer=prestamosRuta.filter(function(p){return p.fechaInicio===_ayerStr&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
@@ -5120,6 +5126,9 @@ function renderPanelRecolector(){
     var _inyecAyer=inversiones.filter(function(x){return x.fecha===_ayerStr&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
     var _cajaAyer=_recAyer+_baseAyer+_inyecAyer-_presAyer-_renovAyer-_gastosAyer;
     baseGuardada=_cajaAyer>0?_cajaAyer:0;
+    // Cachear carry-forward para hoy (no es manual, pero sirve para mañana)
+    bases['_cf_'+_baseKey]=baseGuardada;
+    guardarDatos();
   }
   var recogidaTotal=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
 
