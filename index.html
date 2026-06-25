@@ -5227,8 +5227,9 @@ function renderPanelRecolector(){
   if(wrapSalida) wrapSalida.style.display=(rolActual==='admin')?'':'none';
   var inputSalida=document.getElementById('caja-salida');
   if(inputSalida) inputSalida.value=fmt(salidaGuardada+inyeccionHoy)||'';
-  // FÓRMULA: (Base + Inyección) + Recogida - NuevosReales - EntregadoRenov - AdminRenov - Gastos
-  var baseConInyeccion=baseGuardada+inyeccionHoy;
+  // Si la base es manual, la inyección ya está considerada por el admin — no sumar dos veces
+  var baseEsManual=!!(bases['_m_'+_baseKey]);
+  var baseConInyeccion=baseEsManual?baseGuardada:baseGuardada+inyeccionHoy;
   var cajaTotal=baseConInyeccion+recogidaTotal-totalSoloNuevos-totalEntregadoRenov-totalAdminRenov-totalGastos;
   document.getElementById('caja-recogida').textContent='₡'+fmt(recogidaTotal);
   document.getElementById('caja-base-display').textContent='₡'+fmt(baseConInyeccion);
