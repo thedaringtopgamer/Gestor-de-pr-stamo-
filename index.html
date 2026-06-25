@@ -3198,8 +3198,7 @@ function guardarPrestamo(){
     +'💳 *Cuota:* ₡'+fmt(cuotaVal)+'\n'
     +'🔢 *Cantidad de cuotas:* '+cd.cuotas+'\n'
     +'📆 *Próxima fecha de pago:* '+proxStr+' ('+proxDia+')';
-  var tel=(p.telefono||'').replace(/\D/g,'');
-  var waUrl='https://wa.me/'+(tel?'506'+tel:'')+'?text='+encodeURIComponent(msg);
+  var waUrl='https://wa.me/'+formatTel(p.telefono||'')+'?text='+encodeURIComponent(msg);
   clienteTemporal={};
   sessionStorage.removeItem('fjd_cliente_temp');
   document.getElementById('nc-nombre').value='';
@@ -3633,9 +3632,10 @@ function verDetalle(id){
   var btnWa=document.getElementById('det-btn-wa');
   var btnCall=document.getElementById('det-btn-call');
   if(telNum){
-    btnWa.href='https://wa.me/506'+telNum;
+    var telWa=formatTel(p.telefono||'');
+    btnWa.href='https://wa.me/'+telWa;
     btnWa.style.display='inline-flex';
-    btnCall.href='tel:+506'+telNum;
+    btnCall.href='tel:+'+(telWa.startsWith('+')?telWa.slice(1):telWa);
     btnCall.style.display='inline-flex';
   } else {
     btnWa.style.display='none';
@@ -3836,9 +3836,14 @@ function renderPagosLista(p){
 }
 
 function formatTel(tel){
+  // Conservar el + si lo tiene, luego solo dígitos
+  var hasPlus=(tel||'').trim().startsWith('+');
   var t=(tel||'').replace(/\D/g,'');
-  if(t.length===8) return '506'+t; // Costa Rica
-  if(t.startsWith('506')) return t;
+  if(!t) return '';
+  // Si ya tiene código de país (más de 8 dígitos) usar como está
+  if(t.length>8) return t;
+  // 8 dígitos sin código → asumir Costa Rica 506
+  if(t.length===8) return '506'+t;
   return t;
 }
 
