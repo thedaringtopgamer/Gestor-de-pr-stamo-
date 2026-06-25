@@ -5092,20 +5092,24 @@ function renderPanelRecolector(){
   var rutaCajaKey=rutaActual||'todas';
   var _baseKey=rutaCajaKey+'_'+fecha;
   var baseGuardada;
-  if(_baseKey in bases){
-    // Base ya guardada (manual o carry-forward previo) — no tocar
+  if(bases['_m_'+_baseKey]){
+    // Admin guardó manualmente esta base — respetar sin recalcular
     baseGuardada=parseInt(bases[_baseKey])||0;
   } else {
-    // No hay base para hoy — calcular caja de ayer como base inicial del día
+    // Calcular carry-forward de ayer (siempre dinámico, no persiste)
     var _ayer=new Date(fecha+'T12:00:00'); _ayer.setDate(_ayer.getDate()-1);
     var _ayerStr=_ayer.toISOString().split('T')[0];
-    var _baseAyer=parseInt(bases[rutaCajaKey+'_'+_ayerStr])||0;
+    // Base de ayer: solo respetar si fue guardada manualmente
+    var _baseAyer=bases['_m_'+rutaCajaKey+'_'+_ayerStr]?parseInt(bases[rutaCajaKey+'_'+_ayerStr])||0:0;
     if(!_baseAyer){
+      // Buscar hasta 30 días atrás la última base manual
       for(var _d=2;_d<=30;_d++){
         var _p=new Date(fecha+'T12:00:00'); _p.setDate(_p.getDate()-_d);
         var _pStr=_p.toISOString().split('T')[0];
-        _baseAyer=parseInt(bases[rutaCajaKey+'_'+_pStr])||0;
-        if(_baseAyer>0) break;
+        if(bases['_m_'+rutaCajaKey+'_'+_pStr]){
+          _baseAyer=parseInt(bases[rutaCajaKey+'_'+_pStr])||0;
+          break;
+        }
       }
     }
     var _idsR=prestamosRuta.map(function(p){return p.id;});
@@ -5116,9 +5120,6 @@ function renderPanelRecolector(){
     var _inyecAyer=inversiones.filter(function(x){return x.fecha===_ayerStr&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
     var _cajaAyer=_recAyer+_baseAyer+_inyecAyer-_presAyer-_renovAyer-_gastosAyer;
     baseGuardada=_cajaAyer>0?_cajaAyer:0;
-    // Guardar carry-forward una sola vez para que no recalcule en próximos renders
-    bases[_baseKey]=baseGuardada;
-    guardarDatos();
   }
   var recogidaTotal=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
 
@@ -5323,9 +5324,14 @@ function guardarBase(){
   var base=readMoneyInput('caja-base');
   var rutas=['todas','Heredia','Alajuela','San Ramón'];
   if(rutaActual==='todas'){
-    rutas.forEach(function(r){ bases[r+'_'+fecha]=base; });
+    rutas.forEach(function(r){
+      bases[r+'_'+fecha]=base;
+      bases['_m_'+r+'_'+fecha]=1; // marcar como guardada manualmente
+    });
   } else {
-    bases[(rutaActual||'todas')+'_'+fecha]=base;
+    var rk=(rutaActual||'todas');
+    bases[rk+'_'+fecha]=base;
+    bases['_m_'+rk+'_'+fecha]=1;
   }
   guardarDatos();
   renderPanelRecolector();
