@@ -5104,10 +5104,11 @@ function renderPanelRecolector(){
     var _ayer=new Date(fecha+'T12:00:00'); _ayer.setDate(_ayer.getDate()-1);
     var _ayerStr=_ayer.toISOString().split('T')[0];
     var _ayerKey=rutaCajaKey+'_'+_ayerStr;
-    // Obtener base de ayer (manual tiene prioridad, luego carry-forward cacheado, luego buscar atrás)
+    // Obtener base de ayer — acepta _m_ (manual), _cf_ (carry-forward) o valor legacy sin marca
     var _baseAyer=0;
     if(bases['_m_'+_ayerKey]) _baseAyer=parseInt(bases[_ayerKey])||0;
     else if(bases['_cf_'+_ayerKey]!==undefined) _baseAyer=parseInt(bases['_cf_'+_ayerKey])||0;
+    else if(bases[_ayerKey]!==undefined) _baseAyer=parseInt(bases[_ayerKey])||0;
     else {
       for(var _d=2;_d<=60;_d++){
         var _pd=new Date(fecha+'T12:00:00'); _pd.setDate(_pd.getDate()-_d);
@@ -5115,6 +5116,7 @@ function renderPanelRecolector(){
         var _pdk=rutaCajaKey+'_'+_pdStr;
         if(bases['_m_'+_pdk]){ _baseAyer=parseInt(bases[_pdk])||0; break; }
         if(bases['_cf_'+_pdk]!==undefined){ _baseAyer=parseInt(bases['_cf_'+_pdk])||0; break; }
+        if(bases[_pdk]!==undefined){ _baseAyer=parseInt(bases[_pdk])||0; break; }
       }
     }
     // CajaTotal de ayer = base de ayer + movimientos de ayer
