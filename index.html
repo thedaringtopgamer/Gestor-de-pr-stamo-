@@ -5220,8 +5220,8 @@ function renderPanelRecolector(){
   if(bases['_m_'+_baseKey]){
     // Admin cambió la base manualmente este día — respetar
     baseGuardada=parseInt(bases[_baseKey])||0;
-  } else if(bases['_cf_'+_baseKey]!==undefined){
-    // Ya se calculó el carry-forward para este día — usar valor cacheado
+  } else if(bases['_cf_'+_baseKey]>0){
+    // Usar carry-forward cacheado solo si es mayor a cero (un caché de 0 puede ser error de carga)
     baseGuardada=parseInt(bases['_cf_'+_baseKey])||0;
   } else {
     // Calcular carry-forward: base hoy = cajaTotal de ayer
@@ -5252,9 +5252,11 @@ function renderPanelRecolector(){
     var _inyecAyer=inversiones.filter(function(x){return x.fecha===_ayerStr&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
     var _cajaAyer=_recAyer+_baseAyer+_inyecAyer-_presAyer-_renovAyer-_gastosAyer;
     baseGuardada=_cajaAyer>0?_cajaAyer:0;
-    // Cachear carry-forward para hoy (no es manual, pero sirve para mañana)
-    bases['_cf_'+_baseKey]=baseGuardada;
-    guardarDatos();
+    // Cachear carry-forward solo si el resultado es válido (> 0), para no bloquear con un cero incorrecto
+    if(baseGuardada>0){
+      bases['_cf_'+_baseKey]=baseGuardada;
+      guardarDatos();
+    }
   }
   var recogidaTotal=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
 
