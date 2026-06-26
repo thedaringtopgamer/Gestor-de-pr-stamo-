@@ -3771,7 +3771,7 @@ function verDetalle(id){
   // Botones admin y badge de bloqueo
   var wrapAdm=document.getElementById('wrap-admin-btns');
   var bloqBadge=document.getElementById('bloqueo-badge');
-  if(wrapAdm) wrapAdm.style.display=esAdmin?'grid':'none';
+  if(wrapAdm) wrapAdm.style.display=(esAdmin&&!esCancelado)?'grid':'none';
   if(bloqBadge){
     var esBloqueadoDetalle=!!(p.bloqueado||clientesBloqueados[p.id]);
     bloqBadge.style.display=esBloqueadoDetalle?'':'none';
