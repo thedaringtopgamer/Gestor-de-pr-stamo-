@@ -978,7 +978,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <button id="btn-ver-docs" class="btn btn-outline btn-full" style="padding:12px;margin-bottom:4px" onclick="verDocsCliente()">📁 Ver documentos del cliente</button>
 
       <!-- Abonar -->
-      <div class="card">
+      <div class="card" id="wrap-abonar">
         <p style="font-size:14px;font-weight:600;margin-bottom:12px">💰 Abonar Monto</p>
         <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:14px">
           <div>
@@ -994,10 +994,11 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           <label>Fecha de pago</label>
           <input type="date" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="abonar-fecha">
         </div>
-        <button class="btn btn-blue btn-full" style="padding:12px" onclick="registrarAbono()">✓ Abonar</button>
+        <button id="btn-abonar" class="btn btn-blue btn-full" style="padding:12px" onclick="registrarAbono()">✓ Abonar</button>
       </div>
 
-      <button class="btn btn-cyan btn-full" style="padding:12px;margin-top:4px" onclick="abrirRenovar()">🔄 Renovar</button>
+      <button id="btn-renovar" class="btn btn-cyan btn-full" style="padding:12px;margin-top:4px" onclick="abrirRenovar()">🔄 Renovar</button>
+      <button id="btn-nuevo-prestamo" class="btn btn-blue btn-full" style="padding:12px;margin-top:4px;display:none" onclick="irNuevoPrestamo()">🆕 Nuevo Préstamo</button>
 <button id="btn-eliminar-prestamo" class="btn btn-red btn-full" style="padding:11px;margin-top:8px" onclick="eliminarPrestamo()">🗑 Eliminar préstamo</button>
 
       <!-- Botones admin: Corregir y Bloquear -->
@@ -3525,9 +3526,18 @@ function renderTarjetas(filtro){
   var todos=prestamosVisibles();
   var items=todos.filter(function(p){
     if(f) return p.cliente.toLowerCase().includes(f);
-    // Sin búsqueda: solo activas completas con saldo pendiente
+    // Sin búsqueda: activas + canceladas dentro del último año
     if(p.incompleto) return false;
-    if(calcDerived(p).saldoPendiente<=0) return false;
+    var d=calcDerived(p);
+    if(d.saldoPendiente<=0){
+      // Mostrar cancelados por 1 año desde el último pago
+      var pagosCliente=pagos.filter(function(x){return x.id_prestamo===p.id;});
+      if(!pagosCliente.length) return false;
+      pagosCliente.sort(function(a,b){return new Date(b.fechaPago)-new Date(a.fechaPago);});
+      var ultimoPago=new Date(pagosCliente[0].fechaPago+'T12:00:00');
+      var unAno=new Date(ultimoPago); unAno.setFullYear(unAno.getFullYear()+1);
+      return new Date()<=unAno;
+    }
     return true;
   });
   items.sort(function(a,b){return a.cliente.localeCompare(b.cliente,'es');});
@@ -3734,12 +3744,20 @@ function verDetalle(id){
     btnDocs.style.borderColor=verifDet.necesita?'#f59e0b':'';
     btnDocs.style.color=verifDet.necesita?'#b45309':'';
   }
-  // Mostrar/ocultar controles según rol
+  // Mostrar/ocultar controles según rol y estado
   var esAdmin=(rolActual==='admin');
+  var esCancelado=(d.saldoPendiente<=0);
   var btnGuardar=document.getElementById('btn-guardar-fecha');
   var btnEliminar=document.getElementById('btn-eliminar-prestamo');
-  if(btnGuardar) btnGuardar.style.display=esAdmin?'':'none';
+  var wrapAbonar=document.getElementById('wrap-abonar');
+  var btnRenovar=document.getElementById('btn-renovar');
+  var btnNuevoPrestamo=document.getElementById('btn-nuevo-prestamo');
+  if(btnGuardar) btnGuardar.style.display=esAdmin&&!esCancelado?'':'none';
   if(btnEliminar) btnEliminar.style.display=esAdmin?'':'none';
+  // Cancelado: ocultar Abonar y Renovar, mostrar Nuevo Préstamo
+  if(wrapAbonar) wrapAbonar.style.display=esCancelado?'none':'';
+  if(btnRenovar) btnRenovar.style.display=esCancelado?'none':'';
+  if(btnNuevoPrestamo) btnNuevoPrestamo.style.display=esCancelado?'':'none';
   // Precargar campos del modal corregir (siempre, para cuando se abra)
   if(esAdmin){
     document.getElementById('corr-monto').value=fmt(p.montoPrestado||0);
@@ -4165,6 +4183,25 @@ function renovarDesdeLista(id){
   abrirRenovar();
 }
 
+function irNuevoPrestamo(){
+  if(!currentId) return;
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  // Pre-llenar pantalla de nuevo cliente con datos del cliente existente
+  goTo('screen-nuevo');
+  setTimeout(function(){
+    var elNombre=document.getElementById('nuevo-nombre');
+    var elTel=document.getElementById('nuevo-tel');
+    var elRuta=document.getElementById('nuevo-ruta');
+    var elSubruta=document.getElementById('nuevo-subruta');
+    if(elNombre) elNombre.value=p.cliente||'';
+    if(elTel) elTel.value=p.telefono||'';
+    if(elRuta) elRuta.value=p.ruta||'';
+    if(elSubruta) elSubruta.value=p.subruta||'';
+    // Marcar que este nuevo préstamo es para un cliente existente (mismo ID)
+    window._clienteExistenteId=p.id;
+  },50);
+}
 function abrirRenovar(){
   if(!currentId) return;
   var p=prestamos.find(function(x){return x.id===currentId;});
