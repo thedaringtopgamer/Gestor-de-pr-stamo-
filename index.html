@@ -4507,20 +4507,34 @@ function eliminarPrestamo(){
   var p=prestamos.find(function(x){return x.id===currentId;});
   if(!p) return;
   var overlay=document.getElementById('modal-overlay');
+  // Primera confirmación
   document.getElementById('modal-subtitulo').textContent='Eliminar préstamo';
-  document.getElementById('modal-mensaje').textContent='¿Eliminar el préstamo de '+p.cliente+'?';
-  document.getElementById('modal-btn-si').textContent='Sí, eliminar';
-  document.getElementById('modal-btn-si').style.background='#dc2626';
+  document.getElementById('modal-mensaje').textContent='¿Eliminar el préstamo de '+p.cliente+'? Esto borrará todo el historial de pagos del cliente.';
+  document.getElementById('modal-btn-si').textContent='Continuar';
+  document.getElementById('modal-btn-si').style.background='#f59e0b';
   overlay.style.display='flex';
   _modalCallback=function(){
     overlay.style.display='none';
     document.getElementById('modal-btn-si').style.background='#16a34a';
-    prestamos=prestamos.filter(function(x){return x.id!==currentId;});
-    pagos=pagos.filter(function(x){return x.id_prestamo!==currentId;});
-    guardarDatos();
-    currentId=null;
-    toast('Préstamo eliminado');
-    goTo('screen-cobros');
+    // Segunda confirmación
+    setTimeout(function(){
+      document.getElementById('modal-subtitulo').textContent='⚠️ Confirmación final';
+      document.getElementById('modal-mensaje').textContent='Esta acción NO se puede deshacer. ¿Está seguro que desea eliminar a '+p.cliente+' y todo su historial?';
+      document.getElementById('modal-btn-si').textContent='Sí, eliminar definitivamente';
+      document.getElementById('modal-btn-si').style.background='#dc2626';
+      overlay.style.display='flex';
+      _modalCallback=function(){
+        overlay.style.display='none';
+        document.getElementById('modal-btn-si').style.background='#16a34a';
+        prestamos=prestamos.filter(function(x){return x.id!==currentId;});
+        pagos=pagos.filter(function(x){return x.id_prestamo!==currentId;});
+        guardarDatos();
+        currentId=null;
+        toast('Préstamo eliminado');
+        goTo('screen-cobros');
+      };
+      document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
+    },150);
   };
   document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
 }
