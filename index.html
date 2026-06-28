@@ -2305,18 +2305,48 @@ function guardarMetas(){
   metaPrestamos=parseInt((document.getElementById('meta-prestamos').value||'').replace(/[^\d]/g,'')||'0',10);
   metaClientes=parseInt((document.getElementById('meta-clientes').value||'').replace(/[^\d]/g,'')||'0',10);
   metaTarjetas=parseInt((document.getElementById('meta-tarjetas').value||'').replace(/[^\d]/g,'')||'0',10);
-  metas[_metaKey('prestamos')]=metaPrestamos;
-  metas[_metaKey('clientes')]=metaClientes;
-  metas[_metaKey('tarjetas')]=metaTarjetas;
+  if(rutaInvFiltro==='todas'){
+    // Guardar en "todas" Y propagar a rutas que no tienen meta propia
+    var rutas=['todas','Heredia','Alajuela','San Ramón'];
+    rutas.forEach(function(r){
+      var k=r==='todas'?'todas':r.toLowerCase().replace(/\s+/g,'_');
+      // Solo sobreescribir rutas que no tienen meta propia (o que tienen la misma que "todas" antes)
+      if(r==='todas'||!metas['fjd_meta_prestamos_'+k+'_propio']){
+        metas['fjd_meta_prestamos_'+k]=metaPrestamos;
+        metas['fjd_meta_clientes_'+k]=metaClientes;
+        metas['fjd_meta_tarjetas_'+k]=metaTarjetas;
+      }
+    });
+    metas['fjd_meta_prestamos_todas']=metaPrestamos;
+    metas['fjd_meta_clientes_todas']=metaClientes;
+    metas['fjd_meta_tarjetas_todas']=metaTarjetas;
+  } else {
+    // Guardar meta propia para esta ruta específica y marcarla como independiente
+    var k2=rutaInvFiltro.toLowerCase().replace(/\s+/g,'_');
+    metas['fjd_meta_prestamos_'+k2]=metaPrestamos;
+    metas['fjd_meta_clientes_'+k2]=metaClientes;
+    metas['fjd_meta_tarjetas_'+k2]=metaTarjetas;
+    metas['fjd_meta_prestamos_'+k2+'_propio']=1;
+    metas['fjd_meta_clientes_'+k2+'_propio']=1;
+    metas['fjd_meta_tarjetas_'+k2+'_propio']=1;
+  }
   guardarDatos();
   renderInversion();
   toast('✓ Metas guardadas');
 }
 
 function _cargarMetas(){
-  metaPrestamos=parseInt(metas[_metaKey('prestamos')])||0;
-  metaClientes=parseInt(metas[_metaKey('clientes')])||0;
-  metaTarjetas=parseInt(metas[_metaKey('tarjetas')])||0;
+  // Si la ruta tiene meta propia, usarla; si no, usar la de "todas" como fallback
+  function _leerMeta(sufijo){
+    var val=parseInt(metas[_metaKey(sufijo)])||0;
+    if(!val&&rutaInvFiltro!=='todas'){
+      val=parseInt(metas['fjd_meta_'+sufijo+'_todas'])||0;
+    }
+    return val;
+  }
+  metaPrestamos=_leerMeta('prestamos');
+  metaClientes=_leerMeta('clientes');
+  metaTarjetas=_leerMeta('tarjetas');
   var elP=document.getElementById('meta-prestamos');
   var elC=document.getElementById('meta-clientes');
   var elT=document.getElementById('meta-tarjetas');
