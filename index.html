@@ -2302,6 +2302,21 @@ function _metaKey(sufijo){
 }
 
 function guardarMetas(){
+  var ruta=rutaInvFiltro==='todas'?'todas las rutas':rutaInvFiltro;
+  var overlay=document.getElementById('modal-overlay');
+  document.getElementById('modal-subtitulo').textContent='💾 Confirmar metas';
+  document.getElementById('modal-mensaje').textContent='¿Guardar las metas del mes para '+ruta+'?'+(rutaInvFiltro==='todas'?' Esto aplicará a todas las rutas.':'');
+  document.getElementById('modal-btn-si').textContent='Sí, guardar';
+  document.getElementById('modal-btn-si').style.background='#854d0e';
+  overlay.style.display='flex';
+  _modalCallback=function(){
+    overlay.style.display='none';
+    document.getElementById('modal-btn-si').style.background='#16a34a';
+    _ejecutarGuardarMetas();
+  };
+  document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
+}
+function _ejecutarGuardarMetas(){
   metaPrestamos=parseInt((document.getElementById('meta-prestamos').value||'').replace(/[^\d]/g,'')||'0',10);
   metaClientes=parseInt((document.getElementById('meta-clientes').value||'').replace(/[^\d]/g,'')||'0',10);
   metaTarjetas=parseInt((document.getElementById('meta-tarjetas').value||'').replace(/[^\d]/g,'')||'0',10);
