@@ -2145,6 +2145,16 @@ function guardarDatos(){
 
 function _syncSupabase(){ guardarDatos(); }
 
+// Guarda SOLO la clave bases — nunca toca prestamos ni fotos
+function _guardarSoloBases(){
+  try{ localStorage.setItem('fjd_bases',JSON.stringify(bases)); }catch(e){}
+  fetch(SUPA_URL+'/rest/v1/app_data',{
+    method:'POST',
+    headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
+    body:JSON.stringify([{key:'bases',value:bases}])
+  }).catch(function(){});
+}
+
 // ── Supabase Storage para fotos ──
 var FOTOS_BUCKET='fotos-fjd';
 
@@ -5305,10 +5315,10 @@ function renderPanelRecolector(){
     var _inyecAyer=inversiones.filter(function(x){return x.fecha===_ayerStr&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
     var _cajaAyer=_recAyer+_baseAyer+_inyecAyer-_presAyer-_renovAyer-_gastosAyer;
     baseGuardada=_cajaAyer>0?_cajaAyer:0;
-    // Cachear carry-forward solo si el resultado es válido (> 0), para no bloquear con un cero incorrecto
+    // Cachear carry-forward solo si el resultado es válido (> 0)
     if(baseGuardada>0){
       bases['_cf_'+_baseKey]=baseGuardada;
-      guardarDatos();
+      _guardarSoloBases();
     }
   }
   var recogidaTotal=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
@@ -5367,7 +5377,7 @@ function renderPanelRecolector(){
     var _mananaKey=rutaCajaKey+'_'+_mananaStr;
     if(!bases['_m_'+_mananaKey]&&bases['_cf_'+_mananaKey]!==cajaTotal){
       bases['_cf_'+_mananaKey]=cajaTotal;
-      guardarDatos();
+      _guardarSoloBases();
     }
   }
 }
