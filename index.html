@@ -2306,20 +2306,18 @@ function guardarMetas(){
   metaClientes=parseInt((document.getElementById('meta-clientes').value||'').replace(/[^\d]/g,'')||'0',10);
   metaTarjetas=parseInt((document.getElementById('meta-tarjetas').value||'').replace(/[^\d]/g,'')||'0',10);
   if(rutaInvFiltro==='todas'){
-    // Guardar en "todas" Y propagar a rutas que no tienen meta propia
+    // "Todas" es el jefe — sobreescribe TODAS las rutas sin excepción
     var rutas=['todas','Heredia','Alajuela','San Ramón'];
     rutas.forEach(function(r){
       var k=r==='todas'?'todas':r.toLowerCase().replace(/\s+/g,'_');
-      // Solo sobreescribir rutas que no tienen meta propia (o que tienen la misma que "todas" antes)
-      if(r==='todas'||!metas['fjd_meta_prestamos_'+k+'_propio']){
-        metas['fjd_meta_prestamos_'+k]=metaPrestamos;
-        metas['fjd_meta_clientes_'+k]=metaClientes;
-        metas['fjd_meta_tarjetas_'+k]=metaTarjetas;
-      }
+      metas['fjd_meta_prestamos_'+k]=metaPrestamos;
+      metas['fjd_meta_clientes_'+k]=metaClientes;
+      metas['fjd_meta_tarjetas_'+k]=metaTarjetas;
+      // Limpiar marca de "propio" para que queden sincronizadas con "todas"
+      delete metas['fjd_meta_prestamos_'+k+'_propio'];
+      delete metas['fjd_meta_clientes_'+k+'_propio'];
+      delete metas['fjd_meta_tarjetas_'+k+'_propio'];
     });
-    metas['fjd_meta_prestamos_todas']=metaPrestamos;
-    metas['fjd_meta_clientes_todas']=metaClientes;
-    metas['fjd_meta_tarjetas_todas']=metaTarjetas;
   } else {
     // Guardar meta propia para esta ruta específica y marcarla como independiente
     var k2=rutaInvFiltro.toLowerCase().replace(/\s+/g,'_');
