@@ -1789,14 +1789,17 @@ function _verificarRevocacion(){
   if(rolActual==='admin') return;
   var loginTs=parseInt(localStorage.getItem('fjd_login_ts')||'0');
   var loginRuta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
-  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value',{headers:SUPA_HDR})
-  .then(function(r){return r.ok?r.json():null;})
-  .then(function(rows){
-    if(!rows||!rows[0]) return;
-    var rev=rows[0].value||{};
-    var revokeTs=rev[loginRuta]||rev['todas']||0;
-    if(revokeTs>loginTs){
-      _eliminarLoginNube(_getDeviceId());
+  var myDeviceId=_getDeviceId();
+  Promise.all([
+    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value',{headers:SUPA_HDR}).then(function(r){return r.ok?r.json():null;}),
+    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked_device&select=value',{headers:SUPA_HDR}).then(function(r){return r.ok?r.json():null;})
+  ]).then(function(results){
+    var revRuta=(results[0]&&results[0][0]&&results[0][0].value)||{};
+    var revDev=(results[1]&&results[1][0]&&results[1][0].value)||{};
+    var revokeTs=revRuta[loginRuta]||revRuta['todas']||0;
+    var revDevTs=revDev[myDeviceId]||0;
+    if(revokeTs>loginTs||revDevTs>loginTs){
+      _eliminarLoginNube(myDeviceId);
       toast('⚠ Su sesión fue cerrada por el administrador.');
       setTimeout(_forzarLogoutAdmin,2000);
     }
@@ -1992,7 +1995,9 @@ function abrirRevocarSesiones(){
           +'<div style="flex:1;min-width:0">'
           +'<div style="font-size:12px;font-weight:700;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📱 '+s.dispositivo+'</div>'
           +'<div style="font-size:10px;color:#6b7280">'+(appAbierta?'App abierta ahora':'App cerrada')+' · Entró '+loginStr+'</div>'
-          +'</div></div>';
+          +'</div>'
+          +'<button onclick="revocarDispositivo(\''+s.deviceId+'\',this)" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:13px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif;flex-shrink:0" title="Cerrar esta sesión">✕</button>'
+          +'</div>';
       }).join('');
       var badge=numLog>0
         ?'<span style="background:'+(numLog>0?'#dbeafe':'#f3f4f6')+';color:'+(numLog>0?'#1d4ed8':'#9ca3af')+';border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700">'+numLog+' logueado'+(numLog>1?'s':'')+'</span>'
@@ -2035,6 +2040,36 @@ function revocarRuta(ruta, btn){
     if(r&&r.ok){ btn.textContent='✓ Cerrado'; btn.style.background='#16a34a'; toast('✓ Sesión de ruta '+ruta+' cerrada'); }
     else{ btn.disabled=false; btn.textContent='Cerrar sesión'; toast('⚠ Error'); }
   }).catch(function(){ btn.disabled=false; btn.textContent='Cerrar sesión'; toast('⚠ Error'); });
+}
+
+function revocarDispositivo(deviceId, btn){
+  btn.disabled=true; btn.textContent='...';
+  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked_device&select=value',{headers:SUPA_HDR})
+  .then(function(r){return r.ok?r.json():[];})
+  .then(function(rows){
+    var rev=(rows&&rows[0]&&rows[0].value)||{};
+    rev[deviceId]=Date.now();
+    return fetch(SUPA_URL+'/rest/v1/app_data',{
+      method:'POST',
+      headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
+      body:JSON.stringify([{key:'session_revoked_device',value:rev}])
+    });
+  })
+  .then(function(r){
+    if(r&&r.ok){
+      btn.textContent='✓';
+      btn.style.background='#16a34a';
+      // Eliminar de logged_sessions también
+      fetch(SUPA_URL+'/rest/v1/app_data?key=eq.logged_sessions&select=value',{headers:SUPA_HDR})
+      .then(function(r2){return r2.ok?r2.json():[];})
+      .then(function(rows2){
+        var log=(rows2&&rows2[0]&&rows2[0].value)||{};
+        delete log[deviceId];
+        return fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'logged_sessions',value:log}])});
+      }).catch(function(){});
+      toast('✓ Sesión cerrada');
+    } else { btn.disabled=false; btn.textContent='✕'; toast('⚠ Error'); }
+  }).catch(function(){ btn.disabled=false; btn.textContent='✕'; toast('⚠ Error'); });
 }
 
 function revocarTodas(){
