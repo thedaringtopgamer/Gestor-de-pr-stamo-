@@ -2133,16 +2133,17 @@ function guardarDatos(){
     localStorage.setItem('fjd_ts',ts.toString());
   }catch(e){}
 
-  // Fotos ya están en Storage como URLs — solo excluir base64 legacy del payload
+  // Construir mapa de fotos separado y limpiar base64 del payload de prestamos
+  var fotosMap={};
   var prestamosSinFotos=prestamos.map(function(p){
     var copia=Object.assign({},p);
     if(copia.fotos){
       var fotosLimpias={};
       Object.keys(copia.fotos).forEach(function(k){
-        // Guardar solo URLs (Storage), no base64
         if(copia.fotos[k]&&!copia.fotos[k].startsWith('data:')) fotosLimpias[k]=copia.fotos[k];
       });
       copia.fotos=fotosLimpias;
+      if(Object.keys(fotosLimpias).length) fotosMap[p.id]=fotosLimpias;
     }
     return copia;
   });
@@ -2150,6 +2151,7 @@ function guardarDatos(){
   _guardandoEnNube=true;
   var datosPrincipales=[
     {key:'prestamos',value:prestamosSinFotos},
+    {key:'fotos',value:fotosMap},
     {key:'pagos',value:pagos},
     {key:'cobrosadmin',value:cobrosAdmin},
     {key:'gastos',value:gastos},
@@ -5692,6 +5694,17 @@ function fechaOffset(dias){
           if(row.key==='passwords'&&Array.isArray(row.value)) row.value.forEach(function(p,i){if(USUARIOS[i]&&p) USUARIOS[i].pass=p;});
           if(row.key==='session_revoked'&&row.value&&typeof row.value==='object') window._sessionRevoked=row.value;
         });
+        // Cargar fotos por separado (excluidas del query principal para no sobrecargar)
+        try{
+          var rFotos=await fetch(SUPA_URL+'/rest/v1/app_data?select=value&key=eq.fotos',{headers:SUPA_HDR});
+          if(rFotos.ok){
+            var rowsFotos=await rFotos.json();
+            if(rowsFotos&&rowsFotos[0]&&rowsFotos[0].value&&typeof rowsFotos[0].value==='object'){
+              var fotosSupabase=rowsFotos[0].value;
+              prestamos.forEach(function(p){ if(fotosSupabase[p.id]) p.fotos=Object.assign({},fotosSupabase[p.id],p.fotos||{}); });
+            }
+          }
+        }catch(e){}
         _cargado=true;
         break;
       } else { _ultimoCodigo=r.status; _intentos++; if(_intentos<3) await new Promise(function(res){setTimeout(res,3000);}); }
