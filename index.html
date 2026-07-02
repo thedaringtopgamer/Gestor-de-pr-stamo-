@@ -1583,36 +1583,41 @@ function _actualizarPendiente(deviceId,ruta,dispositivo){
 }
 
 function _marcaDispositivo(ua){
-  if(!ua) return 'Otro';
-  if(ua.indexOf('iPhone')!==-1) return 'iPhone';
-  if(ua.indexOf('iPad')!==-1) return 'iPad';
+  if(!ua) return {icono:'📱',marca:'Otro'};
+  if(ua.indexOf('iPhone')!==-1) return {icono:'📱',marca:'iPhone'};
+  if(ua.indexOf('iPad')!==-1) return {icono:'📟',marca:'iPad'};
   if(ua.indexOf('Android')!==-1){
     var modelMatch=ua.match(/Android[\s\d.]+;\s*([^)]+)\)/);
     var modelo=modelMatch?modelMatch[1].replace(/\s*Build\/.*/,'').trim():'';
     var ml=modelo.toLowerCase();
-    if(ml.indexOf('samsung')!==-1||ml.match(/^sm-/)||ml.match(/^galaxy/i)) return 'Samsung';
-    if(ml.indexOf('xiaomi')!==-1||ml.match(/^(redmi|poco|mi )/)) return 'Xiaomi';
-    if(ml.indexOf('motorola')!==-1||ml.match(/^moto/i)||ml.match(/^xt\d/i)) return 'Motorola';
-    if(ml.indexOf('huawei')!==-1||ml.match(/^(ale|clt|cun|dub|eln|eva|frd|grr|knt|lon|mha|nem|nxt|pra|scl|stf|tag|trt|vky|vns|was|cob|ana|noa)-/i)) return 'Huawei';
-    if(ml.indexOf('lg ')!==-1||ml.match(/^lg-/i)) return 'LG';
-    if(ml.indexOf('oppo')!==-1||ml.match(/^cph\d/i)) return 'Oppo';
-    if(ml.indexOf('vivo')!==-1||ml.match(/^v\d{4}/i)) return 'Vivo';
-    if(ml.indexOf('realme')!==-1||ml.match(/^rmx/i)) return 'Realme';
-    if(ml.indexOf('nokia')!==-1) return 'Nokia';
-    if(ml.indexOf('sony')!==-1||ml.match(/^(xperia|g\d{4}|h\d{4}|i\d{4}|j\d{4})/i)) return 'Sony';
-    if(ml.indexOf('asus')!==-1||ml.match(/^zb\d/i)) return 'Asus';
-    if(ml.indexOf('oneplus')!==-1) return 'OnePlus';
-    if(modelo) return modelo.split(' ')[0]; // primera palabra del modelo
-    return 'Android';
+    // Detectar tablets Android por palabras clave comunes
+    var esTablet=ml.indexOf('tab')!==-1||ml.indexOf('pad')!==-1||ml.indexOf('slate')!==-1;
+    var icono=esTablet?'📟':'📱';
+    var marca;
+    if(ml.indexOf('samsung')!==-1||ml.match(/^sm-/i)||ml.match(/^galaxy/i)) marca='Samsung';
+    else if(ml.indexOf('xiaomi')!==-1||ml.match(/^(redmi|poco|mi )/i)) marca='Xiaomi';
+    else if(ml.indexOf('motorola')!==-1||ml.match(/^moto/i)||ml.match(/^xt\d/i)) marca='Motorola';
+    else if(ml.indexOf('huawei')!==-1) marca='Huawei';
+    else if(ml.indexOf('lg ')!==-1||ml.match(/^lg-/i)) marca='LG';
+    else if(ml.indexOf('oppo')!==-1||ml.match(/^cph\d/i)) marca='Oppo';
+    else if(ml.indexOf('vivo')!==-1) marca='Vivo';
+    else if(ml.indexOf('realme')!==-1||ml.match(/^rmx/i)) marca='Realme';
+    else if(ml.indexOf('nokia')!==-1) marca='Nokia';
+    else if(ml.indexOf('sony')!==-1||ml.match(/^xperia/i)) marca='Sony';
+    else if(ml.indexOf('asus')!==-1) marca='Asus';
+    else if(ml.indexOf('oneplus')!==-1) marca='OnePlus';
+    else marca=modelo?modelo.split(' ')[0]:'Android';
+    return {icono:icono,marca:marca};
   }
-  if(ua.indexOf('Windows')!==-1) return 'PC';
-  if(ua.indexOf('Mac')!==-1) return 'Mac';
-  return 'Otro';
+  if(ua.indexOf('Windows')!==-1) return {icono:'💻',marca:'PC'};
+  if(ua.indexOf('Macintosh')!==-1||ua.indexOf('Mac OS')!==-1) return {icono:'💻',marca:'Mac'};
+  return {icono:'📱',marca:'Otro'};
 }
 
 function _registrarLoginNube(deviceId,ruta){
   var ua=navigator.userAgent;
-  var dispositivo=_marcaDispositivo(ua);
+  var _dev=_marcaDispositivo(ua);
+  var dispositivo=_dev.icono+' '+_dev.marca;
   fetch(SUPA_URL+'/rest/v1/app_data?key=eq.logged_sessions&select=value',{headers:SUPA_HDR})
   .then(function(r){return r.ok?r.json():[];})
   .then(function(rows){
@@ -1851,7 +1856,8 @@ function _enviarHeartbeat(){
   var deviceId=_getDeviceId();
   var ruta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
   var user=localStorage.getItem('fjd_login_user')||ruta;
-  var dispositivo=_marcaDispositivo(navigator.userAgent);
+  var _dev2=_marcaDispositivo(navigator.userAgent);
+  var dispositivo=_dev2.icono+' '+_dev2.marca;
   var sesion={deviceId:deviceId,ruta:ruta,user:user,lastSeen:Date.now(),dispositivo:dispositivo,lat:_deviceLat,lng:_deviceLng};
   // Leer sesiones actuales, actualizar esta, guardar
   fetch(SUPA_URL+'/rest/v1/app_data?key=eq.device_sessions&select=value',{headers:SUPA_HDR})
