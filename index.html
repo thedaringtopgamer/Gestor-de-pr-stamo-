@@ -1582,13 +1582,37 @@ function _actualizarPendiente(deviceId,ruta,dispositivo){
   }).catch(function(){});
 }
 
+function _marcaDispositivo(ua){
+  if(!ua) return 'Otro';
+  if(ua.indexOf('iPhone')!==-1) return 'iPhone';
+  if(ua.indexOf('iPad')!==-1) return 'iPad';
+  if(ua.indexOf('Android')!==-1){
+    var modelMatch=ua.match(/Android[\s\d.]+;\s*([^)]+)\)/);
+    var modelo=modelMatch?modelMatch[1].replace(/\s*Build\/.*/,'').trim():'';
+    var ml=modelo.toLowerCase();
+    if(ml.indexOf('samsung')!==-1||ml.match(/^sm-/)||ml.match(/^galaxy/i)) return 'Samsung';
+    if(ml.indexOf('xiaomi')!==-1||ml.match(/^(redmi|poco|mi )/)) return 'Xiaomi';
+    if(ml.indexOf('motorola')!==-1||ml.match(/^moto/i)||ml.match(/^xt\d/i)) return 'Motorola';
+    if(ml.indexOf('huawei')!==-1||ml.match(/^(ale|clt|cun|dub|eln|eva|frd|grr|knt|lon|mha|nem|nxt|pra|scl|stf|tag|trt|vky|vns|was|cob|ana|noa)-/i)) return 'Huawei';
+    if(ml.indexOf('lg ')!==-1||ml.match(/^lg-/i)) return 'LG';
+    if(ml.indexOf('oppo')!==-1||ml.match(/^cph\d/i)) return 'Oppo';
+    if(ml.indexOf('vivo')!==-1||ml.match(/^v\d{4}/i)) return 'Vivo';
+    if(ml.indexOf('realme')!==-1||ml.match(/^rmx/i)) return 'Realme';
+    if(ml.indexOf('nokia')!==-1) return 'Nokia';
+    if(ml.indexOf('sony')!==-1||ml.match(/^(xperia|g\d{4}|h\d{4}|i\d{4}|j\d{4})/i)) return 'Sony';
+    if(ml.indexOf('asus')!==-1||ml.match(/^zb\d/i)) return 'Asus';
+    if(ml.indexOf('oneplus')!==-1) return 'OnePlus';
+    if(modelo) return modelo.split(' ')[0]; // primera palabra del modelo
+    return 'Android';
+  }
+  if(ua.indexOf('Windows')!==-1) return 'PC';
+  if(ua.indexOf('Mac')!==-1) return 'Mac';
+  return 'Otro';
+}
+
 function _registrarLoginNube(deviceId,ruta){
   var ua=navigator.userAgent;
-  var dispositivo='Otro';
-  var m;
-  if(ua.indexOf('iPhone')!==-1){ m=ua.match(/iPhone OS ([\d_]+)/); dispositivo='iPhone'+(m?' (iOS '+m[1].replace(/_/g,'.')+')':''); }
-  else if(ua.indexOf('iPad')!==-1){ m=ua.match(/CPU OS ([\d_]+)/); dispositivo='iPad'+(m?' (iOS '+m[1].replace(/_/g,'.')+')':''); }
-  else if(ua.indexOf('Android')!==-1){ m=ua.match(/Android[\s\d.]+;\s*([^)]+)\)/); dispositivo=m?m[1].replace(/\s*Build\/.*/,'').trim()||'Android':'Android'; }
+  var dispositivo=_marcaDispositivo(ua);
   fetch(SUPA_URL+'/rest/v1/app_data?key=eq.logged_sessions&select=value',{headers:SUPA_HDR})
   .then(function(r){return r.ok?r.json():[];})
   .then(function(rows){
@@ -1827,26 +1851,7 @@ function _enviarHeartbeat(){
   var deviceId=_getDeviceId();
   var ruta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
   var user=localStorage.getItem('fjd_login_user')||ruta;
-  var ua=navigator.userAgent;
-  // Detectar modelo específico
-  var dispositivo='Otro';
-  var modeloMatch;
-  if(ua.indexOf('iPhone')!==-1){
-    modeloMatch=ua.match(/iPhone OS ([\d_]+)/);
-    dispositivo='iPhone'+(modeloMatch?' (iOS '+modeloMatch[1].replace(/_/g,'.')+')'  :'');
-  } else if(ua.indexOf('iPad')!==-1){
-    modeloMatch=ua.match(/CPU OS ([\d_]+)/);
-    dispositivo='iPad'+(modeloMatch?' (iOS '+modeloMatch[1].replace(/_/g,'.')+')'  :'');
-  } else if(ua.indexOf('Android')!==-1){
-    // Intenta extraer el modelo: "Android X.X; <Modelo>) "
-    modeloMatch=ua.match(/Android[\s\d.]+;\s*([^)]+)\)/);
-    if(modeloMatch){
-      var modelo=modeloMatch[1].trim();
-      // Eliminar "Build/..." si aparece en el modelo
-      modelo=modelo.replace(/\s*Build\/.*/,'').trim();
-      dispositivo=modelo||'Android';
-    } else { dispositivo='Android'; }
-  }
+  var dispositivo=_marcaDispositivo(navigator.userAgent);
   var sesion={deviceId:deviceId,ruta:ruta,user:user,lastSeen:Date.now(),dispositivo:dispositivo,lat:_deviceLat,lng:_deviceLng};
   // Leer sesiones actuales, actualizar esta, guardar
   fetch(SUPA_URL+'/rest/v1/app_data?key=eq.device_sessions&select=value',{headers:SUPA_HDR})
@@ -1990,13 +1995,14 @@ function abrirRevocarSesiones(){
         var loginDate=new Date(s.loginTs);
         var loginStr=loginDate.toLocaleDateString('es-CR',{day:'2-digit',month:'2-digit'})
           +' '+loginDate.toLocaleTimeString('es-CR',{hour:'2-digit',minute:'2-digit'});
-        return '<div style="display:flex;align-items:center;gap:8px;margin-top:6px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:8px 10px">'
-          +'<span style="display:inline-block;width:14px;height:14px;border-radius:50%;flex-shrink:0;background:'+(appAbierta?'#a3e635':'#ef4444')+';box-shadow:0 0 6px '+(appAbierta?'#a3e635':'#ef4444')+'"></span>'
+        var dotColor=appAbierta?'#a3e635':'#ef4444';
+        return '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px">'
+          +'<span style="display:inline-block;width:12px;height:12px;border-radius:50%;flex-shrink:0;background:'+dotColor+';box-shadow:0 0 7px '+dotColor+'"></span>'
           +'<div style="flex:1;min-width:0">'
-          +'<div style="font-size:12px;font-weight:700;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📱 '+s.dispositivo+'</div>'
-          +'<div style="font-size:10px;color:#6b7280">'+(appAbierta?'App abierta ahora':'App cerrada')+' · Entró '+loginStr+'</div>'
+          +'<div style="font-size:14px;font-weight:800;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+s.dispositivo+'</div>'
+          +'<div style="font-size:10px;color:#6b7280;margin-top:1px">'+(appAbierta?'Usando la app ahora':'App cerrada')+' · '+loginStr+'</div>'
           +'</div>'
-          +'<button onclick="revocarDispositivo(\''+s.deviceId+'\',this)" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:13px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif;flex-shrink:0" title="Cerrar esta sesión">✕</button>'
+          +'<button onclick="revocarDispositivo(\''+s.deviceId+'\',this)" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif;flex-shrink:0" title="Cerrar esta sesión">✕</button>'
           +'</div>';
       }).join('');
       var badge=numLog>0
