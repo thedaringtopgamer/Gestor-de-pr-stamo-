@@ -1750,6 +1750,13 @@ function mostrarApp(){
   if(menuCerrar) menuCerrar.style.display=rolActual==='admin'?'block':'none';
   _syncDesktopSidebar();
   _iniciarHeartbeat();
+  // Limpieza única: borrar _fechaCreacion de todos los préstamos (fue asignada incorrectamente por migración fallida)
+  if(!localStorage.getItem('fjd_limpieza_fechacreacion')){
+    var cambio=false;
+    prestamos.forEach(function(p){ if(p._fechaCreacion){delete p._fechaCreacion;cambio=true;} });
+    if(cambio) guardarDatos();
+    localStorage.setItem('fjd_limpieza_fechacreacion','1');
+  }
   // sessionStorage se borra al cerrar la app completamente, pero sobrevive recargas en segundo plano
   // → Si no hay pantalla en sessionStorage, la app fue cerrada: ir a cobros
   // → Si hay pantalla, la app estaba en segundo plano: restaurar donde estaba
