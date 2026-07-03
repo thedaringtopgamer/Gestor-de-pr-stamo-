@@ -1750,18 +1750,6 @@ function mostrarApp(){
   if(menuCerrar) menuCerrar.style.display=rolActual==='admin'?'block':'none';
   _syncDesktopSidebar();
   _iniciarHeartbeat();
-  // Migración única: préstamos sin _fechaCreacion que nunca se renovaron → asignar fechaInicio
-  (function(){
-    var idsRen=renovaciones.map(function(rv){return rv.id_prestamo;});
-    var necesitaGuardar=false;
-    prestamos.forEach(function(p){
-      if(!p._fechaCreacion&&p.fechaInicio&&idsRen.indexOf(p.id)<0){
-        p._fechaCreacion=p.fechaInicio;
-        necesitaGuardar=true;
-      }
-    });
-    if(necesitaGuardar) guardarDatos();
-  })();
   // sessionStorage se borra al cerrar la app completamente, pero sobrevive recargas en segundo plano
   // → Si no hay pantalla en sessionStorage, la app fue cerrada: ir a cobros
   // → Si hay pantalla, la app estaba en segundo plano: restaurar donde estaba
@@ -2473,12 +2461,7 @@ function _calcCierreData(desde,hasta,rutaParam){
   });
   var recogida=pagosP.reduce(function(s,x){ return s+x.montoAbonado; },0);
   var idsRenovados=renovaciones.map(function(rv){return rv.id_prestamo;});
-  // Clientes nuevos = solo por _fechaCreacion. Sin _fechaCreacion = no contar.
-  var nuevosP=prestamos.filter(function(p){
-    var fc=p._fechaCreacion;
-    if(!fc||!porRuta(p)||fc<desde||fc>hasta||p.incompleto||p._ocultarPanelNuevo) return false;
-    return true;
-  });
+  var nuevosP=prestamos.filter(function(p){ var fc=p._fechaCreacion||p.fechaInicio; return porRuta(p)&&fc>=desde&&fc<=hasta&&!p.incompleto&&!p._ocultarPanelNuevo&&idsRenovados.indexOf(p.id)<0; });
   var prestado=nuevosP.reduce(function(s,p){ return s+p.montoPrestado; },0);
   var renovP=renovaciones.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
   var montoRenov=renovP.reduce(function(s,x){ return s+(x.montoNuevo||0); },0);
@@ -3326,7 +3309,7 @@ function guardarPrestamo(){
     existente.diasPorCuota=cd.diasPorCuota;
     existente.tipo=cd.tipo;
     existente.fechaInicio=fecha;
-    // _fechaCreacion NO se toca en renovaciones — solo se asigna cuando se crea el cliente por primera vez
+    existente._fechaCreacion=fecha;
     existente.estado='Activo';
     existente.Cuota_Quincenal=cuotaVal;
     existente.Total_Intereses=intereses;
@@ -4622,7 +4605,7 @@ function confirmarRenovacion(){
   p.tipo=tipo;
   var fechaHoy=hoyLocal();
   p.fechaInicio=fechaHoy;
-  // _fechaCreacion NO se toca — es la fecha original del primer préstamo, nunca cambia
+  p._fechaCreacion=fechaHoy;
   p.estado='Activo';
   var adminMonto=readMoneyInput('ren-cobro-admin');
   if(adminMonto>0){
