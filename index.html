@@ -1750,6 +1750,18 @@ function mostrarApp(){
   if(menuCerrar) menuCerrar.style.display=rolActual==='admin'?'block':'none';
   _syncDesktopSidebar();
   _iniciarHeartbeat();
+  // Migración única: préstamos sin _fechaCreacion que nunca se renovaron → asignar fechaInicio
+  (function(){
+    var idsRen=renovaciones.map(function(rv){return rv.id_prestamo;});
+    var necesitaGuardar=false;
+    prestamos.forEach(function(p){
+      if(!p._fechaCreacion&&p.fechaInicio&&idsRen.indexOf(p.id)<0){
+        p._fechaCreacion=p.fechaInicio;
+        necesitaGuardar=true;
+      }
+    });
+    if(necesitaGuardar) guardarDatos();
+  })();
   // sessionStorage se borra al cerrar la app completamente, pero sobrevive recargas en segundo plano
   // → Si no hay pantalla en sessionStorage, la app fue cerrada: ir a cobros
   // → Si hay pantalla, la app estaba en segundo plano: restaurar donde estaba
@@ -2461,11 +2473,9 @@ function _calcCierreData(desde,hasta,rutaParam){
   });
   var recogida=pagosP.reduce(function(s,x){ return s+x.montoAbonado; },0);
   var idsRenovados=renovaciones.map(function(rv){return rv.id_prestamo;});
-  // Clientes nuevos = basado en _fechaCreacion (fecha original, nunca cambia con renovaciones)
-  // Si fue renovado y no tiene _fechaCreacion guardada = préstamo viejo, no contar
+  // Clientes nuevos = solo por _fechaCreacion. Sin _fechaCreacion = no contar.
   var nuevosP=prestamos.filter(function(p){
-    var esRenovado=idsRenovados.indexOf(p.id)>=0;
-    var fc=p._fechaCreacion||(esRenovado?null:p.fechaInicio);
+    var fc=p._fechaCreacion;
     if(!fc||!porRuta(p)||fc<desde||fc>hasta||p.incompleto||p._ocultarPanelNuevo) return false;
     return true;
   });
