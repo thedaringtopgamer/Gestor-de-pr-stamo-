@@ -3323,7 +3323,7 @@ function guardarPrestamo(){
     existente.diasPorCuota=cd.diasPorCuota;
     existente.tipo=cd.tipo;
     existente.fechaInicio=fecha;
-    existente._fechaCreacion=fecha;
+    existente._fechaCreacion=existente._fechaCreacion||fecha; // conservar fecha original del primer préstamo
     existente.estado='Activo';
     existente.Cuota_Quincenal=cuotaVal;
     existente.Total_Intereses=intereses;
