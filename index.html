@@ -2461,7 +2461,21 @@ function _calcCierreData(desde,hasta,rutaParam){
   });
   var recogida=pagosP.reduce(function(s,x){ return s+x.montoAbonado; },0);
   var idsRenovados=renovaciones.map(function(rv){return rv.id_prestamo;});
-  var nuevosP=prestamos.filter(function(p){ var fc=p._fechaCreacion||p.fechaInicio; return porRuta(p)&&fc>=desde&&fc<=hasta&&!p.incompleto&&!p._ocultarPanelNuevo&&idsRenovados.indexOf(p.id)<0; });
+  // Cliente nuevo = su préstamo empezó en el período Y no tenía ningún préstamo anterior al período
+  // (aunque ese préstamo se haya renovado después, sigue siendo cliente nuevo del período)
+  var nuevosP=prestamos.filter(function(p){
+    var fc=p._fechaCreacion||p.fechaInicio;
+    if(!porRuta(p)||fc<desde||fc>hasta||p.incompleto||p._ocultarPanelNuevo) return false;
+    if(idsRenovados.indexOf(p.id)>=0){
+      // Préstamo renovado: solo cuenta como nuevo si el cliente no tenía préstamos antes del período
+      var tienePrevio=prestamos.some(function(q){
+        var fq=q._fechaCreacion||q.fechaInicio;
+        return q.cedula&&q.cedula===p.cedula&&fq<desde&&!q.incompleto;
+      });
+      return !tienePrevio;
+    }
+    return true;
+  });
   var prestado=nuevosP.reduce(function(s,p){ return s+p.montoPrestado; },0);
   var renovP=renovaciones.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
   var montoRenov=renovP.reduce(function(s,x){ return s+(x.montoNuevo||0); },0);
