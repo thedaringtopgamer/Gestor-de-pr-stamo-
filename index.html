@@ -4612,7 +4612,7 @@ function confirmarRenovacion(){
   p.tipo=tipo;
   var fechaHoy=hoyLocal();
   p.fechaInicio=fechaHoy;
-  p._fechaCreacion=fechaHoy;
+  // _fechaCreacion NO se toca — es la fecha original del primer préstamo, nunca cambia
   p.estado='Activo';
   var adminMonto=readMoneyInput('ren-cobro-admin');
   if(adminMonto>0){
