@@ -253,7 +253,8 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <div style="font-size:12px;font-weight:700;color:#60a5fa;letter-spacing:8px;margin-bottom:4px">FINANCIERA</div>
       <p style="font-size:13px;color:#94a3b8;margin-top:8px">Sistema de gestión de préstamos</p>
     </div>
-    <form style="background:#fff;border-radius:16px;padding:24px 20px;width:100%;max-width:340px" onsubmit="loginAccesoGeneral();return false;" autocomplete="on">
+    <iframe name="_acceso_sink" style="display:none" tabindex="-1"></iframe>
+    <form id="acceso-form" action="javascript:void(0)" target="_acceso_sink" method="post" style="background:#fff;border-radius:16px;padding:24px 20px;width:100%;max-width:340px" onsubmit="return loginAccesoGeneral(this);" autocomplete="on">
       <p style="font-size:16px;font-weight:700;color:#1e40af;margin-bottom:16px;text-align:center">🔐 Acceso al sistema</p>
       <div id="acceso-error" style="display:none;background:#fee2e2;color:#dc2626;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:12px">Usuario o contraseña incorrectos</div>
       <div style="margin-bottom:12px">
@@ -1715,21 +1716,26 @@ function entrarComoRuta(ruta){
 var ADMIN_USER='TheDaring';
 var ADMIN_PASS='Thedaring020603';
 
-function loginAccesoGeneral(){
+function loginAccesoGeneral(form){
   var u=(document.getElementById('acceso-usuario').value||'').trim();
   var p=document.getElementById('acceso-pass').value;
   var errEl=document.getElementById('acceso-error');
-  // Verificar contra todos los usuarios (rutas + admin)
   var match=USUARIOS.find(function(x){ return x.user.toLowerCase()===u.toLowerCase()&&x.pass===p; });
   var esAdmin=(u===ADMIN_USER&&p===ADMIN_PASS);
-  if(!match&&!esAdmin){ errEl.style.display='block'; document.getElementById('acceso-pass').value=''; return; }
+  if(!match&&!esAdmin){
+    errEl.style.display='block';
+    document.getElementById('acceso-pass').value='';
+    return false;
+  }
   errEl.style.display='none';
-  document.getElementById('acceso-screen').style.display='none';
-  // Guardar que pasó el acceso general en esta sesión
-  sessionStorage.setItem('fjd_acceso','1');
-  // Mostrar login normal (selección de ruta o admin)
-  document.getElementById('login-screen').style.display='flex';
-  loginMostrarRutas();
+  // Dejar que el form se envíe al iframe → el navegador detecta login exitoso y ofrece guardar contraseña
+  setTimeout(function(){
+    document.getElementById('acceso-screen').style.display='none';
+    sessionStorage.setItem('fjd_acceso','1');
+    document.getElementById('login-screen').style.display='flex';
+    loginMostrarRutas();
+  }, 50);
+  return true;
 }
 
 function loginAdmin(){
