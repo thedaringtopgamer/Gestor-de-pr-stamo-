@@ -245,6 +245,30 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
 </div>
 
 <!-- PANTALLA DE ENTRADA -->
+<!-- PANTALLA DE ACCESO GENERAL — aparece antes que todo -->
+<div id="acceso-screen" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 100%);z-index:10000;overflow-y:auto">
+  <div style="min-height:100vh;padding:44px 24px 40px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="font-size:64px;font-weight:900;color:#fff;letter-spacing:-3px">JD</div>
+      <div style="font-size:12px;font-weight:700;color:#60a5fa;letter-spacing:8px;margin-bottom:4px">FINANCIERA</div>
+      <p style="font-size:13px;color:#94a3b8;margin-top:8px">Sistema de gestión de préstamos</p>
+    </div>
+    <form style="background:#fff;border-radius:16px;padding:24px 20px;width:100%;max-width:340px" onsubmit="loginAccesoGeneral();return false;" autocomplete="on">
+      <p style="font-size:16px;font-weight:700;color:#1e40af;margin-bottom:16px;text-align:center">🔐 Acceso al sistema</p>
+      <div id="acceso-error" style="display:none;background:#fee2e2;color:#dc2626;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:12px">Usuario o contraseña incorrectos</div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Usuario</label>
+        <input type="text" id="acceso-usuario" name="username" placeholder="Usuario" autocomplete="username" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Contraseña</label>
+        <input type="password" id="acceso-pass" name="password" placeholder="••••••••" autocomplete="current-password" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+      </div>
+      <button type="submit" style="width:100%;padding:12px;background:#1e40af;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Entrar</button>
+    </form>
+  </div>
+</div>
+
 <div id="login-screen" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#1e40af 0%,#0ea5e9 100%);z-index:9999;overflow-y:auto">
   <div style="min-height:100vh;padding:44px 24px 40px;display:flex;flex-direction:column;align-items:center">
     <div style="text-align:center;margin-bottom:32px">
@@ -1690,6 +1714,24 @@ function entrarComoRuta(ruta){
 }
 var ADMIN_USER='TheDaring';
 var ADMIN_PASS='Thedaring020603';
+
+function loginAccesoGeneral(){
+  var u=(document.getElementById('acceso-usuario').value||'').trim();
+  var p=document.getElementById('acceso-pass').value;
+  var errEl=document.getElementById('acceso-error');
+  // Verificar contra todos los usuarios (rutas + admin)
+  var match=USUARIOS.find(function(x){ return x.user.toLowerCase()===u.toLowerCase()&&x.pass===p; });
+  var esAdmin=(u===ADMIN_USER&&p===ADMIN_PASS);
+  if(!match&&!esAdmin){ errEl.style.display='block'; document.getElementById('acceso-pass').value=''; return; }
+  errEl.style.display='none';
+  document.getElementById('acceso-screen').style.display='none';
+  // Guardar que pasó el acceso general en esta sesión
+  sessionStorage.setItem('fjd_acceso','1');
+  // Mostrar login normal (selección de ruta o admin)
+  document.getElementById('login-screen').style.display='flex';
+  loginMostrarRutas();
+}
+
 function loginAdmin(){
   var u=document.getElementById('login-user-admin').value.trim();
   var p=document.getElementById('login-pass-admin').value;
@@ -5903,8 +5945,12 @@ function fechaOffset(dias){
         if(_rutaRevTs>0&&_rutaRevTs>_rutaFijaTs){
           localStorage.removeItem('fjd_ruta_fija'); localStorage.removeItem('fjd_ruta_fija_ts');
           localStorage.removeItem('fjd_ruta_actual'); localStorage.removeItem('fjd_rol');
-          document.getElementById('login-screen').style.display='flex';
-          loginMostrarRutas();
+          if(sessionStorage.getItem('fjd_acceso')==='1'){
+            document.getElementById('login-screen').style.display='flex';
+            loginMostrarRutas();
+          } else {
+            document.getElementById('acceso-screen').style.display='flex';
+          }
         } else {
           rolActual='ruta';
           rutaActual=_rutaFija;
@@ -5915,12 +5961,20 @@ function fechaOffset(dias){
           mostrarApp();
         }
       } else {
-        document.getElementById('login-screen').style.display='flex';
-        loginMostrarRutas();
+        if(sessionStorage.getItem('fjd_acceso')==='1'){
+          document.getElementById('login-screen').style.display='flex';
+          loginMostrarRutas();
+        } else {
+          document.getElementById('acceso-screen').style.display='flex';
+        }
       }
     }
   }catch(e){
-    document.getElementById('login-screen').style.display='flex';
+    if(sessionStorage.getItem('fjd_acceso')==='1'){
+      document.getElementById('login-screen').style.display='flex';
+    } else {
+      document.getElementById('acceso-screen').style.display='flex';
+    }
   }
 
   // Doble seguro
@@ -5928,7 +5982,14 @@ function fechaOffset(dias){
     var appV=document.getElementById('app').style.display==='block'||document.getElementById('app').style.display==='flex';
     var loginV=document.getElementById('login-screen').style.display==='flex';
     var esperaV=document.getElementById('espera-screen').style.display==='flex';
-    if(!appV&&!loginV&&!esperaV) document.getElementById('login-screen').style.display='flex';
+    var accesoV=document.getElementById('acceso-screen').style.display==='flex';
+    if(!appV&&!loginV&&!esperaV&&!accesoV){
+      if(sessionStorage.getItem('fjd_acceso')==='1'){
+        document.getElementById('login-screen').style.display='flex';
+      } else {
+        document.getElementById('acceso-screen').style.display='flex';
+      }
+    }
   },500);
 })();
 </script>
