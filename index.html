@@ -258,11 +258,11 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <div id="acceso-error" style="display:none;background:#fee2e2;color:#dc2626;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:12px">Usuario o contraseña incorrectos</div>
       <div style="margin-bottom:12px">
         <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Usuario</label>
-        <input type="text" id="acceso-usuario" name="username" placeholder="Usuario" autocomplete="off" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+        <input type="text" id="acceso-usuario" placeholder="Usuario" autocomplete="off" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
       </div>
       <div style="margin-bottom:16px">
         <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Contraseña</label>
-        <input type="password" id="acceso-pass" name="password" placeholder="••••••••" autocomplete="new-password" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+        <input type="password" id="acceso-pass" placeholder="••••••••" autocomplete="off" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
       </div>
       <button type="submit" style="width:100%;padding:12px;background:#1e40af;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Entrar</button>
     </form>
@@ -1714,14 +1714,15 @@ function entrarComoRuta(ruta){
 }
 var ADMIN_USER='TheDaring';
 var ADMIN_PASS='Thedaring020603';
+var ACCESO_USER='Financiera JD';
+var ACCESO_PASS='02060364640';
 
 function loginAccesoGeneral(){
   var u=(document.getElementById('acceso-usuario').value||'').trim();
   var p=document.getElementById('acceso-pass').value;
   var errEl=document.getElementById('acceso-error');
-  var match=USUARIOS.find(function(x){ return x.user.toLowerCase()===u.toLowerCase()&&x.pass===p; });
-  var esAdmin=(u===ADMIN_USER&&p===ADMIN_PASS);
-  if(!match&&!esAdmin){ errEl.style.display='block'; document.getElementById('acceso-pass').value=''; return; }
+  var ok=(u.toLowerCase()===ACCESO_USER.toLowerCase()&&p===ACCESO_PASS);
+  if(!ok){ errEl.style.display='block'; document.getElementById('acceso-pass').value=''; return; }
   errEl.style.display='none';
   document.getElementById('acceso-screen').style.display='none';
   sessionStorage.setItem('fjd_acceso','1');
