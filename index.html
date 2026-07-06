@@ -1719,7 +1719,7 @@ var ACCESO_PASS='02060364640';
 
 function loginAccesoGeneral(){
   var u=(document.getElementById('acceso-usuario').value||'').trim();
-  var p=document.getElementById('acceso-pass').value;
+  var p=(document.getElementById('acceso-pass').value||'').trim();
   var errEl=document.getElementById('acceso-error');
   var ok=(u.toLowerCase()===ACCESO_USER.toLowerCase()&&p===ACCESO_PASS);
   if(!ok){ errEl.style.display='block'; document.getElementById('acceso-pass').value=''; return; }
