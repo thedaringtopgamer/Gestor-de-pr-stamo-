@@ -1882,9 +1882,9 @@ function _verificarRevocacion(){
     var revDev=(results[1]&&results[1][0]&&results[1][0].value)||{};
     var revokeTs=revRuta[loginRuta]||revRuta['todas']||0;
     var revDevTs=revDev[myDeviceId]||0;
-    if(revokeTs>loginTs||revDevTs>loginTs){
+    var _botado=(loginTs===0&&(revokeTs>0||revDevTs>0))||(revokeTs>loginTs)||(revDevTs>loginTs);
+    if(_botado){
       _eliminarLoginNube(myDeviceId);
-      toast('⚠ Su sesión fue cerrada por el administrador.');
       _forzarLogoutAdmin();
     }
   }).catch(function(){});
@@ -5950,15 +5950,17 @@ function fechaOffset(dias){
         var _loginTs=parseInt(localStorage.getItem('fjd_login_ts')||'0');
         var _loginRuta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
         var _revokeTs=(window._sessionRevoked[_loginRuta]||window._sessionRevoked['todas'])||0;
-        if(_revokeTs>_loginTs){ _revocado=true; }
+        // Si no hay loginTs registrado, cualquier revocación activa lo bota
+        if(_loginTs===0 && _revokeTs>0){ _revocado=true; }
+        else if(_revokeTs>_loginTs){ _revocado=true; }
       }
       if(_revocado){
         localStorage.removeItem('fjd_session'); localStorage.removeItem('fjd_rol');
         localStorage.removeItem('fjd_login_ts'); localStorage.removeItem('fjd_login_ruta');
         localStorage.removeItem('fjd_ruta_fija'); localStorage.removeItem('fjd_ruta_fija_ts');
         localStorage.removeItem('fjd_ruta_actual');
-        document.getElementById('login-screen').style.display='flex';
-        loginMostrarRutas();
+        sessionStorage.removeItem('fjd_acceso');
+        document.getElementById('acceso-screen').style.display='flex';
         toast('⚠ Su sesión fue cerrada por el administrador.');
       } else {
         // Sesión existente — registrar en nube (por si abrió la app sin haber pasado por login)
