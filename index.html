@@ -1716,6 +1716,7 @@ var ADMIN_USER='TheDaring';
 var ADMIN_PASS='Thedaring020603';
 var ACCESO_USER='Financiera JD';
 var ACCESO_PASS='02060364640';
+// Estos valores se sobreescriben con los de Supabase al cargar
 
 function loginAccesoGeneral(){
   var u=(document.getElementById('acceso-usuario').value||'').trim();
@@ -1791,6 +1792,15 @@ function mostrarApp(){
   if(menuCerrar) menuCerrar.style.display=rolActual==='admin'?'block':'none';
   _syncDesktopSidebar();
   _iniciarHeartbeat();
+  // Subir acceso_clave a Supabase si no existe aún
+  if(rolActual==='admin'){
+    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.acceso_clave&select=key',{headers:SUPA_HDR})
+    .then(function(r){return r.ok?r.json():[];}).then(function(rows){
+      if(!rows||!rows.length){
+        fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:SUPA_HDR,body:JSON.stringify({key:'acceso_clave',value:{user:ACCESO_USER,pass:ACCESO_PASS}})}).catch(function(){});
+      }
+    }).catch(function(){});
+  }
   // Migración: asignar _fechaCreacion = 4 semanas atrás a todos los préstamos que no la tengan
   if(!localStorage.getItem('fjd_mc_v2')){
     var _hace4sem=new Date(); _hace4sem.setDate(_hace4sem.getDate()-28);
@@ -3057,6 +3067,8 @@ function sincronizarSupabaseFondo(){
       if(row.key==='inv_overrides'&&row.value&&typeof row.value==='object') invOverrides=row.value;
       if(row.key==='clientes_bloqueados'&&row.value&&typeof row.value==='object') clientesBloqueados=row.value;
       if(row.key==='passwords'&&Array.isArray(row.value)) row.value.forEach(function(p,i){if(USUARIOS[i]&&p) USUARIOS[i].pass=p;});
+      if(row.key==='acceso_clave'&&row.value&&row.value.user) ACCESO_USER=row.value.user;
+      if(row.key==='acceso_clave'&&row.value&&row.value.pass) ACCESO_PASS=row.value.pass;
       if(row.key==='fotos'&&row.value&&typeof row.value==='object') fotosMapBg=row.value;
     });
     if(Object.keys(fotosMapBg).length){
@@ -5655,10 +5667,44 @@ function toggleGestionUsuarios(){
         +'<button onclick="cambiarPassword('+i+')" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">Guardar</button>'
         +'</div>'
         +'</div>';
-    }).join('');
+    }).join('')
+    +'<div style="padding:12px 0;border-top:2px solid #e5e7eb;margin-top:8px">'
+    +'<div style="font-size:13px;font-weight:700;color:#7c3aed;margin-bottom:8px">🔐 Acceso general (pantalla de entrada)</div>'
+    +'<div style="font-size:12px;color:#6b7280;margin-bottom:8px">Usuario: <b>'+ACCESO_USER+'</b></div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:8px">'
+    +'<input type="text" id="acceso-nuevo-user" placeholder="Nuevo usuario" style="flex:1;padding:8px 10px;border:1.5px solid #ddd6fe;border-radius:8px;font-size:13px;font-family:\'DM Sans\',sans-serif;outline:none;box-sizing:border-box">'
+    +'</div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<input type="password" id="acceso-nuevo-pass" placeholder="Nueva contraseña" style="flex:1;padding:8px 10px;border:1.5px solid #ddd6fe;border-radius:8px;font-size:13px;font-family:\'DM Sans\',sans-serif;outline:none;box-sizing:border-box">'
+    +'<button onclick="cambiarAccesoGeneral()" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">Guardar</button>'
+    +'</div>'
+    +'</div>';
   } else {
     panel.style.display='none';
   }
+}
+
+function cambiarAccesoGeneral(){
+  var nuevoUser=(document.getElementById('acceso-nuevo-user').value||'').trim();
+  var nuevoPass=(document.getElementById('acceso-nuevo-pass').value||'').trim();
+  if(!nuevoUser&&!nuevoPass){toast('⚠ Escribí usuario o contraseña nueva');return;}
+  if(nuevoUser) ACCESO_USER=nuevoUser;
+  if(nuevoPass) ACCESO_PASS=nuevoPass;
+  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.acceso_clave',{
+    method:'GET',headers:SUPA_HDR
+  }).then(function(r){return r.ok?r.json():[];}).then(function(rows){
+    var method=rows&&rows.length?'PATCH':'POST';
+    var url=SUPA_URL+'/rest/v1/app_data'+(method==='PATCH'?'?key=eq.acceso_clave':'');
+    var body=method==='PATCH'?JSON.stringify({value:{user:ACCESO_USER,pass:ACCESO_PASS}}):JSON.stringify({key:'acceso_clave',value:{user:ACCESO_USER,pass:ACCESO_PASS}});
+    return fetch(url,{method:method,headers:SUPA_HDR,body:body});
+  }).then(function(r){
+    if(r&&r.ok){
+      document.getElementById('acceso-nuevo-user').value='';
+      document.getElementById('acceso-nuevo-pass').value='';
+      toast('✓ Acceso general actualizado');
+      togglePasswordPanel();togglePasswordPanel();
+    } else { toast('⚠ Error guardando en la nube'); }
+  }).catch(function(){toast('⚠ Error de conexión');});
 }
 
 function cambiarPassword(idx){
@@ -5850,6 +5896,9 @@ function fechaOffset(dias){
           if(row.key==='clientes_bloqueados'&&row.value&&typeof row.value==='object') clientesBloqueados=row.value;
           if(row.key==='passwords'&&Array.isArray(row.value)) row.value.forEach(function(p,i){if(USUARIOS[i]&&p) USUARIOS[i].pass=p;});
           if(row.key==='session_revoked'&&row.value&&typeof row.value==='object') window._sessionRevoked=row.value;
+          if(row.key==='acceso_clave'&&row.value&&row.value.user) ACCESO_USER=row.value.user;
+          if(row.key==='acceso_clave'&&row.value&&row.value.pass) ACCESO_PASS=row.value.pass;
+          if(row.key==='admin_pass'&&row.value) ADMIN_PASS=row.value;
         });
         // Cargar fotos por separado (excluidas del query principal para no sobrecargar)
         try{
