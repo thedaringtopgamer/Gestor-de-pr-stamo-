@@ -1828,35 +1828,30 @@ function _forzarLogoutAdmin(){
   localStorage.removeItem('fjd_cliente_temp'); localStorage.removeItem('fjd_login_ts');
   localStorage.removeItem('fjd_login_user'); localStorage.removeItem('fjd_ruta_fija');
   localStorage.removeItem('fjd_ruta_fija_ts'); localStorage.removeItem('fjd_ruta_actual');
+  sessionStorage.removeItem('fjd_acceso');
   document.getElementById('app').style.display='none';
   document.getElementById('splash-screen').style.display='none';
+  document.getElementById('login-screen').style.display='none';
   closeMenu();
-  document.getElementById('login-screen').style.display='flex';
-  loginMostrarRutas();
+  document.getElementById('acceso-screen').style.display='flex';
 }
 
 function _forzarLogout(){
-  var eraRuta=localStorage.getItem('fjd_rol')!=='admin';
-  var rutaFija=localStorage.getItem('fjd_ruta_fija');
   _eliminarLoginNube(_getDeviceId());
   localStorage.removeItem('fjd_session'); localStorage.removeItem('fjd_rol');
   localStorage.removeItem('fjd_pantalla'); localStorage.removeItem('fjd_detalle_id');
   localStorage.removeItem('fjd_cliente_temp'); localStorage.removeItem('fjd_login_ts');
   localStorage.removeItem('fjd_login_user');
-  document.getElementById('app').style.display='none';
   document.getElementById('splash-screen').style.display='none';
   closeMenu();
-  // Si el teléfono tiene ruta fija, volver directo a esa ruta
-  if(eraRuta && rutaFija){
-    rolActual='ruta';
-    rutaActual=rutaFija;
-    localStorage.setItem('fjd_rol','ruta');
-    localStorage.setItem('fjd_ruta_actual',rutaFija);
-    mostrarApp();
-  } else {
-    document.getElementById('login-screen').style.display='flex';
-    loginMostrarRutas();
-  }
+  sessionStorage.removeItem('fjd_acceso');
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('acceso-screen').style.display='flex';
+  // Limpiar campos del acceso
+  var accUser=document.getElementById('acceso-usuario'); if(accUser) accUser.value='';
+  var accPass=document.getElementById('acceso-pass'); if(accPass) accPass.value='';
+  var accErr=document.getElementById('acceso-error'); if(accErr) accErr.style.display='none';
 }
 
 function cerrarSesion(){
