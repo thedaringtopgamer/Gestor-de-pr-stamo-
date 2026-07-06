@@ -1726,8 +1726,9 @@ function loginAccesoGeneral(){
   errEl.style.display='none';
   document.getElementById('acceso-screen').style.display='none';
   sessionStorage.setItem('fjd_acceso','1');
-  document.getElementById('login-screen').style.display='flex';
-  loginMostrarRutas();
+  var ls=document.getElementById('login-screen');
+  ls.style.cssText='display:flex!important;position:fixed;inset:0;background:linear-gradient(135deg,#1e40af 0%,#0ea5e9 100%);z-index:9999;overflow-y:auto';
+  try{ loginMostrarRutas(); }catch(e){}
 }
 
 function loginAdmin(){
