@@ -1869,25 +1869,31 @@ function cerrarSesion(){
   _forzarLogout();
 }
 
+var _verificandoRevocacion=false;
 function _verificarRevocacion(){
   if(rolActual==='admin') return;
+  if(_verificandoRevocacion) return;
+  _verificandoRevocacion=true;
   var loginTs=parseInt(localStorage.getItem('fjd_login_ts')||'0');
   var loginRuta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
   var myDeviceId=_getDeviceId();
+  var _nc='&_nc='+Date.now();
+  var _hdrNC=Object.assign({},SUPA_HDR,{'Cache-Control':'no-cache','Pragma':'no-cache'});
   Promise.all([
-    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value',{headers:SUPA_HDR}).then(function(r){return r.ok?r.json():null;}),
-    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked_device&select=value',{headers:SUPA_HDR}).then(function(r){return r.ok?r.json():null;})
+    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value'+_nc,{headers:_hdrNC}).then(function(r){return r.ok?r.json():null;}),
+    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked_device&select=value'+_nc,{headers:_hdrNC}).then(function(r){return r.ok?r.json():null;})
   ]).then(function(results){
     var revRuta=(results[0]&&results[0][0]&&results[0][0].value)||{};
     var revDev=(results[1]&&results[1][0]&&results[1][0].value)||{};
     var revokeTs=revRuta[loginRuta]||revRuta['todas']||0;
     var revDevTs=revDev[myDeviceId]||0;
     var _botado=(loginTs===0&&(revokeTs>0||revDevTs>0))||(revokeTs>loginTs)||(revDevTs>loginTs);
+    _verificandoRevocacion=false;
     if(_botado){
       _eliminarLoginNube(myDeviceId);
       _forzarLogoutAdmin();
     }
-  }).catch(function(){});
+  }).catch(function(){ _verificandoRevocacion=false; });
 }
 
 // ── Heartbeat de dispositivos ──────────────────────────────────────
