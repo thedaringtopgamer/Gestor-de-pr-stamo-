@@ -2306,7 +2306,8 @@ function renderInversion(){
   var capitalPrestado=activos.reduce(function(s,p){ return s+p.montoPrestado; },0);
   var interesesPendientes=Math.max(0,enCalle-capitalPrestado);
   var invFiltradas=inversiones.filter(function(i){
-    return rutaInvFiltro==='todas'||(i.ruta===rutaInvFiltro)||(i.ruta==='todas')||(!i.ruta);
+    if(rutaInvFiltro==='todas') return true;
+    return i.ruta===rutaInvFiltro;
   });
   var capitalTotal=invFiltradas.reduce(function(s,i){ return s+i.monto; },0);
 
@@ -2383,7 +2384,7 @@ function eliminarInversion(id){
 
 function abrirHistorialInversion(){
   var _rutaHist=typeof rutaInvFiltro!=='undefined'?rutaInvFiltro:'todas';
-  var _invH=inversiones.filter(function(i){ return _rutaHist==='todas'||(i.ruta===_rutaHist)||(i.ruta==='todas')||(!i.ruta); });
+  var _invH=inversiones.filter(function(i){ return _rutaHist==='todas'||(i.ruta===_rutaHist); });
   var sorted=_invH.slice().sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
   var lista=document.getElementById('modal-hist-inversion-lista');
   if(!sorted.length){ lista.innerHTML='<p style="color:#6b7280;text-align:center;padding:20px">Sin inyecciones registradas</p>'; }
