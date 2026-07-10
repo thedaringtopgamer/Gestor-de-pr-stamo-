@@ -1801,14 +1801,13 @@ function mostrarApp(){
       }
     }).catch(function(){});
   }
-  // Migración: asignar _fechaCreacion = 4 semanas atrás a todos los préstamos que no la tengan
-  if(!localStorage.getItem('fjd_mc_v2')){
+  // Migración: asignar _fechaCreacion solo a préstamos que no la tengan (nunca sobreescribir)
+  var _sinFechaCreacion=prestamos.filter(function(p){return !p._fechaCreacion;});
+  if(_sinFechaCreacion.length){
     var _hace4sem=new Date(); _hace4sem.setDate(_hace4sem.getDate()-28);
     var _hace4str=_hace4sem.getFullYear()+'-'+String(_hace4sem.getMonth()+1).padStart(2,'0')+'-'+String(_hace4sem.getDate()).padStart(2,'0');
-    var _cambioMc=false;
-    prestamos.forEach(function(p){ p._fechaCreacion=_hace4str; _cambioMc=true; });
-    if(_cambioMc) guardarDatos();
-    localStorage.setItem('fjd_mc_v2','1');
+    _sinFechaCreacion.forEach(function(p){ p._fechaCreacion=_hace4str; });
+    guardarDatos();
   }
   // sessionStorage se borra al cerrar la app completamente, pero sobrevive recargas en segundo plano
   // → Si no hay pantalla en sessionStorage, la app fue cerrada: ir a cobros
