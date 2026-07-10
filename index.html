@@ -2305,7 +2305,10 @@ function renderInversion(){
   var enCalle=activos.reduce(function(s,p){ return s+calcDerived(p).saldoPendiente; },0);
   var capitalPrestado=activos.reduce(function(s,p){ return s+p.montoPrestado; },0);
   var interesesPendientes=Math.max(0,enCalle-capitalPrestado);
-  var capitalTotal=inversiones.reduce(function(s,i){ return s+i.monto; },0);
+  var invFiltradas=inversiones.filter(function(i){
+    return rutaInvFiltro==='todas'||(i.ruta===rutaInvFiltro)||(i.ruta==='todas')||(!i.ruta);
+  });
+  var capitalTotal=invFiltradas.reduce(function(s,i){ return s+i.monto; },0);
 
   document.getElementById('inv-en-calle').textContent=_fmtCol(enCalle);
   document.getElementById('inv-clientes-activos').textContent=activos.length+' cliente'+(activos.length===1?'':'s');
@@ -2326,9 +2329,9 @@ function renderInversion(){
   labelEl.textContent='De ₡'+_fmtCol(capitalPrestado)+' prestado';
 
   var hist=document.getElementById('inv-historial');
-  if(!inversiones.length){ hist.innerHTML='<p style="color:#6b7280;font-size:13px;text-align:center;padding:16px">Sin inyecciones registradas</p>'; }
+  if(!invFiltradas.length){ hist.innerHTML='<p style="color:#6b7280;font-size:13px;text-align:center;padding:16px">Sin inyecciones registradas</p>'; }
   else {
-    var sorted=inversiones.slice().sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
+    var sorted=invFiltradas.slice().sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
     var ultimas2=sorted.slice(0,2);
     hist.innerHTML=ultimas2.map(function(inv){
       return '<div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'
@@ -2379,7 +2382,9 @@ function eliminarInversion(id){
 }
 
 function abrirHistorialInversion(){
-  var sorted=inversiones.slice().sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
+  var _rutaHist=typeof rutaInvFiltro!=='undefined'?rutaInvFiltro:'todas';
+  var _invH=inversiones.filter(function(i){ return _rutaHist==='todas'||(i.ruta===_rutaHist)||(i.ruta==='todas')||(!i.ruta); });
+  var sorted=_invH.slice().sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
   var lista=document.getElementById('modal-hist-inversion-lista');
   if(!sorted.length){ lista.innerHTML='<p style="color:#6b7280;text-align:center;padding:20px">Sin inyecciones registradas</p>'; }
   else {
