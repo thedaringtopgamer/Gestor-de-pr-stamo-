@@ -2055,7 +2055,7 @@ function verDispositivosConectados(){
 }
 
 function _cerrarSesionesModal(el){
-  el.closest('[style*="position:fixed"]').remove();
+  var m=el; while(m&&m.parentElement!==document.body) m=m.parentElement; if(m) m.remove();
   fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'admin_ui_state',value:{sesiones_abiertas:false}}])}).catch(function(){});
 }
 
