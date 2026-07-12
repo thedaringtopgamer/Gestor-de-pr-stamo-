@@ -6050,6 +6050,7 @@ function fechaOffset(dias){
           if(row.key==='clientes_bloqueados'&&row.value&&typeof row.value==='object') clientesBloqueados=row.value;
           if(row.key==='passwords'&&Array.isArray(row.value)) row.value.forEach(function(p,i){if(USUARIOS[i]&&p) USUARIOS[i].pass=p;});
           if(row.key==='session_revoked'&&row.value&&typeof row.value==='object') window._sessionRevoked=row.value;
+          if(row.key==='session_revoked_device'&&row.value&&typeof row.value==='object') window._sessionRevokedDevice=row.value;
           if(row.key==='acceso_clave'&&row.value&&row.value.user) ACCESO_USER=row.value.user;
           if(row.key==='acceso_clave'&&row.value&&row.value.pass) ACCESO_PASS=row.value.pass;
           if(row.key==='admin_pass'&&row.value) ADMIN_PASS=row.value;
@@ -6100,13 +6101,20 @@ function fechaOffset(dias){
       // Verificar revocación ANTES de mostrar la app
       var _rol=localStorage.getItem('fjd_rol')||'ruta';
       var _revocado=false;
-      if(_rol!=='admin' && window._sessionRevoked){
+      if(_rol!=='admin'){
         var _loginTs=parseInt(localStorage.getItem('fjd_login_ts')||'0');
         var _loginRuta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
-        var _revokeTs=(window._sessionRevoked[_loginRuta]||window._sessionRevoked['todas'])||0;
-        // Si no hay loginTs registrado, cualquier revocación activa lo bota
-        if(_loginTs===0 && _revokeTs>0){ _revocado=true; }
-        else if(_revokeTs>_loginTs){ _revocado=true; }
+        var _myDevId=localStorage.getItem('fjd_device_id')||'';
+        if(window._sessionRevoked){
+          var _revokeTs=(window._sessionRevoked[_loginRuta]||window._sessionRevoked['todas'])||0;
+          if(_loginTs===0 && _revokeTs>0){ _revocado=true; }
+          else if(_revokeTs>_loginTs){ _revocado=true; }
+        }
+        if(!_revocado && window._sessionRevokedDevice && _myDevId){
+          var _revDevTs=window._sessionRevokedDevice[_myDevId]||0;
+          if(_loginTs===0 && _revDevTs>0){ _revocado=true; }
+          else if(_revDevTs>_loginTs){ _revocado=true; }
+        }
       }
       if(_revocado){
         localStorage.removeItem('fjd_session'); localStorage.removeItem('fjd_rol');
@@ -6154,7 +6162,7 @@ function fechaOffset(dias){
           localStorage.setItem('fjd_session','1');
           localStorage.setItem('fjd_rol','ruta');
           localStorage.setItem('fjd_ruta_actual',_rutaFija);
-          localStorage.setItem('fjd_login_ts',Date.now().toString());
+          if(!localStorage.getItem('fjd_login_ts')) localStorage.setItem('fjd_login_ts',Date.now().toString());
           localStorage.setItem('fjd_login_ruta',_rutaFija);
           sessionStorage.setItem('fjd_ruta_actual',_rutaFija);
           _registrarLoginNube(_getDeviceId(),_rutaFija);
