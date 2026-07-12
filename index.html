@@ -1707,10 +1707,13 @@ function _actualizarLabelRuta(){
 function entrarComoRuta(ruta){
   rolActual='ruta';
   rutaActual=ruta;
+  localStorage.setItem('fjd_session','1');
   localStorage.setItem('fjd_rol','ruta');
   localStorage.setItem('fjd_ruta_actual',ruta);
   localStorage.setItem('fjd_ruta_fija',ruta);
   localStorage.setItem('fjd_ruta_fija_ts',Date.now().toString());
+  localStorage.setItem('fjd_login_ts',Date.now().toString());
+  localStorage.setItem('fjd_login_ruta',ruta);
   sessionStorage.setItem('fjd_ruta_actual',ruta);
   _registrarLoginNube(_getDeviceId(),ruta);
   mostrarApp();
@@ -6148,6 +6151,7 @@ function fechaOffset(dias){
         } else {
           rolActual='ruta';
           rutaActual=_rutaFija;
+          localStorage.setItem('fjd_session','1');
           localStorage.setItem('fjd_rol','ruta');
           localStorage.setItem('fjd_ruta_actual',_rutaFija);
           localStorage.setItem('fjd_login_ts',Date.now().toString());
