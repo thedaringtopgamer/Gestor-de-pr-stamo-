@@ -2092,7 +2092,7 @@ function abrirRevocarSesiones(){
           +'<span style="display:inline-block;width:12px;height:12px;border-radius:50%;flex-shrink:0;background:'+dotColor+';box-shadow:0 0 7px '+dotColor+'"></span>'
           +'<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:800;color:#111">'+s.dispositivo+'</div>'
           +'<div style="font-size:10px;color:#6b7280;margin-top:1px">'+(appAbierta?'Usando la app ahora':'App cerrada')+' · '+loginStr+'</div></div>'
-          +'<button onclick="revocarDispositivo(\''+s.deviceId+'\',this)" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif;flex-shrink:0">✕</button>'
+          +'<button onclick="revocarDispositivo(\''+s.deviceId+'\',\''+s.ruta+'\',this)" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif;flex-shrink:0">✕</button>'
           +'</div>';
       }).join('')
       +'</div>':''
@@ -2116,7 +2116,7 @@ function abrirRevocarSesiones(){
           +'<div style="font-size:14px;font-weight:800;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+s.dispositivo+'</div>'
           +'<div style="font-size:10px;color:#6b7280;margin-top:1px">'+(appAbierta?'Usando la app ahora':'App cerrada')+' · '+loginStr+'</div>'
           +'</div>'
-          +'<button onclick="revocarDispositivo(\''+s.deviceId+'\',this)" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif;flex-shrink:0" title="Cerrar esta sesión">✕</button>'
+          +'<button onclick="revocarDispositivo(\''+s.deviceId+'\',\''+s.ruta+'\',this)" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif;flex-shrink:0" title="Cerrar esta sesión">✕</button>'
           +'</div>';
       }).join('');
       var badge=numLog>0
@@ -2163,17 +2163,18 @@ function revocarRuta(ruta, btn){
   }).catch(function(){ btn.disabled=false; btn.textContent='Cerrar sesión'; toast('⚠ Error'); });
 }
 
-function revocarDispositivo(deviceId, btn){
+function revocarDispositivo(deviceId, ruta, btn){
   btn.disabled=true; btn.textContent='...';
-  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked_device&select=value',{headers:SUPA_HDR})
+  // Usa el mismo mecanismo que revocarRuta (session_revoked[ruta]) que funciona de forma comprobada
+  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value',{headers:SUPA_HDR})
   .then(function(r){return r.ok?r.json():[];})
   .then(function(rows){
     var rev=(rows&&rows[0]&&rows[0].value)||{};
-    rev[deviceId]=Date.now();
+    rev[ruta]=Date.now();
     return fetch(SUPA_URL+'/rest/v1/app_data',{
       method:'POST',
       headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
-      body:JSON.stringify([{key:'session_revoked_device',value:rev}])
+      body:JSON.stringify([{key:'session_revoked',value:rev}])
     });
   })
   .then(function(r){
