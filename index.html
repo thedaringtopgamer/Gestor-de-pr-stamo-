@@ -2834,7 +2834,7 @@ function renderCierres(){
   if(elRangoMes) elRangoMes.innerHTML=inicioMes+' → '+hoy+semMesTag;
   // Tarjetas activas actuales para esta ruta
   var activosCartera=prestamos.filter(function(p){
-    return !p.incompleto&&p.estado!=='Cancelado';
+    return !p.incompleto&&p.estado!=='Cancelado'&&(rFiltroMes==='todas'||p.ruta===rFiltroMes);
   }).length;
   window._idsNuevos_mes=dMes.idsNuevos||[];
   window._rangoNuevos_mes=inicioMes+' → '+hoy;
