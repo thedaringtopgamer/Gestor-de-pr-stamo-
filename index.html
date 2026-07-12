@@ -1804,6 +1804,12 @@ function mostrarApp(){
         fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:SUPA_HDR,body:JSON.stringify({key:'acceso_clave',value:{user:ACCESO_USER,pass:ACCESO_PASS}})}).catch(function(){});
       }
     }).catch(function(){});
+    // Restaurar modal de sesiones si estaba abierto antes de recargar
+    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.admin_ui_state&select=value',{headers:SUPA_HDR})
+    .then(function(r){return r.ok?r.json():[];}).then(function(rows){
+      var st=(rows&&rows[0]&&rows[0].value)||{};
+      if(st.sesiones_abiertas) setTimeout(function(){abrirRevocarSesiones();},600);
+    }).catch(function(){});
   }
   // Migración: asignar _fechaCreacion solo a préstamos que no la tengan (nunca sobreescribir)
   var _sinFechaCreacion=prestamos.filter(function(p){return !p._fechaCreacion;});
@@ -1938,6 +1944,16 @@ function _enviarHeartbeat(){
       body:JSON.stringify([{key:'device_sessions',value:sesiones}])
     });
   }).catch(function(){});
+  // Actualizar nombre de dispositivo en logged_sessions para que el panel siempre muestre la marca correcta
+  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.logged_sessions&select=value',{headers:SUPA_HDR})
+  .then(function(r){return r.ok?r.json():[];})
+  .then(function(rows){
+    var ls=(rows&&rows[0]&&rows[0].value)||{};
+    if(ls[deviceId]){
+      ls[deviceId].dispositivo=dispositivo;
+      return fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'logged_sessions',value:ls}])});
+    }
+  }).catch(function(){});
 }
 
 function _iniciarHeartbeat(){
@@ -2035,7 +2051,13 @@ function verDispositivosConectados(){
   }).catch(function(){ toast('⚠ Error de conexión'); });
 }
 
+function _cerrarSesionesModal(el){
+  el.closest('[style*="position:fixed"]').remove();
+  fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'admin_ui_state',value:{sesiones_abiertas:false}}])}).catch(function(){});
+}
+
 function abrirRevocarSesiones(){
+  fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'admin_ui_state',value:{sesiones_abiertas:true}}])}).catch(function(){});
   Promise.all([
     fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value',{headers:SUPA_HDR}).then(function(r){return r.ok?r.json():[];}),
     fetch(SUPA_URL+'/rest/v1/app_data?key=eq.device_sessions&select=value',{headers:SUPA_HDR}).then(function(r){return r.ok?r.json():[];}),
@@ -2113,7 +2135,7 @@ function abrirRevocarSesiones(){
       +filas
       +'<div style="display:flex;gap:8px;margin-top:16px">'
       +'<button onclick="revocarTodas()" style="flex:1;padding:12px;background:#ef4444;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">Cerrar todas</button>'
-      +'<button onclick="this.closest(\'[style*=fixed]\').remove()" style="flex:1;padding:12px;background:#f3f4f6;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">Cerrar</button>'
+      +'<button onclick="_cerrarSesionesModal(this)" style="flex:1;padding:12px;background:#f3f4f6;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">Cerrar</button>'
       +'</div></div>';
     document.body.appendChild(modal);
   }).catch(function(){ toast('⚠ Error de conexión'); });
