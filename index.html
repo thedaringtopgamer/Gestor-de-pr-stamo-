@@ -1643,7 +1643,8 @@ function _marcaDispositivo(ua){
 function _registrarLoginNube(deviceId,ruta){
   var ua=navigator.userAgent;
   var _dev=_marcaDispositivo(ua);
-  var dispositivo=_dev.icono+' '+_dev.marca;
+  var nombre=ruta==='Admin'?ADMIN_USER:(localStorage.getItem('fjd_login_user')||ruta);
+  var dispositivo=_dev.icono+' '+_dev.marca+' de '+nombre;
   fetch(SUPA_URL+'/rest/v1/app_data?key=eq.logged_sessions&select=value',{headers:SUPA_HDR})
   .then(function(r){return r.ok?r.json():[];})
   .then(function(rows){
