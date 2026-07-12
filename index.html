@@ -1646,11 +1646,12 @@ function _registrarLoginNube(deviceId,ruta){
   var ua=navigator.userAgent;
   var _dev=_marcaDispositivo(ua);
   var dispositivo=ruta==='Admin'?(_dev.icono+' '+_dev.marca+' de '+ADMIN_USER):(_dev.icono+' '+_dev.marca);
+  var token=localStorage.getItem('fjd_session_token')||'';
   fetch(SUPA_URL+'/rest/v1/app_data?key=eq.logged_sessions&select=value',{headers:SUPA_HDR})
   .then(function(r){return r.ok?r.json():[];})
   .then(function(rows){
     var ls=(rows&&rows[0]&&rows[0].value)||{};
-    ls[deviceId]={deviceId:deviceId,ruta:ruta,dispositivo:dispositivo,loginTs:Date.now()};
+    ls[deviceId]={deviceId:deviceId,ruta:ruta,dispositivo:dispositivo,loginTs:Date.now(),token:token};
     return fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'logged_sessions',value:ls}])});
   }).catch(function(){});
 }
@@ -1707,6 +1708,8 @@ function _actualizarLabelRuta(){
 function entrarComoRuta(ruta){
   rolActual='ruta';
   rutaActual=ruta;
+  var _tok='tok_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  localStorage.setItem('fjd_session_token',_tok);
   localStorage.setItem('fjd_session','1');
   localStorage.setItem('fjd_rol','ruta');
   localStorage.setItem('fjd_ruta_actual',ruta);
@@ -1850,6 +1853,7 @@ function _forzarLogoutAdmin(){
   localStorage.removeItem('fjd_cliente_temp'); localStorage.removeItem('fjd_login_ts');
   localStorage.removeItem('fjd_login_user'); localStorage.removeItem('fjd_ruta_fija');
   localStorage.removeItem('fjd_ruta_fija_ts'); localStorage.removeItem('fjd_ruta_actual');
+  localStorage.removeItem('fjd_session_token');
   sessionStorage.removeItem('fjd_acceso');
   document.getElementById('app').style.display='none';
   document.getElementById('splash-screen').style.display='none';
@@ -1887,6 +1891,7 @@ function _verificarRevocacion(){
   if(_verificandoRevocacion) return;
   _verificandoRevocacion=true;
   var loginTs=parseInt(localStorage.getItem('fjd_login_ts')||'0');
+  var myToken=localStorage.getItem('fjd_session_token')||'';
   var loginRuta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
   var myDeviceId=_getDeviceId();
   var _nc='&_nc='+Date.now();
@@ -1898,8 +1903,10 @@ function _verificarRevocacion(){
     var revRuta=(results[0]&&results[0][0]&&results[0][0].value)||{};
     var revDev=(results[1]&&results[1][0]&&results[1][0].value)||{};
     var revokeTs=revRuta[loginRuta]||revRuta['todas']||0;
-    var revDevTs=revDev[myDeviceId]||0;
-    var _botado=(loginTs===0&&(revokeTs>0||revDevTs>0))||(revokeTs>loginTs)||(revDevTs>loginTs);
+    var revokedToken=revDev[myDeviceId]||'';
+    // Token match: revocado si el token almacenado en Supabase coincide con el token de esta sesión
+    var _botadoPorDispositivo=myToken&&revokedToken&&(revokedToken===myToken);
+    var _botado=(loginTs===0&&revokeTs>0)||(revokeTs>loginTs)||_botadoPorDispositivo;
     _verificandoRevocacion=false;
     if(_botado){
       _eliminarLoginNube(myDeviceId);
@@ -2092,7 +2099,7 @@ function abrirRevocarSesiones(){
           +'<span style="display:inline-block;width:12px;height:12px;border-radius:50%;flex-shrink:0;background:'+dotColor+';box-shadow:0 0 7px '+dotColor+'"></span>'
           +'<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:800;color:#111">'+s.dispositivo+'</div>'
           +'<div style="font-size:10px;color:#6b7280;margin-top:1px">'+(appAbierta?'Usando la app ahora':'App cerrada')+' · '+loginStr+'</div></div>'
-          +'<button onclick="revocarDispositivo(\''+s.deviceId+'\',\''+s.ruta+'\',this)" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif;flex-shrink:0">✕</button>'
+          +'<button onclick="revocarDispositivo(\''+s.deviceId+'\',\''+(s.token||'')+'\',this)" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif;flex-shrink:0">✕</button>'
           +'</div>';
       }).join('')
       +'</div>':''
@@ -2116,7 +2123,7 @@ function abrirRevocarSesiones(){
           +'<div style="font-size:14px;font-weight:800;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+s.dispositivo+'</div>'
           +'<div style="font-size:10px;color:#6b7280;margin-top:1px">'+(appAbierta?'Usando la app ahora':'App cerrada')+' · '+loginStr+'</div>'
           +'</div>'
-          +'<button onclick="revocarDispositivo(\''+s.deviceId+'\',\''+s.ruta+'\',this)" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif;flex-shrink:0" title="Cerrar esta sesión">✕</button>'
+          +'<button onclick="revocarDispositivo(\''+s.deviceId+'\',\''+(s.token||'')+'\',this)" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif;flex-shrink:0" title="Cerrar esta sesión">✕</button>'
           +'</div>';
       }).join('');
       var badge=numLog>0
@@ -2163,18 +2170,17 @@ function revocarRuta(ruta, btn){
   }).catch(function(){ btn.disabled=false; btn.textContent='Cerrar sesión'; toast('⚠ Error'); });
 }
 
-function revocarDispositivo(deviceId, ruta, btn){
+function revocarDispositivo(deviceId, token, btn){
   btn.disabled=true; btn.textContent='...';
-  // Usa el mismo mecanismo que revocarRuta (session_revoked[ruta]) que funciona de forma comprobada
-  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value',{headers:SUPA_HDR})
+  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked_device&select=value',{headers:SUPA_HDR})
   .then(function(r){return r.ok?r.json():[];})
   .then(function(rows){
     var rev=(rows&&rows[0]&&rows[0].value)||{};
-    rev[ruta]=Date.now();
+    rev[deviceId]=token||('ts_'+Date.now()); // token de sesión, único por login
     return fetch(SUPA_URL+'/rest/v1/app_data',{
       method:'POST',
       headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
-      body:JSON.stringify([{key:'session_revoked',value:rev}])
+      body:JSON.stringify([{key:'session_revoked_device',value:rev}])
     });
   })
   .then(function(r){
@@ -6112,9 +6118,9 @@ function fechaOffset(dias){
           else if(_revokeTs>_loginTs){ _revocado=true; }
         }
         if(!_revocado && window._sessionRevokedDevice && _myDevId){
-          var _revDevTs=window._sessionRevokedDevice[_myDevId]||0;
-          if(_loginTs===0 && _revDevTs>0){ _revocado=true; }
-          else if(_revDevTs>_loginTs){ _revocado=true; }
+          var _revokedToken=window._sessionRevokedDevice[_myDevId]||'';
+          var _myToken=localStorage.getItem('fjd_session_token')||'';
+          if(_myToken && _revokedToken && _myToken===_revokedToken){ _revocado=true; }
         }
       }
       if(_revocado){
@@ -6160,6 +6166,7 @@ function fechaOffset(dias){
         } else {
           rolActual='ruta';
           rutaActual=_rutaFija;
+          if(!localStorage.getItem('fjd_session_token')) localStorage.setItem('fjd_session_token','tok_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
           localStorage.setItem('fjd_session','1');
           localStorage.setItem('fjd_rol','ruta');
           localStorage.setItem('fjd_ruta_actual',_rutaFija);
