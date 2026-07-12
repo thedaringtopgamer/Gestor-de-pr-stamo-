@@ -723,6 +723,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <div style="position:relative" id="admin-menu-wrap">
           <button id="admin-menu-btn" onclick="toggleAdminMenu()" style="display:none;background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:#374151;line-height:1">⋮</button>
           <div id="admin-menu-drop" style="display:none;position:absolute;right:0;top:36px;background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:500;min-width:200px;overflow:hidden">
+            <button id="btn-backup-completo" onclick="exportarBackupCompleto();toggleAdminMenu()" style="display:none;width:100%;padding:14px 16px;background:none;border:none;border-bottom:1px solid #f3f4f6;text-align:left;font-size:14px;font-weight:600;color:#7c3aed;cursor:pointer;font-family:'DM Sans',sans-serif">💾 Backup completo (con fotos)</button>
             <button onclick="exportarBackup();toggleAdminMenu()" style="width:100%;padding:14px 16px;background:none;border:none;border-bottom:1px solid #f3f4f6;text-align:left;font-size:14px;font-weight:600;color:#166534;cursor:pointer;font-family:'DM Sans',sans-serif">⬇ Exportar backup</button>
             <label style="display:block;cursor:pointer">
               <div style="padding:14px 16px;border-bottom:1px solid #f3f4f6;font-size:14px;font-weight:600;color:#1d4ed8">⬆ Importar backup</div>
@@ -3224,6 +3225,10 @@ function _syncDesktopSidebar(){
   if(lblEl) lblEl.textContent=esAdmin?'👑 Admin':(rutaActual||'Ruta');
   var rutaEl=document.getElementById('desktop-sidebar-ruta');
   if(rutaEl) rutaEl.textContent=esAdmin?'Administrador':(rutaActual||'');
+  // Backup completo solo en escritorio
+  var esDesktop=window.innerWidth>=768;
+  var btnBC=document.getElementById('btn-backup-completo');
+  if(btnBC) btnBC.style.display=(esAdmin&&esDesktop)?'block':'none';
 }
 function toggleAdminMenu(){
   var d=document.getElementById('admin-menu-drop');
@@ -5638,6 +5643,39 @@ function exportarBackup(){
   a.click();
   URL.revokeObjectURL(url);
   toast('✓ Backup descargado: backup-financiera-jd-'+hoy+'.json');
+}
+
+async function exportarBackupCompleto(){
+  toast('⏳ Descargando todo de Supabase...');
+  try{
+    // Bajar todo incluyendo fotos
+    var r1=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:Object.assign({},SUPA_HDR,{'Cache-Control':'no-cache'})});
+    if(!r1.ok){ toast('⚠ Error al conectar con Supabase'); return; }
+    var rows=await r1.json();
+    var datos={version:2,fecha:new Date().toISOString(),supabase:{}};
+    rows.forEach(function(row){ datos.supabase[row.key]=row.value; });
+    // Incluir datos en memoria también (por si hay cambios no guardados)
+    datos.prestamos=prestamos;
+    datos.pagos=pagos;
+    datos.cobrosAdmin=cobrosAdmin;
+    datos.gastos=gastos;
+    datos.renovaciones=renovaciones;
+    datos.inversiones=inversiones;
+    datos.cierres=cierres;
+    datos.bases=bases;
+    var json=JSON.stringify(datos,null,2);
+    var blob=new Blob([json],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    var hoy=hoyLocal();
+    a.href=url;
+    a.download='backup-completo-financiera-jd-'+hoy+'.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast('✓ Backup completo descargado ('+Math.round(json.length/1024)+' KB)');
+  }catch(e){ toast('⚠ Error: '+e.message); }
 }
 
 function importarBackup(input){
