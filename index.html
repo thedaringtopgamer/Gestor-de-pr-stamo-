@@ -1743,6 +1743,7 @@ function loginAdmin(){
     localStorage.setItem('fjd_login_ts',Date.now().toString());
     localStorage.setItem('fjd_login_ruta','todas');
     rolActual='admin';
+    _registrarLoginNube(_getDeviceId(),'Admin');
     document.getElementById('login-screen').style.display='none';
     document.getElementById('ruta-selector').style.display='flex';
   } else {
@@ -6070,10 +6071,8 @@ function fechaOffset(dias){
         toast('⚠ Su sesión fue cerrada por el administrador.');
       } else {
         // Sesión existente — registrar en nube (por si abrió la app sin haber pasado por login)
-        if(_rol!=='admin'){
-          var _rutaLog=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
-          _registrarLoginNube(_getDeviceId(),_rutaLog);
-        }
+        var _rutaLog=_rol==='admin'?'Admin':(localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas');
+        _registrarLoginNube(_getDeviceId(),_rutaLog);
         mostrarApp();
       }
     } else {
