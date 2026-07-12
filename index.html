@@ -1621,18 +1621,19 @@ function _marcaDispositivo(ua){
     var icono=esTablet?'📟':'📱';
     var marca;
     if(ml.indexOf('samsung')!==-1||ml.match(/^sm-/i)||ml.match(/^galaxy/i)) marca='Samsung';
-    else if(ml.indexOf('xiaomi')!==-1||ml.match(/^(redmi|poco|mi )/i)) marca='Xiaomi';
+    else if(ml.indexOf('xiaomi')!==-1||ml.match(/^(redmi|poco|mi |m2|m3|m4|m5|2201|2107|2109|21|22|23)/i)||ml.match(/^[a-z]?\d{4,}/i)) marca='Xiaomi';
     else if(ml.indexOf('motorola')!==-1||ml.match(/^moto/i)||ml.match(/^xt\d/i)) marca='Motorola';
-    else if(ml.indexOf('huawei')!==-1) marca='Huawei';
+    else if(ml.indexOf('huawei')!==-1||ml.match(/^(clt|ana|els|nop|jny|lio|lya|mar|saw|ele|col|dub|bla|ldn|ane|ale|grn|fla|vtr|eba|neo|yal)/i)) marca='Huawei';
     else if(ml.indexOf('lg ')!==-1||ml.match(/^lg-/i)) marca='LG';
-    else if(ml.indexOf('oppo')!==-1||ml.match(/^cph\d/i)) marca='Oppo';
-    else if(ml.indexOf('vivo')!==-1) marca='Vivo';
+    else if(ml.indexOf('oppo')!==-1||ml.match(/^(cph|pck|pdx|pem)\d/i)) marca='Oppo';
+    else if(ml.indexOf('vivo')!==-1||ml.match(/^v\d{4}/i)) marca='Vivo';
     else if(ml.indexOf('realme')!==-1||ml.match(/^rmx/i)) marca='Realme';
     else if(ml.indexOf('nokia')!==-1) marca='Nokia';
-    else if(ml.indexOf('sony')!==-1||ml.match(/^xperia/i)) marca='Sony';
-    else if(ml.indexOf('asus')!==-1) marca='Asus';
-    else if(ml.indexOf('oneplus')!==-1) marca='OnePlus';
-    else marca=modelo?modelo.split(' ')[0]:'Android';
+    else if(ml.indexOf('sony')!==-1||ml.match(/^xperia/i)||ml.match(/^(xq-|sog|so-)/i)) marca='Sony';
+    else if(ml.indexOf('asus')!==-1||ml.match(/^(zenfone|rog|zb|ze|zd|zu)\d/i)) marca='Asus';
+    else if(ml.indexOf('oneplus')!==-1||ml.match(/^(be|in|kb|le|ac|dn)\d{4}/i)) marca='OnePlus';
+    else if(ml.indexOf('tcl')!==-1||ml.match(/^(5\d{3}[a-z]|6\d{3}[a-z])/i)) marca='TCL';
+    else{ var primeraPalabra=modelo?modelo.split(' ')[0]:''; marca=(primeraPalabra.length>2)?primeraPalabra:'Android'; }
     return {icono:icono,marca:marca};
   }
   if(ua.indexOf('Windows')!==-1) return {icono:'💻',marca:'PC'};
