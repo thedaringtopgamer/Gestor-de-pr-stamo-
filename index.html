@@ -1633,7 +1633,8 @@ function _marcaDispositivo(ua){
     else if(ml.indexOf('asus')!==-1||ml.match(/^(zenfone|rog|zb|ze|zd|zu)\d/i)) marca='Asus';
     else if(ml.indexOf('oneplus')!==-1||ml.match(/^(be|in|kb|le|ac|dn)\d{4}/i)) marca='OnePlus';
     else if(ml.indexOf('tcl')!==-1||ml.match(/^(5\d{3}[a-z]|6\d{3}[a-z])/i)) marca='TCL';
-    else{ var primeraPalabra=modelo?modelo.split(' ')[0]:''; marca=(primeraPalabra.length>2)?primeraPalabra:'Android'; }
+    else{ marca=modelo&&modelo.length>2?modelo:'Android'; }
+    // Mostrar modelo completo si es conocido, sino la marca sola
     return {icono:icono,marca:marca};
   }
   if(ua.indexOf('Windows')!==-1) return {icono:'💻',marca:'PC'};
@@ -1644,8 +1645,7 @@ function _marcaDispositivo(ua){
 function _registrarLoginNube(deviceId,ruta){
   var ua=navigator.userAgent;
   var _dev=_marcaDispositivo(ua);
-  var nombre=ruta==='Admin'?ADMIN_USER:(localStorage.getItem('fjd_login_user')||ruta);
-  var dispositivo=_dev.icono+' '+_dev.marca+' de '+nombre;
+  var dispositivo=ruta==='Admin'?(_dev.icono+' '+_dev.marca+' de '+ADMIN_USER):(_dev.icono+' '+_dev.marca);
   fetch(SUPA_URL+'/rest/v1/app_data?key=eq.logged_sessions&select=value',{headers:SUPA_HDR})
   .then(function(r){return r.ok?r.json():[];})
   .then(function(rows){
@@ -6092,8 +6092,9 @@ function fechaOffset(dias){
         document.getElementById('acceso-screen').style.display='flex';
         toast('⚠ Su sesión fue cerrada por el administrador.');
       } else {
-        // Sesión existente — registrar en nube (por si abrió la app sin haber pasado por login)
+        // Sesión existente — registrar en nube y asegurar loginTs
         var _rutaLog=_rol==='admin'?'Admin':(localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas');
+        if(!localStorage.getItem('fjd_login_ts')) localStorage.setItem('fjd_login_ts',Date.now().toString());
         _registrarLoginNube(_getDeviceId(),_rutaLog);
         mostrarApp();
       }
@@ -6127,6 +6128,8 @@ function fechaOffset(dias){
           rutaActual=_rutaFija;
           localStorage.setItem('fjd_rol','ruta');
           localStorage.setItem('fjd_ruta_actual',_rutaFija);
+          localStorage.setItem('fjd_login_ts',Date.now().toString());
+          localStorage.setItem('fjd_login_ruta',_rutaFija);
           sessionStorage.setItem('fjd_ruta_actual',_rutaFija);
           _registrarLoginNube(_getDeviceId(),_rutaFija);
           mostrarApp();
