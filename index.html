@@ -772,7 +772,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <p style="font-size:18px;font-weight:600;margin-bottom:10px" id="tarjetas-titulo">Listado de tarjetas (0)</p>
       <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
         <span style="font-size:13px;color:var(--text-muted)">Filtro</span>
-        <input id="filtro-tarjetas" type="text" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none" placeholder="Buscar cliente...">
+        <input id="filtro-tarjetas" type="text" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none" placeholder="Buscar cliente… o /lunes /martes…">
         <button class="btn btn-blue btn-sm" onclick="filtrarTarjetas()">Buscar</button>
       </div>
       <button class="btn btn-cyan btn-full" style="margin-bottom:14px" onclick="imprimirTarjetas()">🖨 Imprimir tarjetas</button>
@@ -3734,11 +3734,34 @@ function continuarClienteIncompleto(id){
   else goTo('screen-nuevo-prestamo');
 }
 
+var _DIAS_SEMANA={'lunes':1,'martes':2,'miércoles':3,'miercoles':3,'jueves':4,'viernes':5,'sábado':6,'sabado':6,'domingo':0};
+function _diaSemanaCliente(p){
+  // Retorna 0-6 basado en fechaInicio o próxima cuota
+  try{
+    var d=calcDerived(p);
+    if(d.proximaFecha){
+      var f=new Date(d.proximaFecha+'T12:00:00');
+      return f.getDay();
+    }
+    if(p.fechaInicio){
+      var f2=new Date(p.fechaInicio+'T12:00:00');
+      return f2.getDay();
+    }
+  }catch(e){}
+  return -1;
+}
 function renderTarjetas(filtro){
   var lista=document.getElementById('tarjetas-lista');
   var f=(filtro||'').toLowerCase().trim();
+  // Detectar búsqueda por día: /lunes, /martes, etc.
+  var filtroDia=-1;
+  if(f.startsWith('/')){
+    var nombreDia=f.slice(1).trim();
+    if(_DIAS_SEMANA.hasOwnProperty(nombreDia)) filtroDia=_DIAS_SEMANA[nombreDia];
+  }
   var todos=prestamosVisibles();
   var items=todos.filter(function(p){
+    if(filtroDia>=0){ if(p.incompleto) return false; return _diaSemanaCliente(p)===filtroDia; }
     if(f) return p.cliente.toLowerCase().includes(f);
     // Sin búsqueda: activas + canceladas dentro del último año
     if(p.incompleto) return false;
