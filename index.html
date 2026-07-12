@@ -5665,13 +5665,28 @@ async function exportarBackupCompleto(){
     datos.bases=bases;
     var json=JSON.stringify(datos,null,2);
     var blob=new Blob([json],{type:'application/json'});
+    var hoy=hoyLocal();
+    var nombreArchivo='backup-completo-financiera-jd-'+hoy+'.json';
+    if(window.showSaveFilePicker){
+      try{
+        var handle=await window.showSaveFilePicker({
+          suggestedName:nombreArchivo,
+          types:[{description:'Backup Financiera JD',accept:{'application/json':['.json']}}]
+        });
+        var writable=await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        toast('✓ Backup guardado ('+Math.round(json.length/1024)+' KB)');
+        return;
+      }catch(err){
+        if(err.name==='AbortError') return; // usuario canceló
+      }
+    }
+    // Fallback para navegadores sin showSaveFilePicker
     var url=URL.createObjectURL(blob);
     var a=document.createElement('a');
-    var hoy=hoyLocal();
-    a.href=url;
-    a.download='backup-completo-financiera-jd-'+hoy+'.json';
-    document.body.appendChild(a);
-    a.click();
+    a.href=url; a.download=nombreArchivo;
+    document.body.appendChild(a); a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast('✓ Backup completo descargado ('+Math.round(json.length/1024)+' KB)');
