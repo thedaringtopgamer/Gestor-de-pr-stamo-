@@ -3598,8 +3598,21 @@ function calcDerived(p){
   var estado=saldoPendiente<=0?'Cancelado':'Activo';
   // Monto acumulado: cuotas vencidas sin pagar × cuota - adelanto parcial
   var montoPorPagar=pendienteProxima;
-  if(saldoPendiente>0 && !p.proximaFechaPago){
+  if(saldoPendiente>0){
     var cuotasDue=getCuotasDueHoy(p);
+    // Si hay fecha manual y ya llegó, verificar si esa cuota aún no está contada en el calendario original
+    if(p.proximaFechaPago){
+      var _manualD=parseLocalDate(p.proximaFechaPago); _manualD.setHours(0,0,0,0);
+      var _hoyD=new Date(); _hoyD.setHours(0,0,0,0);
+      if(_manualD.getTime()<=_hoyD.getTime()){
+        var _nextNum=cuotasPagadas+1;
+        if(_nextNum<=p.cantidadDeQuincenas){
+          var _schedD=getCuotaVencimiento(p,_nextNum); _schedD.setHours(0,0,0,0);
+          // La fecha manual es antes que el calendario → esa cuota no está contada aún
+          if(_schedD.getTime()>_hoyD.getTime()) cuotasDue+=1;
+        }
+      }
+    }
     var cuotasEnDeuda=Math.max(0,cuotasDue-cuotasPagadas);
     if(cuotasEnDeuda>1){
       montoPorPagar=Math.min(saldoPendiente,Math.max(0,cuotasEnDeuda*p.Cuota_Quincenal-adelanto));
