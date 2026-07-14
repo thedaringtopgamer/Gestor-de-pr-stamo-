@@ -3600,15 +3600,15 @@ function calcDerived(p){
   var montoPorPagar=pendienteProxima;
   if(saldoPendiente>0){
     if(p.proximaFechaPago){
-      // Con fecha manual: contar cuántos ciclos completos han pasado desde esa fecha
+      // Con fecha manual: si ya llegó, la fecha representa "cobrar HOY incluyendo la cuota actual"
       var _manualD=parseLocalDate(p.proximaFechaPago); _manualD.setHours(0,0,0,0);
       var _hoyD=new Date(); _hoyD.setHours(0,0,0,0);
-      var _diasTransc=Math.floor((_hoyD-_manualD)/86400000);
-      if(_diasTransc>=0){
-        var _dpc=p.diasPorCuota||15;
-        var _extraCiclos=Math.floor(_diasTransc/_dpc);
-        if(_extraCiclos>0){
-          montoPorPagar=Math.min(saldoPendiente,Math.max(0,pendienteProxima+_extraCiclos*p.Cuota_Quincenal));
+      if(_manualD.getTime()<=_hoyD.getTime()){
+        // Cuotas vencidas por calendario + 1 (la cuota del período actual que el admin trae a hoy)
+        var _cuotasDue=getCuotasDueHoy(p)+1;
+        var _cuotasEnDeuda=Math.max(0,_cuotasDue-cuotasPagadas);
+        if(_cuotasEnDeuda>1){
+          montoPorPagar=Math.min(saldoPendiente,Math.max(0,_cuotasEnDeuda*p.Cuota_Quincenal-adelanto));
         }
       }
     } else {
