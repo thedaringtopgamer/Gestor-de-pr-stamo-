@@ -3596,26 +3596,28 @@ function calcDerived(p){
   var pendienteProxima=saldoPendiente>0?Math.max(0,p.Cuota_Quincenal-adelanto):0;
   var progreso=p.Total_A_Cobrar>0?Math.min(1,totalPagado/p.Total_A_Cobrar):0;
   var estado=saldoPendiente<=0?'Cancelado':'Activo';
-  // Monto acumulado: cuotas vencidas sin pagar × cuota - adelanto parcial
+  // Monto acumulado: cuotas vencidas sin pagar
   var montoPorPagar=pendienteProxima;
   if(saldoPendiente>0){
-    var cuotasDue=getCuotasDueHoy(p);
-    // Si hay fecha manual y ya llegó, verificar si esa cuota aún no está contada en el calendario original
     if(p.proximaFechaPago){
+      // Con fecha manual: contar cuántos ciclos completos han pasado desde esa fecha
       var _manualD=parseLocalDate(p.proximaFechaPago); _manualD.setHours(0,0,0,0);
       var _hoyD=new Date(); _hoyD.setHours(0,0,0,0);
-      if(_manualD.getTime()<=_hoyD.getTime()){
-        var _nextNum=cuotasPagadas+1;
-        if(_nextNum<=p.cantidadDeQuincenas){
-          var _schedD=getCuotaVencimiento(p,_nextNum); _schedD.setHours(0,0,0,0);
-          // La fecha manual es antes que el calendario → esa cuota no está contada aún
-          if(_schedD.getTime()>_hoyD.getTime()) cuotasDue+=1;
+      var _diasTransc=Math.floor((_hoyD-_manualD)/86400000);
+      if(_diasTransc>=0){
+        var _dpc=p.diasPorCuota||15;
+        var _extraCiclos=Math.floor(_diasTransc/_dpc);
+        if(_extraCiclos>0){
+          montoPorPagar=Math.min(saldoPendiente,Math.max(0,pendienteProxima+_extraCiclos*p.Cuota_Quincenal));
         }
       }
-    }
-    var cuotasEnDeuda=Math.max(0,cuotasDue-cuotasPagadas);
-    if(cuotasEnDeuda>1){
-      montoPorPagar=Math.min(saldoPendiente,Math.max(0,cuotasEnDeuda*p.Cuota_Quincenal-adelanto));
+    } else {
+      // Sin fecha manual: usar calendario original
+      var cuotasDue=getCuotasDueHoy(p);
+      var cuotasEnDeuda=Math.max(0,cuotasDue-cuotasPagadas);
+      if(cuotasEnDeuda>1){
+        montoPorPagar=Math.min(saldoPendiente,Math.max(0,cuotasEnDeuda*p.Cuota_Quincenal-adelanto));
+      }
     }
   }
   return {totalPagado:totalPagado,saldoPendiente:saldoPendiente,cuotasPagadas:cuotasPagadas,adelanto:adelanto,pendienteProxima:pendienteProxima,montoPorPagar:montoPorPagar,progreso:progreso,estado:estado};
