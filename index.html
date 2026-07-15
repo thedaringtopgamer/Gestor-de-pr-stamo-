@@ -3599,25 +3599,22 @@ function calcDerived(p){
   // Monto acumulado: cuotas vencidas sin pagar
   var montoPorPagar=pendienteProxima;
   if(saldoPendiente>0){
+    var _hoyD2=new Date(); _hoyD2.setHours(0,0,0,0);
+    var _cuotasEnDeudaFinal=0;
     if(p.proximaFechaPago){
-      // Con fecha manual: si ya llegó, la fecha representa "cobrar HOY incluyendo la cuota actual"
       var _manualD=parseLocalDate(p.proximaFechaPago); _manualD.setHours(0,0,0,0);
-      var _hoyD=new Date(); _hoyD.setHours(0,0,0,0);
-      if(_manualD.getTime()<=_hoyD.getTime()){
-        // Cuotas vencidas por calendario + 1 (la cuota del período actual que el admin trae a hoy)
-        var _cuotasDue=getCuotasDueHoy(p)+1;
-        var _cuotasEnDeuda=Math.max(0,_cuotasDue-cuotasPagadas);
-        if(_cuotasEnDeuda>1){
-          montoPorPagar=Math.min(saldoPendiente,Math.max(0,_cuotasEnDeuda*p.Cuota_Quincenal-adelanto));
-        }
+      if(_manualD.getTime()<=_hoyD2.getTime()){
+        // Períodos vencidos = 1 (la fecha manual) + períodos adicionales transcurridos desde esa fecha
+        var _diasDesde=Math.floor((_hoyD2.getTime()-_manualD.getTime())/86400000);
+        var _periodos=1+Math.floor(_diasDesde/(p.diasPorCuota||15));
+        _cuotasEnDeudaFinal=Math.min(p.cantidadDeQuincenas-cuotasPagadas,_periodos);
       }
     } else {
-      // Sin fecha manual: usar calendario original
-      var cuotasDue=getCuotasDueHoy(p);
-      var cuotasEnDeuda=Math.max(0,cuotasDue-cuotasPagadas);
-      if(cuotasEnDeuda>1){
-        montoPorPagar=Math.min(saldoPendiente,Math.max(0,cuotasEnDeuda*p.Cuota_Quincenal-adelanto));
-      }
+      var _cuotasDue2=getCuotasDueHoy(p);
+      _cuotasEnDeudaFinal=Math.max(0,_cuotasDue2-cuotasPagadas);
+    }
+    if(_cuotasEnDeudaFinal>0){
+      montoPorPagar=Math.min(saldoPendiente,Math.max(0,_cuotasEnDeudaFinal*p.Cuota_Quincenal-adelanto));
     }
   }
   return {totalPagado:totalPagado,saldoPendiente:saldoPendiente,cuotasPagadas:cuotasPagadas,adelanto:adelanto,pendienteProxima:pendienteProxima,montoPorPagar:montoPorPagar,progreso:progreso,estado:estado};
