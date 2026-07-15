@@ -3607,9 +3607,16 @@ function calcDerived(p){
     if(p.proximaFechaPago){
       var _manualD=parseLocalDate(p.proximaFechaPago); _manualD.setHours(0,0,0,0);
       if(_manualD.getTime()<=_hoyD2.getTime()){
-        // Admin marcó esta fecha para cobrar: garantizar al menos 1 cuota pendiente
-        // y respetar lo que diga el calendario si ya cuenta más
-        _cuotasEnDeudaFinal=Math.max(_cuotasEnDeudaSched,1);
+        // Ver si la fecha manual está más allá del último vencimiento del calendario
+        var _lastSchedD=_cuotasDueSched>0?getCuotaVencimiento(p,_cuotasDueSched):null;
+        if(_lastSchedD) _lastSchedD.setHours(0,0,0,0);
+        if(!_lastSchedD||_manualD.getTime()>_lastSchedD.getTime()){
+          // La fecha manual es posterior al calendario → hay una cuota extra que cobrar hoy
+          _cuotasEnDeudaFinal=_cuotasEnDeudaSched+1;
+        } else {
+          // La fecha manual cae dentro del rango ya contado por el calendario → mínimo 1
+          _cuotasEnDeudaFinal=Math.max(_cuotasEnDeudaSched,1);
+        }
         _cuotasEnDeudaFinal=Math.min(p.cantidadDeQuincenas-cuotasPagadas,_cuotasEnDeudaFinal);
       }
     }
