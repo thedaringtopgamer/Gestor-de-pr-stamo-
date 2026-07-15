@@ -3866,18 +3866,10 @@ function renderTarjetas(filtro){
   var items=todos.filter(function(p){
     if(filtroDia>=0){ if(p.incompleto) return false; return _diaSemanaCliente(p)===filtroDia; }
     if(f) return p.cliente.toLowerCase().includes(f);
-    // Sin búsqueda: activas + canceladas dentro del último año
+    // Sin búsqueda: solo activos (cancelados solo aparecen al buscar por nombre)
     if(p.incompleto) return false;
     var d=calcDerived(p);
-    if(d.saldoPendiente<=0){
-      // Mostrar cancelados por 1 año desde el último pago
-      var pagosCliente=pagos.filter(function(x){return x.id_prestamo===p.id;});
-      if(!pagosCliente.length) return false;
-      pagosCliente.sort(function(a,b){return new Date(b.fechaPago)-new Date(a.fechaPago);});
-      var ultimoPago=new Date(pagosCliente[0].fechaPago+'T12:00:00');
-      var unAno=new Date(ultimoPago); unAno.setFullYear(unAno.getFullYear()+1);
-      return new Date()<=unAno;
-    }
+    if(d.saldoPendiente<=0) return false;
     return true;
   });
   items.sort(function(a,b){return a.cliente.localeCompare(b.cliente,'es');});
