@@ -3600,24 +3600,19 @@ function calcDerived(p){
   var montoPorPagar=pendienteProxima;
   if(saldoPendiente>0){
     var _hoyD2=new Date(); _hoyD2.setHours(0,0,0,0);
-    // Cuotas vencidas por calendario original
-    var _cuotasDueSched=getCuotasDueHoy(p);
-    var _cuotasEnDeudaSched=Math.max(0,_cuotasDueSched-cuotasPagadas);
-    var _cuotasEnDeudaFinal=_cuotasEnDeudaSched;
+    // Cuotas vencidas por el calendario original del préstamo
+    var _cuotasEnDeudaFinal=Math.max(0,getCuotasDueHoy(p)-cuotasPagadas);
     if(p.proximaFechaPago){
       var _manualD=parseLocalDate(p.proximaFechaPago); _manualD.setHours(0,0,0,0);
       if(_manualD.getTime()<=_hoyD2.getTime()){
-        // Ver si la fecha manual está más allá del último vencimiento del calendario
-        var _lastSchedD=_cuotasDueSched>0?getCuotaVencimiento(p,_cuotasDueSched):null;
-        if(_lastSchedD) _lastSchedD.setHours(0,0,0,0);
-        if(!_lastSchedD||_manualD.getTime()>_lastSchedD.getTime()){
-          // La fecha manual es posterior al calendario → hay una cuota extra que cobrar hoy
-          _cuotasEnDeudaFinal=_cuotasEnDeudaSched+1;
-        } else {
-          // La fecha manual cae dentro del rango ya contado por el calendario → mínimo 1
-          _cuotasEnDeudaFinal=Math.max(_cuotasEnDeudaSched,1);
-        }
-        _cuotasEnDeudaFinal=Math.min(p.cantidadDeQuincenas-cuotasPagadas,_cuotasEnDeudaFinal);
+        // Cuotas contadas desde la fecha manual: 1 (la propia fecha) + períodos adicionales transcurridos
+        var _diasDesdeManual=Math.floor((_hoyD2.getTime()-_manualD.getTime())/86400000);
+        var _enDeudaManual=Math.min(
+          p.cantidadDeQuincenas-cuotasPagadas,
+          1+Math.floor(_diasDesdeManual/(p.diasPorCuota||15))
+        );
+        // Usar el mayor entre calendario y fecha manual para nunca subestimar
+        _cuotasEnDeudaFinal=Math.max(_cuotasEnDeudaFinal,_enDeudaManual);
       }
     }
     if(_cuotasEnDeudaFinal>0){
