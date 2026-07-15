@@ -3604,15 +3604,28 @@ function calcDerived(p){
     if(p.proximaFechaPago){
       var _manualD=parseLocalDate(p.proximaFechaPago); _manualD.setHours(0,0,0,0);
       if(_manualD.getTime()<=_hoyD2.getTime()){
-        // La fecha del admin es la referencia: 1 cuota por la fecha misma + 1 por cada período de diasPorCuota transcurrido
-        var _dias=Math.floor((_hoyD2.getTime()-_manualD.getTime())/86400000);
+        var _periodosAdicionales;
+        if(p.tipo==='Diario'){
+          // Diario: contar días hábiles transcurridos desde la fecha (sin fines de semana)
+          var _cur=new Date(_manualD); _cur.setDate(_cur.getDate()+1);
+          var _habiles=0;
+          while(_cur.getTime()<=_hoyD2.getTime()){
+            if(!esFinDeSemana(_cur)) _habiles++;
+            _cur.setDate(_cur.getDate()+1);
+          }
+          _periodosAdicionales=_habiles;
+        } else {
+          // Semanal/Quincenal/Mensual: días calendario desde la fecha
+          var _diasCal=Math.floor((_hoyD2.getTime()-_manualD.getTime())/86400000);
+          _periodosAdicionales=Math.floor(_diasCal/(p.diasPorCuota||15));
+        }
         _cuotasEnDeudaFinal=Math.min(
           p.cantidadDeQuincenas-cuotasPagadas,
-          1+Math.floor(_dias/(p.diasPorCuota||15))
+          1+_periodosAdicionales
         );
       }
     } else {
-      // Sin fecha manual: usar el calendario original del préstamo
+      // Sin proximaFechaPago: usar el calendario original del préstamo
       _cuotasEnDeudaFinal=Math.max(0,getCuotasDueHoy(p)-cuotasPagadas);
     }
     if(_cuotasEnDeudaFinal>0){
