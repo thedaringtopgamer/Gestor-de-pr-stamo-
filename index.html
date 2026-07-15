@@ -3600,18 +3600,18 @@ function calcDerived(p){
   var montoPorPagar=pendienteProxima;
   if(saldoPendiente>0){
     var _hoyD2=new Date(); _hoyD2.setHours(0,0,0,0);
-    var _cuotasEnDeudaFinal=0;
+    // Cuotas vencidas por calendario original
+    var _cuotasDueSched=getCuotasDueHoy(p);
+    var _cuotasEnDeudaSched=Math.max(0,_cuotasDueSched-cuotasPagadas);
+    var _cuotasEnDeudaFinal=_cuotasEnDeudaSched;
     if(p.proximaFechaPago){
       var _manualD=parseLocalDate(p.proximaFechaPago); _manualD.setHours(0,0,0,0);
       if(_manualD.getTime()<=_hoyD2.getTime()){
-        // Períodos vencidos = 1 (la fecha manual) + períodos adicionales transcurridos desde esa fecha
-        var _diasDesde=Math.floor((_hoyD2.getTime()-_manualD.getTime())/86400000);
-        var _periodos=1+Math.floor(_diasDesde/(p.diasPorCuota||15));
-        _cuotasEnDeudaFinal=Math.min(p.cantidadDeQuincenas-cuotasPagadas,_periodos);
+        // Admin marcó esta fecha para cobrar: garantizar al menos 1 cuota pendiente
+        // y respetar lo que diga el calendario si ya cuenta más
+        _cuotasEnDeudaFinal=Math.max(_cuotasEnDeudaSched,1);
+        _cuotasEnDeudaFinal=Math.min(p.cantidadDeQuincenas-cuotasPagadas,_cuotasEnDeudaFinal);
       }
-    } else {
-      var _cuotasDue2=getCuotasDueHoy(p);
-      _cuotasEnDeudaFinal=Math.max(0,_cuotasDue2-cuotasPagadas);
     }
     if(_cuotasEnDeudaFinal>0){
       montoPorPagar=Math.min(saldoPendiente,Math.max(0,_cuotasEnDeudaFinal*p.Cuota_Quincenal-adelanto));
