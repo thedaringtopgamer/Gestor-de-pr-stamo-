@@ -3600,20 +3600,20 @@ function calcDerived(p){
   var montoPorPagar=pendienteProxima;
   if(saldoPendiente>0){
     var _hoyD2=new Date(); _hoyD2.setHours(0,0,0,0);
-    // Cuotas vencidas por el calendario original del préstamo
-    var _cuotasEnDeudaFinal=Math.max(0,getCuotasDueHoy(p)-cuotasPagadas);
+    var _cuotasEnDeudaFinal=0;
     if(p.proximaFechaPago){
       var _manualD=parseLocalDate(p.proximaFechaPago); _manualD.setHours(0,0,0,0);
       if(_manualD.getTime()<=_hoyD2.getTime()){
-        // Cuotas contadas desde la fecha manual: 1 (la propia fecha) + períodos adicionales transcurridos
-        var _diasDesdeManual=Math.floor((_hoyD2.getTime()-_manualD.getTime())/86400000);
-        var _enDeudaManual=Math.min(
+        // La fecha del admin es la referencia: 1 cuota por la fecha misma + 1 por cada período de diasPorCuota transcurrido
+        var _dias=Math.floor((_hoyD2.getTime()-_manualD.getTime())/86400000);
+        _cuotasEnDeudaFinal=Math.min(
           p.cantidadDeQuincenas-cuotasPagadas,
-          1+Math.floor(_diasDesdeManual/(p.diasPorCuota||15))
+          1+Math.floor(_dias/(p.diasPorCuota||15))
         );
-        // Usar el mayor entre calendario y fecha manual para nunca subestimar
-        _cuotasEnDeudaFinal=Math.max(_cuotasEnDeudaFinal,_enDeudaManual);
       }
+    } else {
+      // Sin fecha manual: usar el calendario original del préstamo
+      _cuotasEnDeudaFinal=Math.max(0,getCuotasDueHoy(p)-cuotasPagadas);
     }
     if(_cuotasEnDeudaFinal>0){
       montoPorPagar=Math.min(saldoPendiente,Math.max(0,_cuotasEnDeudaFinal*p.Cuota_Quincenal-adelanto));
