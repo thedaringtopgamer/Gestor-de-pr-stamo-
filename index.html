@@ -246,75 +246,132 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
 
 <!-- PANTALLA DE ENTRADA -->
 <!-- PANTALLA DE ACCESO GENERAL — aparece antes que todo -->
-<div id="acceso-screen" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 100%);z-index:10000;overflow-y:auto">
-  <div style="min-height:100vh;padding:44px 24px 40px;display:flex;flex-direction:column;align-items:center;justify-content:center">
-    <div style="text-align:center;margin-bottom:32px">
-      <div style="font-size:64px;font-weight:900;color:#fff;letter-spacing:-3px">JD</div>
-      <div style="font-size:12px;font-weight:700;color:#60a5fa;letter-spacing:8px;margin-bottom:4px">FINANCIERA</div>
-      <p style="font-size:13px;color:#94a3b8;margin-top:8px">Sistema de gestión de préstamos</p>
+<div id="acceso-screen" style="display:none;position:fixed;inset:0;z-index:10000;overflow:hidden">
+  <!-- Fondo con patrón -->
+  <div style="position:absolute;inset:0;background:linear-gradient(160deg,#0a0f1e 0%,#0d1f4a 50%,#0a1628 100%)"></div>
+  <div style="position:absolute;inset:0;background-image:radial-gradient(circle at 20% 50%,rgba(37,99,235,0.15) 0%,transparent 60%),radial-gradient(circle at 80% 20%,rgba(14,165,233,0.1) 0%,transparent 50%);pointer-events:none"></div>
+  <!-- Líneas decorativas -->
+  <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#2563eb,#0ea5e9,transparent)"></div>
+  <div style="position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(96,165,250,0.3),transparent)"></div>
+
+  <div style="position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px">
+    <!-- Logo / branding -->
+    <div style="text-align:center;margin-bottom:48px">
+      <div style="display:inline-flex;align-items:center;justify-content:center;width:80px;height:80px;background:linear-gradient(135deg,#1d4ed8,#0ea5e9);border-radius:24px;margin-bottom:20px;box-shadow:0 0 40px rgba(37,99,235,0.5)">
+        <span style="font-size:36px;font-weight:900;color:#fff;letter-spacing:-2px;font-family:'DM Sans',sans-serif">JD</span>
+      </div>
+      <div style="font-size:22px;font-weight:800;color:#fff;letter-spacing:2px;font-family:'DM Sans',sans-serif">FINANCIERA JD</div>
+      <div style="font-size:12px;color:#64748b;letter-spacing:3px;margin-top:6px;text-transform:uppercase">Sistema de Gestión</div>
     </div>
-    <form id="acceso-form" style="background:#fff;border-radius:16px;padding:24px 20px;width:100%;max-width:340px" onsubmit="loginAccesoGeneral();return false;" autocomplete="off">
-      <p style="font-size:16px;font-weight:700;color:#1e40af;margin-bottom:16px;text-align:center">🔐 Acceso al sistema</p>
-      <div id="acceso-error" style="display:none;background:#fee2e2;color:#dc2626;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:12px">Usuario o contraseña incorrectos</div>
-      <div style="margin-bottom:12px">
-        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Usuario</label>
-        <input type="text" id="acceso-usuario" placeholder="Usuario" autocomplete="off" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+
+    <!-- Formulario -->
+    <form id="acceso-form" onsubmit="loginAccesoGeneral();return false;" autocomplete="off"
+      style="width:100%;max-width:400px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:36px 32px;backdrop-filter:blur(20px)">
+      <div style="font-size:13px;font-weight:600;color:#64748b;letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;text-align:center">Acceso al sistema</div>
+      <div id="acceso-error" style="display:none;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:20px;text-align:center">Usuario o contraseña incorrectos</div>
+      <div style="margin-bottom:18px">
+        <label style="font-size:11px;font-weight:700;color:#475569;letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:8px">Usuario</label>
+        <input type="text" id="acceso-usuario" placeholder="Ingrese su usuario" autocomplete="off"
+          style="width:100%;padding:14px 16px;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.1);border-radius:12px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;color:#fff;transition:border-color 0.2s"
+          onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
       </div>
-      <div style="margin-bottom:16px">
-        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Contraseña</label>
-        <input type="password" id="acceso-pass" placeholder="••••••••" autocomplete="off" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+      <div style="margin-bottom:28px">
+        <label style="font-size:11px;font-weight:700;color:#475569;letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:8px">Contraseña</label>
+        <input type="password" id="acceso-pass" placeholder="••••••••" autocomplete="off"
+          style="width:100%;padding:14px 16px;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.1);border-radius:12px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;color:#fff;transition:border-color 0.2s"
+          onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
       </div>
-      <button type="submit" style="width:100%;padding:12px;background:#1e40af;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Entrar</button>
+      <button type="submit"
+        style="width:100%;padding:15px;background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;letter-spacing:0.5px;box-shadow:0 4px 24px rgba(37,99,235,0.4);transition:opacity 0.2s"
+        onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+        Iniciar sesión →
+      </button>
     </form>
+
+    <div style="margin-top:32px;font-size:11px;color:#1e3a5f;letter-spacing:1px">SISTEMA PRIVADO · ACCESO RESTRINGIDO</div>
   </div>
 </div>
 
-<div id="login-screen" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#1e40af 0%,#0ea5e9 100%);z-index:9999;overflow-y:auto">
-  <div style="min-height:100vh;padding:44px 24px 40px;display:flex;flex-direction:column;align-items:center">
-    <div style="text-align:center;margin-bottom:32px">
-      <div style="font-size:52px;margin-bottom:8px">💰</div>
-      <h1 style="font-size:26px;font-weight:700;color:#fff;margin:0">Financiera JD</h1>
-      <p style="font-size:14px;color:#bfdbfe;margin-top:6px">Seleccioná tu ruta de trabajo</p>
+<div id="login-screen" style="display:none;position:fixed;inset:0;z-index:9999;overflow:hidden">
+  <!-- Fondo -->
+  <div style="position:absolute;inset:0;background:linear-gradient(160deg,#0a0f1e 0%,#0d1f4a 50%,#0a1628 100%)"></div>
+  <div style="position:absolute;inset:0;background-image:radial-gradient(circle at 75% 60%,rgba(37,99,235,0.12) 0%,transparent 55%),radial-gradient(circle at 25% 30%,rgba(14,165,233,0.08) 0%,transparent 50%);pointer-events:none"></div>
+  <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#2563eb,#0ea5e9,transparent)"></div>
+
+  <div style="position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow-y:auto">
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:40px">
+      <div style="display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;background:linear-gradient(135deg,#1d4ed8,#0ea5e9);border-radius:18px;margin-bottom:16px;box-shadow:0 0 32px rgba(37,99,235,0.4)">
+        <span style="font-size:28px;font-weight:900;color:#fff;font-family:'DM Sans',sans-serif">JD</span>
+      </div>
+      <div style="font-size:20px;font-weight:800;color:#fff;font-family:'DM Sans',sans-serif">Financiera JD</div>
+      <div style="font-size:12px;color:#475569;margin-top:4px;letter-spacing:2px;text-transform:uppercase">Seleccioná tu ruta</div>
     </div>
 
     <!-- Panel rutas (cobrador) -->
-    <div id="login-rutas-panel" style="display:flex;flex-direction:column;gap:14px;width:100%;max-width:360px">
-      <button onclick="entrarComoRuta('Heredia')" style="padding:18px 16px;background:#fff;color:#1e40af;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:12px;box-shadow:0 2px 10px rgba(0,0,0,0.15)">
-        <span style="font-size:24px">📍</span><span>Heredia</span>
+    <div id="login-rutas-panel" style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:400px">
+      <button onclick="entrarComoRuta('Heredia')"
+        style="padding:18px 20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:14px;color:#fff;transition:all 0.2s;text-align:left"
+        onmouseover="this.style.background='rgba(37,99,235,0.2)';this.style.borderColor='rgba(59,130,246,0.5)'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.1)'">
+        <span style="width:40px;height:40px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📍</span>
+        <span>Heredia</span>
+        <span style="margin-left:auto;color:#475569;font-size:18px">›</span>
       </button>
-      <button onclick="entrarComoRuta('Alajuela')" style="padding:18px 16px;background:#fff;color:#1e40af;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:12px;box-shadow:0 2px 10px rgba(0,0,0,0.15)">
-        <span style="font-size:24px">📍</span><span>Alajuela</span>
+      <button onclick="entrarComoRuta('Alajuela')"
+        style="padding:18px 20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:14px;color:#fff;transition:all 0.2s;text-align:left"
+        onmouseover="this.style.background='rgba(37,99,235,0.2)';this.style.borderColor='rgba(59,130,246,0.5)'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.1)'">
+        <span style="width:40px;height:40px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📍</span>
+        <span>Alajuela</span>
+        <span style="margin-left:auto;color:#475569;font-size:18px">›</span>
       </button>
-      <button onclick="entrarComoRuta('San Ramón')" style="padding:18px 16px;background:#fff;color:#1e40af;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:12px;box-shadow:0 2px 10px rgba(0,0,0,0.15)">
-        <span style="font-size:24px">📍</span><span>San Ramón</span>
+      <button onclick="entrarComoRuta('San Ramón')"
+        style="padding:18px 20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:14px;color:#fff;transition:all 0.2s;text-align:left"
+        onmouseover="this.style.background='rgba(37,99,235,0.2)';this.style.borderColor='rgba(59,130,246,0.5)'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.1)'">
+        <span style="width:40px;height:40px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📍</span>
+        <span>San Ramón</span>
+        <span style="margin-left:auto;color:#475569;font-size:18px">›</span>
       </button>
-      <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
-        <div style="flex:1;height:1px;background:rgba(255,255,255,0.3)"></div>
-        <span style="font-size:12px;color:#bfdbfe">o</span>
-        <div style="flex:1;height:1px;background:rgba(255,255,255,0.3)"></div>
+      <div style="display:flex;align-items:center;gap:12px;margin:6px 0">
+        <div style="flex:1;height:1px;background:rgba(255,255,255,0.07)"></div>
+        <span style="font-size:11px;color:#334155;letter-spacing:1px;text-transform:uppercase">o</span>
+        <div style="flex:1;height:1px;background:rgba(255,255,255,0.07)"></div>
       </div>
-      <button onclick="loginMostrarAdmin()" style="padding:14px 16px;background:rgba(255,255,255,0.15);color:#fff;border:1.5px solid rgba(255,255,255,0.4);border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:10px">
-        <span style="font-size:18px">🔐</span><span>Acceso Administrador</span>
+      <button onclick="loginMostrarAdmin()"
+        style="padding:16px 20px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;color:#64748b;transition:all 0.2s"
+        onmouseover="this.style.color='#94a3b8';this.style.borderColor='rgba(255,255,255,0.15)'" onmouseout="this.style.color='#64748b';this.style.borderColor='rgba(255,255,255,0.08)'">
+        <span>🔐</span><span>Acceso Administrador</span>
       </button>
     </div>
 
     <!-- Panel login admin (contraseña) -->
-    <div id="login-admin-panel" style="display:none;width:100%;max-width:360px">
-      <button onclick="loginMostrarRutas()" style="background:none;border:none;color:#bfdbfe;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:16px;padding:0;display:block">← Volver</button>
-      <form style="background:#fff;border-radius:16px;padding:24px 20px" onsubmit="loginAdmin();return false;" autocomplete="off">
-        <p style="font-size:16px;font-weight:700;color:#1e40af;margin-bottom:4px">🔐 Administrador</p>
-        <div id="login-error" style="display:none;background:#fee2e2;color:#dc2626;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:12px"></div>
-        <div style="margin-bottom:12px">
-          <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Usuario</label>
-          <input type="text" name="username" id="login-user-admin" placeholder="Usuario" autocomplete="new-password" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+    <div id="login-admin-panel" style="display:none;width:100%;max-width:400px">
+      <button onclick="loginMostrarRutas()" style="background:none;border:none;color:#475569;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:20px;padding:0;display:flex;align-items:center;gap:6px;letter-spacing:0.5px">
+        ← Volver
+      </button>
+      <form style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:32px;backdrop-filter:blur(20px)" onsubmit="loginAdmin();return false;" autocomplete="off">
+        <div style="font-size:13px;font-weight:600;color:#64748b;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;text-align:center">Administrador</div>
+        <div id="login-error" style="display:none;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:20px;text-align:center"></div>
+        <div style="margin-bottom:18px">
+          <label style="font-size:11px;font-weight:700;color:#475569;letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:8px">Usuario</label>
+          <input type="text" name="username" id="login-user-admin" placeholder="Ingrese su usuario" autocomplete="new-password"
+            style="width:100%;padding:14px 16px;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.1);border-radius:12px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;color:#fff;transition:border-color 0.2s"
+            onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
         </div>
-        <div style="margin-bottom:12px">
-          <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Contraseña</label>
-          <input type="password" name="password" id="login-pass-admin" placeholder="••••••••" autocomplete="new-password" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+        <div style="margin-bottom:28px">
+          <label style="font-size:11px;font-weight:700;color:#475569;letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:8px">Contraseña</label>
+          <input type="password" name="password" id="login-pass-admin" placeholder="••••••••" autocomplete="new-password"
+            style="width:100%;padding:14px 16px;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.1);border-radius:12px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;color:#fff;transition:border-color 0.2s"
+            onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
         </div>
-        <button type="submit" style="width:100%;padding:12px;background:#1e40af;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Entrar</button>
+        <button type="submit"
+          style="width:100%;padding:15px;background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;letter-spacing:0.5px;box-shadow:0 4px 24px rgba(37,99,235,0.4)"
+          onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+          Iniciar sesión →
+        </button>
       </form>
     </div>
+
+    <div style="margin-top:32px;font-size:11px;color:#1e3a5f;letter-spacing:1px">SISTEMA PRIVADO · ACCESO RESTRINGIDO</div>
   </div>
 </div>
 
