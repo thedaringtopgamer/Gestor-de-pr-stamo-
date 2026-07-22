@@ -1989,11 +1989,10 @@ function _verificarRevocacion(){
   var myDeviceId=_getDeviceId();
   var loginTs=parseInt(localStorage.getItem('fjd_login_ts')||'0');
   var loginRuta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
-  var _nc='&_nc='+Date.now();
   var _hdrNC=Object.assign({},SUPA_HDR,{'Cache-Control':'no-cache','Pragma':'no-cache'});
   Promise.all([
-    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.kick_signals&select=value'+_nc,{headers:_hdrNC}).then(function(r){return r.ok?r.json():null;}),
-    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value'+_nc,{headers:_hdrNC}).then(function(r){return r.ok?r.json():null;})
+    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.kick_signals&select=value',{headers:_hdrNC}).then(function(r){return r.ok?r.json():null;}),
+    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value',{headers:_hdrNC}).then(function(r){return r.ok?r.json():null;})
   ]).then(function(results){
     var kicks=(results[0]&&results[0][0]&&results[0][0].value)||{};
     var revRuta=(results[1]&&results[1][0]&&results[1][0].value)||{};
