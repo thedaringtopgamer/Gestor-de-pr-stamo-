@@ -1980,10 +1980,13 @@ function cerrarSesion(){
 }
 
 var _verificandoRevocacion=false;
+var _verificandoRevocacionTs=0;
 function _verificarRevocacion(){
   if(rolActual==='admin') return;
-  if(_verificandoRevocacion) return;
+  // Si el flag lleva más de 8s trabado, lo liberamos
+  if(_verificandoRevocacion && (Date.now()-_verificandoRevocacionTs)<8000) return;
   _verificandoRevocacion=true;
+  _verificandoRevocacionTs=Date.now();
   var loginTs=parseInt(localStorage.getItem('fjd_login_ts')||'0');
   var myToken=localStorage.getItem('fjd_session_token')||'';
   var loginRuta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
@@ -1998,13 +2001,12 @@ function _verificarRevocacion(){
     var revDev=(results[1]&&results[1][0]&&results[1][0].value)||{};
     var revokeTs=revRuta[loginRuta]||revRuta['todas']||0;
     var revokedToken=revDev[myDeviceId]||'';
-    // Token match: revocado si el token almacenado en Supabase coincide con el token de esta sesión
     var _botadoPorDispositivo=myToken&&revokedToken&&(revokedToken===myToken);
     var _botado=(loginTs===0&&revokeTs>0)||(revokeTs>loginTs)||_botadoPorDispositivo;
     _verificandoRevocacion=false;
     if(_botado){
       _eliminarLoginNube(myDeviceId);
-      _forzarLogoutAdmin();
+      _forzarLogout();
     }
   }).catch(function(){ _verificandoRevocacion=false; });
 }
@@ -2281,6 +2283,8 @@ function revocarDispositivo(deviceId, token, btn){
     if(r&&r.ok){
       btn.textContent='✓';
       btn.style.background='#16a34a';
+      // Forzar chequeo inmediato en este dispositivo también (por si es el mismo)
+      _verificandoRevocacion=false;
       // Eliminar de logged_sessions también
       fetch(SUPA_URL+'/rest/v1/app_data?key=eq.logged_sessions&select=value',{headers:SUPA_HDR})
       .then(function(r2){return r2.ok?r2.json():[];})
@@ -3390,10 +3394,10 @@ document.addEventListener('visibilitychange',function(){
   if(document.visibilityState==='visible' && localStorage.getItem('fjd_session')==='1') _verificarRevocacion();
 });
 
-// Chequeo en vivo cada 2 segundos para detectar revocación remota
+// Chequeo en vivo cada 1 segundo para detectar revocación remota
 setInterval(function(){
   if(localStorage.getItem('fjd_session')==='1') _verificarRevocacion();
-}, 2000);
+}, 1000);
 
 // Chequeo rápido de timestamp cada 5s — si la nube tiene datos más nuevos, sincroniza inmediatamente
 setInterval(function(){
