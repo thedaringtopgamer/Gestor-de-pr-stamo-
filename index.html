@@ -5941,12 +5941,12 @@ function toggleGestionUsuarios(){
   var lista=document.getElementById('gestion-usuarios-lista');
   if(panel.style.display==='none'){
     panel.style.display='block';
-    lista.innerHTML=USUARIOS.map(function(u,i){
+    lista.innerHTML=USUARIOS.filter(function(u){return u.rol==='admin';}).map(function(u,i){
       return '<div style="padding:10px 0;border-bottom:1px solid #e5e7eb">'
-        +'<div style="font-size:13px;font-weight:600;margin-bottom:6px;color:#1e40af">'+(u.rol==='admin'?'👑':'👤')+' '+u.user+'</div>'
+        +'<div style="font-size:13px;font-weight:600;margin-bottom:6px;color:#1e40af">👑 '+u.user+' (Administrador)</div>'
         +'<div style="display:flex;gap:8px">'
-        +'<input type="password" id="ruta-pwd-'+i+'" placeholder="Nueva contraseña" style="flex:1;padding:8px 10px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:13px;font-family:\'DM Sans\',sans-serif;outline:none;box-sizing:border-box">'
-        +'<button onclick="cambiarPassword('+i+')" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">Guardar</button>'
+        +'<input type="password" id="ruta-pwd-0" placeholder="Nueva contraseña admin" style="flex:1;padding:8px 10px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:13px;font-family:\'DM Sans\',sans-serif;outline:none;box-sizing:border-box">'
+        +'<button onclick="cambiarPasswordAdmin()" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">Guardar</button>'
         +'</div>'
         +'</div>';
     }).join('')
@@ -6002,6 +6002,31 @@ function cambiarPassword(idx){
   guardarDatos();
   input.value='';
   toast('✓ Contraseña de '+USUARIOS[idx].user+' actualizada');
+}
+
+function cambiarPasswordAdmin(){
+  var input=document.getElementById('ruta-pwd-0');
+  if(!input) return;
+  var nueva=input.value.trim();
+  if(!nueva){toast('⚠ Escribí la nueva contraseña');return;}
+  if(nueva.length<6){toast('⚠ Mínimo 6 caracteres');return;}
+  _sha256(nueva).then(function(hash){
+    ADMIN_PASS_HASH=hash;
+    ADMIN_PASS_LEGACY='';
+    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.admin_credentials',{method:'GET',headers:SUPA_HDR})
+    .then(function(r){return r.ok?r.json():[];}).then(function(rows){
+      var method=rows&&rows.length?'PATCH':'POST';
+      var url=SUPA_URL+'/rest/v1/app_data'+(method==='PATCH'?'?key=eq.admin_credentials':'');
+      var body=method==='PATCH'?JSON.stringify({value:{user:ADMIN_USER,pass_hash:hash}}):JSON.stringify({key:'admin_credentials',value:{user:ADMIN_USER,pass_hash:hash}});
+      return fetch(url,{method:method,headers:SUPA_HDR,body:body});
+    }).then(function(r){
+      if(r&&r.ok){
+        input.value='';
+        toast('✓ Contraseña de administrador actualizada');
+        togglePasswordPanel();togglePasswordPanel();
+      } else { toast('⚠ Error guardando en la nube'); }
+    }).catch(function(){toast('⚠ Error de conexión');});
+  });
 }
 
 function abrirNuevoGasto(){
