@@ -1983,28 +1983,28 @@ var _verificandoRevocacion=false;
 var _verificandoRevocacionTs=0;
 function _verificarRevocacion(){
   if(rolActual==='admin') return;
-  // Si el flag lleva más de 8s trabado, lo liberamos
-  if(_verificandoRevocacion && (Date.now()-_verificandoRevocacionTs)<8000) return;
+  if(_verificandoRevocacion && (Date.now()-_verificandoRevocacionTs)<6000) return;
   _verificandoRevocacion=true;
   _verificandoRevocacionTs=Date.now();
-  var loginTs=parseInt(localStorage.getItem('fjd_login_ts')||'0');
-  var myToken=localStorage.getItem('fjd_session_token')||'';
-  var loginRuta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
   var myDeviceId=_getDeviceId();
+  var loginTs=parseInt(localStorage.getItem('fjd_login_ts')||'0');
+  var loginRuta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
   var _nc='&_nc='+Date.now();
   var _hdrNC=Object.assign({},SUPA_HDR,{'Cache-Control':'no-cache','Pragma':'no-cache'});
   Promise.all([
-    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value'+_nc,{headers:_hdrNC}).then(function(r){return r.ok?r.json():null;}),
-    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked_device&select=value'+_nc,{headers:_hdrNC}).then(function(r){return r.ok?r.json():null;})
+    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.kick_signals&select=value'+_nc,{headers:_hdrNC}).then(function(r){return r.ok?r.json():null;}),
+    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value'+_nc,{headers:_hdrNC}).then(function(r){return r.ok?r.json():null;})
   ]).then(function(results){
-    var revRuta=(results[0]&&results[0][0]&&results[0][0].value)||{};
-    var revDev=(results[1]&&results[1][0]&&results[1][0].value)||{};
+    var kicks=(results[0]&&results[0][0]&&results[0][0].value)||{};
+    var revRuta=(results[1]&&results[1][0]&&results[1][0].value)||{};
+    // Kick directo por deviceId (más confiable)
+    var kickTs=kicks[myDeviceId]||0;
+    var _botadoPorKick=kickTs>loginTs;
+    // Kick por ruta (cerrar ruta completa)
     var revokeTs=revRuta[loginRuta]||revRuta['todas']||0;
-    var revokedToken=revDev[myDeviceId]||'';
-    var _botadoPorDispositivo=myToken&&revokedToken&&(revokedToken===myToken);
-    var _botado=(loginTs===0&&revokeTs>0)||(revokeTs>loginTs)||_botadoPorDispositivo;
+    var _botadoPorRuta=(loginTs===0&&revokeTs>0)||(revokeTs>loginTs);
     _verificandoRevocacion=false;
-    if(_botado){
+    if(_botadoPorKick||_botadoPorRuta){
       _eliminarLoginNube(myDeviceId);
       _forzarLogout();
     }
@@ -2268,22 +2268,22 @@ function revocarRuta(ruta, btn){
 
 function revocarDispositivo(deviceId, token, btn){
   btn.disabled=true; btn.textContent='...';
-  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked_device&select=value',{headers:SUPA_HDR})
+  // Escribir señal directa de kick para este dispositivo
+  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.kick_signals&select=value',{headers:SUPA_HDR})
   .then(function(r){return r.ok?r.json():[];})
   .then(function(rows){
-    var rev=(rows&&rows[0]&&rows[0].value)||{};
-    rev[deviceId]=token||('ts_'+Date.now()); // token de sesión, único por login
+    var kicks=(rows&&rows[0]&&rows[0].value)||{};
+    kicks[deviceId]=Date.now();
     return fetch(SUPA_URL+'/rest/v1/app_data',{
       method:'POST',
       headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
-      body:JSON.stringify([{key:'session_revoked_device',value:rev}])
+      body:JSON.stringify([{key:'kick_signals',value:kicks}])
     });
   })
   .then(function(r){
     if(r&&r.ok){
       btn.textContent='✓';
       btn.style.background='#16a34a';
-      // Forzar chequeo inmediato en este dispositivo también (por si es el mismo)
       _verificandoRevocacion=false;
       // Eliminar de logged_sessions también
       fetch(SUPA_URL+'/rest/v1/app_data?key=eq.logged_sessions&select=value',{headers:SUPA_HDR})
