@@ -1813,6 +1813,7 @@ function loginAccesoGeneral(){
   function _doLogin(ok){
     if(!ok){ errEl.style.display='block'; document.getElementById('acceso-pass').value=''; return; }
     errEl.style.display='none';
+    localStorage.removeItem('fjd_kicked');
     document.getElementById('acceso-screen').style.display='none';
     sessionStorage.setItem('fjd_acceso','1');
     document.getElementById('login-screen').style.display='flex';
@@ -1962,6 +1963,10 @@ function _forzarLogout(){
   localStorage.removeItem('fjd_pantalla'); localStorage.removeItem('fjd_detalle_id');
   localStorage.removeItem('fjd_cliente_temp'); localStorage.removeItem('fjd_login_ts');
   localStorage.removeItem('fjd_login_user');
+  // Borrar ruta fija para que no entre automático al recargar
+  localStorage.removeItem('fjd_ruta_fija'); localStorage.removeItem('fjd_ruta_fija_ts');
+  localStorage.removeItem('fjd_ruta_actual'); localStorage.removeItem('fjd_session_token');
+  localStorage.setItem('fjd_kicked','1');
   document.getElementById('splash-screen').style.display='none';
   closeMenu();
   sessionStorage.removeItem('fjd_acceso');
@@ -6359,7 +6364,7 @@ function fechaOffset(dias){
         window.location.hash='';
         document.getElementById('login-screen').style.display='flex';
         loginMostrarAdmin();
-      } else if(_rutaFija){
+      } else if(_rutaFija && !localStorage.getItem('fjd_kicked')){
         var _rutaFijaTs=parseInt(localStorage.getItem('fjd_ruta_fija_ts')||'0');
         if(!_rutaFijaTs){_rutaFijaTs=Date.now();localStorage.setItem('fjd_ruta_fija_ts',_rutaFijaTs.toString());}
         // Verificar kick_signals para ruta fija también
