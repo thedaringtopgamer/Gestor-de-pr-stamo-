@@ -6317,25 +6317,18 @@ function fechaOffset(dias){
 
   try{
     if(localStorage.getItem('fjd_session')==='1'){
-      // Verificar revocación ANTES de mostrar la app
       var _rol=localStorage.getItem('fjd_rol')||'ruta';
-      var _revocado=false;
-      if(_rol!=='admin'){
-        var _loginTs=parseInt(localStorage.getItem('fjd_login_ts')||'0');
-        var _loginRuta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
-        var _myDevId=localStorage.getItem('fjd_device_id')||'';
-        if(window._sessionRevoked){
-          var _revokeTs=(window._sessionRevoked[_loginRuta]||window._sessionRevoked['todas'])||0;
-          if(_loginTs===0 && _revokeTs>0){ _revocado=true; }
-          else if(_revokeTs>_loginTs){ _revocado=true; }
-        }
-        if(!_revocado && window._sessionRevokedDevice && _myDevId){
-          var _revokedToken=window._sessionRevokedDevice[_myDevId]||'';
-          var _myToken=localStorage.getItem('fjd_session_token')||'';
-          if(_myToken && _revokedToken && _myToken===_revokedToken){ _revocado=true; }
-        }
+      var _myDevId=_getDeviceId();
+      var _loginTs=parseInt(localStorage.getItem('fjd_login_ts')||'0');
+      var _loginRuta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
+      function _arrancarSesion(){
+        var _rutaLog=_rol==='admin'?'Admin':_loginRuta;
+        rolActual=_rol; rutaActual=_loginRuta;
+        if(!localStorage.getItem('fjd_login_ts')) localStorage.setItem('fjd_login_ts',Date.now().toString());
+        _registrarLoginNube(_myDevId,_rutaLog);
+        mostrarApp();
       }
-      if(_revocado){
+      function _cerrarSesionRevocada(){
         localStorage.removeItem('fjd_session'); localStorage.removeItem('fjd_rol');
         localStorage.removeItem('fjd_login_ts'); localStorage.removeItem('fjd_login_ruta');
         localStorage.removeItem('fjd_ruta_fija'); localStorage.removeItem('fjd_ruta_fija_ts');
@@ -6343,12 +6336,18 @@ function fechaOffset(dias){
         sessionStorage.removeItem('fjd_acceso');
         document.getElementById('acceso-screen').style.display='flex';
         toast('⚠ Su sesión fue cerrada por el administrador.');
+      }
+      if(_rol==='admin'){
+        _arrancarSesion();
       } else {
-        // Sesión existente — registrar en nube y asegurar loginTs
-        var _rutaLog=_rol==='admin'?'Admin':(localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas');
-        if(!localStorage.getItem('fjd_login_ts')) localStorage.setItem('fjd_login_ts',Date.now().toString());
-        _registrarLoginNube(_getDeviceId(),_rutaLog);
-        mostrarApp();
+        // Consultar kick_signals en Supabase ANTES de mostrar la app
+        fetch(SUPA_URL+'/rest/v1/app_data?key=eq.kick_signals&select=value',{headers:Object.assign({},SUPA_HDR,{'Cache-Control':'no-cache'})})
+        .then(function(r){return r.ok?r.json():[];})
+        .then(function(rows){
+          var kicks=(rows&&rows[0]&&rows[0].value)||{};
+          var kickTs=kicks[_myDevId]||0;
+          if(kickTs>_loginTs){ _cerrarSesionRevocada(); } else { _arrancarSesion(); }
+        }).catch(function(){ _arrancarSesion(); });
       }
     } else {
       // Sin sesión: si el teléfono ya tiene ruta fija guardada, entrar directo
@@ -6361,33 +6360,43 @@ function fechaOffset(dias){
         document.getElementById('login-screen').style.display='flex';
         loginMostrarAdmin();
       } else if(_rutaFija){
-        // Verificar si fue revocado incluso sin sesión activa
-        var _rutaRevTs=(window._sessionRevoked&&(window._sessionRevoked[_rutaFija]||window._sessionRevoked['todas']))||0;
         var _rutaFijaTs=parseInt(localStorage.getItem('fjd_ruta_fija_ts')||'0');
-        // Primera vez con código nuevo: registrar ahora para no revocar por eventos pasados
         if(!_rutaFijaTs){_rutaFijaTs=Date.now();localStorage.setItem('fjd_ruta_fija_ts',_rutaFijaTs.toString());}
-        if(_rutaRevTs>0&&_rutaRevTs>_rutaFijaTs){
-          localStorage.removeItem('fjd_ruta_fija'); localStorage.removeItem('fjd_ruta_fija_ts');
-          localStorage.removeItem('fjd_ruta_actual'); localStorage.removeItem('fjd_rol');
-          if(sessionStorage.getItem('fjd_acceso')==='1'){
-            document.getElementById('login-screen').style.display='flex';
-            loginMostrarRutas();
-          } else {
+        // Verificar kick_signals para ruta fija también
+        fetch(SUPA_URL+'/rest/v1/app_data?key=eq.kick_signals&select=value',{headers:Object.assign({},SUPA_HDR,{'Cache-Control':'no-cache'})})
+        .then(function(r){return r.ok?r.json():[];})
+        .then(function(rows){
+          var kicks=(rows&&rows[0]&&rows[0].value)||{};
+          var _rfDevId=_getDeviceId();
+          var _rfLoginTs=parseInt(localStorage.getItem('fjd_login_ts')||'0');
+          var kickTs=kicks[_rfDevId]||0;
+          if(kickTs>0&&kickTs>_rfLoginTs&&kickTs>_rutaFijaTs){
+            localStorage.removeItem('fjd_ruta_fija'); localStorage.removeItem('fjd_ruta_fija_ts');
+            localStorage.removeItem('fjd_ruta_actual'); localStorage.removeItem('fjd_rol');
             document.getElementById('acceso-screen').style.display='flex';
+            toast('⚠ Su sesión fue cerrada por el administrador.');
+          } else {
+            rolActual='ruta'; rutaActual=_rutaFija;
+            if(!localStorage.getItem('fjd_session_token')) localStorage.setItem('fjd_session_token','tok_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
+            localStorage.setItem('fjd_session','1'); localStorage.setItem('fjd_rol','ruta');
+            localStorage.setItem('fjd_ruta_actual',_rutaFija);
+            if(!localStorage.getItem('fjd_login_ts')) localStorage.setItem('fjd_login_ts',_rutaFijaTs.toString());
+            localStorage.setItem('fjd_login_ruta',_rutaFija);
+            sessionStorage.setItem('fjd_ruta_actual',_rutaFija);
+            _registrarLoginNube(_rfDevId,_rutaFija);
+            mostrarApp();
           }
-        } else {
-          rolActual='ruta';
-          rutaActual=_rutaFija;
+        }).catch(function(){
+          rolActual='ruta'; rutaActual=_rutaFija;
           if(!localStorage.getItem('fjd_session_token')) localStorage.setItem('fjd_session_token','tok_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
-          localStorage.setItem('fjd_session','1');
-          localStorage.setItem('fjd_rol','ruta');
+          localStorage.setItem('fjd_session','1'); localStorage.setItem('fjd_rol','ruta');
           localStorage.setItem('fjd_ruta_actual',_rutaFija);
-          if(!localStorage.getItem('fjd_login_ts')) localStorage.setItem('fjd_login_ts',Date.now().toString());
+          if(!localStorage.getItem('fjd_login_ts')) localStorage.setItem('fjd_login_ts',_rutaFijaTs.toString());
           localStorage.setItem('fjd_login_ruta',_rutaFija);
           sessionStorage.setItem('fjd_ruta_actual',_rutaFija);
           _registrarLoginNube(_getDeviceId(),_rutaFija);
           mostrarApp();
-        }
+        });
       } else {
         if(sessionStorage.getItem('fjd_acceso')==='1'){
           document.getElementById('login-screen').style.display='flex';
