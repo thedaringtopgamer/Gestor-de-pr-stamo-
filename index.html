@@ -6007,7 +6007,7 @@ function cambiarAccesoGeneral(){
           document.getElementById('acceso-nuevo-user').value='';
           document.getElementById('acceso-nuevo-pass').value='';
           toast('✓ Acceso general actualizado');
-          togglePasswordPanel();togglePasswordPanel();
+          toggleGestionUsuarios();toggleGestionUsuarios();
         } else { toast('⚠ Error guardando en la nube'); }
       }).catch(function(){toast('⚠ Error de conexión');});
     });
@@ -6051,7 +6051,7 @@ function cambiarPasswordAdmin(){
         if(r&&r.ok){
           input.value='';
           toast('✓ Contraseña de administrador actualizada');
-          togglePasswordPanel();togglePasswordPanel();
+          toggleGestionUsuarios();toggleGestionUsuarios();
         } else { toast('⚠ Error guardando en la nube'); }
       }).catch(function(){toast('⚠ Error de conexión');});
     });
