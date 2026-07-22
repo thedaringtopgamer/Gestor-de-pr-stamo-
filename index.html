@@ -1897,6 +1897,7 @@ function mostrarApp(){
   _iniciarHeartbeat();
   // Subir acceso_clave a Supabase si no existe aún
   if(rolActual==='admin'){
+    setTimeout(function(){ _autoBackupDiario(); }, 4000);
     fetch(SUPA_URL+'/rest/v1/app_data?key=eq.acceso_clave&select=key',{headers:SUPA_HDR})
     .then(function(r){return r.ok?r.json():[];}).then(function(rows){
       if(!rows||!rows.length){
@@ -5835,6 +5836,34 @@ function renderPanelRecolector(){
       _guardarSoloBases();
     }
   }
+}
+
+async function _autoBackupDiario(){
+  try{
+    var hoy=hoyLocal();
+    var ultimo=localStorage.getItem('fjd_ultimo_autobackup');
+    if(ultimo===hoy) return; // ya se descargó hoy
+    toast('📦 Descargando respaldo automático del día...');
+    await new Promise(function(r){setTimeout(r,1500);});
+    var r1=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:Object.assign({},SUPA_HDR,{'Cache-Control':'no-cache'})});
+    if(!r1.ok) return;
+    var rows=await r1.json();
+    var datos={version:2,fecha:new Date().toISOString(),supabase:{}};
+    rows.forEach(function(row){ datos.supabase[row.key]=row.value; });
+    datos.prestamos=prestamos; datos.pagos=pagos; datos.cobrosAdmin=cobrosAdmin;
+    datos.gastos=gastos; datos.renovaciones=renovaciones; datos.inversiones=inversiones;
+    datos.cierres=cierres; datos.bases=bases;
+    var json=JSON.stringify(datos,null,2);
+    var blob=new Blob([json],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url; a.download='autobackup-financiera-jd-'+hoy+'.json';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    localStorage.setItem('fjd_ultimo_autobackup',hoy);
+    toast('✓ Respaldo automático guardado: '+hoy);
+  }catch(e){}
 }
 
 function exportarBackup(){
