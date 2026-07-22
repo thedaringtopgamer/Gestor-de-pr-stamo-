@@ -301,16 +301,16 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     <!-- Panel login admin (contraseña) -->
     <div id="login-admin-panel" style="display:none;width:100%;max-width:360px">
       <button onclick="loginMostrarRutas()" style="background:none;border:none;color:#bfdbfe;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:16px;padding:0;display:block">← Volver</button>
-      <form style="background:#fff;border-radius:16px;padding:24px 20px" onsubmit="loginAdmin();return false;" autocomplete="on">
+      <form style="background:#fff;border-radius:16px;padding:24px 20px" onsubmit="loginAdmin();return false;" autocomplete="off">
         <p style="font-size:16px;font-weight:700;color:#1e40af;margin-bottom:4px">🔐 Administrador</p>
         <div id="login-error" style="display:none;background:#fee2e2;color:#dc2626;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:12px"></div>
         <div style="margin-bottom:12px">
           <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Usuario</label>
-          <input type="text" name="username" id="login-user-admin" placeholder="Usuario" autocomplete="username" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+          <input type="text" name="username" id="login-user-admin" placeholder="Usuario" autocomplete="new-password" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
         </div>
         <div style="margin-bottom:12px">
           <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Contraseña</label>
-          <input type="password" name="password" id="login-pass-admin" placeholder="••••••••" autocomplete="current-password" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+          <input type="password" name="password" id="login-pass-admin" placeholder="••••••••" autocomplete="new-password" style="width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
         </div>
         <button type="submit" style="width:100%;padding:12px;background:#1e40af;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Entrar</button>
       </form>
@@ -1722,29 +1722,42 @@ function entrarComoRuta(ruta){
   mostrarApp();
 }
 var ADMIN_USER='TheDaring';
-var ADMIN_PASS='Thedaring020603';
+var ADMIN_PASS_HASH='';
+var ADMIN_PASS_LEGACY='Thedaring020603';
 var ACCESO_USER='Financiera JD';
-var ACCESO_PASS='02060364640';
-// Estos valores se sobreescriben con los de Supabase al cargar
+var ACCESO_PASS_HASH='';
+
+function _sha256(str){
+  return crypto.subtle.digest('SHA-256',new TextEncoder().encode(str))
+    .then(function(buf){return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');});
+}
 
 function loginAccesoGeneral(){
   var u=(document.getElementById('acceso-usuario').value||'').trim();
   var p=(document.getElementById('acceso-pass').value||'').trim();
   var errEl=document.getElementById('acceso-error');
-  var ok=(u.toLowerCase()===ACCESO_USER.toLowerCase()&&p===ACCESO_PASS);
-  if(!ok){ errEl.style.display='block'; document.getElementById('acceso-pass').value=''; return; }
-  errEl.style.display='none';
-  document.getElementById('acceso-screen').style.display='none';
-  sessionStorage.setItem('fjd_acceso','1');
-  document.getElementById('login-screen').style.display='flex';
-  try{ loginMostrarRutas(); }catch(e){}
+  var stored=ACCESO_PASS_HASH;
+  var isHash=/^[a-f0-9]{64}$/.test(stored);
+  function _doLogin(ok){
+    if(!ok){ errEl.style.display='block'; document.getElementById('acceso-pass').value=''; return; }
+    errEl.style.display='none';
+    document.getElementById('acceso-screen').style.display='none';
+    sessionStorage.setItem('fjd_acceso','1');
+    document.getElementById('login-screen').style.display='flex';
+    try{ loginMostrarRutas(); }catch(e){}
+  }
+  if(isHash){
+    _sha256(p).then(function(hash){ _doLogin(u.toLowerCase()===ACCESO_USER.toLowerCase()&&hash===stored); });
+  } else {
+    _doLogin(u.toLowerCase()===ACCESO_USER.toLowerCase()&&p===stored);
+  }
 }
 
 function loginAdmin(){
   var u=document.getElementById('login-user-admin').value.trim();
   var p=document.getElementById('login-pass-admin').value;
   var err=document.getElementById('login-error');
-  if(u===ADMIN_USER && p===ADMIN_PASS){
+  function _adminOk(){
     err.style.display='none';
     localStorage.setItem('fjd_session','1');
     localStorage.setItem('fjd_rol','admin');
@@ -1754,10 +1767,18 @@ function loginAdmin(){
     _registrarLoginNube(_getDeviceId(),'Admin');
     document.getElementById('login-screen').style.display='none';
     document.getElementById('ruta-selector').style.display='flex';
-  } else {
+  }
+  function _adminFail(){
     err.textContent='Usuario o contraseña incorrectos';
     err.style.display='block';
     document.getElementById('login-pass-admin').value='';
+  }
+  if(ADMIN_PASS_HASH&&/^[a-f0-9]{64}$/.test(ADMIN_PASS_HASH)){
+    _sha256(p).then(function(hash){
+      if(u===ADMIN_USER&&hash===ADMIN_PASS_HASH) _adminOk(); else _adminFail();
+    });
+  } else {
+    if(u===ADMIN_USER&&p===ADMIN_PASS_LEGACY) _adminOk(); else _adminFail();
   }
 }
 function loginMostrarAdmin(){
@@ -1807,7 +1828,7 @@ function mostrarApp(){
     fetch(SUPA_URL+'/rest/v1/app_data?key=eq.acceso_clave&select=key',{headers:SUPA_HDR})
     .then(function(r){return r.ok?r.json():[];}).then(function(rows){
       if(!rows||!rows.length){
-        fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:SUPA_HDR,body:JSON.stringify({key:'acceso_clave',value:{user:ACCESO_USER,pass:ACCESO_PASS}})}).catch(function(){});
+        fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:SUPA_HDR,body:JSON.stringify({key:'acceso_clave',value:{user:ACCESO_USER,pass_hash:ACCESO_PASS_HASH}})}).catch(function(){});
       }
     }).catch(function(){});
     // Restaurar modal de sesiones si estaba abierto antes de recargar
@@ -3154,7 +3175,10 @@ function sincronizarSupabaseFondo(){
       if(row.key==='clientes_bloqueados'&&row.value&&typeof row.value==='object') clientesBloqueados=row.value;
       if(row.key==='passwords'&&Array.isArray(row.value)) row.value.forEach(function(p,i){if(USUARIOS[i]&&p) USUARIOS[i].pass=p;});
       if(row.key==='acceso_clave'&&row.value&&row.value.user) ACCESO_USER=row.value.user;
-      if(row.key==='acceso_clave'&&row.value&&row.value.pass) ACCESO_PASS=row.value.pass;
+      if(row.key==='acceso_clave'&&row.value&&(row.value.pass_hash||row.value.pass)) ACCESO_PASS_HASH=row.value.pass_hash||row.value.pass;
+      if(row.key==='admin_credentials'&&row.value&&row.value.user) ADMIN_USER=row.value.user;
+      if(row.key==='admin_credentials'&&row.value&&row.value.pass_hash) ADMIN_PASS_HASH=row.value.pass_hash;
+      if(row.key==='admin_pass'&&row.value&&typeof row.value==='string') ADMIN_PASS_LEGACY=row.value;
       if(row.key==='fotos'&&row.value&&typeof row.value==='object') fotosMapBg=row.value;
     });
     if(Object.keys(fotosMapBg).length){
@@ -5890,22 +5914,25 @@ function cambiarAccesoGeneral(){
   var nuevoPass=(document.getElementById('acceso-nuevo-pass').value||'').trim();
   if(!nuevoUser&&!nuevoPass){toast('⚠ Escribí usuario o contraseña nueva');return;}
   if(nuevoUser) ACCESO_USER=nuevoUser;
-  if(nuevoPass) ACCESO_PASS=nuevoPass;
-  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.acceso_clave',{
-    method:'GET',headers:SUPA_HDR
-  }).then(function(r){return r.ok?r.json():[];}).then(function(rows){
-    var method=rows&&rows.length?'PATCH':'POST';
-    var url=SUPA_URL+'/rest/v1/app_data'+(method==='PATCH'?'?key=eq.acceso_clave':'');
-    var body=method==='PATCH'?JSON.stringify({value:{user:ACCESO_USER,pass:ACCESO_PASS}}):JSON.stringify({key:'acceso_clave',value:{user:ACCESO_USER,pass:ACCESO_PASS}});
-    return fetch(url,{method:method,headers:SUPA_HDR,body:body});
-  }).then(function(r){
-    if(r&&r.ok){
-      document.getElementById('acceso-nuevo-user').value='';
-      document.getElementById('acceso-nuevo-pass').value='';
-      toast('✓ Acceso general actualizado');
-      togglePasswordPanel();togglePasswordPanel();
-    } else { toast('⚠ Error guardando en la nube'); }
-  }).catch(function(){toast('⚠ Error de conexión');});
+  var hashPromise=nuevoPass?_sha256(nuevoPass):Promise.resolve(null);
+  hashPromise.then(function(newHash){
+    if(newHash) ACCESO_PASS_HASH=newHash;
+    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.acceso_clave',{
+      method:'GET',headers:SUPA_HDR
+    }).then(function(r){return r.ok?r.json():[];}).then(function(rows){
+      var method=rows&&rows.length?'PATCH':'POST';
+      var url=SUPA_URL+'/rest/v1/app_data'+(method==='PATCH'?'?key=eq.acceso_clave':'');
+      var body=method==='PATCH'?JSON.stringify({value:{user:ACCESO_USER,pass_hash:ACCESO_PASS_HASH}}):JSON.stringify({key:'acceso_clave',value:{user:ACCESO_USER,pass_hash:ACCESO_PASS_HASH}});
+      return fetch(url,{method:method,headers:SUPA_HDR,body:body});
+    }).then(function(r){
+      if(r&&r.ok){
+        document.getElementById('acceso-nuevo-user').value='';
+        document.getElementById('acceso-nuevo-pass').value='';
+        toast('✓ Acceso general actualizado');
+        togglePasswordPanel();togglePasswordPanel();
+      } else { toast('⚠ Error guardando en la nube'); }
+    }).catch(function(){toast('⚠ Error de conexión');});
+  });
 }
 
 function cambiarPassword(idx){
@@ -6099,8 +6126,10 @@ function fechaOffset(dias){
           if(row.key==='session_revoked'&&row.value&&typeof row.value==='object') window._sessionRevoked=row.value;
           if(row.key==='session_revoked_device'&&row.value&&typeof row.value==='object') window._sessionRevokedDevice=row.value;
           if(row.key==='acceso_clave'&&row.value&&row.value.user) ACCESO_USER=row.value.user;
-          if(row.key==='acceso_clave'&&row.value&&row.value.pass) ACCESO_PASS=row.value.pass;
-          if(row.key==='admin_pass'&&row.value) ADMIN_PASS=row.value;
+          if(row.key==='acceso_clave'&&row.value&&(row.value.pass_hash||row.value.pass)) ACCESO_PASS_HASH=row.value.pass_hash||row.value.pass;
+          if(row.key==='admin_credentials'&&row.value&&row.value.user) ADMIN_USER=row.value.user;
+          if(row.key==='admin_credentials'&&row.value&&row.value.pass_hash) ADMIN_PASS_HASH=row.value.pass_hash;
+          if(row.key==='admin_pass'&&row.value&&typeof row.value==='string') ADMIN_PASS_LEGACY=row.value;
         });
         // Cargar fotos por separado (excluidas del query principal para no sobrecargar)
         try{
