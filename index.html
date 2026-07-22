@@ -465,6 +465,21 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     </div>
   </div>
 
+  <!-- MODAL CONFIRMAR CONTRASEÑA -->
+  <div id="modal-confirm-pass" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9000;align-items:flex-end;justify-content:center" onclick="this.style.display='none'">
+    <div style="background:#fff;border-radius:20px 20px 0 0;padding:28px 24px 36px;width:100%;max-width:390px;box-shadow:0 -4px 30px rgba(0,0,0,0.25)" onclick="event.stopPropagation()">
+      <div style="font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px" id="mcp-titulo">Confirmar contraseña</div>
+      <div style="font-size:14px;color:#374151;margin-bottom:12px">¿Querés guardar esta contraseña?</div>
+      <div style="background:#f0f9ff;border:2px solid #bae6fd;border-radius:12px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">🔑</span>
+        <span id="mcp-pass-show" style="font-size:18px;font-weight:700;color:#0369a1;letter-spacing:2px;word-break:break-all"></span>
+      </div>
+      <div style="font-size:12px;color:#9ca3af;margin-bottom:24px">Fijate bien que esté bien escrita antes de confirmar.</div>
+      <button id="mcp-btn-confirmar" style="width:100%;padding:15px;background:#16a34a;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;font-family:'DM Sans',sans-serif;margin-bottom:10px;cursor:pointer">✓ Sí, guardar esta contraseña</button>
+      <button onclick="document.getElementById('modal-confirm-pass').style.display='none'" style="width:100%;padding:13px;background:#f3f4f6;color:#374151;border:none;border-radius:12px;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer">Cancelar</button>
+    </div>
+  </div>
+
   <!-- MODAL CONFIRMACIÓN -->
   <div id="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:8000;display:none;align-items:flex-end;justify-content:center" onclick="modalCancelar()">
     <div style="background:#fff;border-radius:20px 20px 0 0;padding:28px 24px 36px;width:100%;max-width:390px;box-shadow:0 -4px 30px rgba(0,0,0,0.2)" onclick="event.stopPropagation()">
@@ -5970,26 +5985,33 @@ function cambiarAccesoGeneral(){
   var nuevoUser=(document.getElementById('acceso-nuevo-user').value||'').trim();
   var nuevoPass=(document.getElementById('acceso-nuevo-pass').value||'').trim();
   if(!nuevoUser&&!nuevoPass){toast('⚠ Escribí usuario o contraseña nueva');return;}
-  if(nuevoUser) ACCESO_USER=nuevoUser;
-  var hashPromise=nuevoPass?_sha256(nuevoPass):Promise.resolve(null);
-  hashPromise.then(function(newHash){
-    if(newHash) ACCESO_PASS_HASH=newHash;
-    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.acceso_clave',{
-      method:'GET',headers:SUPA_HDR
-    }).then(function(r){return r.ok?r.json():[];}).then(function(rows){
-      var method=rows&&rows.length?'PATCH':'POST';
-      var url=SUPA_URL+'/rest/v1/app_data'+(method==='PATCH'?'?key=eq.acceso_clave':'');
-      var body=method==='PATCH'?JSON.stringify({value:{user:ACCESO_USER,pass_hash:ACCESO_PASS_HASH}}):JSON.stringify({key:'acceso_clave',value:{user:ACCESO_USER,pass_hash:ACCESO_PASS_HASH}});
-      return fetch(url,{method:method,headers:SUPA_HDR,body:body});
-    }).then(function(r){
-      if(r&&r.ok){
-        document.getElementById('acceso-nuevo-user').value='';
-        document.getElementById('acceso-nuevo-pass').value='';
-        toast('✓ Acceso general actualizado');
-        togglePasswordPanel();togglePasswordPanel();
-      } else { toast('⚠ Error guardando en la nube'); }
-    }).catch(function(){toast('⚠ Error de conexión');});
-  });
+  var modal=document.getElementById('modal-confirm-pass');
+  document.getElementById('mcp-titulo').textContent='Confirmar — Acceso general';
+  document.getElementById('mcp-pass-show').textContent=nuevoPass||(nuevoUser?'(solo usuario)':'');
+  modal.style.display='flex';
+  document.getElementById('mcp-btn-confirmar').onclick=function(){
+    modal.style.display='none';
+    if(nuevoUser) ACCESO_USER=nuevoUser;
+    var hashPromise=nuevoPass?_sha256(nuevoPass):Promise.resolve(null);
+    hashPromise.then(function(newHash){
+      if(newHash) ACCESO_PASS_HASH=newHash;
+      fetch(SUPA_URL+'/rest/v1/app_data?key=eq.acceso_clave',{
+        method:'GET',headers:SUPA_HDR
+      }).then(function(r){return r.ok?r.json():[];}).then(function(rows){
+        var method=rows&&rows.length?'PATCH':'POST';
+        var url=SUPA_URL+'/rest/v1/app_data'+(method==='PATCH'?'?key=eq.acceso_clave':'');
+        var body=method==='PATCH'?JSON.stringify({value:{user:ACCESO_USER,pass_hash:ACCESO_PASS_HASH}}):JSON.stringify({key:'acceso_clave',value:{user:ACCESO_USER,pass_hash:ACCESO_PASS_HASH}});
+        return fetch(url,{method:method,headers:SUPA_HDR,body:body});
+      }).then(function(r){
+        if(r&&r.ok){
+          document.getElementById('acceso-nuevo-user').value='';
+          document.getElementById('acceso-nuevo-pass').value='';
+          toast('✓ Acceso general actualizado');
+          togglePasswordPanel();togglePasswordPanel();
+        } else { toast('⚠ Error guardando en la nube'); }
+      }).catch(function(){toast('⚠ Error de conexión');});
+    });
+  };
 }
 
 function cambiarPassword(idx){
@@ -6010,23 +6032,30 @@ function cambiarPasswordAdmin(){
   var nueva=input.value.trim();
   if(!nueva){toast('⚠ Escribí la nueva contraseña');return;}
   if(nueva.length<6){toast('⚠ Mínimo 6 caracteres');return;}
-  _sha256(nueva).then(function(hash){
-    ADMIN_PASS_HASH=hash;
-    ADMIN_PASS_LEGACY='';
-    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.admin_credentials',{method:'GET',headers:SUPA_HDR})
-    .then(function(r){return r.ok?r.json():[];}).then(function(rows){
-      var method=rows&&rows.length?'PATCH':'POST';
-      var url=SUPA_URL+'/rest/v1/app_data'+(method==='PATCH'?'?key=eq.admin_credentials':'');
-      var body=method==='PATCH'?JSON.stringify({value:{user:ADMIN_USER,pass_hash:hash}}):JSON.stringify({key:'admin_credentials',value:{user:ADMIN_USER,pass_hash:hash}});
-      return fetch(url,{method:method,headers:SUPA_HDR,body:body});
-    }).then(function(r){
-      if(r&&r.ok){
-        input.value='';
-        toast('✓ Contraseña de administrador actualizada');
-        togglePasswordPanel();togglePasswordPanel();
-      } else { toast('⚠ Error guardando en la nube'); }
-    }).catch(function(){toast('⚠ Error de conexión');});
-  });
+  var modal=document.getElementById('modal-confirm-pass');
+  document.getElementById('mcp-titulo').textContent='Confirmar — Contraseña Administrador';
+  document.getElementById('mcp-pass-show').textContent=nueva;
+  modal.style.display='flex';
+  document.getElementById('mcp-btn-confirmar').onclick=function(){
+    modal.style.display='none';
+    _sha256(nueva).then(function(hash){
+      ADMIN_PASS_HASH=hash;
+      ADMIN_PASS_LEGACY='';
+      fetch(SUPA_URL+'/rest/v1/app_data?key=eq.admin_credentials',{method:'GET',headers:SUPA_HDR})
+      .then(function(r){return r.ok?r.json():[];}).then(function(rows){
+        var method=rows&&rows.length?'PATCH':'POST';
+        var url=SUPA_URL+'/rest/v1/app_data'+(method==='PATCH'?'?key=eq.admin_credentials':'');
+        var body=method==='PATCH'?JSON.stringify({value:{user:ADMIN_USER,pass_hash:hash}}):JSON.stringify({key:'admin_credentials',value:{user:ADMIN_USER,pass_hash:hash}});
+        return fetch(url,{method:method,headers:SUPA_HDR,body:body});
+      }).then(function(r){
+        if(r&&r.ok){
+          input.value='';
+          toast('✓ Contraseña de administrador actualizada');
+          togglePasswordPanel();togglePasswordPanel();
+        } else { toast('⚠ Error guardando en la nube'); }
+      }).catch(function(){toast('⚠ Error de conexión');});
+    });
+  };
 }
 
 function abrirNuevoGasto(){
