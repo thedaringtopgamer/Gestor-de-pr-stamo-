@@ -1534,10 +1534,10 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
 
 <script>
 var USUARIOS=[
-  {user:'The Daring',    pass:'thedaring020603', rol:'admin'},
-  {user:'Ruta Heredia',  pass:'financierajd',    rol:'ruta', ruta:'Heredia'},
-  {user:'Ruta Alajuela', pass:'financierajd',    rol:'ruta', ruta:'Alajuela'},
-  {user:'Ruta San Ramón',pass:'financierajd',    rol:'ruta', ruta:'San Ramón'}
+  {user:'The Daring',    pass:'', rol:'admin'},
+  {user:'Ruta Heredia',  pass:'', rol:'ruta', ruta:'Heredia'},
+  {user:'Ruta Alajuela', pass:'', rol:'ruta', ruta:'Alajuela'},
+  {user:'Ruta San Ramón',pass:'', rol:'ruta', ruta:'San Ramón'}
 ];
 
 var rolActual=localStorage.getItem('fjd_rol')||'ruta';
@@ -1795,7 +1795,7 @@ function entrarComoRuta(ruta){
 }
 var ADMIN_USER='TheDaring';
 var ADMIN_PASS_HASH='';
-var ADMIN_PASS_LEGACY='Thedaring020603';
+var ADMIN_PASS_LEGACY='';
 var ACCESO_USER='Financiera JD';
 var ACCESO_PASS_HASH='';
 
