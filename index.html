@@ -2457,6 +2457,7 @@ function renderInversion(){
   });
   var basePrestamos=rutaInvFiltro==='todas'?prestamos:prestamos.filter(function(p){return p.ruta===rutaInvFiltro;});
   var activos=basePrestamos.filter(function(p){
+    if(p.estado==='Cancelado'||p.incompleto) return false;
     var d=calcDerived(p); return d.saldoPendiente>0;
   });
   var enCalle=activos.reduce(function(s,p){ return s+calcDerived(p).saldoPendiente; },0);
