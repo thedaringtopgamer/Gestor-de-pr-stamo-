@@ -733,6 +733,18 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     </div>
   </div>
 
+  <!-- ==================== DETALLE CAJA DÍA ==================== -->
+  <div id="screen-detalle-caja-dia" class="screen">
+    <div class="navbar">
+      <button class="btn btn-cyan btn-sm" onclick="goBack()">← Volver</button>
+      <span class="navbar-title" id="det-caja-titulo">Caja del día</span>
+      <div style="width:70px"></div>
+    </div>
+    <div class="section" style="padding-top:12px">
+      <div id="det-caja-body"></div>
+    </div>
+  </div>
+
   <!-- Modal historial completo de cierres -->
   <div id="modal-hist-cierres" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:8000;align-items:flex-end;justify-content:center">
     <div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-height:88vh;overflow-y:auto;padding:20px">
@@ -3392,28 +3404,21 @@ function abrirHistorialCajasTipo(tipo){
       lista.innerHTML=filtrados.map(function(c){
         var d=new Date(c.timestampCierre||0);
         var horaStr=c.timestampCierre?(String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')):'';
-        var det=c.detalle||{};
-        var cobrosLst=(det.cobros||[]).map(function(x){return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #fef9c3"><span style="font-size:12px">'+x.cliente+'</span><span style="font-size:12px;font-weight:700;color:#166534">₡'+fmt(x.monto)+'</span></div>';}).join('');
-        var nuevosLst=(det.nuevos||[]).map(function(x){return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #dbeafe"><span style="font-size:12px">'+x.cliente+(x.subruta?' · '+x.subruta:'')+'</span><span style="font-size:12px;font-weight:700;color:#1e40af">₡'+fmt(x.monto)+'</span></div>';}).join('');
-        var renovLst=(det.renovaciones||[]).map(function(x){return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #ede9fe"><span style="font-size:12px">🔄 '+x.cliente+'</span><span style="font-size:12px;font-weight:700;color:#7c3aed">₡'+fmt(x.montoNuevo)+'</span></div>';}).join('');
-        var gastosLst=(det.gastos||[]).map(function(x){return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #fee2e2"><span style="font-size:12px">'+x.tipo+(x.obs?' · '+x.obs:'')+'</span><span style="font-size:12px;font-weight:700;color:#dc2626">₡'+fmt(x.monto)+'</span></div>';}).join('');
-        return '<div style="background:#fefce8;border:1.5px solid #fde047;border-radius:12px;padding:14px;margin-bottom:12px">'
-          +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
-          +'<div><div style="font-size:14px;font-weight:800;color:#854d0e">📅 '+c.fecha+' — '+c.ruta+'</div>'
+        var d=c.data||{};
+        return '<div style="background:#fefce8;border:1.5px solid #fde047;border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer" onclick="document.getElementById(\'modal-hist-cierres\').style.display=\'none\';verDetalleCajaDia(\''+c.id+'\')">'
+          +'<div style="display:flex;justify-content:space-between;align-items:center">'
+          +'<div><div style="font-size:14px;font-weight:800;color:#854d0e">📅 '+c.fecha+'</div>'
           +(horaStr?'<div style="font-size:10px;color:#92400e">Cerrada a las '+horaStr+'</div>':'')
           +'</div>'
-          +'<button onclick="eliminarCierreDiario(\''+c.id+'\')" style="background:#fee2e2;color:#991b1b;border:none;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🗑</button>'
+          +'<div style="text-align:right"><div style="font-size:15px;font-weight:800;color:#166534">₡'+fmt(d.recogida||0)+'</div>'
+          +'<div style="font-size:10px;color:#6b7280">recogida</div></div>'
           +'</div>'
-          +(c.data?'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">'
-            +'<div style="background:#fff;border-radius:8px;padding:8px"><div style="color:#6b7280;font-size:10px;font-weight:700">RECOGIDA</div><div style="font-weight:800;color:#166534">₡'+fmt(c.data.recogida||0)+'</div></div>'
-            +'<div style="background:#fff;border-radius:8px;padding:8px"><div style="color:#6b7280;font-size:10px;font-weight:700">PRESTADO</div><div style="font-weight:800;color:#1e40af">₡'+fmt(c.data.prestado||0)+'</div></div>'
-            +'<div style="background:#fff;border-radius:8px;padding:8px"><div style="color:#6b7280;font-size:10px;font-weight:700">GASTOS</div><div style="font-weight:800;color:#dc2626">₡'+fmt(c.data.totalGastos||0)+'</div></div>'
-            +'<div style="background:#fff;border-radius:8px;padding:8px"><div style="color:#6b7280;font-size:10px;font-weight:700">UTILIDAD</div><div style="font-weight:800;color:#0369a1">₡'+fmt(c.data.utilidad||0)+'</div></div>'
-            +'</div>':'')
-          +(cobrosLst?'<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:#166534;margin-bottom:4px">💰 COBROS ('+( det.cobros||[]).length+')</div>'+cobrosLst+'</div>':'')
-          +(nuevosLst?'<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:#1e40af;margin-bottom:4px">🆕 PRÉSTAMOS NUEVOS ('+(det.nuevos||[]).length+')</div>'+nuevosLst+'</div>':'')
-          +(renovLst?'<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:#7c3aed;margin-bottom:4px">🔄 RENOVACIONES ('+(det.renovaciones||[]).length+')</div>'+renovLst+'</div>':'')
-          +(gastosLst?'<div style="margin-bottom:4px"><div style="font-size:11px;font-weight:700;color:#dc2626;margin-bottom:4px">💸 GASTOS ('+(det.gastos||[]).length+')</div>'+gastosLst+'</div>':'')
+          +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px">'
+          +'<div style="background:#fff;border-radius:8px;padding:6px;text-align:center"><div style="font-size:9px;color:#6b7280;font-weight:700">COBROS</div><div style="font-weight:800;font-size:13px">'+((c.detalle&&c.detalle.cobros||[]).length)+'</div></div>'
+          +'<div style="background:#fff;border-radius:8px;padding:6px;text-align:center"><div style="font-size:9px;color:#6b7280;font-weight:700">NUEVOS</div><div style="font-weight:800;font-size:13px">'+((c.detalle&&c.detalle.nuevos||[]).length)+'</div></div>'
+          +'<div style="background:#fff;border-radius:8px;padding:6px;text-align:center"><div style="font-size:9px;color:#6b7280;font-weight:700">GASTOS</div><div style="font-weight:800;font-size:13px;color:#dc2626">₡'+fmt(d.totalGastos||0)+'</div></div>'
+          +'</div>'
+          +'<div style="text-align:center;margin-top:8px;font-size:12px;color:#1e40af;font-weight:700">Ver detalle completo →</div>'
           +'</div>';
       }).join('');
     }
@@ -3423,11 +3428,85 @@ function abrirHistorialCajasTipo(tipo){
   }
 }
 
+function verDetalleCajaDia(id){
+  var c=cierresDiarios.find(function(x){ return x.id===id; });
+  if(!c) return;
+  document.getElementById('det-caja-titulo').textContent='📅 '+c.fecha+' — '+c.ruta;
+  var det=c.detalle||{};
+  var d=c.data||{};
+  var horaStr='';
+  if(c.timestampCierre){ var dd=new Date(c.timestampCierre); horaStr=String(dd.getHours()).padStart(2,'0')+':'+String(dd.getMinutes()).padStart(2,'0'); }
+
+  function _seccion(titulo,colorBg,colorBorder,colorTitulo,items,emptyMsg){
+    if(!items||!items.length) return '<div style="background:'+colorBg+';border:1.5px solid '+colorBorder+';border-radius:12px;padding:14px;margin-bottom:12px"><div style="font-size:13px;font-weight:800;color:'+colorTitulo+';margin-bottom:8px">'+titulo+'</div><p style="font-size:13px;color:#6b7280;margin:0">'+emptyMsg+'</p></div>';
+    return '<div style="background:'+colorBg+';border:1.5px solid '+colorBorder+';border-radius:12px;padding:14px;margin-bottom:12px"><div style="font-size:13px;font-weight:800;color:'+colorTitulo+';margin-bottom:10px">'+titulo+' ('+items.length+')</div>'+items+'</div>';
+  }
+
+  // Cobros
+  var cobrosHtml=(det.cobros||[]).map(function(x){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #d1fae5">'
+      +'<span style="font-size:14px;font-weight:600">'+x.cliente+'</span>'
+      +'<span style="font-size:15px;font-weight:800;color:#166534">₡'+fmt(x.monto)+'</span></div>';
+  }).join('');
+
+  // Préstamos nuevos
+  var nuevosHtml=(det.nuevos||[]).map(function(x){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #dbeafe">'
+      +'<div><div style="font-size:14px;font-weight:600">'+x.cliente+'</div>'+(x.subruta?'<div style="font-size:11px;color:#6b7280">'+x.subruta+'</div>':'')+'</div>'
+      +'<span style="font-size:15px;font-weight:800;color:#1e40af">₡'+fmt(x.monto)+'</span></div>';
+  }).join('');
+
+  // Renovaciones
+  var renovHtml=(det.renovaciones||[]).map(function(x){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #ede9fe">'
+      +'<div><div style="font-size:14px;font-weight:600">🔄 '+x.cliente+'</div>'
+      +'<div style="font-size:11px;color:#6b7280">Saldo anterior: ₡'+fmt(x.saldoAnterior||0)+(x.montoEntregado?'  ·  Entregado: ₡'+fmt(x.montoEntregado):'')+'</div></div>'
+      +'<span style="font-size:15px;font-weight:800;color:#7c3aed">₡'+fmt(x.montoNuevo)+'</span></div>';
+  }).join('');
+
+  // Gastos
+  var gastosHtml=(det.gastos||[]).map(function(x){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #fee2e2">'
+      +'<div><div style="font-size:14px;font-weight:600">'+x.tipo+'</div>'+(x.obs?'<div style="font-size:11px;color:#6b7280">'+x.obs+'</div>':'')+'</div>'
+      +'<span style="font-size:15px;font-weight:800;color:#dc2626">₡'+fmt(x.monto)+'</span></div>';
+  }).join('');
+
+  // Cobros admin
+  var cobAdmHtml=(det.cobrosAdmin||[]).map(function(x){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #e0e7ff">'
+      +'<div><div style="font-size:14px;font-weight:600">'+x.cliente+'</div>'+(x.concepto?'<div style="font-size:11px;color:#6b7280">'+x.concepto+'</div>':'')+'</div>'
+      +'<span style="font-size:15px;font-weight:800;color:#4f46e5">₡'+fmt(x.monto)+'</span></div>';
+  }).join('');
+
+  var html=''
+    // Resumen de totales
+    +'<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px;margin-bottom:16px">'
+    +(horaStr?'<div style="font-size:11px;color:#6b7280;margin-bottom:10px">Cerrada a las '+horaStr+'</div>':'')
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    +'<div style="background:#f0fdf4;border-radius:10px;padding:12px"><div style="font-size:10px;font-weight:700;color:#166534">💰 RECOGIDA</div><div style="font-size:18px;font-weight:900;color:#166534">₡'+fmt(d.recogida||0)+'</div></div>'
+    +'<div style="background:#eff6ff;border-radius:10px;padding:12px"><div style="font-size:10px;font-weight:700;color:#1e40af">💸 PRESTADO</div><div style="font-size:18px;font-weight:900;color:#1e40af">₡'+fmt(d.prestado||0)+'</div></div>'
+    +'<div style="background:#fef2f2;border-radius:10px;padding:12px"><div style="font-size:10px;font-weight:700;color:#dc2626">📉 GASTOS</div><div style="font-size:18px;font-weight:900;color:#dc2626">₡'+fmt(d.totalGastos||0)+'</div></div>'
+    +'<div style="background:#f0f9ff;border-radius:10px;padding:12px"><div style="font-size:10px;font-weight:700;color:#0369a1">📊 UTILIDAD</div><div style="font-size:18px;font-weight:900;color:#0369a1">₡'+fmt(d.utilidad||0)+'</div></div>'
+    +'</div></div>'
+    +_seccion('💰 Cobros del día','#f0fdf4','#86efac','#166534',cobrosHtml,'Sin cobros registrados')
+    +_seccion('🆕 Préstamos nuevos','#eff6ff','#93c5fd','#1e40af',nuevosHtml,'Sin préstamos nuevos')
+    +_seccion('🔄 Renovaciones','#faf5ff','#c4b5fd','#7c3aed',renovHtml,'Sin renovaciones')
+    +_seccion('📉 Gastos','#fef2f2','#fca5a5','#dc2626',gastosHtml,'Sin gastos')
+    +(cobAdmHtml?_seccion('🏦 Cobros administrativos','#eef2ff','#a5b4fc','#4f46e5',cobAdmHtml,''):'')
+    // Botón eliminar
+    +'<div style="margin-top:16px">'
+    +'<button onclick="eliminarCierreDiario(\''+c.id+'\')" style="width:100%;padding:11px;background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:10px;font-size:13px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🗑 Eliminar este cierre</button>'
+    +'</div>';
+
+  document.getElementById('det-caja-body').innerHTML=html;
+  goTo('screen-detalle-caja-dia');
+}
+
 function eliminarCierreDiario(id){
   if(!confirm('¿Eliminar este cierre diario?')) return;
   cierresDiarios=cierresDiarios.filter(function(c){ return c.id!==id; });
   guardarDatos();
-  abrirHistorialCajasTipo('dia');
+  goBack();
   renderCajas();
   toast('✓ Cierre eliminado');
 }
