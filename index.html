@@ -5901,7 +5901,7 @@ function togglePanelSec(sec){
 
 function renderPanelRecolector(){
   var fechaEl=document.getElementById('panel-fecha');
-  if(!fechaEl.value) fechaEl.value=hoyLocal();
+  if(!fechaEl.value) fechaEl.value=diaOperativo();
   var fecha=fechaEl.value;
 
   // Préstamos visibles según ruta actual
@@ -6445,7 +6445,7 @@ function guardarGasto(){
   if(!monto){toast('⚠ Ingrese el monto');return;}
   var tipo=(document.getElementById('gasto-tipo').value.trim()||'OTRO').toUpperCase();
   var obs=document.getElementById('gasto-obs').value.trim();
-  var fechaPanel=document.getElementById('panel-fecha').value||hoyLocal();
+  var fechaPanel=document.getElementById('panel-fecha').value||diaOperativo();
   gastos.push({id:Date.now().toString(),fecha:fechaPanel,monto:monto,tipo:tipo,obs:obs,ruta:rutaActual||'todas'});
   guardarDatos();
   cerrarGastoModal();
@@ -6454,7 +6454,7 @@ function guardarGasto(){
 }
 
 function mostrarResumenCaja(){
-  var fecha=document.getElementById('panel-fecha').value||hoyLocal();
+  var fecha=document.getElementById('panel-fecha').value||diaOperativo();
   var parts=fecha.split('-');
   document.getElementById('caja-fecha-txt').textContent=parseInt(parts[2])+'/'+parseInt(parts[1])+'/'+parts[0];
   var pRuta=prestamosVisibles();
@@ -6477,7 +6477,7 @@ function mostrarResumenCaja(){
   document.getElementById('caja-modal').style.display='flex';
 }
 function guardarBase(){
-  var fecha=document.getElementById('panel-fecha').value||hoyLocal();
+  var fecha=document.getElementById('panel-fecha').value||diaOperativo();
   var base=readMoneyInput('caja-base');
   var rk=rutaActual||'todas';
   var inyecActual=inversiones.filter(function(x){return x.fecha===fecha&&(rk==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rk);}).reduce(function(s,x){return s+x.monto;},0);
@@ -6499,7 +6499,7 @@ function guardarBase(){
 }
 function guardarSalida(){
   if(rolActual!=='admin'){toast('⚠ Solo el admin puede editar la salida');return;}
-  var fecha=document.getElementById('panel-fecha').value||hoyLocal();
+  var fecha=document.getElementById('panel-fecha').value||diaOperativo();
   var salida=readMoneyInput('caja-salida');
   var rk=rutaActual||'todas';
   var inyecActual=inversiones.filter(function(x){return x.fecha===fecha&&(rk==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rk);}).reduce(function(s,x){return s+x.monto;},0);
@@ -6511,7 +6511,7 @@ function guardarSalida(){
   toast('✓ Salida guardada: ₡'+fmt(salida));
 }
 function calcCaja(){
-  var fecha=document.getElementById('panel-fecha').value||hoyLocal();
+  var fecha=document.getElementById('panel-fecha').value||diaOperativo();
   var base=readMoneyInput('caja-base-modal');
   var recogida=pagos.filter(function(x){return x.fechaPago===fecha;}).reduce(function(s,x){return s+x.montoAbonado;},0);
   var prestamosHoy=prestamos.filter(function(p){return p.fechaInicio===fecha;}).reduce(function(s,p){return s+p.montoPrestado;},0);
@@ -6520,7 +6520,7 @@ function calcCaja(){
   document.getElementById('caja-total').textContent='₡'+fmt(recogida+base-prestamosHoy-totalGastos);
 }
 function guardarBaseModal(){
-  var fecha=document.getElementById('panel-fecha').value||hoyLocal();
+  var fecha=document.getElementById('panel-fecha').value||diaOperativo();
   var base=readMoneyInput('caja-base-modal');
   var rk=rutaActual||'todas';
   var inyecActual=inversiones.filter(function(x){return x.fecha===fecha&&(rk==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rk);}).reduce(function(s,x){return s+x.monto;},0);
