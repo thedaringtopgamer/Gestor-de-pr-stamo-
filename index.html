@@ -643,6 +643,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
 
       <!-- Pills de ruta -->
       <div style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px">
+        <button id="cajas-rbtn-todas" onclick="setCajasRuta('todas')" style="flex-shrink:0;padding:7px 16px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Todas</button>
         <button id="cajas-rbtn-Heredia" onclick="setCajasRuta('Heredia')" style="flex-shrink:0;padding:7px 16px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Heredia</button>
         <button id="cajas-rbtn-Alajuela" onclick="setCajasRuta('Alajuela')" style="flex-shrink:0;padding:7px 16px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Alajuela</button>
         <button id="cajas-rbtn-SanRamon" onclick="setCajasRuta('San Ramón')" style="flex-shrink:0;padding:7px 16px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">San Ramón</button>
@@ -689,10 +690,6 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         </button>
       </div>
 
-      <!-- Reiniciar cierres (admin) -->
-      <div id="wrap-reiniciar-cierres" style="display:none;margin-top:8px">
-        <button onclick="reiniciarCierres()" style="width:100%;padding:10px;background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:10px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🗑 Reiniciar historial de cierres</button>
-      </div>
 
     </div>
   </div>
@@ -3258,50 +3255,63 @@ function abrirHistorialCierres(){ abrirHistorialTipo('semana'); }
 
 // ── PANEL DE CAJAS ────────────────────────────────────────────────────────────
 
+var _RUTAS_CAJA=['Heredia','Alajuela','San Ramón'];
+
 function setCajasRuta(ruta){
   rutaCajasFiltro=ruta;
-  // También actualizar el filtro de inversión para que cierres sem/mes usen esta ruta
-  rutaInvFiltro=ruta;
+  rutaInvFiltro=ruta==='todas'?'todas':ruta;
   renderCajas();
 }
 
 function renderCajas(){
-  var ruta=rutaCajasFiltro||'Heredia';
+  var ruta=rutaCajasFiltro||'todas';
+  var diaOp=diaOperativo();
   // Pills
-  ['Heredia','Alajuela','San Ramón'].forEach(function(r){
-    var id='cajas-rbtn-'+(r==='San Ramón'?'SanRamon':r);
+  ['todas','Heredia','Alajuela','San Ramón'].forEach(function(r){
+    var id='cajas-rbtn-'+(r==='San Ramón'?'SanRamon':r==='todas'?'todas':r);
     var btn=document.getElementById(id);
     if(!btn) return;
     btn.style.background=r===ruta?'#1e40af':'#e5e7eb';
     btn.style.color=r===ruta?'#fff':'#374151';
   });
-  // Estado de caja hoy
-  var diaOp=diaOperativo();
-  var cierreHoy=cierresDiarios.filter(function(c){ return c.ruta===ruta&&c.fecha===diaOp; })[0];
-  var cajaCerrada=!!cierreHoy;
+  // Estado de cajas
   var estadoCard=document.getElementById('cajas-estado-card');
   if(estadoCard){
-    var colorBg=cajaCerrada?'#f0fdf4':'#fef3c7';
-    var colorBorder=cajaCerrada?'#86efac':'#fde047';
-    var colorText=cajaCerrada?'#166534':'#854d0e';
-    var estadoLabel=cajaCerrada?'🔒 Caja cerrada':'🟢 Caja abierta';
-    var horaLabel='';
-    if(cajaCerrada&&cierreHoy.timestampCierre){
-      var d=new Date(cierreHoy.timestampCierre);
-      horaLabel=' · Cerrada a las '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    if(ruta==='todas'){
+      // Mostrar las 3 rutas en una sola vista
+      estadoCard.innerHTML=_RUTAS_CAJA.map(function(r){
+        var c=cierresDiarios.filter(function(x){ return x.ruta===r&&x.fecha===diaOp; })[0];
+        var cerrada=!!c;
+        var hora='';
+        if(cerrada&&c.timestampCierre){ var dd=new Date(c.timestampCierre); hora=' · '+String(dd.getHours()).padStart(2,'0')+':'+String(dd.getMinutes()).padStart(2,'0'); }
+        return '<div style="background:'+(cerrada?'#f0fdf4':'#fef3c7')+';border:2px solid '+(cerrada?'#86efac':'#fde047')+';border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+          +'<div><div style="font-size:13px;font-weight:800;color:'+(cerrada?'#166534':'#854d0e')+'">'+r+'</div>'
+          +'<div style="font-size:11px;color:'+(cerrada?'#166534':'#92400e')+';margin-top:1px">'+(cerrada?'🔒 Cerrada'+hora:'🟢 Abierta')+'</div></div>'
+          +(cerrada
+            ?'<button onclick="reabrirCajaDia(\''+r+'\')" style="background:#fff;color:#dc2626;border:2px solid #fca5a5;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">↩ Reabrir</button>'
+            :'<button onclick="cerrarCajaDia(\''+r+'\')" style="background:#1e40af;color:#fff;border:none;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🔒 Cerrar</button>')
+          +'</div>';
+      }).join('')
+      +'<button onclick="cerrarTodasLasCajas()" style="width:100%;margin-top:4px;padding:11px;background:#1e40af;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🔒 Cerrar todas las cajas</button>';
+    } else {
+      var cierreHoy=cierresDiarios.filter(function(c){ return c.ruta===ruta&&c.fecha===diaOp; })[0];
+      var cajaCerrada=!!cierreHoy;
+      var horaLabel='';
+      if(cajaCerrada&&cierreHoy.timestampCierre){ var dd2=new Date(cierreHoy.timestampCierre); horaLabel=' · Cerrada a las '+String(dd2.getHours()).padStart(2,'0')+':'+String(dd2.getMinutes()).padStart(2,'0'); }
+      estadoCard.innerHTML='<div style="background:'+(cajaCerrada?'#f0fdf4':'#fef3c7')+';border:2px solid '+(cajaCerrada?'#86efac':'#fde047')+';border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">'
+        +'<div><div style="font-size:14px;font-weight:800;color:'+(cajaCerrada?'#166534':'#854d0e')+'">'+ruta+'</div>'
+        +'<div style="font-size:12px;color:'+(cajaCerrada?'#166534':'#92400e')+';margin-top:2px">'+(cajaCerrada?'🔒 Caja cerrada'+horaLabel:'🟢 Caja abierta')+'</div></div>'
+        +(cajaCerrada
+          ?'<button onclick="reabrirCajaDia(\''+ruta+'\')" style="background:#fff;color:#dc2626;border:2px solid #fca5a5;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">↩ Reabrir</button>'
+          :'<button onclick="cerrarCajaDia(\''+ruta+'\')" style="background:#1e40af;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🔒 Cerrar caja</button>')
+        +'</div>';
     }
-    estadoCard.innerHTML='<div style="background:'+colorBg+';border:2px solid '+colorBorder+';border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">'
-      +'<div><div style="font-size:14px;font-weight:800;color:'+colorText+'">'+ruta+'</div>'
-      +'<div style="font-size:12px;color:'+colorText+';margin-top:2px">'+estadoLabel+horaLabel+'</div></div>'
-      +(cajaCerrada
-        ?'<button onclick="reabrirCajaDia(\''+ruta+'\')" style="background:#fff;color:#dc2626;border:2px solid #fca5a5;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">↩ Reabrir</button>'
-        :'<button onclick="cerrarCajaDia(\''+ruta+'\')" style="background:#1e40af;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🔒 Cerrar caja</button>')
-      +'</div>';
   }
   // Renderizar semana y mes en curso para esta ruta
   renderCierres();
   // Contador diario
-  var nDia=cierresDiarios.filter(function(c){ return c.ruta===ruta; }).length;
+  var rFiltroD=ruta==='todas'?null:ruta;
+  var nDia=cierresDiarios.filter(function(c){ return !rFiltroD||c.ruta===rFiltroD; }).length;
   var cntDia=document.getElementById('cnt-dia-cajas');
   if(cntDia) cntDia.textContent=nDia?nDia+' guardado'+(nDia===1?'':'s'):'Sin cierres';
 }
@@ -3309,27 +3319,28 @@ function renderCajas(){
 function cerrarCajaDia(ruta){
   var diaOp=diaOperativo();
   var yaExiste=cierresDiarios.some(function(c){ return c.ruta===ruta&&c.fecha===diaOp; });
-  if(yaExiste){ toast('⚠ La caja de '+ruta+' ya está cerrada hoy'); return; }
+  if(yaExiste){ toast('⚠ La caja de '+ruta+' ya está cerrada'); return; }
   var data=_calcCierreData(diaOp,diaOp,ruta);
-  var nombre=ruta;
-  var resumen='📋 '+nombre+' — '+diaOp
-    +'\n💰 Recogida: ₡'+fmt(data.recogida)
-    +'\n👥 Clientes nuevos: '+data.numPrestamos
-    +'\n💸 Prestado: ₡'+fmt(data.prestado)
-    +'\n📊 Utilidad: ₡'+fmt(data.utilidad);
-  if(!confirm('¿Cerrar caja de '+ruta+' del día '+diaOp+'?\n\n'+resumen+'\n\nPodés reabrir la caja si cometés un error.')) return;
-  cierresDiarios.push({
-    id:Date.now().toString(),
-    tipo:'dia',
-    fecha:diaOp,
-    ruta:ruta,
-    data:data,
-    timestampCierre:Date.now(),
-    nota:''
-  });
+  if(!confirm('¿Cerrar caja de '+ruta+' del día '+diaOp+'?\n\n💰 Recogida: ₡'+fmt(data.recogida)+'\n👥 Clientes nuevos: '+data.numPrestamos+'\n💸 Prestado: ₡'+fmt(data.prestado)+'\n\nPodés reabrir si cometés un error.')) return;
+  cierresDiarios.push({id:Date.now().toString(),tipo:'dia',fecha:diaOp,ruta:ruta,data:data,timestampCierre:Date.now(),nota:''});
   guardarDatos();
   renderCajas();
   toast('✓ Caja de '+ruta+' cerrada');
+}
+
+function cerrarTodasLasCajas(){
+  var diaOp=diaOperativo();
+  var abiertas=_RUTAS_CAJA.filter(function(r){ return !cierresDiarios.some(function(c){ return c.ruta===r&&c.fecha===diaOp; }); });
+  if(!abiertas.length){ toast('⚠ Todas las cajas ya están cerradas'); return; }
+  if(!confirm('¿Cerrar todas las cajas del día '+diaOp+'?\n\nRutas: '+abiertas.join(', '))) return;
+  var ts=Date.now();
+  abiertas.forEach(function(r,i){
+    var data=_calcCierreData(diaOp,diaOp,r);
+    cierresDiarios.push({id:(ts+i).toString(),tipo:'dia',fecha:diaOp,ruta:r,data:data,timestampCierre:ts,nota:''});
+  });
+  guardarDatos();
+  renderCajas();
+  toast('✓ Todas las cajas cerradas');
 }
 
 function reabrirCajaDia(ruta){
