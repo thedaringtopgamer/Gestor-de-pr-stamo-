@@ -2626,6 +2626,7 @@ var cierres=[];
 var cierresDiarios=[];
 var rutaCajasFiltro='Heredia';
 var _panelHistoricoId=null;
+var _panelHistoricoRuta=null;
 var metaPrestamos=0;
 var metaClientes=0;
 var metaTarjetas=0;
@@ -3432,28 +3433,39 @@ function abrirHistorialCajasTipo(tipo){
 function verDetalleCajaDia(id){
   var c=cierresDiarios.find(function(x){ return x.id===id; });
   if(!c) return;
-  var det=c.detalle||{};
-  var d=c.data||{};
 
-  // Marcar modo histórico ANTES de goTo para que no llame renderPanelRecolector
+  // 1. Poner la fecha y ruta del cierre para que renderPanelRecolector filtre por ese día
+  var fechaEl=document.getElementById('panel-fecha');
+  if(fechaEl) fechaEl.value=c.fecha;
+  var _rutaOrig=rutaActual;
+  if(c.ruta&&c.ruta!=='todas') rutaActual=c.ruta;
+
+  // 2. Marcar modo histórico (guarda ruta original para restaurar al volver)
   _panelHistoricoId=id;
+  _panelHistoricoRuta=_rutaOrig;
 
-  // Cambiar título del navbar
+  // 3. Cambiar título del navbar
   var navTitle=document.querySelector('#screen-panel-recolector .navbar-title');
   if(navTitle) navTitle.textContent='📅 '+c.fecha+' · '+c.ruta;
 
-  // Ocultar badge de ruta y fecha/botones de acción
+  // 4. Ocultar badge de ruta editable y botones de acción
   var rutaBadge=document.getElementById('navbar-ruta-label-panel');
   if(rutaBadge) rutaBadge.style.display='none';
-  var fechaWrap=document.getElementById('_panel-fecha-wrap');
-  if(fechaWrap) fechaWrap.style.display='none';
   var botonesReales=document.getElementById('_panel-hist-botones-reales');
   if(botonesReales) botonesReales.style.display='none';
+  var fechaWrap=document.getElementById('_panel-fecha-wrap');
+  if(fechaWrap) fechaWrap.style.display='none';
 
-  // Insertar banner de solo-lectura si no existe
+  // 5. Insertar (o mostrar) banner de solo-lectura con botón eliminar
   var sectionEl=document.querySelector('#screen-panel-recolector .section');
   var bannerExist=document.getElementById('_panel-hist-banner');
-  if(!bannerExist&&sectionEl){
+  if(bannerExist){
+    var horaStrB='';
+    if(c.timestampCierre){var ddB=new Date(c.timestampCierre);horaStrB=String(ddB.getHours()).padStart(2,'0')+':'+String(ddB.getMinutes()).padStart(2,'0');}
+    bannerExist.innerHTML='<span>🔒 Caja cerrada'+(horaStrB?' a las <strong>'+horaStrB+'</strong>':'')+'</span>'
+      +'<button onclick="eliminarCierreDiario(\''+c.id+'\')" style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🗑 Eliminar</button>';
+    bannerExist.style.display='flex';
+  } else if(sectionEl){
     var banner=document.createElement('div');
     banner.id='_panel-hist-banner';
     var horaStr='';
@@ -3462,132 +3474,18 @@ function verDetalleCajaDia(id){
     banner.innerHTML='<span>🔒 Caja cerrada'+(horaStr?' a las <strong>'+horaStr+'</strong>':'')+'</span>'
       +'<button onclick="eliminarCierreDiario(\''+c.id+'\')" style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🗑 Eliminar</button>';
     sectionEl.insertBefore(banner,sectionEl.firstChild);
-  } else if(bannerExist){
-    bannerExist.style.display='';
   }
 
-  // ── Gastos ──
-  var gastosList=det.gastos||[];
-  var totalGastosDet=gastosList.reduce(function(s,x){return s+(x.monto||0);},0);
-  document.getElementById('panel-stat-gastos').textContent='₡'+fmt(totalGastosDet);
-  document.getElementById('panel-gastos-lista').innerHTML=gastosList.length
-    ?gastosList.map(function(g){
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">'
-        +'<div><div style="font-size:13px;font-weight:600">'+g.tipo+'</div><div style="font-size:11px;color:var(--text-muted)">'+(g.obs||'')+'</div></div>'
-        +'<span style="font-size:14px;font-weight:700;color:#92400e">₡'+fmt(g.monto)+'</span></div>';
-    }).join('')
-    :'<p style="font-size:13px;color:var(--text-muted)">Sin gastos registrados</p>';
+  // 6. Render NORMAL del panel — exactamente igual al panel de hoy pero con la fecha del cierre
+  renderPanelRecolector();
 
-  // ── Préstamos nuevos ──
-  var nuevos=det.nuevos||[];
-  var renovs=det.renovaciones||[];
-  var countNuevos=nuevos.length+renovs.length;
-  var totalNuevos=nuevos.reduce(function(s,x){return s+(x.monto||0);},0)+renovs.reduce(function(s,x){return s+(x.montoNuevo||0);},0);
-  document.getElementById('panel-stat-nuevos').textContent=countNuevos+' préstamo'+(countNuevos!==1?'s':'')+' · ₡'+fmt(totalNuevos);
-  var nuevosRows=nuevos.map(function(x){
-    return '<tr style="border-bottom:1px solid #eff6ff">'
-      +'<td style="padding:16px 12px;text-align:right;font-weight:700;color:#2563eb;white-space:nowrap">₡'+fmt(x.monto)+'</td>'
-      +'<td style="padding:16px 12px;font-weight:600;color:#1e293b;white-space:nowrap">'+x.cliente+'</td>'
-      +'<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">'+c.fecha.split('-').reverse().join('-')+'</td>'
-      +'<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">'+(x.subruta||'—')+'</td>'
-      +'<td></td></tr>';
-  });
-  var renovRows=renovs.map(function(x){
-    return '<tr style="border-bottom:1px solid #eff6ff">'
-      +'<td style="padding:16px 12px;text-align:right;font-weight:700;color:#7c3aed;white-space:nowrap">₡'+fmt(x.montoNuevo||0)+'</td>'
-      +'<td style="padding:16px 12px;white-space:nowrap"><span style="font-weight:600;color:#1e293b">'+x.cliente+'</span> <span style="font-size:10px;color:#7c3aed;font-weight:600">🔄</span></td>'
-      +'<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">'+c.fecha.split('-').reverse().join('-')+'</td>'
-      +'<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">—</td>'
-      +'<td></td></tr>';
-  });
-  var allNuevosRows=nuevosRows.concat(renovRows);
-  document.getElementById('panel-nuevos-lista').innerHTML=allNuevosRows.length
-    ?'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="min-width:440px;border-collapse:collapse;font-size:15px">'
-      +'<thead><tr style="border-bottom:2px solid #bfdbfe">'
-      +'<th style="text-align:right;padding:6px 8px;color:#1d4ed8;font-weight:700;white-space:nowrap">Monto</th>'
-      +'<th style="text-align:left;padding:6px 8px;color:#1d4ed8;font-weight:700;white-space:nowrap">Cliente</th>'
-      +'<th style="text-align:left;padding:6px 8px;color:#1d4ed8;font-weight:700;white-space:nowrap">Fecha</th>'
-      +'<th style="text-align:left;padding:6px 8px;color:#1d4ed8;font-weight:700;white-space:nowrap">Lugar</th>'
-      +'<th style="padding:6px 8px"></th>'
-      +'</tr></thead><tbody>'+allNuevosRows.join('')+'</tbody></table></div>'
-    :'<p style="font-size:13px;color:var(--text-muted)">Sin préstamos nuevos</p>';
-
-  // ── Cobros realizados ──
-  var cobros=det.cobros||[];
-  var totalCobros=cobros.reduce(function(s,x){return s+(x.monto||0);},0);
-  document.getElementById('panel-stat-cobros').textContent=cobros.length+' cobro'+(cobros.length!==1?'s':'')+' · ₡'+fmt(totalCobros);
-  document.getElementById('panel-cobros-lista').innerHTML=cobros.length
-    ?'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="min-width:420px;border-collapse:collapse;font-size:15px">'
-      +'<thead><tr style="border-bottom:2px solid #bbf7d0">'
-      +'<th style="text-align:right;padding:6px 8px;color:#166534;font-weight:700;white-space:nowrap">Monto</th>'
-      +'<th style="text-align:left;padding:6px 8px;color:#166534;font-weight:700;white-space:nowrap">Cliente</th>'
-      +'<th style="text-align:left;padding:6px 8px;color:#166534;font-weight:700;white-space:nowrap">Fecha</th>'
-      +'<th style="padding:6px 8px"></th>'
-      +'</tr></thead><tbody>'
-      +cobros.map(function(x){
-        return '<tr style="border-bottom:1px solid #f0fdf4">'
-          +'<td style="padding:16px 12px;text-align:right;font-weight:700;color:#166534;white-space:nowrap">₡'+fmt(x.monto)+'</td>'
-          +'<td style="padding:16px 12px;font-weight:600;color:#1e293b;white-space:nowrap">'+x.cliente+'</td>'
-          +'<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">'+c.fecha.split('-').reverse().join('-')+'</td>'
-          +'<td></td></tr>';
-      }).join('')
-      +'</tbody></table></div>'
-    :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros registrados</p>';
-
-  // ── Cobros administrativos ──
-  var cobAdm=det.cobrosAdmin||[];
-  var totalCobAdm=cobAdm.reduce(function(s,x){return s+(x.monto||0);},0);
-  document.getElementById('panel-stat-admin').textContent='₡'+fmt(totalCobAdm);
-  document.getElementById('panel-admin-lista').innerHTML=cobAdm.length
-    ?'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="min-width:400px;border-collapse:collapse;font-size:15px">'
-      +'<thead><tr style="border-bottom:2px solid #ddd6fe">'
-      +'<th style="text-align:right;padding:6px 8px;color:#5b21b6;font-weight:700;white-space:nowrap">Cobro Adm.</th>'
-      +'<th style="text-align:left;padding:6px 8px;color:#5b21b6;font-weight:700;white-space:nowrap">Cliente</th>'
-      +'<th style="padding:6px 8px"></th>'
-      +'</tr></thead><tbody>'
-      +cobAdm.map(function(x){
-        return '<tr style="border-bottom:1px solid #f5f3ff">'
-          +'<td style="padding:16px 12px;text-align:right;font-weight:700;color:#5b21b6;white-space:nowrap">₡'+fmt(x.monto)+'</td>'
-          +'<td style="padding:16px 12px;font-weight:600;color:#1e293b;white-space:nowrap">'+x.cliente+(x.concepto?'<div style="font-size:11px;color:#6b7280">'+x.concepto+'</div>':'')+'</td>'
-          +'<td></td></tr>';
-      }).join('')
-      +'</tbody></table></div>'
-    :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros administrativos</p>';
-
-  // ── Renovaciones ──
-  var panelRenov=document.getElementById('panel-renov-lista');
-  if(panelRenov){
-    document.getElementById('panel-stat-renov').textContent=renovs.length+' renovación'+(renovs.length!==1?'es':'');
-    panelRenov.innerHTML=renovs.length
-      ?renovs.map(function(x){
-        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">'
-          +'<div><div style="font-size:13px;font-weight:600">'+x.cliente+'</div>'
-          +'<div style="font-size:11px;color:var(--text-muted)">₡'+fmt(x.montoNuevo||0)+(x.montoEntregado?' · Entregado: ₡'+fmt(x.montoEntregado):'')+'</div></div>'
-          +'<span style="font-size:14px;font-weight:700;color:#92400e">₡'+fmt(x.montoNuevo||0)+'</span>'
-          +'</div>';
-      }).join('')
-      :'<p style="font-size:13px;color:var(--text-muted)">Sin renovaciones</p>';
-  }
-
-  // ── Resumen de Caja (mismo diseño oscuro) ──
-  document.getElementById('panel-stat-caja').textContent='Total: ₡'+fmt(d.utilidad||d.caja||0);
-  // Ocultar campos editables de base/salida
+  // 7. Tras el render, ocultar campos editables (base y salida) — solo ver, no editar
   var wrapBase=document.getElementById('caja-base-wrap');
   if(wrapBase) wrapBase.style.display='none';
   var wrapSalida=document.getElementById('caja-salida-wrap');
   if(wrapSalida) wrapSalida.style.display='none';
-  // Llenar valores mostrados
-  var elRecogida=document.getElementById('caja-recogida');
-  if(elRecogida) elRecogida.textContent='₡'+fmt(d.recogida||totalCobros);
-  var elBase=document.getElementById('caja-base-display');
-  if(elBase) elBase.textContent='₡'+fmt(d.base||0);
-  var elPres=document.getElementById('caja-prestamos');
-  if(elPres) elPres.textContent='₡'+fmt(d.prestado||totalNuevos);
-  var elGastos=document.getElementById('caja-gastos');
-  if(elGastos) elGastos.textContent='₡'+fmt(d.totalGastos||totalGastosDet);
-  var elTotal=document.getElementById('caja-total');
-  if(elTotal) elTotal.textContent='₡'+fmt(d.utilidad||d.caja||0);
 
+  // 8. Navegar (goTo no llama renderPanelRecolector de nuevo porque _panelHistoricoId está activo)
   goTo('screen-panel-recolector');
 }
 
@@ -3759,8 +3657,9 @@ function goBack(){
   if(prev==='screen-tarjetas') renderTarjetas();
   if(prev==='screen-panel-recolector'){
     if(_panelHistoricoId){
-      // Volviendo desde detalle histórico: limpiar modo histórico y restaurar panel normal
+      // Restaurar estado normal del panel
       _panelHistoricoId=null;
+      if(_panelHistoricoRuta!==null){ rutaActual=_panelHistoricoRuta; _panelHistoricoRuta=null; }
       var _nt=document.querySelector('#screen-panel-recolector .navbar-title');
       if(_nt) _nt.textContent='Panel Recolector';
       var _nb=document.getElementById('navbar-ruta-label-panel');
