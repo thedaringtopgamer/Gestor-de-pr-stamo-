@@ -1255,11 +1255,11 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     </div>
     <div class="section">
       <!-- Fecha y acciones -->
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <div id="_panel-fecha-wrap" style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <span style="font-size:13px;color:var(--text-muted);font-weight:500">Fecha:</span>
         <input type="date" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="panel-fecha" onchange="renderPanelRecolector()" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:14px">
+      <div id="_panel-hist-botones-reales" style="display:flex;gap:8px;margin-bottom:14px">
         <button class="btn btn-green btn-full" style="padding:11px;font-size:13px" onclick="goTo('screen-nuevo-cliente')">➕ Nuevo Préstamo</button>
         <button class="btn btn-outline btn-full" style="padding:11px;font-size:13px" onclick="abrirNuevoGasto()">💸 Nuevo Gasto</button>
       </div>
@@ -2625,6 +2625,7 @@ function abrirHistorialInversion(){
 var cierres=[];
 var cierresDiarios=[];
 var rutaCajasFiltro='Heredia';
+var _panelHistoricoId=null;
 var metaPrestamos=0;
 var metaClientes=0;
 var metaTarjetas=0;
@@ -3431,102 +3432,163 @@ function abrirHistorialCajasTipo(tipo){
 function verDetalleCajaDia(id){
   var c=cierresDiarios.find(function(x){ return x.id===id; });
   if(!c) return;
-  document.getElementById('det-caja-titulo').textContent=c.fecha+' · '+c.ruta;
   var det=c.detalle||{};
   var d=c.data||{};
-  var horaStr='';
-  if(c.timestampCierre){ var dd=new Date(c.timestampCierre); horaStr=String(dd.getHours()).padStart(2,'0')+':'+String(dd.getMinutes()).padStart(2,'0'); }
 
-  function _acordeon(secId,icono,titulo,statTxt,colorHdr,colorBorder,colorTxt,contenido){
-    return '<div style="border:1.5px solid '+colorBorder+';border-radius:12px;margin-bottom:10px;overflow:hidden">'
-      +'<div onclick="var s=document.getElementById(\''+secId+'\');var a=document.getElementById(\'arr-'+secId+'\');if(s.style.display===\'none\'){s.style.display=\'block\';a.textContent=\'▼\';}else{s.style.display=\'none\';a.textContent=\'▶\';}" style="display:flex;justify-content:space-between;align-items:center;padding:18px 16px;background:'+colorHdr+';cursor:pointer">'
-      +'<div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">'+icono+'</span>'
-      +'<div><div style="font-size:17px;font-weight:700;color:'+colorTxt+'">'+titulo+'</div>'
-      +'<div style="font-size:15px;color:'+colorTxt+';opacity:0.8">'+statTxt+'</div></div></div>'
-      +'<span style="font-size:18px;color:'+colorTxt+'" id="arr-'+secId+'">▶</span></div>'
-      +'<div id="'+secId+'" style="display:none;padding:12px 16px;background:#fff">'+contenido+'</div>'
-      +'</div>';
+  // Marcar modo histórico ANTES de goTo para que no llame renderPanelRecolector
+  _panelHistoricoId=id;
+
+  // Cambiar título del navbar
+  var navTitle=document.querySelector('#screen-panel-recolector .navbar-title');
+  if(navTitle) navTitle.textContent='📅 '+c.fecha+' · '+c.ruta;
+
+  // Ocultar badge de ruta y fecha/botones de acción
+  var rutaBadge=document.getElementById('navbar-ruta-label-panel');
+  if(rutaBadge) rutaBadge.style.display='none';
+  var fechaWrap=document.getElementById('_panel-fecha-wrap');
+  if(fechaWrap) fechaWrap.style.display='none';
+  var botonesReales=document.getElementById('_panel-hist-botones-reales');
+  if(botonesReales) botonesReales.style.display='none';
+
+  // Insertar banner de solo-lectura si no existe
+  var sectionEl=document.querySelector('#screen-panel-recolector .section');
+  var bannerExist=document.getElementById('_panel-hist-banner');
+  if(!bannerExist&&sectionEl){
+    var banner=document.createElement('div');
+    banner.id='_panel-hist-banner';
+    var horaStr='';
+    if(c.timestampCierre){var dd=new Date(c.timestampCierre);horaStr=String(dd.getHours()).padStart(2,'0')+':'+String(dd.getMinutes()).padStart(2,'0');}
+    banner.style.cssText='background:#f1f5f9;border:1.5px solid #cbd5e1;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#475569;display:flex;justify-content:space-between;align-items:center';
+    banner.innerHTML='<span>🔒 Caja cerrada'+(horaStr?' a las <strong>'+horaStr+'</strong>':'')+'</span>'
+      +'<button onclick="eliminarCierreDiario(\''+c.id+'\')" style="background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🗑 Eliminar</button>';
+    sectionEl.insertBefore(banner,sectionEl.firstChild);
+  } else if(bannerExist){
+    bannerExist.style.display='';
   }
 
-  // Cobros
-  var cobros=det.cobros||[];
-  var totalCobros=cobros.reduce(function(s,x){return s+(x.monto||0);},0);
-  var cobrosHtml=cobros.length
-    ?cobros.map(function(x){
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #d1fae5">'
-        +'<span style="font-size:14px;font-weight:600;color:#1e293b">'+x.cliente+'</span>'
-        +'<span style="font-size:15px;font-weight:800;color:#166534">₡'+fmt(x.monto)+'</span></div>';
-    }).join('')
-    :'<p style="font-size:13px;color:#6b7280">Sin cobros registrados</p>';
-
-  // Préstamos nuevos
-  var nuevos=det.nuevos||[];
-  var totalNuevos=nuevos.reduce(function(s,x){return s+(x.monto||0);},0);
-  var nuevosHtml=nuevos.length
-    ?nuevos.map(function(x){
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #dbeafe">'
-        +'<div><div style="font-size:14px;font-weight:600;color:#1e293b">'+x.cliente+'</div>'+(x.subruta?'<div style="font-size:11px;color:#6b7280">'+x.subruta+'</div>':'')+'</div>'
-        +'<span style="font-size:15px;font-weight:800;color:#1e40af">₡'+fmt(x.monto)+'</span></div>';
-    }).join('')
-    :'<p style="font-size:13px;color:#6b7280">Sin préstamos nuevos</p>';
-
-  // Cobros admin
-  var cobAdm=det.cobrosAdmin||[];
-  var totalCobAdm=cobAdm.reduce(function(s,x){return s+(x.monto||0);},0);
-  var cobAdmHtml=cobAdm.length
-    ?cobAdm.map(function(x){
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #ddd6fe">'
-        +'<div><div style="font-size:14px;font-weight:600;color:#1e293b">'+x.cliente+'</div>'+(x.concepto?'<div style="font-size:11px;color:#6b7280">'+x.concepto+'</div>':'')+'</div>'
-        +'<span style="font-size:15px;font-weight:800;color:#5b21b6">₡'+fmt(x.monto)+'</span></div>';
-    }).join('')
-    :'<p style="font-size:13px;color:#6b7280">Sin cobros administrativos</p>';
-
-  // Renovaciones
-  var renovs=det.renovaciones||[];
-  var renovHtml=renovs.length
-    ?renovs.map(function(x){
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #fde68a">'
-        +'<div><div style="font-size:14px;font-weight:600;color:#1e293b">🔄 '+x.cliente+'</div>'
-        +'<div style="font-size:11px;color:#6b7280">Saldo anterior: ₡'+fmt(x.saldoAnterior||0)+(x.montoEntregado?'  ·  Entregado: ₡'+fmt(x.montoEntregado):'')+'</div></div>'
-        +'<span style="font-size:15px;font-weight:800;color:#92400e">₡'+fmt(x.montoNuevo)+'</span></div>';
-    }).join('')
-    :'<p style="font-size:13px;color:#6b7280">Sin renovaciones</p>';
-
-  // Gastos
+  // ── Gastos ──
   var gastosList=det.gastos||[];
   var totalGastosDet=gastosList.reduce(function(s,x){return s+(x.monto||0);},0);
-  var gastosHtml=gastosList.length
-    ?gastosList.map(function(x){
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #fde68a">'
-        +'<div><div style="font-size:14px;font-weight:600;color:#1e293b">'+x.tipo+'</div>'+(x.obs?'<div style="font-size:11px;color:#6b7280">'+x.obs+'</div>':'')+'</div>'
-        +'<span style="font-size:15px;font-weight:800;color:#b45309">₡'+fmt(x.monto)+'</span></div>';
+  document.getElementById('panel-stat-gastos').textContent='₡'+fmt(totalGastosDet);
+  document.getElementById('panel-gastos-lista').innerHTML=gastosList.length
+    ?gastosList.map(function(g){
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">'
+        +'<div><div style="font-size:13px;font-weight:600">'+g.tipo+'</div><div style="font-size:11px;color:var(--text-muted)">'+(g.obs||'')+'</div></div>'
+        +'<span style="font-size:14px;font-weight:700;color:#92400e">₡'+fmt(g.monto)+'</span></div>';
     }).join('')
-    :'<p style="font-size:13px;color:#6b7280">Sin gastos registrados</p>';
+    :'<p style="font-size:13px;color:var(--text-muted)">Sin gastos registrados</p>';
 
-  // Resumen de caja (dark)
-  var cajaHtml='<div style="display:flex;flex-direction:column;gap:8px">'
-    +'<div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px"><span style="font-size:15px;color:#d1d5db">Recogida</span><span style="font-size:15px;font-weight:600;color:#4ade80">₡'+fmt(d.recogida||0)+'</span></div>'
-    +'<div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px"><span style="font-size:15px;color:#d1d5db">Préstamos nuevos</span><span style="font-size:15px;font-weight:600;color:#d1d5db">₡'+fmt(d.prestado||0)+'</span></div>'
-    +'<div style="display:flex;justify-content:space-between;padding:9px 12px;background:#374151;border-radius:8px"><span style="font-size:15px;color:#d1d5db">Gastos</span><span style="font-size:15px;font-weight:600;color:#d1d5db">₡'+fmt(d.totalGastos||0)+'</span></div>'
-    +'<div style="display:flex;justify-content:space-between;padding:14px 16px;background:#16a34a;border-radius:10px;margin-top:4px"><span style="font-size:16px;font-weight:700;color:#fff">Utilidad del día</span><span style="font-size:22px;font-weight:700;color:#fff">₡'+fmt(d.utilidad||0)+'</span></div>'
-    +'</div>';
+  // ── Préstamos nuevos ──
+  var nuevos=det.nuevos||[];
+  var renovs=det.renovaciones||[];
+  var countNuevos=nuevos.length+renovs.length;
+  var totalNuevos=nuevos.reduce(function(s,x){return s+(x.monto||0);},0)+renovs.reduce(function(s,x){return s+(x.montoNuevo||0);},0);
+  document.getElementById('panel-stat-nuevos').textContent=countNuevos+' préstamo'+(countNuevos!==1?'s':'')+' · ₡'+fmt(totalNuevos);
+  var nuevosRows=nuevos.map(function(x){
+    return '<tr style="border-bottom:1px solid #eff6ff">'
+      +'<td style="padding:16px 12px;text-align:right;font-weight:700;color:#2563eb;white-space:nowrap">₡'+fmt(x.monto)+'</td>'
+      +'<td style="padding:16px 12px;font-weight:600;color:#1e293b;white-space:nowrap">'+x.cliente+'</td>'
+      +'<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">'+c.fecha.split('-').reverse().join('-')+'</td>'
+      +'<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">'+(x.subruta||'—')+'</td>'
+      +'<td></td></tr>';
+  });
+  var renovRows=renovs.map(function(x){
+    return '<tr style="border-bottom:1px solid #eff6ff">'
+      +'<td style="padding:16px 12px;text-align:right;font-weight:700;color:#7c3aed;white-space:nowrap">₡'+fmt(x.montoNuevo||0)+'</td>'
+      +'<td style="padding:16px 12px;white-space:nowrap"><span style="font-weight:600;color:#1e293b">'+x.cliente+'</span> <span style="font-size:10px;color:#7c3aed;font-weight:600">🔄</span></td>'
+      +'<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">'+c.fecha.split('-').reverse().join('-')+'</td>'
+      +'<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">—</td>'
+      +'<td></td></tr>';
+  });
+  var allNuevosRows=nuevosRows.concat(renovRows);
+  document.getElementById('panel-nuevos-lista').innerHTML=allNuevosRows.length
+    ?'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="min-width:440px;border-collapse:collapse;font-size:15px">'
+      +'<thead><tr style="border-bottom:2px solid #bfdbfe">'
+      +'<th style="text-align:right;padding:6px 8px;color:#1d4ed8;font-weight:700;white-space:nowrap">Monto</th>'
+      +'<th style="text-align:left;padding:6px 8px;color:#1d4ed8;font-weight:700;white-space:nowrap">Cliente</th>'
+      +'<th style="text-align:left;padding:6px 8px;color:#1d4ed8;font-weight:700;white-space:nowrap">Fecha</th>'
+      +'<th style="text-align:left;padding:6px 8px;color:#1d4ed8;font-weight:700;white-space:nowrap">Lugar</th>'
+      +'<th style="padding:6px 8px"></th>'
+      +'</tr></thead><tbody>'+allNuevosRows.join('')+'</tbody></table></div>'
+    :'<p style="font-size:13px;color:var(--text-muted)">Sin préstamos nuevos</p>';
 
-  var html=''
-    +(horaStr?'<div style="background:#f1f5f9;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#475569">🔒 Caja cerrada a las <strong>'+horaStr+'</strong></div>':'')
-    +_acordeon('hdc-gastos','💸','Gastos','₡'+fmt(totalGastosDet),'#fef3c7','#fde68a','#92400e',gastosHtml)
-    +_acordeon('hdc-nuevos','📄','Préstamos nuevos',nuevos.length+' préstamo'+(nuevos.length!==1?'s':''),'#dbeafe','#bfdbfe','#1e40af',nuevosHtml)
-    +_acordeon('hdc-cobros','💰','Cobros realizados',cobros.length+' cobro'+(cobros.length!==1?'s':'')+' · ₡'+fmt(totalCobros),'#dcfce7','#bbf7d0','#166534',cobrosHtml)
-    +_acordeon('hdc-admin','🏦','Cobros administrativos','₡'+fmt(totalCobAdm),'#ede9fe','#ddd6fe','#5b21b6',cobAdmHtml)
-    +_acordeon('hdc-renov','🔄','Renovaciones',renovs.length+' renovación'+(renovs.length!==1?'es':''),'#fffbeb','#fde68a','#92400e',renovHtml)
-    +'<div style="border:1.5px solid #6b7280;border-radius:12px;margin-bottom:14px;overflow:hidden">'
-    +'<div onclick="var s=document.getElementById(\'hdc-caja\');var a=document.getElementById(\'arr-hdc-caja\');if(s.style.display===\'none\'){s.style.display=\'block\';a.textContent=\'▼\';}else{s.style.display=\'none\';a.textContent=\'▶\';}" style="display:flex;justify-content:space-between;align-items:center;padding:18px 16px;background:#1f2937;cursor:pointer">'
-    +'<div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">🗂</span><div><div style="font-size:17px;font-weight:700;color:#fff">Resumen de Caja</div><div style="font-size:15px;color:#9ca3af">₡'+fmt(d.utilidad||0)+'</div></div></div>'
-    +'<span style="font-size:18px;color:#9ca3af" id="arr-hdc-caja">▶</span></div>'
-    +'<div id="hdc-caja" style="display:none;padding:16px;background:#1f2937">'+cajaHtml+'</div></div>'
-    +'<div style="margin-top:4px"><button onclick="eliminarCierreDiario(\''+c.id+'\')" style="width:100%;padding:11px;background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:10px;font-size:13px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🗑 Eliminar este cierre</button></div>';
+  // ── Cobros realizados ──
+  var cobros=det.cobros||[];
+  var totalCobros=cobros.reduce(function(s,x){return s+(x.monto||0);},0);
+  document.getElementById('panel-stat-cobros').textContent=cobros.length+' cobro'+(cobros.length!==1?'s':'')+' · ₡'+fmt(totalCobros);
+  document.getElementById('panel-cobros-lista').innerHTML=cobros.length
+    ?'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="min-width:420px;border-collapse:collapse;font-size:15px">'
+      +'<thead><tr style="border-bottom:2px solid #bbf7d0">'
+      +'<th style="text-align:right;padding:6px 8px;color:#166534;font-weight:700;white-space:nowrap">Monto</th>'
+      +'<th style="text-align:left;padding:6px 8px;color:#166534;font-weight:700;white-space:nowrap">Cliente</th>'
+      +'<th style="text-align:left;padding:6px 8px;color:#166534;font-weight:700;white-space:nowrap">Fecha</th>'
+      +'<th style="padding:6px 8px"></th>'
+      +'</tr></thead><tbody>'
+      +cobros.map(function(x){
+        return '<tr style="border-bottom:1px solid #f0fdf4">'
+          +'<td style="padding:16px 12px;text-align:right;font-weight:700;color:#166534;white-space:nowrap">₡'+fmt(x.monto)+'</td>'
+          +'<td style="padding:16px 12px;font-weight:600;color:#1e293b;white-space:nowrap">'+x.cliente+'</td>'
+          +'<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">'+c.fecha.split('-').reverse().join('-')+'</td>'
+          +'<td></td></tr>';
+      }).join('')
+      +'</tbody></table></div>'
+    :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros registrados</p>';
 
-  document.getElementById('det-caja-body').innerHTML=html;
-  goTo('screen-detalle-caja-dia');
+  // ── Cobros administrativos ──
+  var cobAdm=det.cobrosAdmin||[];
+  var totalCobAdm=cobAdm.reduce(function(s,x){return s+(x.monto||0);},0);
+  document.getElementById('panel-stat-admin').textContent='₡'+fmt(totalCobAdm);
+  document.getElementById('panel-admin-lista').innerHTML=cobAdm.length
+    ?'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="min-width:400px;border-collapse:collapse;font-size:15px">'
+      +'<thead><tr style="border-bottom:2px solid #ddd6fe">'
+      +'<th style="text-align:right;padding:6px 8px;color:#5b21b6;font-weight:700;white-space:nowrap">Cobro Adm.</th>'
+      +'<th style="text-align:left;padding:6px 8px;color:#5b21b6;font-weight:700;white-space:nowrap">Cliente</th>'
+      +'<th style="padding:6px 8px"></th>'
+      +'</tr></thead><tbody>'
+      +cobAdm.map(function(x){
+        return '<tr style="border-bottom:1px solid #f5f3ff">'
+          +'<td style="padding:16px 12px;text-align:right;font-weight:700;color:#5b21b6;white-space:nowrap">₡'+fmt(x.monto)+'</td>'
+          +'<td style="padding:16px 12px;font-weight:600;color:#1e293b;white-space:nowrap">'+x.cliente+(x.concepto?'<div style="font-size:11px;color:#6b7280">'+x.concepto+'</div>':'')+'</td>'
+          +'<td></td></tr>';
+      }).join('')
+      +'</tbody></table></div>'
+    :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros administrativos</p>';
+
+  // ── Renovaciones ──
+  var panelRenov=document.getElementById('panel-renov-lista');
+  if(panelRenov){
+    document.getElementById('panel-stat-renov').textContent=renovs.length+' renovación'+(renovs.length!==1?'es':'');
+    panelRenov.innerHTML=renovs.length
+      ?renovs.map(function(x){
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">'
+          +'<div><div style="font-size:13px;font-weight:600">'+x.cliente+'</div>'
+          +'<div style="font-size:11px;color:var(--text-muted)">₡'+fmt(x.montoNuevo||0)+(x.montoEntregado?' · Entregado: ₡'+fmt(x.montoEntregado):'')+'</div></div>'
+          +'<span style="font-size:14px;font-weight:700;color:#92400e">₡'+fmt(x.montoNuevo||0)+'</span>'
+          +'</div>';
+      }).join('')
+      :'<p style="font-size:13px;color:var(--text-muted)">Sin renovaciones</p>';
+  }
+
+  // ── Resumen de Caja (mismo diseño oscuro) ──
+  document.getElementById('panel-stat-caja').textContent='Total: ₡'+fmt(d.utilidad||d.caja||0);
+  // Ocultar campos editables de base/salida
+  var wrapBase=document.getElementById('caja-base-wrap');
+  if(wrapBase) wrapBase.style.display='none';
+  var wrapSalida=document.getElementById('caja-salida-wrap');
+  if(wrapSalida) wrapSalida.style.display='none';
+  // Llenar valores mostrados
+  var elRecogida=document.getElementById('caja-recogida');
+  if(elRecogida) elRecogida.textContent='₡'+fmt(d.recogida||totalCobros);
+  var elBase=document.getElementById('caja-base-display');
+  if(elBase) elBase.textContent='₡'+fmt(d.base||0);
+  var elPres=document.getElementById('caja-prestamos');
+  if(elPres) elPres.textContent='₡'+fmt(d.prestado||totalNuevos);
+  var elGastos=document.getElementById('caja-gastos');
+  if(elGastos) elGastos.textContent='₡'+fmt(d.totalGastos||totalGastosDet);
+  var elTotal=document.getElementById('caja-total');
+  if(elTotal) elTotal.textContent='₡'+fmt(d.utilidad||d.caja||0);
+
+  goTo('screen-panel-recolector');
 }
 
 function eliminarCierreDiario(id){
@@ -3669,7 +3731,7 @@ function goTo(id){
   if(_pantallasRestaurables.indexOf(id)!==-1) _guardarPantalla(id);
   if(id==='screen-cobros') renderCobros();
   if(id==='screen-tarjetas') renderTarjetas();
-  if(id==='screen-panel-recolector') renderPanelRecolector();
+  if(id==='screen-panel-recolector'&&!_panelHistoricoId) renderPanelRecolector();
   if(id==='screen-home') updateHome();
   if(id==='screen-inversion') renderInversion();
   if(id==='screen-cajas'){ var _cr=sessionStorage.getItem('fjd_cajas_ruta'); if(_cr){ rutaCajasFiltro=_cr; rutaInvFiltro=_cr; } renderCajas(); }
@@ -3695,7 +3757,29 @@ function goBack(){
   _guardarPantalla(prev);
   if(prev==='screen-cobros') renderCobros();
   if(prev==='screen-tarjetas') renderTarjetas();
-  if(prev==='screen-panel-recolector') renderPanelRecolector();
+  if(prev==='screen-panel-recolector'){
+    if(_panelHistoricoId){
+      // Volviendo desde detalle histórico: limpiar modo histórico y restaurar panel normal
+      _panelHistoricoId=null;
+      var _nt=document.querySelector('#screen-panel-recolector .navbar-title');
+      if(_nt) _nt.textContent='Panel Recolector';
+      var _nb=document.getElementById('navbar-ruta-label-panel');
+      if(_nb) _nb.style.display='';
+      var _bh=document.getElementById('_panel-hist-banner');
+      if(_bh) _bh.style.display='none';
+      var _br=document.getElementById('_panel-hist-botones-reales');
+      if(_br) _br.style.display='';
+      var _df=document.getElementById('_panel-fecha-wrap');
+      if(_df) _df.style.display='';
+      var _wb=document.getElementById('caja-base-wrap');
+      if(_wb) _wb.style.display=(rolActual==='admin')?'':'none';
+      var _ws=document.getElementById('caja-salida-wrap');
+      if(_ws) _ws.style.display=(rolActual==='admin')?'':'none';
+      renderPanelRecolector();
+    } else {
+      renderPanelRecolector();
+    }
+  }
   if(prev==='screen-home') updateHome();
 }
 
