@@ -4101,7 +4101,7 @@ function getCuotaVencimiento(p, numCuota){
 }
 
 function getEstadoCobro(p){
-  var hoy = new Date(); hoy.setHours(0,0,0,0);
+  var hoy = parseLocalDate(diaOperativo()); hoy.setHours(0,0,0,0);
   var d = calcDerived(p);
   if(d.saldoPendiente<=0) return 'cancelado';
   // Si hay fecha manual puesta y hay saldo pendiente, usarla directamente
