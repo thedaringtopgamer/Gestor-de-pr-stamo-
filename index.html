@@ -3260,6 +3260,7 @@ var _RUTAS_CAJA=['Heredia','Alajuela','San Ramón'];
 function setCajasRuta(ruta){
   rutaCajasFiltro=ruta;
   rutaInvFiltro=ruta==='todas'?'todas':ruta;
+  sessionStorage.setItem('fjd_cajas_ruta',ruta);
   renderCajas();
 }
 
@@ -3531,7 +3532,7 @@ function goTo(id){
   if(id==='screen-panel-recolector') renderPanelRecolector();
   if(id==='screen-home') updateHome();
   if(id==='screen-inversion') renderInversion();
-  if(id==='screen-cajas') renderCajas();
+  if(id==='screen-cajas'){ var _cr=sessionStorage.getItem('fjd_cajas_ruta'); if(_cr){ rutaCajasFiltro=_cr; rutaInvFiltro=_cr; } renderCajas(); }
   if(id==='screen-nuevo-prestamo'){
     var _h=hoyLocal(); var _hp=_h.split('-');
     document.getElementById('np-fecha').value=_h;
