@@ -3510,7 +3510,7 @@ function toast(msg){
 }
 
 // Pantallas que se pueden restaurar al refrescar (tienen datos persistentes)
-var _pantallasRestaurables=['screen-cobros','screen-tarjetas','screen-panel-recolector','screen-home','screen-detalle','screen-renovar','screen-docs-cliente','screen-inversion'];
+var _pantallasRestaurables=['screen-cobros','screen-tarjetas','screen-panel-recolector','screen-home','screen-detalle','screen-renovar','screen-docs-cliente','screen-inversion','screen-cajas'];
 
 function _guardarPantalla(id){
   sessionStorage.setItem('fjd_pantalla',id);
@@ -3531,6 +3531,7 @@ function goTo(id){
   if(id==='screen-panel-recolector') renderPanelRecolector();
   if(id==='screen-home') updateHome();
   if(id==='screen-inversion') renderInversion();
+  if(id==='screen-cajas') renderCajas();
   if(id==='screen-nuevo-prestamo'){
     var _h=hoyLocal(); var _hp=_h.split('-');
     document.getElementById('np-fecha').value=_h;
