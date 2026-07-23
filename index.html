@@ -457,6 +457,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <div class="desktop-nav-item" onclick="goTo('screen-panel-recolector');_deskNav(this)">📊 Panel Recolector</div>
       <div class="desktop-nav-item" onclick="goTo('screen-nuevo-cliente');_deskNav(this)">➕ Nuevo Cliente</div>
       <div class="desktop-nav-item" id="dsk-menu-inversion" onclick="goTo('screen-inversion');_deskNav(this)" style="display:none">💰 Inversión</div>
+      <div class="desktop-nav-item" id="dsk-menu-cajas" onclick="goTo('screen-cajas');renderCajas();_deskNav(this)" style="display:none">📦 Cajas</div>
     </div>
     <div id="desktop-sidebar-footer">
       <div id="dsk-usuario-label"></div>
@@ -497,6 +498,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     <div class="menu-item" onclick="goTo('screen-panel-recolector');closeMenu()">📊 Panel Recolector</div>
     <div class="menu-item" onclick="goTo('screen-nuevo-cliente');closeMenu()">➕ Nuevo Cliente</div>
     <div class="menu-item" id="menu-inversion" onclick="goTo('screen-inversion');closeMenu()" style="display:none">💰 Inversión</div>
+    <div class="menu-item" id="menu-cajas" onclick="goTo('screen-cajas');renderCajas();closeMenu()" style="display:none">📦 Cajas</div>
     <div class="menu-item" id="menu-cerrar-sesion" onclick="cerrarSesion()" style="display:none;color:var(--red)">🔒 Cerrar sesión</div>
   </div>
 
@@ -622,46 +624,74 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <div id="meta-desglose" style="margin-top:12px;font-size:12px;color:#713f12"></div>
       </div>
 
-      <!-- Cierres automáticos -->
+      <!-- Acceso rápido a Cajas -->
       <div style="margin-bottom:10px">
-        <p style="font-size:14px;font-weight:800;margin-bottom:12px">📅 Cierres de período</p>
+        <button onclick="goTo('screen-cajas');renderCajas()" style="width:100%;padding:14px;background:#1e40af;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">📦 Ver Panel de Cajas →</button>
+      </div>
 
-        <!-- Semana en curso -->
-        <div class="card" style="margin-bottom:10px;border:2px solid #dbeafe">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <div>
-              <div style="font-size:13px;font-weight:800;color:#1e40af">📆 Semana en curso</div>
-              <div style="font-size:11px;color:#6b7280" id="cierre-semana-rango"></div>
-            </div>
-            <button id="btn-cerrar-semana" onclick="cerrarSemana()" style="background:#1e40af;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Cerrar semana</button>
-          </div>
-          <div id="cierre-semana-stats"></div>
-        </div>
+    </div>
+  </div>
 
-        <!-- Mes en curso -->
-        <div class="card" style="margin-bottom:10px;border:2px solid #dcfce7">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <div>
-              <div style="font-size:13px;font-weight:800;color:#166534">🗓 Mes en curso</div>
-              <div style="font-size:11px;color:#6b7280" id="cierre-mes-rango"></div>
-            </div>
-            <button id="btn-cerrar-mes" onclick="cerrarMes()" style="background:#166534;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Cerrar mes</button>
-          </div>
-          <div id="cierre-mes-stats"></div>
-        </div>
+  <!-- ==================== CAJAS ==================== -->
+  <div id="screen-cajas" class="screen">
+    <div class="navbar">
+      <button class="btn btn-cyan btn-sm" onclick="goBack()">← Volver</button>
+      <span class="navbar-title">📦 Cajas</span>
+      <div style="width:70px"></div>
+    </div>
+    <div class="section" style="padding-top:12px">
 
-        <!-- Historial cierres guardados -->
-        <div style="margin-top:16px">
-          <p style="font-size:13px;font-weight:700;margin-bottom:10px">🗂 Historial de cierres</p>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <button onclick="abrirHistorialTipo('semana')" style="padding:16px 10px;background:#dbeafe;color:#1e40af;border:2px solid #93c5fd;border-radius:12px;font-size:15px;font-weight:800;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center">
-              📆 Semana<div id="cnt-semana" style="font-size:11px;font-weight:600;margin-top:4px;color:#3b82f6"></div>
-            </button>
-            <button onclick="abrirHistorialTipo('mes')" style="padding:16px 10px;background:#dcfce7;color:#166534;border:2px solid #86efac;border-radius:12px;font-size:15px;font-weight:800;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center">
-              🗓 Mensual<div id="cnt-mes" style="font-size:11px;font-weight:600;margin-top:4px;color:#16a34a"></div>
-            </button>
+      <!-- Pills de ruta -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px">
+        <button id="cajas-rbtn-Heredia" onclick="setCajasRuta('Heredia')" style="flex-shrink:0;padding:7px 16px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Heredia</button>
+        <button id="cajas-rbtn-Alajuela" onclick="setCajasRuta('Alajuela')" style="flex-shrink:0;padding:7px 16px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Alajuela</button>
+        <button id="cajas-rbtn-SanRamon" onclick="setCajasRuta('San Ramón')" style="flex-shrink:0;padding:7px 16px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">San Ramón</button>
+      </div>
+
+      <!-- Estado de la caja hoy -->
+      <div id="cajas-estado-card" style="margin-bottom:16px"></div>
+
+      <!-- Semana en curso de esta ruta -->
+      <div class="card" style="margin-bottom:10px;border:2px solid #dbeafe">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div>
+            <div style="font-size:13px;font-weight:800;color:#1e40af">📆 Semana en curso</div>
+            <div style="font-size:11px;color:#6b7280" id="cierre-semana-rango"></div>
           </div>
+          <button id="btn-cerrar-semana" onclick="cerrarSemana()" style="background:#1e40af;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Cerrar semana</button>
         </div>
+        <div id="cierre-semana-stats"></div>
+      </div>
+
+      <!-- Mes en curso de esta ruta -->
+      <div class="card" style="margin-bottom:16px;border:2px solid #dcfce7">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div>
+            <div style="font-size:13px;font-weight:800;color:#166534">🗓 Mes en curso</div>
+            <div style="font-size:11px;color:#6b7280" id="cierre-mes-rango"></div>
+          </div>
+          <button id="btn-cerrar-mes" onclick="cerrarMes()" style="background:#166534;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Cerrar mes</button>
+        </div>
+        <div id="cierre-mes-stats"></div>
+      </div>
+
+      <!-- Historial de cierres -->
+      <p style="font-size:13px;font-weight:700;margin-bottom:10px">🗂 Historial de cierres</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+        <button onclick="abrirHistorialCajasTipo('dia')" style="padding:14px 6px;background:#fef9c3;color:#854d0e;border:2px solid #fde047;border-radius:12px;font-size:13px;font-weight:800;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center">
+          📅 Diario<div id="cnt-dia-cajas" style="font-size:10px;font-weight:600;margin-top:3px;color:#92400e"></div>
+        </button>
+        <button onclick="abrirHistorialTipo('semana')" style="padding:14px 6px;background:#dbeafe;color:#1e40af;border:2px solid #93c5fd;border-radius:12px;font-size:13px;font-weight:800;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center">
+          📆 Semana<div id="cnt-semana" style="font-size:10px;font-weight:600;margin-top:3px;color:#3b82f6"></div>
+        </button>
+        <button onclick="abrirHistorialTipo('mes')" style="padding:14px 6px;background:#dcfce7;color:#166534;border:2px solid #86efac;border-radius:12px;font-size:13px;font-weight:800;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center">
+          🗓 Mensual<div id="cnt-mes" style="font-size:10px;font-weight:600;margin-top:3px;color:#16a34a"></div>
+        </button>
+      </div>
+
+      <!-- Reiniciar cierres (admin) -->
+      <div id="wrap-reiniciar-cierres" style="display:none;margin-top:8px">
+        <button onclick="reiniciarCierres()" style="width:100%;padding:10px;background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:10px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🗑 Reiniciar historial de cierres</button>
       </div>
 
     </div>
@@ -1892,6 +1922,8 @@ function mostrarApp(){
   if(adminBtn) adminBtn.style.display=rolActual==='admin'?'block':'none';
   var menuInv=document.getElementById('menu-inversion');
   if(menuInv) menuInv.style.display=rolActual==='admin'?'block':'none';
+  var menuCajas=document.getElementById('menu-cajas');
+  if(menuCajas) menuCajas.style.display=rolActual==='admin'?'block':'none';
   var menuCerrar=document.getElementById('menu-cerrar-sesion');
   if(menuCerrar) menuCerrar.style.display=rolActual==='admin'?'block':'none';
   _syncDesktopSidebar();
@@ -2388,6 +2420,7 @@ function guardarDatos(){
     {key:'renovaciones',value:renovaciones},
     {key:'inversiones',value:inversiones},
     {key:'cierres',value:cierres},
+    {key:'cierres_diarios',value:cierresDiarios},
     {key:'bases',value:bases},
     {key:'salidas',value:salidas},
     {key:'metas',value:metas},
@@ -2581,6 +2614,8 @@ function abrirHistorialInversion(){
 }
 
 var cierres=[];
+var cierresDiarios=[];
+var rutaCajasFiltro='Heredia';
 var metaPrestamos=0;
 var metaClientes=0;
 var metaTarjetas=0;
@@ -3136,6 +3171,7 @@ function _guardarCierre(tipo,desde,hasta){
   guardarDatos();
   document.getElementById('modal-confirmar-cierre').style.display='none';
   renderInversion();
+  try{ renderCajas(); }catch(e){}
   toast('✓ Cierre guardado');
 }
 
@@ -3168,6 +3204,7 @@ function reiniciarCierres(){
   });
   guardarDatos();
   renderInversion();
+  renderCajas();
   toast('✓ Historial reiniciado — período comienza hoy');
 }
 
@@ -3218,6 +3255,136 @@ function abrirHistorialTipo(tipo){
 }
 
 function abrirHistorialCierres(){ abrirHistorialTipo('semana'); }
+
+// ── PANEL DE CAJAS ────────────────────────────────────────────────────────────
+
+function setCajasRuta(ruta){
+  rutaCajasFiltro=ruta;
+  // También actualizar el filtro de inversión para que cierres sem/mes usen esta ruta
+  rutaInvFiltro=ruta;
+  renderCajas();
+}
+
+function renderCajas(){
+  var ruta=rutaCajasFiltro||'Heredia';
+  // Pills
+  ['Heredia','Alajuela','San Ramón'].forEach(function(r){
+    var id='cajas-rbtn-'+(r==='San Ramón'?'SanRamon':r);
+    var btn=document.getElementById(id);
+    if(!btn) return;
+    btn.style.background=r===ruta?'#1e40af':'#e5e7eb';
+    btn.style.color=r===ruta?'#fff':'#374151';
+  });
+  // Estado de caja hoy
+  var diaOp=diaOperativo();
+  var cierreHoy=cierresDiarios.filter(function(c){ return c.ruta===ruta&&c.fecha===diaOp; })[0];
+  var cajaCerrada=!!cierreHoy;
+  var estadoCard=document.getElementById('cajas-estado-card');
+  if(estadoCard){
+    var colorBg=cajaCerrada?'#f0fdf4':'#fef3c7';
+    var colorBorder=cajaCerrada?'#86efac':'#fde047';
+    var colorText=cajaCerrada?'#166534':'#854d0e';
+    var estadoLabel=cajaCerrada?'🔒 Caja cerrada':'🟢 Caja abierta';
+    var horaLabel='';
+    if(cajaCerrada&&cierreHoy.timestampCierre){
+      var d=new Date(cierreHoy.timestampCierre);
+      horaLabel=' · Cerrada a las '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    }
+    estadoCard.innerHTML='<div style="background:'+colorBg+';border:2px solid '+colorBorder+';border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">'
+      +'<div><div style="font-size:14px;font-weight:800;color:'+colorText+'">'+ruta+'</div>'
+      +'<div style="font-size:12px;color:'+colorText+';margin-top:2px">'+estadoLabel+horaLabel+'</div></div>'
+      +(cajaCerrada
+        ?'<button onclick="reabrirCajaDia(\''+ruta+'\')" style="background:#fff;color:#dc2626;border:2px solid #fca5a5;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">↩ Reabrir</button>'
+        :'<button onclick="cerrarCajaDia(\''+ruta+'\')" style="background:#1e40af;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🔒 Cerrar caja</button>')
+      +'</div>';
+  }
+  // Renderizar semana y mes en curso para esta ruta
+  renderCierres();
+  // Contador diario
+  var nDia=cierresDiarios.filter(function(c){ return c.ruta===ruta; }).length;
+  var cntDia=document.getElementById('cnt-dia-cajas');
+  if(cntDia) cntDia.textContent=nDia?nDia+' guardado'+(nDia===1?'':'s'):'Sin cierres';
+}
+
+function cerrarCajaDia(ruta){
+  var diaOp=diaOperativo();
+  var yaExiste=cierresDiarios.some(function(c){ return c.ruta===ruta&&c.fecha===diaOp; });
+  if(yaExiste){ toast('⚠ La caja de '+ruta+' ya está cerrada hoy'); return; }
+  var data=_calcCierreData(diaOp,diaOp,ruta);
+  var nombre=ruta;
+  var resumen='📋 '+nombre+' — '+diaOp
+    +'\n💰 Recogida: ₡'+fmt(data.recogida)
+    +'\n👥 Clientes nuevos: '+data.numPrestamos
+    +'\n💸 Prestado: ₡'+fmt(data.prestado)
+    +'\n📊 Utilidad: ₡'+fmt(data.utilidad);
+  if(!confirm('¿Cerrar caja de '+ruta+' del día '+diaOp+'?\n\n'+resumen+'\n\nPodés reabrir la caja si cometés un error.')) return;
+  cierresDiarios.push({
+    id:Date.now().toString(),
+    tipo:'dia',
+    fecha:diaOp,
+    ruta:ruta,
+    data:data,
+    timestampCierre:Date.now(),
+    nota:''
+  });
+  guardarDatos();
+  renderCajas();
+  toast('✓ Caja de '+ruta+' cerrada');
+}
+
+function reabrirCajaDia(ruta){
+  var diaOp=diaOperativo();
+  if(!confirm('¿Reabrir la caja de '+ruta+' del día '+diaOp+'?')) return;
+  cierresDiarios=cierresDiarios.filter(function(c){ return !(c.ruta===ruta&&c.fecha===diaOp); });
+  guardarDatos();
+  renderCajas();
+  toast('✓ Caja de '+ruta+' reabierta');
+}
+
+function abrirHistorialCajasTipo(tipo){
+  var ruta=rutaCajasFiltro||'Heredia';
+  if(tipo==='dia'){
+    var titulo='📅 Cierres diarios — '+ruta;
+    document.getElementById('modal-cierres-titulo').textContent=titulo;
+    var lista=document.getElementById('modal-hist-cierres-lista');
+    var filtrados=cierresDiarios.filter(function(c){ return c.ruta===ruta; })
+      .sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
+    if(!filtrados.length){
+      lista.innerHTML='<p style="color:#6b7280;text-align:center;padding:20px">Sin cierres diarios guardados</p>';
+    } else {
+      lista.innerHTML=filtrados.map(function(c){
+        var d=new Date(c.timestampCierre||0);
+        var horaStr=c.timestampCierre?(String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')):'';
+        return '<div style="background:#fefce8;border:1.5px solid #fde047;border-radius:12px;padding:14px;margin-bottom:10px">'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+          +'<div><div style="font-size:13px;font-weight:800;color:#854d0e">📅 '+c.fecha+'</div>'
+          +(horaStr?'<div style="font-size:10px;color:#92400e">Cerrada a las '+horaStr+'</div>':'')
+          +'</div>'
+          +'<button onclick="eliminarCierreDiario(\''+c.id+'\')" style="background:#fee2e2;color:#991b1b;border:none;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🗑</button>'
+          +'</div>'
+          +(c.data?'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">'
+            +'<div style="background:#fff;border-radius:8px;padding:8px"><div style="color:#6b7280;font-size:10px;font-weight:700">RECOGIDA</div><div style="font-weight:800;color:#166534">₡'+fmt(c.data.recogida||0)+'</div></div>'
+            +'<div style="background:#fff;border-radius:8px;padding:8px"><div style="color:#6b7280;font-size:10px;font-weight:700">PRESTADO</div><div style="font-weight:800;color:#1e40af">₡'+fmt(c.data.prestado||0)+'</div></div>'
+            +'<div style="background:#fff;border-radius:8px;padding:8px"><div style="color:#6b7280;font-size:10px;font-weight:700">CLIENTES</div><div style="font-weight:800">'+( c.data.numPrestamos||0)+'</div></div>'
+            +'<div style="background:#fff;border-radius:8px;padding:8px"><div style="color:#6b7280;font-size:10px;font-weight:700">UTILIDAD</div><div style="font-weight:800;color:#0369a1">₡'+fmt(c.data.utilidad||0)+'</div></div>'
+            +'</div>':'')
+          +'</div>';
+      }).join('');
+    }
+    document.getElementById('modal-hist-cierres').style.display='flex';
+  } else {
+    abrirHistorialTipo(tipo);
+  }
+}
+
+function eliminarCierreDiario(id){
+  if(!confirm('¿Eliminar este cierre diario?')) return;
+  cierresDiarios=cierresDiarios.filter(function(c){ return c.id!==id; });
+  guardarDatos();
+  abrirHistorialCajasTipo('dia');
+  renderCajas();
+  toast('✓ Cierre eliminado');
+}
 
 function cargarDesdeLocalStorage(){
   try{
@@ -3294,6 +3461,12 @@ function hoyLocal(){
   var m=String(d.getMonth()+1).padStart(2,'0');
   var dd=String(d.getDate()).padStart(2,'0');
   return y+'-'+m+'-'+dd;
+}
+// Día operativo: antes de las 4am sigue siendo el día anterior
+function diaOperativo(){
+  var d=new Date();
+  if(d.getHours()<4) d.setDate(d.getDate()-1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
 function fmt(n){
@@ -3384,6 +3557,8 @@ function _syncDesktopSidebar(){
   var esAdmin=rolActual==='admin';
   var invEl=document.getElementById('dsk-menu-inversion');
   if(invEl) invEl.style.display=esAdmin?'flex':'none';
+  var cajasEl=document.getElementById('dsk-menu-cajas');
+  if(cajasEl) cajasEl.style.display=esAdmin?'flex':'none';
   var lblEl=document.getElementById('dsk-usuario-label');
   if(lblEl) lblEl.textContent=esAdmin?'👑 Admin':(rutaActual||'Ruta');
   var rutaEl=document.getElementById('desktop-sidebar-ruta');
@@ -6268,6 +6443,7 @@ function fechaOffset(dias){
           if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
           if(row.key==='inversiones'&&Array.isArray(row.value)) inversiones=row.value;
           if(row.key==='cierres'&&Array.isArray(row.value)) cierres=row.value;
+          if(row.key==='cierres_diarios'&&Array.isArray(row.value)) cierresDiarios=row.value;
           if(row.key==='bases'&&row.value&&typeof row.value==='object') bases=row.value;
           if(row.key==='salidas'&&row.value&&typeof row.value==='object') salidas=row.value;
           if(row.key==='metas'&&row.value&&typeof row.value==='object') metas=row.value;
