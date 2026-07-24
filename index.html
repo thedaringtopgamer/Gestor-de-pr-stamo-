@@ -4164,7 +4164,7 @@ function calcDerived(p){
       montoPorPagar=Math.min(saldoPendiente,Math.max(0,_cuotasEnDeudaFinal*p.Cuota_Quincenal-adelanto));
     }
   }
-  return {totalPagado:totalPagado,saldoPendiente:saldoPendiente,cuotasPagadas:cuotasPagadas,adelanto:adelanto,pendienteProxima:pendienteProxima,montoPorPagar:montoPorPagar,progreso:progreso,estado:estado};
+  return {totalPagado:totalPagado,saldoPendiente:saldoPendiente,cuotasPagadas:cuotasPagadas,adelanto:adelanto,pendienteProxima:pendienteProxima,montoPorPagar:montoPorPagar,progreso:progreso,estado:estado,proximaFecha:p.proximaFechaPago||null};
 }
 
 function estadoTag(estado){
