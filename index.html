@@ -3495,8 +3495,8 @@ function abrirHistorialCajasTipo(tipo){
       lista.innerHTML='<p style="color:#6b7280;text-align:center;padding:20px">Sin cierres diarios guardados</p>';
     } else {
       lista.innerHTML=filtrados.map(function(c){
-        var d=new Date(c.timestampCierre||0);
-        var horaStr=c.timestampCierre?(String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')):'';
+        var _dt=new Date(c.timestampCierre||0);
+        var horaStr=c.timestampCierre?(String(_dt.getHours()).padStart(2,'0')+':'+String(_dt.getMinutes()).padStart(2,'0')):'';
         var d=c.data||{};
         return '<div style="background:#fefce8;border:1.5px solid #fde047;border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer" onclick="document.getElementById(\'modal-hist-cierres\').style.display=\'none\';verDetalleCajaDia(\''+c.id+'\')">'
           +'<div style="display:flex;justify-content:space-between;align-items:center">'
