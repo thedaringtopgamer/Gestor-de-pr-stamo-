@@ -2050,14 +2050,18 @@ var _verificandoRevocacionTs=0;
 function _mostrarCajaCerrada(ruta){
   var lbl=document.getElementById('caja-cerrada-ruta-label');
   if(lbl) lbl.textContent=ruta;
-  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   var sc=document.getElementById('screen-caja-cerrada');
-  if(sc){ sc.style.display='flex'; sc.classList.add('active'); }
+  if(sc) sc.style.display='flex';
+  // Guardar en localStorage para que el próximo arranque sea instantáneo
+  localStorage.setItem('fjd_caja_cerrada_ruta',ruta);
+  localStorage.setItem('fjd_caja_cerrada_fecha',diaOperativo());
 }
 
 function _ocultarCajaCerrada(){
   var sc=document.getElementById('screen-caja-cerrada');
-  if(sc){ sc.style.display='none'; sc.classList.remove('active'); }
+  if(sc) sc.style.display='none';
+  localStorage.removeItem('fjd_caja_cerrada_ruta');
+  localStorage.removeItem('fjd_caja_cerrada_fecha');
 }
 
 function _chequearCajaCerrada(){
@@ -2065,14 +2069,31 @@ function _chequearCajaCerrada(){
   var rutaCobrador=localStorage.getItem('fjd_ruta_actual')||rutaActual||'todas';
   var diaOp=diaOperativo();
   var fechaCierre=cajasCerradas[rutaCobrador]||cajasCerradas['todas'];
+  var sc=document.getElementById('screen-caja-cerrada');
   if(fechaCierre&&fechaCierre===diaOp){
-    // Caja cerrada para este día operativo → bloquear pantalla
     _mostrarCajaCerrada(rutaCobrador);
   } else {
-    // No hay cierre para hoy → asegurarse de que no esté bloqueado
-    var sc=document.getElementById('screen-caja-cerrada');
-    if(sc&&sc.classList.contains('active')) _ocultarCajaCerrada();
+    if(sc&&sc.style.display==='flex') _ocultarCajaCerrada();
   }
+}
+
+// Verificar caché local de caja cerrada — lllamar ANTES de mostrar cualquier pantalla
+function _chequearCajaCerradaLocal(){
+  var rutaCache=localStorage.getItem('fjd_caja_cerrada_ruta');
+  var fechaCache=localStorage.getItem('fjd_caja_cerrada_fecha');
+  if(!rutaCache||!fechaCache) return false;
+  // Si la fecha del caché coincide con el día operativo actual → aún cerrada
+  if(fechaCache===diaOperativo()){
+    var lbl=document.getElementById('caja-cerrada-ruta-label');
+    if(lbl) lbl.textContent=rutaCache;
+    var sc=document.getElementById('screen-caja-cerrada');
+    if(sc) sc.style.display='flex';
+    return true;
+  }
+  // Ya cambió el día → limpiar caché y dejar pasar
+  localStorage.removeItem('fjd_caja_cerrada_ruta');
+  localStorage.removeItem('fjd_caja_cerrada_fecha');
+  return false;
 }
 
 function _verificarRevocacion(){
@@ -6709,15 +6730,12 @@ function fechaOffset(dias){
         if(!localStorage.getItem('fjd_login_ts')) localStorage.setItem('fjd_login_ts',Date.now().toString());
         _registrarLoginNube(_myDevId,_rutaLog);
         mostrarApp();
-        // Para cobradores: chequear si la caja está cerrada y poner pantalla encima
+        // Para cobradores: chequear caja cerrada (caché local primero, luego Supabase)
         if(_rol!=='admin'){
-          var _diaOp=diaOperativo();
-          var _fechaCierre=cajasCerradas[_loginRuta]||cajasCerradas['todas'];
-          if(_fechaCierre&&_fechaCierre===_diaOp){
-            var _sc=document.getElementById('screen-caja-cerrada');
-            var _lbl=document.getElementById('caja-cerrada-ruta-label');
-            if(_lbl) _lbl.textContent=_loginRuta;
-            if(_sc){ _sc.style.display='flex'; }
+          if(!_chequearCajaCerradaLocal()){
+            var _diaOp=diaOperativo();
+            var _fechaCierre=cajasCerradas[_loginRuta]||cajasCerradas['todas'];
+            if(_fechaCierre&&_fechaCierre===_diaOp) _mostrarCajaCerrada(_loginRuta);
           }
         }
       }
@@ -6778,13 +6796,10 @@ function fechaOffset(dias){
             sessionStorage.setItem('fjd_ruta_actual',_rutaFija);
             _registrarLoginNube(_rfDevId,_rutaFija);
             mostrarApp();
-            var _diaOpRf=diaOperativo();
-            var _fechaCierreRf=cajasCerradas[_rutaFija]||cajasCerradas['todas'];
-            if(_fechaCierreRf&&_fechaCierreRf===_diaOpRf){
-              var _scRf=document.getElementById('screen-caja-cerrada');
-              var _lblRf=document.getElementById('caja-cerrada-ruta-label');
-              if(_lblRf) _lblRf.textContent=_rutaFija;
-              if(_scRf) _scRf.style.display='flex';
+            if(!_chequearCajaCerradaLocal()){
+              var _diaOpRf=diaOperativo();
+              var _fechaCierreRf=cajasCerradas[_rutaFija]||cajasCerradas['todas'];
+              if(_fechaCierreRf&&_fechaCierreRf===_diaOpRf) _mostrarCajaCerrada(_rutaFija);
             }
           }
         }).catch(function(){
@@ -6797,6 +6812,7 @@ function fechaOffset(dias){
           sessionStorage.setItem('fjd_ruta_actual',_rutaFija);
           _registrarLoginNube(_getDeviceId(),_rutaFija);
           mostrarApp();
+          _chequearCajaCerradaLocal();
         });
       } else {
         if(sessionStorage.getItem('fjd_acceso')==='1'){
@@ -6817,11 +6833,14 @@ function fechaOffset(dias){
 
   // Doble seguro
   setTimeout(function(){
+    var cajaCerradaV=document.getElementById('screen-caja-cerrada').style.display==='flex';
+    if(cajaCerradaV) return; // caja cerrada cubre todo — no forzar login
     var appV=document.getElementById('app').style.display==='block'||document.getElementById('app').style.display==='flex';
     var loginV=document.getElementById('login-screen').style.display==='flex';
     var esperaV=document.getElementById('espera-screen').style.display==='flex';
     var accesoV=document.getElementById('acceso-screen').style.display==='flex';
     if(!appV&&!loginV&&!esperaV&&!accesoV){
+      if(_chequearCajaCerradaLocal()) return;
       if(sessionStorage.getItem('fjd_acceso')==='1'){
         document.getElementById('login-screen').style.display='flex';
       } else {
