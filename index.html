@@ -745,6 +745,23 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     </div>
   </div>
 
+  <!-- Pantalla caja cerrada (solo cobrador) -->
+  <div id="screen-caja-cerrada" class="screen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1e3a5f 0%,#1e40af 100%)">
+    <div style="text-align:center;padding:40px 28px;max-width:360px;width:100%">
+      <div style="font-size:64px;margin-bottom:16px">🔒</div>
+      <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:10px;letter-spacing:-0.5px">Financiera JD</div>
+      <div style="font-size:16px;font-weight:600;color:#bfdbfe;margin-bottom:32px">Esta caja está cerrada</div>
+      <div style="background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);border-radius:16px;padding:20px 24px">
+        <div style="font-size:13px;color:#93c5fd;margin-bottom:6px">Se abrirá automáticamente a las</div>
+        <div style="font-size:36px;font-weight:800;color:#fff">4:00 AM</div>
+        <div style="font-size:12px;color:#93c5fd;margin-top:6px">del siguiente día operativo</div>
+      </div>
+      <div style="position:absolute;bottom:40px;left:0;right:0;text-align:center">
+        <span id="caja-cerrada-ruta-label" style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:1px;text-transform:uppercase"></span>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal historial completo de cierres -->
   <div id="modal-hist-cierres" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:8000;align-items:flex-end;justify-content:center">
     <div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-height:88vh;overflow-y:auto;padding:20px">
@@ -2027,6 +2044,34 @@ function cerrarSesion(){
 
 var _verificandoRevocacion=false;
 var _verificandoRevocacionTs=0;
+function _mostrarCajaCerrada(ruta){
+  var lbl=document.getElementById('caja-cerrada-ruta-label');
+  if(lbl) lbl.textContent=ruta;
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  var sc=document.getElementById('screen-caja-cerrada');
+  if(sc){ sc.style.display='flex'; sc.classList.add('active'); }
+}
+
+function _ocultarCajaCerrada(){
+  var sc=document.getElementById('screen-caja-cerrada');
+  if(sc){ sc.style.display='none'; sc.classList.remove('active'); }
+}
+
+function _chequearCajaCerrada(){
+  if(rolActual==='admin') return;
+  var rutaCobrador=localStorage.getItem('fjd_ruta_actual')||rutaActual||'todas';
+  var diaOp=diaOperativo();
+  var fechaCierre=cajasCerradas[rutaCobrador]||cajasCerradas['todas'];
+  if(fechaCierre&&fechaCierre===diaOp){
+    // Caja cerrada para este día operativo → bloquear pantalla
+    _mostrarCajaCerrada(rutaCobrador);
+  } else {
+    // No hay cierre para hoy → asegurarse de que no esté bloqueado
+    var sc=document.getElementById('screen-caja-cerrada');
+    if(sc&&sc.classList.contains('active')) _ocultarCajaCerrada();
+  }
+}
+
 function _verificarRevocacion(){
   if(rolActual==='admin') return;
   if(_verificandoRevocacion && (Date.now()-_verificandoRevocacionTs)<6000) return;
@@ -2038,10 +2083,13 @@ function _verificarRevocacion(){
   var _hdrNC=Object.assign({},SUPA_HDR,{'Cache-Control':'no-cache','Pragma':'no-cache'});
   Promise.all([
     fetch(SUPA_URL+'/rest/v1/app_data?key=eq.kick_signals&select=value',{headers:_hdrNC}).then(function(r){return r.ok?r.json():null;}),
-    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value',{headers:_hdrNC}).then(function(r){return r.ok?r.json():null;})
+    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value',{headers:_hdrNC}).then(function(r){return r.ok?r.json():null;}),
+    fetch(SUPA_URL+'/rest/v1/app_data?key=eq.cajas_cerradas&select=value',{headers:_hdrNC}).then(function(r){return r.ok?r.json():null;})
   ]).then(function(results){
     var kicks=(results[0]&&results[0][0]&&results[0][0].value)||{};
     var revRuta=(results[1]&&results[1][0]&&results[1][0].value)||{};
+    var cajasC=(results[2]&&results[2][0]&&results[2][0].value)||{};
+    cajasCerradas=cajasC;
     // Kick directo por deviceId (más confiable)
     var kickTs=kicks[myDeviceId]||0;
     var _botadoPorKick=kickTs>loginTs;
@@ -2052,6 +2100,8 @@ function _verificarRevocacion(){
     if(_botadoPorKick||_botadoPorRuta){
       _eliminarLoginNube(myDeviceId);
       _forzarLogout();
+    } else {
+      _chequearCajaCerrada();
     }
   }).catch(function(){ _verificandoRevocacion=false; });
 }
@@ -2430,6 +2480,7 @@ function guardarDatos(){
     {key:'inversiones',value:inversiones},
     {key:'cierres',value:cierres},
     {key:'cierres_diarios',value:cierresDiarios},
+    {key:'cajas_cerradas',value:cajasCerradas},
     {key:'bases',value:bases},
     {key:'salidas',value:salidas},
     {key:'metas',value:metas},
@@ -2624,6 +2675,7 @@ function abrirHistorialInversion(){
 
 var cierres=[];
 var cierresDiarios=[];
+var cajasCerradas={};
 var rutaCajasFiltro='Heredia';
 var _panelHistoricoId=null;
 var _panelHistoricoRuta=null;
@@ -3362,6 +3414,7 @@ function cerrarCajaDia(ruta){
   var detalle=_capturarDetalleCaja(diaOp,ruta);
   if(!confirm('¿Cerrar caja de '+ruta+' del día '+diaOp+'?\n\n💰 Recogida: ₡'+fmt(data.recogida)+'\n👥 Clientes nuevos: '+data.numPrestamos+'\n💰 Cobros: '+detalle.cobros.length+'\n💸 Prestado: ₡'+fmt(data.prestado)+'\n\nPodés reabrir si cometés un error.')) return;
   cierresDiarios.push({id:Date.now().toString(),tipo:'dia',fecha:diaOp,ruta:ruta,data:data,detalle:detalle,timestampCierre:Date.now(),nota:''});
+  cajasCerradas[ruta]=diaOp;
   guardarDatos();
   renderCajas();
   toast('✓ Caja de '+ruta+' cerrada');
@@ -3377,6 +3430,7 @@ function cerrarTodasLasCajas(){
     var data=_calcCierreData(diaOp,diaOp,r);
     var detalle=_capturarDetalleCaja(diaOp,r);
     cierresDiarios.push({id:(ts+i).toString(),tipo:'dia',fecha:diaOp,ruta:r,data:data,detalle:detalle,timestampCierre:ts,nota:''});
+    cajasCerradas[r]=diaOp;
   });
   guardarDatos();
   renderCajas();
@@ -3387,6 +3441,7 @@ function reabrirCajaDia(ruta){
   var diaOp=diaOperativo();
   if(!confirm('¿Reabrir la caja de '+ruta+' del día '+diaOp+'?')) return;
   cierresDiarios=cierresDiarios.filter(function(c){ return !(c.ruta===ruta&&c.fecha===diaOp); });
+  delete cajasCerradas[ruta];
   guardarDatos();
   renderCajas();
   toast('✓ Caja de '+ruta+' reabierta');
@@ -3543,6 +3598,8 @@ function sincronizarSupabaseFondo(){
       if(row.key==='admin_credentials'&&row.value&&row.value.pass_hash) ADMIN_PASS_HASH=row.value.pass_hash;
       if(row.key==='admin_pass'&&row.value&&typeof row.value==='string') ADMIN_PASS_LEGACY=row.value;
       if(row.key==='fotos'&&row.value&&typeof row.value==='object') fotosMapBg=row.value;
+      if(row.key==='cierres_diarios'&&Array.isArray(row.value)) cierresDiarios=row.value;
+      if(row.key==='cajas_cerradas'&&row.value&&typeof row.value==='object') cajasCerradas=row.value;
     });
     if(Object.keys(fotosMapBg).length){
       prestamos.forEach(function(p){ if(fotosMapBg[p.id]) p.fotos=fotosMapBg[p.id]; });
@@ -3555,6 +3612,7 @@ function sincronizarSupabaseFondo(){
       localStorage.setItem('fjd_renovaciones',JSON.stringify(renovaciones));
       localStorage.setItem('fjd_ts',tsRemoto.toString());
     }catch(e){}
+    _chequearCajaCerrada();
     var pantalla=localStorage.getItem('fjd_pantalla')||'screen-cobros';
     if(pantalla==='screen-cobros') { renderCobros(); renderTarjetas(); }
     else if(pantalla==='screen-tarjetas') renderTarjetas();
@@ -6580,6 +6638,7 @@ function fechaOffset(dias){
           if(row.key==='inversiones'&&Array.isArray(row.value)) inversiones=row.value;
           if(row.key==='cierres'&&Array.isArray(row.value)) cierres=row.value;
           if(row.key==='cierres_diarios'&&Array.isArray(row.value)) cierresDiarios=row.value;
+          if(row.key==='cajas_cerradas'&&row.value&&typeof row.value==='object') cajasCerradas=row.value;
           if(row.key==='bases'&&row.value&&typeof row.value==='object') bases=row.value;
           if(row.key==='salidas'&&row.value&&typeof row.value==='object') salidas=row.value;
           if(row.key==='metas'&&row.value&&typeof row.value==='object') metas=row.value;
