@@ -3529,6 +3529,9 @@ function verDetalleCajaDia(id){
   var fechaEl=document.getElementById('panel-fecha');
   if(fechaEl) fechaEl.value=c.fecha;
   var _rutaOrig=rutaActual;
+  // Guardar la ruta REAL del admin antes de cambiarla temporalmente para el histórico
+  localStorage.setItem('fjd_panel_ruta',_rutaOrig||'todas');
+  sessionStorage.setItem('fjd_panel_ruta',_rutaOrig||'todas');
   if(c.ruta&&c.ruta!=='todas') rutaActual=c.ruta;
 
   // 2. Marcar modo histórico (guarda ruta original para restaurar al volver)
