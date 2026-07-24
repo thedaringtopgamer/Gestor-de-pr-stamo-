@@ -4491,11 +4491,13 @@ function imprimirCuotas(){
     if(tipo==='QUINCENAL')tipo='QUINCENA';
     else if(tipo==='SEMANAL')tipo='SEMANA';
     else if(tipo==='DIARIO')tipo='DIA';
-    var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/30:0;
-    var diasPagados=cuotaDiaria>0?Math.min(30,Math.floor(d.totalPagado/cuotaDiaria)):0;
+    var _esLargo=(tipo==='DIA'||tipo==='SEMANA')&&(p.cantidadDeQuincenas||30)*(p.diasPorCuota||1)>=60;
+    var _tdias=_esLargo?60:30;
+    var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/_tdias:0;
+    var diasPagados=cuotaDiaria>0?Math.min(_tdias,Math.floor(d.totalPagado/cuotaDiaria)):0;
     var actual=tipo==='QUINCENA'
       ?(d.cuotasPagadas+'/'+p.cantidadDeQuincenas)
-      :(diasPagados+'/30');
+      :(diasPagados+'/'+_tdias);
     var fechaProx=p.proximaFechaPago||hoy;
     var fp=fechaProx.split('-');
     var fechaFmt=fp[2]+'-'+fp[1]+'-'+fp[0];
@@ -4581,11 +4583,13 @@ function imprimirTarjetas(){
     if(tipo==='QUINCENAL') tipo='QUINCENA';
     else if(tipo==='SEMANAL') tipo='SEMANA';
     else if(tipo==='DIARIO') tipo='DIA';
-    var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/30:0;
-    var diasPagados=cuotaDiaria>0?Math.min(30,Math.floor(d.totalPagado/cuotaDiaria)):0;
+    var _esLargo=(tipo==='DIA'||tipo==='SEMANA')&&(p.cantidadDeQuincenas||30)*(p.diasPorCuota||1)>=60;
+    var _tdias=_esLargo?60:30;
+    var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/_tdias:0;
+    var diasPagados=cuotaDiaria>0?Math.min(_tdias,Math.floor(d.totalPagado/cuotaDiaria)):0;
     var actual=tipo==='QUINCENA'
       ?(d.cuotasPagadas+'/'+p.cantidadDeQuincenas)
-      :(diasPagados+'/30');
+      :(diasPagados+'/'+_tdias);
     var fechaProx=p.proximaFechaPago||hoy;
     var fp=fechaProx.split('-');
     var fechaFmt=fp[2]+'-'+fp[1]+'-'+fp[0];
@@ -4676,16 +4680,18 @@ function verDetalle(id){
   document.getElementById('det-saldo').textContent='₡'+fmt(d.saldoPendiente);
   var estadoEl=document.getElementById('det-estado');
   estadoEl.innerHTML=estadoTag(d.estado);
-  var cuotaDiaria=p.Total_A_Cobrar/30;
-  var diasPagados=cuotaDiaria>0?Math.min(30,Math.floor(d.totalPagado/cuotaDiaria)):0;
-  document.getElementById('det-progress-txt').textContent=diasPagados+'/30';
   var tipo=p.tipo||'Quincenal';
   var n=p.cantidadDeQuincenas||1;
+  var _esLargo=(tipo==='Diario'||tipo==='Semanal')&&(n*(p.diasPorCuota||1))>=60;
+  var _tdias=_esLargo?60:30;
+  var cuotaDiaria=p.Total_A_Cobrar/_tdias;
+  var diasPagados=cuotaDiaria>0?Math.min(_tdias,Math.floor(d.totalPagado/cuotaDiaria)):0;
+  document.getElementById('det-progress-txt').textContent=diasPagados+'/'+_tdias;
   var linea1=tipo;
   var linea2='';
   if(tipo==='Quincenal') linea2=n+(n===1?' quincena':' quincenas');
   else if(tipo==='Semanal') linea2=n+(n===1?' semana':' semanas');
-  else if(tipo==='Diario') linea2='30 días';
+  else if(tipo==='Diario') linea2=_tdias+' días';
   document.getElementById('det-modalidad').innerHTML=linea1+(linea2?'<br><span style="font-size:11px;font-weight:500;color:#6b7280">'+linea2+'</span>':'');
   var fi=(p.fechaInicio||'').split('-'); document.getElementById('det-fecha-inicio').textContent=fi.length===3?fi[2]+'/'+fi[1]+'/'+fi[0]:'';
   document.getElementById('abonar-cuota').textContent='₡'+fmt(d.montoPorPagar);
@@ -4766,9 +4772,11 @@ function verDetalle(id){
 function renderCuotasGrid(p,d){
   var grid=document.getElementById('cuotas-grid');
   document.getElementById('celda-info').style.display='none';
-  var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/30:0;
-  var diasPagados=cuotaDiaria>0?Math.min(30,Math.floor(d.totalPagado/cuotaDiaria)):0;
-  document.getElementById('cuotas-counter').textContent=diasPagados+'/30 días';
+  var _esLargo=(p.tipo==='Diario'||p.tipo==='Semanal')&&((p.cantidadDeQuincenas||30)*(p.diasPorCuota||1))>=60;
+  var _tdias=_esLargo?60:30;
+  var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/_tdias:0;
+  var diasPagados=cuotaDiaria>0?Math.min(_tdias,Math.floor(d.totalPagado/cuotaDiaria)):0;
+  document.getElementById('cuotas-counter').textContent=diasPagados+'/'+_tdias+' días';
 
   // Mapear qué pago cubrió cada día
   var pp=pagos.filter(function(x){return x.id_prestamo===p.id;});
@@ -4778,12 +4786,12 @@ function renderCuotasGrid(p,d){
   pp.forEach(function(pago){
     var desdeDia=cuotaDiaria>0?Math.floor(acum/cuotaDiaria):0;
     acum+=pago.montoAbonado;
-    var hastaDia=Math.min(30,cuotaDiaria>0?Math.floor(acum/cuotaDiaria):0);
+    var hastaDia=Math.min(_tdias,cuotaDiaria>0?Math.floor(acum/cuotaDiaria):0);
     for(var k=desdeDia+1;k<=hastaDia;k++) diaPago[k]=pago.fechaPago;
   });
 
   var html='';
-  for(var i=1;i<=30;i++){
+  for(var i=1;i<=_tdias;i++){
     var n=i<10?'0'+i:''+i;
     var paid=i<=diasPagados;
     html+='<div class="cuota-cell '+(paid?'cuota-paid':'cuota-unpaid')+'"'
@@ -4794,7 +4802,7 @@ function renderCuotasGrid(p,d){
 }
 
 function mostrarInfoCelda(dia,fechaPago,totalCobrar){
-  var cuotaDiaria=Math.round(totalCobrar/30);
+  var cuotaDiaria=Math.round(totalCobrar/30); // totalCobrar ya viene del préstamo correcto
   var meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   var fechaFmt='—';
   if(fechaPago){
