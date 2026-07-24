@@ -3730,7 +3730,11 @@ function goTo(id){
   if(_pantallasRestaurables.indexOf(id)!==-1) _guardarPantalla(id);
   if(id==='screen-cobros') renderCobros();
   if(id==='screen-tarjetas') renderTarjetas();
-  if(id==='screen-panel-recolector'&&!_panelHistoricoId) renderPanelRecolector();
+  if(id==='screen-panel-recolector'&&!_panelHistoricoId){
+    var _pr=sessionStorage.getItem('fjd_panel_ruta');
+    if(_pr&&rolActual==='admin') rutaActual=_pr;
+    renderPanelRecolector();
+  }
   if(id==='screen-home') updateHome();
   if(id==='screen-inversion') renderInversion();
   if(id==='screen-cajas'){ var _cr=sessionStorage.getItem('fjd_cajas_ruta'); if(_cr){ rutaCajasFiltro=_cr; rutaInvFiltro=_cr; } renderCajas(); }
@@ -6052,6 +6056,8 @@ function renderPanelRecolector(){
   var fechaEl=document.getElementById('panel-fecha');
   if(!fechaEl.value) fechaEl.value=diaOperativo();
   var fecha=fechaEl.value;
+  // Persistir ruta actual del panel para restaurarla al recargar
+  sessionStorage.setItem('fjd_panel_ruta',rutaActual||'todas');
 
   // Préstamos visibles según ruta actual
   var prestamosRuta=prestamosVisibles();
@@ -6839,7 +6845,10 @@ function fechaOffset(dias){
       var _loginRuta=localStorage.getItem('fjd_login_ruta')||localStorage.getItem('fjd_ruta_actual')||'todas';
       function _arrancarSesion(){
         var _rutaLog=_rol==='admin'?'Admin':_loginRuta;
-        rolActual=_rol; rutaActual=_loginRuta;
+        rolActual=_rol;
+        // Para admin: restaurar la ruta que tenía en el panel antes de recargar
+        var _rutaPanel=sessionStorage.getItem('fjd_panel_ruta');
+        rutaActual=(_rol==='admin'&&_rutaPanel)?_rutaPanel:_loginRuta;
         if(!localStorage.getItem('fjd_login_ts')) localStorage.setItem('fjd_login_ts',Date.now().toString());
         _registrarLoginNube(_myDevId,_rutaLog);
         mostrarApp();
