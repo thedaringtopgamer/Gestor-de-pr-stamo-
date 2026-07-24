@@ -924,6 +924,11 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     </div>
     <div class="section">
       <div style="background:#dbeafe;border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;font-size:13px;color:#1e40af;font-weight:500">📋 Paso 1 de 3 — Datos personales</div>
+      <div id="nc-verif-banner" style="display:none;background:#fef2f2;border:2px solid #fca5a5;border-radius:var(--radius);padding:12px 14px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:800;color:#dc2626;margin-bottom:4px">⚠ Datos requieren verificación</div>
+        <div style="font-size:12px;color:#7f1d1d">Han pasado más de 60 días desde la última actualización. Revise y confirme los datos antes de continuar.</div>
+      </div>
+      <div id="nc-verif-ok" style="display:none;background:#f0fdf4;border:2px solid #86efac;border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;font-size:13px;font-weight:700;color:#166534">✅ Datos verificados y actualizados</div>
       <div class="field-group"><label>Nombre completo *</label><input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="nc-nombre" placeholder="Nombre del cliente"></div>
       <div class="field-group"><label>Cédula *</label><input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="nc-cedula" placeholder="0-0000-0000"></div>
       <div class="field-group"><label>Teléfono *</label><input type="tel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="nc-telefono" placeholder="0000-0000"></div>
@@ -943,7 +948,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         </select>
       </div>
       <div class="divider"></div>
-      <button class="btn btn-cyan btn-full" style="padding:13px;margin-top:8px" onclick="guardarCliente()">Continuar →</button>
+      <button id="nc-btn-continuar" class="btn btn-cyan btn-full" style="padding:13px;margin-top:8px" onclick="guardarCliente()">Continuar →</button>
       <button class="btn btn-gray btn-full" style="margin-top:8px" onclick="goBack()">Cancelar</button>
     </div>
   </div>
@@ -5126,20 +5131,43 @@ function irNuevoPrestamo(){
   if(!currentId) return;
   var p=prestamos.find(function(x){return x.id===currentId;});
   if(!p) return;
-  // Pre-llenar pantalla de nuevo cliente con datos del cliente existente
-  goTo('screen-nuevo');
+  // Verificar si los datos tienen más de 60 días sin actualizar
+  var fechaRef=p.fechaUltimaVerificacion||p.fechaInicio||'';
+  var necesitaVerif=false;
+  if(fechaRef){
+    var diasDiff=Math.floor((Date.now()-parseLocalDate(fechaRef).getTime())/(1000*60*60*24));
+    if(diasDiff>60) necesitaVerif=true;
+  }
+  // Llenar clienteTemporal — sin _id para que se cree un préstamo nuevo
+  clienteTemporal={
+    _clienteOriginalId:p.id,
+    nombre:p.cliente||'',
+    cedula:p.cedula||'',
+    telefono:p.telefono||'',
+    ruta:p.ruta||'',
+    subruta:p.subruta||'',
+    coordCasa:p.coordCasa||'',
+    coordTrabajo:p.coordTrabajo||'',
+    fotos:p.fotos||{},
+    _necesitaVerificacion:necesitaVerif
+  };
+  // Ir a paso 1 y rellenar campos
+  goTo('screen-nuevo-cliente');
   setTimeout(function(){
-    var elNombre=document.getElementById('nuevo-nombre');
-    var elTel=document.getElementById('nuevo-tel');
-    var elRuta=document.getElementById('nuevo-ruta');
-    var elSubruta=document.getElementById('nuevo-subruta');
-    if(elNombre) elNombre.value=p.cliente||'';
-    if(elTel) elTel.value=p.telefono||'';
-    if(elRuta) elRuta.value=p.ruta||'';
-    if(elSubruta) elSubruta.value=p.subruta||'';
-    // Marcar que este nuevo préstamo es para un cliente existente (mismo ID)
-    window._clienteExistenteId=p.id;
-  },50);
+    document.getElementById('nc-nombre').value=p.cliente||'';
+    document.getElementById('nc-cedula').value=p.cedula||'';
+    document.getElementById('nc-telefono').value=p.telefono||'';
+    document.getElementById('nc-ruta').value=p.ruta||'';
+    onRutaChange();
+    setTimeout(function(){ document.getElementById('nc-subruta').value=p.subruta||''; },60);
+    // Mostrar o quitar banner de verificación
+    var banner=document.getElementById('nc-verif-banner');
+    var ok=document.getElementById('nc-verif-ok');
+    var btn=document.getElementById('nc-btn-continuar');
+    if(banner) banner.style.display=necesitaVerif?'block':'none';
+    if(ok) ok.style.display='none';
+    if(btn) btn.textContent=necesitaVerif?'✓ Verificar y Continuar →':'Continuar →';
+  },60);
 }
 function abrirRenovar(){
   if(!currentId) return;
@@ -5539,15 +5567,31 @@ function guardarCliente(){
   if(!subruta){toast('⚠ Seleccione la subruta');return;}
 
   var prevId=clienteTemporal._id;
+  var clienteOriginalId=clienteTemporal._clienteOriginalId||null;
+  var necesitaVerif=clienteTemporal._necesitaVerificacion||false;
 
-  // Bloquear duplicado por cédula (ignorar el propio cliente si está editando)
-  var duplicado=prestamos.find(function(x){return x.cedula===cedula && x.id!==prevId;});
+  // Bloquear duplicado por cédula (ignorar el propio cliente si está editando, y el cliente original)
+  var duplicado=prestamos.find(function(x){return x.cedula===cedula && x.id!==prevId && x.id!==clienteOriginalId;});
   if(duplicado){
     toast('⚠ Ya existe un cliente con esa cédula: '+duplicado.cliente);
     return;
   }
 
-  clienteTemporal={_id:prevId,nombre:nombre,cedula:cedula,telefono:tel,ruta:ruta,subruta:subruta};
+  // Si venía de un préstamo existente (nuevo préstamo para cliente viejo), actualizar fechaUltimaVerificacion
+  if(clienteOriginalId&&necesitaVerif){
+    var pOrig=prestamos.find(function(x){return x.id===clienteOriginalId;});
+    if(pOrig){
+      pOrig.fechaUltimaVerificacion=hoyLocal();
+      pOrig.cliente=nombre; pOrig.cedula=cedula; pOrig.telefono=tel; pOrig.ruta=ruta; pOrig.subruta=subruta;
+    }
+    // Mostrar confirmación visual
+    var bannerV=document.getElementById('nc-verif-banner');
+    var okV=document.getElementById('nc-verif-ok');
+    if(bannerV) bannerV.style.display='none';
+    if(okV) okV.style.display='block';
+  }
+
+  clienteTemporal={_id:prevId,_clienteOriginalId:clienteOriginalId,nombre:nombre,cedula:cedula,telefono:tel,ruta:ruta,subruta:subruta};
   if(!clienteTemporal._id){
     var id=Date.now().toString();
     clienteTemporal._id=id;
