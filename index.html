@@ -4397,11 +4397,12 @@ function _diaSemanaCliente(p){
 function renderTarjetas(filtro){
   var lista=document.getElementById('tarjetas-lista');
   var f=(filtro||'').toLowerCase().trim();
-  // Detectar búsqueda por día: /lunes, /martes, etc.
+  // Detectar búsqueda por día: /lunes, lunes, /martes, martes, etc. (con o sin slash)
   var filtroDia=-1;
-  if(f.startsWith('/')){
-    var nombreDia=f.slice(1).trim();
-    if(_DIAS_SEMANA.hasOwnProperty(nombreDia)) filtroDia=_DIAS_SEMANA[nombreDia];
+  var _fDia=f.replace(/^[\/⁄∕]*/,'').trim(); // quitar cualquier tipo de slash al inicio
+  if(_fDia&&_DIAS_SEMANA.hasOwnProperty(_fDia)){
+    filtroDia=_DIAS_SEMANA[_fDia];
+    f=''; // no tratar como búsqueda de nombre
   }
   var todos=prestamosVisibles();
   var items=todos.filter(function(p){
@@ -4416,12 +4417,15 @@ function renderTarjetas(filtro){
   items.sort(function(a,b){return a.cliente.localeCompare(b.cliente,'es');});
   var totalActivos=todos.filter(function(p){return !p.incompleto&&calcDerived(p).saldoPendiente>0;}).length;
   var totalIncompletos=todos.filter(function(p){return p.incompleto;}).length;
+  var _NOMBRES_DIA=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
   var titulo='Tarjetas activas ('+totalActivos+')';
-  if(totalIncompletos>0&&!f) titulo+=' · ⚠️ '+totalIncompletos+' incompleta'+(totalIncompletos===1?'':'s')+' (busca el nombre)';
-  if(f) titulo+=' · Búsqueda: '+items.length;
+  if(filtroDia>=0) titulo='Préstamos del '+_NOMBRES_DIA[filtroDia]+' ('+items.length+')';
+  else if(totalIncompletos>0&&!f) titulo+=' · ⚠️ '+totalIncompletos+' incompleta'+(totalIncompletos===1?'':'s')+' (busca el nombre)';
+  else if(f) titulo+=' · Búsqueda: '+items.length;
   document.getElementById('tarjetas-titulo').textContent=titulo;
   if(!items.length){
-    lista.innerHTML='<div style="padding:14px"><span class="no-data">No hay préstamos.</span></div>';
+    var _msgVacio=filtroDia>=0?'No hay préstamos para el '+_NOMBRES_DIA[filtroDia]+'. (Total préstamos activos: '+totalActivos+')':'No hay préstamos.';
+    lista.innerHTML='<div style="padding:14px"><span class="no-data">'+_msgVacio+'</span></div>';
     return;
   }
   lista.innerHTML=items.map(function(p){
