@@ -5465,6 +5465,7 @@ function guardarCorreccion(){
   p.tipo=tipo;
   if(fechaInicioCorr) p.fechaInicio=fechaInicioCorr;
   if(fechaCreacionCorr) p._fechaCreacion=fechaCreacionCorr;
+  p.fechaUltimaVerificacion=hoyLocal(); // reiniciar contador 60 días al corregir
   document.getElementById('modal-corregir').style.display='none';
   guardarDatos();
   toast('✓ Datos corregidos');
@@ -5582,7 +5583,7 @@ function guardarCliente(){
     var pOrig=prestamos.find(function(x){return x.id===clienteOriginalId;});
     if(pOrig){
       pOrig.cliente=nombre; pOrig.cedula=cedula; pOrig.telefono=tel; pOrig.ruta=ruta; pOrig.subruta=subruta;
-      if(necesitaVerif) pOrig.fechaUltimaVerificacion=hoyLocal();
+      pOrig.fechaUltimaVerificacion=hoyLocal(); // reiniciar contador 60 días siempre que se edite
     }
     if(necesitaVerif){
       var bannerV=document.getElementById('nc-verif-banner');
@@ -5650,6 +5651,13 @@ function guardarDocumentos(){
         if(!ex.notas) ex.notas={};
         ex.notas['foto-casa']=notaCasa.trim();
         ex.notas['foto-trabajo']=notaTrabajo.trim();
+        ex.fechaUltimaVerificacion=hoyLocal(); // reiniciar contador 60 días al actualizar fotos/ubicación
+      }
+      // También actualizar el registro original si viene de irNuevoPrestamo
+      var _origId=clienteTemporal._clienteOriginalId;
+      if(_origId&&_origId!==ex&&_origId!==(ex&&ex.id)){
+        var _pOrig2=prestamos.find(function(x){return x.id===_origId;});
+        if(_pOrig2){_pOrig2.coordCasa=coordCasa;_pOrig2.coordTrabajo=coordTrabajo;_pOrig2.fotos=fotos;_pOrig2.fechaUltimaVerificacion=hoyLocal();}
       }
       _docsNewFotos={};
       guardarDatos();
