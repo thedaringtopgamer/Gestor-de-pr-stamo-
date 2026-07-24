@@ -2072,8 +2072,7 @@ function _chequearCajaCerrada(){
   var sc=document.getElementById('screen-caja-cerrada');
   if(fechaCierre&&fechaCierre===diaOp){
     _mostrarCajaCerrada(rutaCobrador);
-  } else if(Object.keys(cajasCerradas).length>0){
-    // Solo ocultar si tenemos datos reales de Supabase y confirman que está abierta
+  } else {
     if(sc&&sc.style.display==='flex') _ocultarCajaCerrada();
   }
 }
@@ -2113,8 +2112,9 @@ function _verificarRevocacion(){
   ]).then(function(results){
     var kicks=(results[0]&&results[0][0]&&results[0][0].value)||{};
     var revRuta=(results[1]&&results[1][0]&&results[1][0].value)||{};
-    var cajasC=(results[2]&&results[2][0]&&results[2][0].value);
-    if(cajasC&&typeof cajasC==='object'&&Object.keys(cajasC).length>0) cajasCerradas=cajasC;
+    // Actualizar cajasCerradas solo si el fetch tuvo éxito (results[2] !== null)
+    // Si fue null (error de red), mantener el valor anterior para no desbloquear falso
+    if(results[2]!==null) cajasCerradas=(results[2]&&results[2][0]&&results[2][0].value)||{};
     // Kick directo por deviceId (más confiable)
     var kickTs=kicks[myDeviceId]||0;
     var _botadoPorKick=kickTs>loginTs;
