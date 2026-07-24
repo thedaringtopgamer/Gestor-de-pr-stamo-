@@ -4406,7 +4406,7 @@ function renderTarjetas(filtro){
   }
   var todos=prestamosVisibles();
   var items=todos.filter(function(p){
-    if(filtroDia>=0){ if(p.incompleto) return false; return _diaSemanaCliente(p)===filtroDia; }
+    if(filtroDia>=0){ if(p.incompleto) return false; var _dc=calcDerived(p); if(_dc.saldoPendiente<=0) return false; return _diaSemanaCliente(p)===filtroDia; }
     if(f) return p.cliente.toLowerCase().includes(f);
     // Sin búsqueda: solo activos (cancelados solo aparecen al buscar por nombre)
     if(p.incompleto) return false;
