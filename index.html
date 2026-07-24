@@ -5577,18 +5577,19 @@ function guardarCliente(){
     return;
   }
 
-  // Si venía de un préstamo existente (nuevo préstamo para cliente viejo), actualizar fechaUltimaVerificacion
-  if(clienteOriginalId&&necesitaVerif){
+  // Si venía de un préstamo existente, siempre sincronizar datos al registro original
+  if(clienteOriginalId){
     var pOrig=prestamos.find(function(x){return x.id===clienteOriginalId;});
     if(pOrig){
-      pOrig.fechaUltimaVerificacion=hoyLocal();
       pOrig.cliente=nombre; pOrig.cedula=cedula; pOrig.telefono=tel; pOrig.ruta=ruta; pOrig.subruta=subruta;
+      if(necesitaVerif) pOrig.fechaUltimaVerificacion=hoyLocal();
     }
-    // Mostrar confirmación visual
-    var bannerV=document.getElementById('nc-verif-banner');
-    var okV=document.getElementById('nc-verif-ok');
-    if(bannerV) bannerV.style.display='none';
-    if(okV) okV.style.display='block';
+    if(necesitaVerif){
+      var bannerV=document.getElementById('nc-verif-banner');
+      var okV=document.getElementById('nc-verif-ok');
+      if(bannerV) bannerV.style.display='none';
+      if(okV) okV.style.display='block';
+    }
   }
 
   clienteTemporal={_id:prevId,_clienteOriginalId:clienteOriginalId,nombre:nombre,cedula:cedula,telefono:tel,ruta:ruta,subruta:subruta};
