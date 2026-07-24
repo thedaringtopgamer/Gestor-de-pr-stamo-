@@ -746,19 +746,12 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
   </div>
 
   <!-- Pantalla caja cerrada (solo cobrador) -->
-  <div id="screen-caja-cerrada" class="screen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1e3a5f 0%,#1e40af 100%)">
-    <div style="text-align:center;padding:40px 28px;max-width:360px;width:100%">
-      <div style="font-size:64px;margin-bottom:16px">🔒</div>
-      <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:10px;letter-spacing:-0.5px">Financiera JD</div>
-      <div style="font-size:16px;font-weight:600;color:#bfdbfe;margin-bottom:32px">Esta caja está cerrada</div>
-      <div style="background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);border-radius:16px;padding:20px 24px">
-        <div style="font-size:13px;color:#93c5fd;margin-bottom:6px">Se abrirá automáticamente a las</div>
-        <div style="font-size:36px;font-weight:800;color:#fff">4:00 AM</div>
-        <div style="font-size:12px;color:#93c5fd;margin-top:6px">del siguiente día operativo</div>
-      </div>
-      <div style="position:absolute;bottom:40px;left:0;right:0;text-align:center">
-        <span id="caja-cerrada-ruta-label" style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:1px;text-transform:uppercase"></span>
-      </div>
+  <div id="screen-caja-cerrada" class="screen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 100%);position:fixed;inset:0;z-index:9500">
+    <div class="splash-jd">JD</div>
+    <div class="splash-sub">FINANCIERA</div>
+    <div style="margin-top:8px;font-size:15px;font-weight:600;color:#60a5fa;letter-spacing:2px;text-align:center">CAJA CERRADA</div>
+    <div style="position:fixed;bottom:48px;left:0;right:0;text-align:center">
+      <span id="caja-cerrada-ruta-label" style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:3px;text-transform:uppercase"></span>
     </div>
   </div>
 
