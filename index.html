@@ -6708,6 +6708,18 @@ function fechaOffset(dias){
         rolActual=_rol; rutaActual=_loginRuta;
         if(!localStorage.getItem('fjd_login_ts')) localStorage.setItem('fjd_login_ts',Date.now().toString());
         _registrarLoginNube(_myDevId,_rutaLog);
+        // Para cobradores: chequear si la caja está cerrada ANTES de mostrar la app
+        if(_rol!=='admin'){
+          var _diaOp=diaOperativo();
+          var _fechaCierre=cajasCerradas[_loginRuta]||cajasCerradas['todas'];
+          if(_fechaCierre&&_fechaCierre===_diaOp){
+            var _sc=document.getElementById('screen-caja-cerrada');
+            var _lbl=document.getElementById('caja-cerrada-ruta-label');
+            if(_lbl) _lbl.textContent=_loginRuta;
+            if(_sc){ _sc.style.display='flex'; _sc.classList.add('active'); }
+            return;
+          }
+        }
         mostrarApp();
       }
       function _cerrarSesionRevocada(){
@@ -6766,7 +6778,16 @@ function fechaOffset(dias){
             localStorage.setItem('fjd_login_ruta',_rutaFija);
             sessionStorage.setItem('fjd_ruta_actual',_rutaFija);
             _registrarLoginNube(_rfDevId,_rutaFija);
-            mostrarApp();
+            var _diaOpRf=diaOperativo();
+            var _fechaCierreRf=cajasCerradas[_rutaFija]||cajasCerradas['todas'];
+            if(_fechaCierreRf&&_fechaCierreRf===_diaOpRf){
+              var _scRf=document.getElementById('screen-caja-cerrada');
+              var _lblRf=document.getElementById('caja-cerrada-ruta-label');
+              if(_lblRf) _lblRf.textContent=_rutaFija;
+              if(_scRf){ _scRf.style.display='flex'; _scRf.classList.add('active'); }
+            } else {
+              mostrarApp();
+            }
           }
         }).catch(function(){
           rolActual='ruta'; rutaActual=_rutaFija;
