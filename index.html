@@ -3813,10 +3813,10 @@ document.addEventListener('visibilitychange',function(){
   if(document.visibilityState==='visible' && localStorage.getItem('fjd_session')==='1') _verificarRevocacion();
 });
 
-// Chequeo en vivo cada 1 segundo para detectar revocación remota
+// Chequeo cada 6 segundos para detectar revocación remota / caja cerrada
 setInterval(function(){
   if(localStorage.getItem('fjd_session')==='1') _verificarRevocacion();
-}, 1000);
+}, 6000);
 
 // Chequeo rápido de timestamp cada 5s — si la nube tiene datos más nuevos, sincroniza inmediatamente
 setInterval(function(){
