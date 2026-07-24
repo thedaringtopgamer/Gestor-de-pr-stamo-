@@ -6696,6 +6696,18 @@ function fechaOffset(dias){
   }
   errorConexion=!_cargado;
 
+  // Si hay caja cerrada activa, mostrarla ANTES que el splash desaparezca (evita flash)
+  (function(){
+    var _rutaCC=localStorage.getItem('fjd_caja_cerrada_ruta');
+    var _fechaCC=localStorage.getItem('fjd_caja_cerrada_fecha');
+    if(_rutaCC&&_fechaCC&&_fechaCC===diaOperativo()){
+      var _lbl=document.getElementById('caja-cerrada-ruta-label');
+      if(_lbl) _lbl.textContent=_rutaCC;
+      var _sc=document.getElementById('screen-caja-cerrada');
+      if(_sc) _sc.style.display='flex';
+    }
+  })();
+
   // Siempre ocultar splash — nunca dejar pantalla en blanco
   splash.style.display='none';
 
@@ -6718,6 +6730,26 @@ function fechaOffset(dias){
 
   try{ calcPreview(); }catch(e){}
   try{ updateHome(); }catch(e){}
+
+  // Caja cerrada: check INMEDIATO antes de cualquier pantalla
+  // Si hay caché activo, mostrar pantalla bloqueada y restaurar sesión si fue borrada
+  (function(){
+    var _rutaCC=localStorage.getItem('fjd_caja_cerrada_ruta');
+    var _fechaCC=localStorage.getItem('fjd_caja_cerrada_fecha');
+    if(!_rutaCC||!_fechaCC) return;
+    if(_fechaCC!==diaOperativo()) return; // caché expirado
+    // Mostrar pantalla bloqueada inmediatamente
+    var _lbl=document.getElementById('caja-cerrada-ruta-label');
+    if(_lbl) _lbl.textContent=_rutaCC;
+    var _sc=document.getElementById('screen-caja-cerrada');
+    if(_sc) _sc.style.display='flex';
+    // Restaurar sesión si fue borrada (evita que mande a selección de ruta)
+    if(!localStorage.getItem('fjd_ruta_fija')) localStorage.setItem('fjd_ruta_fija',_rutaCC);
+    if(!localStorage.getItem('fjd_ruta_actual')) localStorage.setItem('fjd_ruta_actual',_rutaCC);
+    if(!localStorage.getItem('fjd_session')) localStorage.setItem('fjd_session','1');
+    if(!localStorage.getItem('fjd_rol')) localStorage.setItem('fjd_rol','ruta');
+    if(!localStorage.getItem('fjd_login_ruta')) localStorage.setItem('fjd_login_ruta',_rutaCC);
+  })();
 
   try{
     if(localStorage.getItem('fjd_session')==='1'){
