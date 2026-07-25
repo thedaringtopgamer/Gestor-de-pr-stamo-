@@ -6450,20 +6450,25 @@ function importarBackup(input){
   reader.onload=function(e){
     try{
       var datos=JSON.parse(e.target.result);
-      if(!datos.prestamos||!datos.pagos){
+      if(!datos||typeof datos!=='object'
+        ||!Array.isArray(datos.prestamos)
+        ||!Array.isArray(datos.pagos)
+        ||!datos.fecha
+        ||(datos.prestamos.length>0&&(!datos.prestamos[0].id||!datos.prestamos[0].cliente))){
         toast('⚠ Archivo inválido — no es un backup de Financiera JD');
-        return;
-      }
-      if(!confirm('¿Restaurar backup del '+datos.fecha.split('T')[0]+'? Se reemplazarán TODOS los datos actuales.')){
         input.value=''; return;
       }
-      prestamos=datos.prestamos||[];
-      pagos=datos.pagos||[];
+      var _fechaBackup=datos.fecha.split('T')[0]||datos.fecha;
+      if(!confirm('¿Restaurar backup del '+_fechaBackup+'?\n\nPréstamos: '+datos.prestamos.length+'\nPagos: '+datos.pagos.length+'\n\nSe reemplazarán TODOS los datos actuales.')){
+        input.value=''; return;
+      }
+      prestamos=datos.prestamos;
+      pagos=datos.pagos;
       cobrosAdmin=datos.cobrosAdmin||[];
       gastos=datos.gastos||[];
       renovaciones=datos.renovaciones||[];
       guardarDatos();
-      toast('✓ Backup restaurado correctamente');
+      toast('✓ Backup del '+_fechaBackup+' restaurado correctamente');
       closeMenu();
       goTo('screen-cobros');
     }catch(err){
