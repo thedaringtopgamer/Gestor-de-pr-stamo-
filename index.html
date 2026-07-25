@@ -6589,10 +6589,10 @@ function importarBackup(input){
       if(Array.isArray(datos.inversiones)) inversiones=datos.inversiones;
       if(Array.isArray(datos.cierres)) cierres=datos.cierres;
       if(Array.isArray(datos.cierresDiarios)) cierresDiarios=datos.cierresDiarios;
-      if(Array.isArray(datos.cajasCerradas)) cajasCerradas=datos.cajasCerradas;
-      if(Array.isArray(datos.bases)) bases=datos.bases;
-      if(Array.isArray(datos.salidas)) salidas=datos.salidas;
-      if(Array.isArray(datos.metas)) metas=datos.metas;
+      if(datos.cajasCerradas&&typeof datos.cajasCerradas==='object') cajasCerradas=datos.cajasCerradas;
+      if(datos.bases&&typeof datos.bases==='object') bases=datos.bases;
+      if(datos.salidas&&typeof datos.salidas==='object') salidas=datos.salidas;
+      if(datos.metas&&typeof datos.metas==='object') metas=datos.metas;
       if(datos.invOverrides&&typeof datos.invOverrides==='object') invOverrides=datos.invOverrides;
       if(Array.isArray(datos.clientesBloqueados)) clientesBloqueados=datos.clientesBloqueados;
       guardarDatos();
