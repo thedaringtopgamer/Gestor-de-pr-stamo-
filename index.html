@@ -1039,6 +1039,14 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           <button type="button" id="btn-tipo-Quincenal" onclick="selTipo('Quincenal')" style="padding:10px 4px;border:1.5px solid var(--cyan);border-radius:var(--radius);font-size:12px;font-weight:600;background:#f0f9ff;color:#0e7490;cursor:pointer;font-family:'DM Sans',sans-serif">Quincenal</button>
           <button type="button" id="btn-tipo-Mensual" onclick="selTipo('Mensual')" style="padding:10px 4px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:12px;font-weight:600;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif">Mensual</button>
         </div>
+        <!-- Sub-opciones Diario -->
+        <div id="sub-diario" style="display:none;margin-top:8px">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Cantidad de cuotas:</div>
+          <div style="display:flex;gap:8px">
+            <button type="button" id="btn-dia-30" onclick="selCuotasDiario(30)" style="flex:1;padding:8px 10px;border:1.5px solid var(--cyan);border-radius:var(--radius);font-size:13px;font-weight:700;background:#f0f9ff;color:#0e7490;cursor:pointer;font-family:'DM Sans',sans-serif">30 cuotas</button>
+            <button type="button" id="btn-dia-60" onclick="selCuotasDiario(60)" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-weight:700;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif">60 cuotas</button>
+          </div>
+        </div>
         <!-- Sub-opciones Semanal -->
         <div id="sub-semanal" style="display:none;margin-top:8px">
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Seleccione período:</div>
@@ -3874,8 +3882,27 @@ function selTipo(tipo){
     btn.style.background=sel?'#f0f9ff':'#fff';
     btn.style.color=sel?'#0e7490':'inherit';
   });
+  document.getElementById('sub-diario').style.display=tipo==='Diario'?'block':'none';
   document.getElementById('sub-semanal').style.display=tipo==='Semanal'?'block':'none';
   document.getElementById('sub-quincenal').style.display=tipo==='Quincenal'?'block':'none';
+  if(tipo==='Diario') selCuotasDiario(30);
+  calcPreview();
+  calcProxFechaPago();
+}
+
+var _npCuotasDiario=30;
+function selCuotasDiario(n){
+  _npCuotasDiario=n;
+  [30,60].forEach(function(v){
+    var btn=document.getElementById('btn-dia-'+v);
+    if(!btn) return;
+    var sel=v===n;
+    btn.style.borderColor=sel?'var(--cyan)':'var(--border)';
+    btn.style.background=sel?'#f0f9ff':'#fff';
+    btn.style.color=sel?'#0e7490':'inherit';
+  });
+  var tasaEl=document.getElementById('np-tasa');
+  if(tasaEl) tasaEl.value=n>=60?'40':'20';
   calcPreview();
   calcProxFechaPago();
 }
@@ -3942,7 +3969,7 @@ function getCuotasYDias(){
   var tipo=el?el.value:'Quincenal';
   var cuotas, diasPorCuota;
   if(tipo==='Diario'){
-    cuotas=30; diasPorCuota=1;
+    cuotas=_npCuotasDiario||30; diasPorCuota=1;
   } else if(tipo==='Semanal'){
     cuotas=_npSemanas||5; diasPorCuota=7;
   } else if(tipo==='Quincenal'){
