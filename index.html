@@ -3683,7 +3683,7 @@ function sincronizarSupabaseFondo(){
     if(pantalla==='screen-cobros') { renderCobros(); renderTarjetas(); }
     else if(pantalla==='screen-tarjetas') renderTarjetas();
     else if(pantalla==='screen-home') updateHome();
-    else if(pantalla==='screen-panel') renderPanel();
+    else if(pantalla==='screen-panel'||pantalla==='screen-panel-recolector') renderPanelRecolector();
   }).catch(function(){});
 }
 
@@ -5584,6 +5584,9 @@ function eliminarPrestamo(){
         document.getElementById('modal-btn-si').style.background='#16a34a';
         prestamos=prestamos.filter(function(x){return x.id!==currentId;});
         pagos=pagos.filter(function(x){return x.id_prestamo!==currentId;});
+        renovaciones=renovaciones.filter(function(x){return x.id_prestamo!==currentId;});
+        cobrosAdmin=cobrosAdmin.filter(function(x){return x.id_prestamo!==currentId;});
+        gastos=gastos.filter(function(x){return x.id_prestamo!==currentId;});
         guardarDatos();
         currentId=null;
         toast('Préstamo eliminado');
@@ -5596,13 +5599,26 @@ function eliminarPrestamo(){
 }
 
 function updateHome(){
-  var activos=prestamos.filter(function(p){return p.estado==='Activo';});
+  var hoy=diaOperativo();
+  var activos=prestamos.filter(function(p){
+    var d=calcDerived(p);
+    return d.saldoPendiente>0;
+  });
   var capital=activos.reduce(function(s,p){return s+p.montoPrestado;},0);
-  var cobrar=activos.reduce(function(s,p){return s+p.Total_A_Cobrar;},0);
+  var cobrar=activos.reduce(function(s,p){
+    var d=calcDerived(p);
+    return s+d.saldoPendiente;
+  },0);
+  var cobrosDia=activos.filter(function(p){
+    if(p.incompleto) return false;
+    var d=calcDerived(p);
+    var fecha=d.proximaFecha||p.fechaInicio||'';
+    return fecha<=hoy;
+  }).length;
   document.getElementById('home-total-prestamos').textContent=activos.length;
   document.getElementById('home-capital').textContent='₡'+fmt(capital);
   document.getElementById('home-cobrar').textContent='₡'+fmt(cobrar);
-  document.getElementById('home-cobros-dia').textContent=activos.length;
+  document.getElementById('home-cobros-dia').textContent=cobrosDia;
 }
 
 // ----- RUTAS Y SUBRUTAS -----
