@@ -4906,8 +4906,10 @@ function mensajeAbono(p){
   var ultimo=pp.length?pp[pp.length-1]:null;
   var montoAbonado=ultimo?ultimo.montoAbonado:0;
   // Progreso días/cuotas
-  var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/30:0;
-  var diasPagados=cuotaDiaria>0?Math.min(30,Math.floor(d.totalPagado/cuotaDiaria)):0;
+  var _esLargoM=( p.tipo==='Diario'||p.tipo==='Semanal')&&((p.cantidadDeQuincenas||30)*(p.diasPorCuota||1))>=60;
+  var _tdiasM=_esLargoM?60:30;
+  var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/_tdiasM:0;
+  var diasPagados=cuotaDiaria>0?Math.min(_tdiasM,Math.floor(d.totalPagado/cuotaDiaria)):0;
   // Próxima fecha de pago con día de semana
   var fechaProxStr='Préstamo cancelado ✅';
   if(d.saldoPendiente>0){
@@ -4922,7 +4924,7 @@ function mensajeAbono(p){
     +'   *Con intereses:* ₡'+fmt(p.Total_A_Cobrar)+'\n'
     +'✅ *Abono:* ₡'+fmt(montoAbonado)+'\n'
     +'💳 *Saldo pendiente:* ₡'+fmt(d.saldoPendiente)+'\n'
-    +'📊 *Cuota:* '+diasPagados+'/30\n'
+    +'📊 *Cuota:* '+diasPagados+'/'+_tdiasM+'\n'
     +'📅 *Próxima fecha de pago:*\n'
     +'   '+fechaProxStr+'\n'
     +'────────────────\n'
@@ -4944,8 +4946,10 @@ function mensajeAbonoAt(p, targetPagoId){
   var totalPagado=totalPagadoGlobal-(p.baseRenovacion||0);
   var saldoPendiente=Math.max(0,p.Total_A_Cobrar-totalPagado);
   var cuotasPagadas=Math.min(p.cantidadDeQuincenas,Math.floor(totalPagado/p.Cuota_Quincenal));
-  var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/30:0;
-  var diasPagados=cuotaDiaria>0?Math.min(30,Math.floor(totalPagado/cuotaDiaria)):0;
+  var _esLargoA=(p.tipo==='Diario'||p.tipo==='Semanal')&&((p.cantidadDeQuincenas||30)*(p.diasPorCuota||1))>=60;
+  var _tdiasA=_esLargoA?60:30;
+  var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/_tdiasA:0;
+  var diasPagados=cuotaDiaria>0?Math.min(_tdiasA,Math.floor(totalPagado/cuotaDiaria)):0;
   var proxCuota=cuotasPagadas+1;
   var fechaProxStr='Préstamo cancelado ✅';
   if(proxCuota<=p.cantidadDeQuincenas && saldoPendiente>0){
@@ -4960,7 +4964,7 @@ function mensajeAbonoAt(p, targetPagoId){
     +'   *Con intereses:* ₡'+fmt(p.Total_A_Cobrar)+'\n'
     +'✅ *Abono:* ₡'+fmt(montoAbonado)+'\n'
     +'💳 *Saldo pendiente:* ₡'+fmt(saldoPendiente)+'\n'
-    +'📊 *Cuota:* '+diasPagados+'/30\n'
+    +'📊 *Cuota:* '+diasPagados+'/'+_tdiasA+'\n'
     +'📅 *Próxima fecha de pago:*\n'
     +'   '+fechaProxStr+'\n'
     +'────────────────\n'
@@ -5214,9 +5218,11 @@ function abrirRenovar(){
   // Cobro admin = 4% del monto prestado (₡2,000 por cada ₡50,000)
   var cobroAdmin=Math.round(p.montoPrestado*0.04);
   document.getElementById('ren-cliente-nombre').textContent=p.cliente;
-  var cuotaDiariaRen=p.Total_A_Cobrar>0?p.Total_A_Cobrar/30:0;
-  var diasPagadosRen=cuotaDiariaRen>0?Math.min(30,Math.floor(d.totalPagado/cuotaDiariaRen)):0;
-  document.getElementById('ren-progreso').textContent=diasPagadosRen+'/30';
+  var _esLargoR=(p.tipo==='Diario'||p.tipo==='Semanal')&&((p.cantidadDeQuincenas||30)*(p.diasPorCuota||1))>=60;
+  var _tdiasR=_esLargoR?60:30;
+  var cuotaDiariaRen=p.Total_A_Cobrar>0?p.Total_A_Cobrar/_tdiasR:0;
+  var diasPagadosRen=cuotaDiariaRen>0?Math.min(_tdiasR,Math.floor(d.totalPagado/cuotaDiariaRen)):0;
+  document.getElementById('ren-progreso').textContent=diasPagadosRen+'/'+_tdiasR;
   document.getElementById('ren-saldo-viejo').textContent='₡'+fmt(d.saldoPendiente);
   document.getElementById('ren-monto').value=fmt(p.montoPrestado);
   document.getElementById('ren-tasa').value=Math.round((p.tasaInteres||0.20)*100);
