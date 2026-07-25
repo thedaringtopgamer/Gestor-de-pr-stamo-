@@ -2487,15 +2487,6 @@ function guardarDatos(){
     localStorage.setItem('fjd_cobrosadmin',JSON.stringify(cobrosAdmin));
     localStorage.setItem('fjd_gastos',JSON.stringify(gastos));
     localStorage.setItem('fjd_renovaciones',JSON.stringify(renovaciones));
-    localStorage.setItem('fjd_inversiones',JSON.stringify(inversiones));
-    localStorage.setItem('fjd_cierres',JSON.stringify(cierres));
-    localStorage.setItem('fjd_cierres_diarios',JSON.stringify(cierresDiarios));
-    localStorage.setItem('fjd_cajas_cerradas',JSON.stringify(cajasCerradas));
-    localStorage.setItem('fjd_bases',JSON.stringify(bases));
-    localStorage.setItem('fjd_salidas',JSON.stringify(salidas));
-    localStorage.setItem('fjd_metas',JSON.stringify(metas));
-    localStorage.setItem('fjd_inv_overrides',JSON.stringify(invOverrides));
-    localStorage.setItem('fjd_clientes_bloqueados',JSON.stringify(clientesBloqueados));
     localStorage.setItem('fjd_ts',ts.toString());
   }catch(e){}
 
@@ -6409,10 +6400,12 @@ function exportarBackup(){
     inversiones:inversiones,
     cierres:cierres,
     cierresDiarios:cierresDiarios,
+    cajasCerradas:cajasCerradas,
     bases:bases,
     salidas:salidas,
     metas:metas,
-    invOverrides:invOverrides
+    invOverrides:invOverrides,
+    clientesBloqueados:clientesBloqueados
   };
   var json=JSON.stringify(datos,null,2);
   var blob=new Blob([json],{type:'application/json'});
@@ -6501,10 +6494,12 @@ function importarBackup(input){
       if(Array.isArray(datos.inversiones)) inversiones=datos.inversiones;
       if(Array.isArray(datos.cierres)) cierres=datos.cierres;
       if(Array.isArray(datos.cierresDiarios)) cierresDiarios=datos.cierresDiarios;
+      if(Array.isArray(datos.cajasCerradas)) cajasCerradas=datos.cajasCerradas;
       if(Array.isArray(datos.bases)) bases=datos.bases;
       if(Array.isArray(datos.salidas)) salidas=datos.salidas;
       if(Array.isArray(datos.metas)) metas=datos.metas;
       if(datos.invOverrides&&typeof datos.invOverrides==='object') invOverrides=datos.invOverrides;
+      if(Array.isArray(datos.clientesBloqueados)) clientesBloqueados=datos.clientesBloqueados;
       guardarDatos();
       toast('✓ Backup del '+_fechaBackup+' restaurado correctamente');
       closeMenu();
