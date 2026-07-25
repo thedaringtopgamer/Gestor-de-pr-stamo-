@@ -6986,6 +6986,17 @@ function fechaOffset(dias){
           }
         });
         if(_baseRenovFix2) setTimeout(guardarDatos,500);
+        // Congelar mensajeWA de pagos y renovaciones que no lo tienen aún
+        var _msgFix=false;
+        prestamos.forEach(function(p){
+          pagos.filter(function(x){return x.id_prestamo===p.id&&!x.mensajeWA;}).forEach(function(pg){
+            pg.mensajeWA=mensajeAbonoAt(p,pg.id_pago); _msgFix=true;
+          });
+          renovaciones.filter(function(x){return x.id_prestamo===p.id&&!x.mensajeWA;}).forEach(function(rv){
+            rv.mensajeWA=mensajeRenovacion(p,rv); _msgFix=true;
+          });
+        });
+        if(_msgFix) setTimeout(guardarDatos,800);
         // Cargar fotos por separado (excluidas del query principal para no sobrecargar)
         try{
           var rFotos=await fetch(SUPA_URL+'/rest/v1/app_data?select=value&key=eq.fotos',{headers:SUPA_HDR});
