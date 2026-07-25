@@ -4795,21 +4795,22 @@ function renderCuotasGrid(p,d){
     var n=i<10?'0'+i:''+i;
     var paid=i<=diasPagados;
     html+='<div class="cuota-cell '+(paid?'cuota-paid':'cuota-unpaid')+'"'
-      +(paid?' onclick="mostrarInfoCelda('+i+',\''+( diaPago[i]||'')+'\','+p.Total_A_Cobrar+')"':'')
+      +(paid?' onclick="mostrarInfoCelda('+i+',\''+( diaPago[i]||'')+'\','+p.Total_A_Cobrar+','+_tdias+')"':'')
       +'>'+n+'</div>';
   }
   grid.innerHTML=html;
 }
 
-function mostrarInfoCelda(dia,fechaPago,totalCobrar){
-  var cuotaDiaria=Math.round(totalCobrar/30); // totalCobrar ya viene del préstamo correcto
+function mostrarInfoCelda(dia,fechaPago,totalCobrar,totalDias){
+  var _td=totalDias||30;
+  var cuotaDiaria=Math.round(totalCobrar/_td);
   var meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   var fechaFmt='—';
   if(fechaPago){
     var parts=fechaPago.split('-');
     fechaFmt=parseInt(parts[2],10)+' de '+meses[parseInt(parts[1],10)-1]+' de '+parts[0];
   }
-  document.getElementById('celda-info-dia').textContent='Día '+dia+' de 30';
+  document.getElementById('celda-info-dia').textContent='Día '+dia+' de '+_td;
   document.getElementById('celda-info-monto').textContent='Cuota diaria: ₡'+fmt(cuotaDiaria);
   document.getElementById('celda-info-fecha').textContent='Pagado el '+fechaFmt;
   document.getElementById('celda-info').style.display='block';
