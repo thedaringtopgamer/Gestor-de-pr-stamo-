@@ -3907,9 +3907,9 @@ function selSemanasCustom(val){
     btn.style.background='#fff';
     btn.style.color='inherit';
   });
-  // >6 semanas → 40%
+  // >=6 semanas → 40%
   var tasaEl=document.getElementById('np-tasa');
-  if(tasaEl) tasaEl.value=n>6?'40':'20';
+  if(tasaEl) tasaEl.value=n>=6?'40':'20';
   calcPreview();
   calcProxFechaPago();
 }
@@ -4492,7 +4492,7 @@ function imprimirCuotas(){
     if(tipo==='QUINCENAL')tipo='QUINCENA';
     else if(tipo==='SEMANAL')tipo='SEMANA';
     else if(tipo==='DIARIO')tipo='DIA';
-    var _esLargo=(tipo==='DIA'||tipo==='SEMANA')&&(p.cantidadDeQuincenas||30)*(p.diasPorCuota||1)>=60;
+    var _esLargo=(tipo==='DIA'&&(p.cantidadDeQuincenas||30)>=60)||(tipo==='SEMANA'&&(p.cantidadDeQuincenas||5)>=6);
     var _tdias=_esLargo?60:30;
     var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/_tdias:0;
     var diasPagados=cuotaDiaria>0?Math.min(_tdias,Math.floor(d.totalPagado/cuotaDiaria)):0;
@@ -4584,7 +4584,7 @@ function imprimirTarjetas(){
     if(tipo==='QUINCENAL') tipo='QUINCENA';
     else if(tipo==='SEMANAL') tipo='SEMANA';
     else if(tipo==='DIARIO') tipo='DIA';
-    var _esLargo=(tipo==='DIA'||tipo==='SEMANA')&&(p.cantidadDeQuincenas||30)*(p.diasPorCuota||1)>=60;
+    var _esLargo=(tipo==='DIA'&&(p.cantidadDeQuincenas||30)>=60)||(tipo==='SEMANA'&&(p.cantidadDeQuincenas||5)>=6);
     var _tdias=_esLargo?60:30;
     var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/_tdias:0;
     var diasPagados=cuotaDiaria>0?Math.min(_tdias,Math.floor(d.totalPagado/cuotaDiaria)):0;
@@ -4683,7 +4683,7 @@ function verDetalle(id){
   estadoEl.innerHTML=estadoTag(d.estado);
   var tipo=p.tipo||'Quincenal';
   var n=p.cantidadDeQuincenas||1;
-  var _esLargo=(tipo==='Diario'||tipo==='Semanal')&&(n*(p.diasPorCuota||1))>=60;
+  var _esLargo=(tipo==='Diario'&&n>=60)||(tipo==='Semanal'&&n>=6);
   var _tdias=_esLargo?60:30;
   var cuotaDiaria=p.Total_A_Cobrar/_tdias;
   var diasPagados=cuotaDiaria>0?Math.min(_tdias,Math.floor(d.totalPagado/cuotaDiaria)):0;
@@ -4773,7 +4773,7 @@ function verDetalle(id){
 function renderCuotasGrid(p,d){
   var grid=document.getElementById('cuotas-grid');
   document.getElementById('celda-info').style.display='none';
-  var _esLargo=(p.tipo==='Diario'||p.tipo==='Semanal')&&((p.cantidadDeQuincenas||30)*(p.diasPorCuota||1))>=60;
+  var _esLargo=(p.tipo==='Diario'&&(p.cantidadDeQuincenas||30)>=60)||(p.tipo==='Semanal'&&(p.cantidadDeQuincenas||5)>=6);
   var _tdias=_esLargo?60:30;
   var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/_tdias:0;
   var diasPagados=cuotaDiaria>0?Math.min(_tdias,Math.floor(d.totalPagado/cuotaDiaria)):0;
@@ -4906,7 +4906,7 @@ function mensajeAbono(p){
   var ultimo=pp.length?pp[pp.length-1]:null;
   var montoAbonado=ultimo?ultimo.montoAbonado:0;
   // Progreso días/cuotas
-  var _esLargoM=( p.tipo==='Diario'||p.tipo==='Semanal')&&((p.cantidadDeQuincenas||30)*(p.diasPorCuota||1))>=60;
+  var _esLargoM=(p.tipo==='Diario'&&(p.cantidadDeQuincenas||30)>=60)||(p.tipo==='Semanal'&&(p.cantidadDeQuincenas||5)>=6);
   var _tdiasM=_esLargoM?60:30;
   var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/_tdiasM:0;
   var diasPagados=cuotaDiaria>0?Math.min(_tdiasM,Math.floor(d.totalPagado/cuotaDiaria)):0;
@@ -4946,7 +4946,7 @@ function mensajeAbonoAt(p, targetPagoId){
   var totalPagado=totalPagadoGlobal-(p.baseRenovacion||0);
   var saldoPendiente=Math.max(0,p.Total_A_Cobrar-totalPagado);
   var cuotasPagadas=Math.min(p.cantidadDeQuincenas,Math.floor(totalPagado/p.Cuota_Quincenal));
-  var _esLargoA=(p.tipo==='Diario'||p.tipo==='Semanal')&&((p.cantidadDeQuincenas||30)*(p.diasPorCuota||1))>=60;
+  var _esLargoA=(p.tipo==='Diario'&&(p.cantidadDeQuincenas||30)>=60)||(p.tipo==='Semanal'&&(p.cantidadDeQuincenas||5)>=6);
   var _tdiasA=_esLargoA?60:30;
   var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/_tdiasA:0;
   var diasPagados=cuotaDiaria>0?Math.min(_tdiasA,Math.floor(totalPagado/cuotaDiaria)):0;
@@ -5218,7 +5218,7 @@ function abrirRenovar(){
   // Cobro admin = 4% del monto prestado (₡2,000 por cada ₡50,000)
   var cobroAdmin=Math.round(p.montoPrestado*0.04);
   document.getElementById('ren-cliente-nombre').textContent=p.cliente;
-  var _esLargoR=(p.tipo==='Diario'||p.tipo==='Semanal')&&((p.cantidadDeQuincenas||30)*(p.diasPorCuota||1))>=60;
+  var _esLargoR=(p.tipo==='Diario'&&(p.cantidadDeQuincenas||30)>=60)||(p.tipo==='Semanal'&&(p.cantidadDeQuincenas||5)>=6);
   var _tdiasR=_esLargoR?60:30;
   var cuotaDiariaRen=p.Total_A_Cobrar>0?p.Total_A_Cobrar/_tdiasR:0;
   var diasPagadosRen=cuotaDiariaRen>0?Math.min(_tdiasR,Math.floor(d.totalPagado/cuotaDiariaRen)):0;
@@ -5307,7 +5307,7 @@ function calcRenovar(){
       document.querySelectorAll('[id^="rsem-"]').forEach(function(el){el.classList.remove('selected');});
       // ajustar tasa automático
       var tasaRenEl=document.getElementById('ren-tasa');
-      if(tasaRenEl && !document.getElementById('ren-digitar-check').checked) tasaRenEl.value=customSemVal>6?'40':'20';
+      if(tasaRenEl && !document.getElementById('ren-digitar-check').checked) tasaRenEl.value=customSemVal>=6?'40':'20';
     } else {
       var sem=document.querySelector('input[name="ren-sem"]:checked');
       var semVal=sem?parseInt(sem.value):6;
