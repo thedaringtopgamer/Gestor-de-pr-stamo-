@@ -5605,9 +5605,15 @@ function guardarCliente(){
   var necesitaVerif=clienteTemporal._necesitaVerificacion||false;
 
   // Bloquear duplicado por cédula (ignorar el propio cliente si está editando, y el cliente original)
-  var duplicado=prestamos.find(function(x){return x.cedula===cedula && x.id!==prevId && x.id!==clienteOriginalId;});
-  if(duplicado){
-    toast('⚠ Ya existe un cliente con esa cédula: '+duplicado.cliente);
+  var duplicadoCedula=cedula?prestamos.find(function(x){return x.cedula&&x.cedula===cedula&&x.id!==prevId&&x.id!==clienteOriginalId;}):null;
+  if(duplicadoCedula){
+    toast('⚠ Esa cédula ya pertenece a: '+duplicadoCedula.cliente);
+    return;
+  }
+  // Bloquear duplicado por nombre (ignorar el propio cliente si está editando, y el cliente original)
+  var duplicadoNombre=prestamos.find(function(x){return x.cliente&&x.cliente.toLowerCase()===nombre.toLowerCase()&&x.id!==prevId&&x.id!==clienteOriginalId;});
+  if(duplicadoNombre){
+    toast('⚠ Ya existe un cliente con ese nombre: '+duplicadoNombre.cliente+' (cédula: '+(duplicadoNombre.cedula||'sin cédula')+')');
     return;
   }
 
