@@ -5171,8 +5171,8 @@ function abonoRapido(id,nombre,cuota){
     pagos.push({
       id_pago:Date.now().toString(),
       id_prestamo:id,
-      fechaRegistro:hoyLocal(),
-      fechaPago:hoyLocal(),
+      fechaRegistro:diaOperativo(),
+      fechaPago:diaOperativo(),
       montoAbonado:cuota
     });
     if(pp){ var advance=calcDerived(pp).cuotasPagadas-cuotasAntes; _autoProximaFecha(pp,advance); }
@@ -5206,7 +5206,7 @@ function registrarAbono(){
     pagos.push({
       id_pago:Date.now().toString(),
       id_prestamo:currentId,
-      fechaRegistro:hoyLocal(),
+      fechaRegistro:diaOperativo(),
       fechaPago:fecha,
       montoAbonado:monto
     });
@@ -5474,7 +5474,7 @@ function confirmarRenovacion(){
   p.cantidadDeQuincenas=cuotas;
   p.diasPorCuota=diasPorCuota;
   p.tipo=tipo;
-  var fechaHoy=hoyLocal();
+  var fechaHoy=diaOperativo();
   p.fechaInicio=fechaHoy;
   p.estado='Activo';
   var adminMonto=readMoneyInput('ren-cobro-admin');
@@ -6197,7 +6197,15 @@ function togglePanelSec(sec){
 
 function renderPanelRecolector(){
   var fechaEl=document.getElementById('panel-fecha');
-  if(!fechaEl.value) fechaEl.value=diaOperativo();
+  var _diaOp=diaOperativo();
+  if(!fechaEl.value){
+    fechaEl.value=_diaOp;
+  } else if(!_panelHistoricoId){
+    // Auto-avanzar si el día operativo cambió (ej: app abierta de ayer, ahora son las 4am+)
+    var _ayer=new Date(_diaOp+'T12:00:00'); _ayer.setDate(_ayer.getDate()-1);
+    var _ayerStr2=_ayer.getFullYear()+'-'+String(_ayer.getMonth()+1).padStart(2,'0')+'-'+String(_ayer.getDate()).padStart(2,'0');
+    if(fechaEl.value===_ayerStr2) fechaEl.value=_diaOp;
+  }
   var fecha=fechaEl.value;
   // Persistir ruta actual del panel para restaurarla al recargar
   sessionStorage.setItem('fjd_panel_ruta',rutaActual||'todas');
