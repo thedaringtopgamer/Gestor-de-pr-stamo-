@@ -5221,8 +5221,13 @@ function _autoProximaFecha(p, advance){
   if(d.saldoPendiente<=0){ p.proximaFechaPago=null; return; }
   if(!advance||advance<=0) return; // pago parcial: la fecha se queda igual
   var base=p.proximaFechaPago?parseLocalDate(p.proximaFechaPago):parseLocalDate(p.fechaInicio);
-  base.setDate(base.getDate()+(p.diasPorCuota||15)*advance);
-  base=siguienteDiaHabil(base);
+  var tipo=p.tipo||'Quincenal';
+  if(tipo==='Diario'){
+    base=addDiasHabiles(base, advance);
+  } else {
+    base.setDate(base.getDate()+(p.diasPorCuota||15)*advance);
+    base=siguienteDiaHabil(base);
+  }
   p.proximaFechaPago=base.getFullYear()+'-'+String(base.getMonth()+1).padStart(2,'0')+'-'+String(base.getDate()).padStart(2,'0');
 }
 
