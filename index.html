@@ -4679,6 +4679,9 @@ function eliminarCliente(id){
   if(!confirm('¿Eliminar a '+p.cliente+'? Esta acción no se puede deshacer.')) return;
   prestamos=prestamos.filter(function(x){return x.id!==id;});
   pagos=pagos.filter(function(x){return x.id_prestamo!==id;});
+  renovaciones=renovaciones.filter(function(x){return x.id_prestamo!==id;});
+  cobrosAdmin=cobrosAdmin.filter(function(x){return x.id_prestamo!==id;});
+  gastos=gastos.filter(function(x){return x.id_prestamo!==id;});
   guardarDatos();
   renderTarjetas(document.getElementById('filtro-tarjetas').value);
   toast('✓ Cliente eliminado');
