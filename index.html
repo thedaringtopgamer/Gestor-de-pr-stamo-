@@ -2719,7 +2719,7 @@ function registrarInversion(){
   var nota=document.getElementById('inv-nota').value.trim();
   var rutaInv=document.getElementById('inv-ruta').value;
   if(!rutaInv||rutaInv==='todas'||rutaInv===''){toast('⚠ Debes elegir una ruta para la inyección');return;}
-  inversiones.push({id:Date.now().toString(),monto:monto,nota:nota,fecha:hoyLocal(),ruta:rutaInv});
+  inversiones.push({id:Date.now().toString(),monto:monto,nota:nota,fecha:diaOperativo(),ruta:rutaInv});
   guardarDatos();
   document.getElementById('inv-monto').value='';
   document.getElementById('inv-nota').value='';
