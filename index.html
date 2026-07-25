@@ -6598,7 +6598,7 @@ function importarBackup(input){
       if(datos.salidas&&typeof datos.salidas==='object') salidas=datos.salidas;
       if(datos.metas&&typeof datos.metas==='object') metas=datos.metas;
       if(datos.invOverrides&&typeof datos.invOverrides==='object') invOverrides=datos.invOverrides;
-      if(Array.isArray(datos.clientesBloqueados)) clientesBloqueados=datos.clientesBloqueados;
+      if(datos.clientesBloqueados&&typeof datos.clientesBloqueados==='object'&&!Array.isArray(datos.clientesBloqueados)) clientesBloqueados=datos.clientesBloqueados;
       guardarDatos();
       toast('✓ Backup del '+_fechaBackup+' restaurado correctamente');
       closeMenu();
