@@ -917,7 +917,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <input id="filtro-cobros" type="text" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none" placeholder="Buscar cliente...">
         <button class="btn btn-blue btn-sm" onclick="filtrarCobros()">Buscar</button>
       </div>
-      <button class="btn btn-cyan btn-full" style="margin-bottom:14px" onclick="imprimirCuotas()">🖨 Imprimir cuotas</button>
+      <button id="btn-imprimir-cuotas" class="btn btn-cyan btn-full" style="margin-bottom:14px" onclick="imprimirCuotas()">🖨 Imprimir cuotas</button>
       <div style="display:flex;justify-content:space-between;padding:0 4px 6px;border-bottom:1px solid var(--border);margin-bottom:4px">
         <span style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em">Cliente</span>
         <span style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em">SubRuta</span>
@@ -947,7 +947,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <input id="filtro-tarjetas" type="text" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none" placeholder="Buscar cliente… o /lunes /martes…">
         <button class="btn btn-blue btn-sm" onclick="filtrarTarjetas()">Buscar</button>
       </div>
-      <button class="btn btn-cyan btn-full" style="margin-bottom:14px" onclick="imprimirTarjetas()">🖨 Imprimir tarjetas</button>
+      <button id="btn-imprimir-tarjetas" class="btn btn-cyan btn-full" style="margin-bottom:14px" onclick="imprimirTarjetas()">🖨 Imprimir tarjetas</button>
       <div style="display:flex;justify-content:space-between;padding:0 4px 6px;border-bottom:1px solid var(--border);margin-bottom:4px">
         <span style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em">Cliente</span>
         <span style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em">Monto</span>
@@ -2023,6 +2023,11 @@ function mostrarApp(){
   var adminBtn=document.getElementById('admin-menu-btn');
   if(adminBtn) adminBtn.style.display=rolActual==='admin'?'block':'none';
   document.querySelectorAll('.gam-trigger').forEach(function(b){b.style.display=rolActual==='admin'?'block':'none';});
+  var _esAdmin=rolActual==='admin';
+  ['btn-imprimir-panel','btn-imprimir-cuotas','btn-imprimir-tarjetas'].forEach(function(id){
+    var b=document.getElementById(id);
+    if(b) b.style.display=_esAdmin?'':'none';
+  });
   var menuInv=document.getElementById('menu-inversion');
   if(menuInv) menuInv.style.display=rolActual==='admin'?'block':'none';
   var menuCajas=document.getElementById('menu-cajas');
