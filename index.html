@@ -5641,10 +5641,9 @@ function updateHome(){
   var atrasados=0, totalHoy=0;
   activos.forEach(function(p){
     if(p.incompleto) return;
-    var d=calcDerived(p);
-    var fecha=d.proximaFecha||p.fechaInicio||'';
-    if(fecha<hoy){ atrasados++; totalHoy++; }
-    else if(fecha===hoy){ totalHoy++; }
+    var estado=getEstadoCobro(p);
+    if(estado==='atrasado'){ atrasados++; totalHoy++; }
+    else if(estado==='hoy'){ totalHoy++; }
   });
   document.getElementById('home-total-prestamos').textContent=activos.length;
   document.getElementById('home-capital').textContent='₡'+fmt(capital);
