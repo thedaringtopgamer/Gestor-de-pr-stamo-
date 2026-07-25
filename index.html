@@ -3646,7 +3646,6 @@ function sincronizarSupabaseFondo(){
       if(row.key==='passwords'&&Array.isArray(row.value)) row.value.forEach(function(p,i){if(USUARIOS[i]&&p) USUARIOS[i].pass=p;});
       if(row.key==='acceso_clave'&&row.value&&row.value.user) ACCESO_USER=row.value.user;
       if(row.key==='acceso_clave'&&row.value&&row.value.pass_hash) ACCESO_PASS_HASH=row.value.pass_hash;
-      if(row.key==='acceso_clave'&&row.value&&row.value.user) ACCESO_USER=row.value.user;
       if(row.key==='admin_credentials'&&row.value&&row.value.user) ADMIN_USER=row.value.user;
       if(row.key==='admin_credentials'&&row.value&&row.value.pass_hash) ADMIN_PASS_HASH=row.value.pass_hash;
       if(row.key==='fotos'&&row.value&&typeof row.value==='object') fotosMapBg=row.value;
@@ -6891,7 +6890,6 @@ function fechaOffset(dias){
           if(row.key==='session_revoked_device'&&row.value&&typeof row.value==='object') window._sessionRevokedDevice=row.value;
           if(row.key==='acceso_clave'&&row.value&&row.value.user) ACCESO_USER=row.value.user;
           if(row.key==='acceso_clave'&&row.value&&row.value.pass_hash) ACCESO_PASS_HASH=row.value.pass_hash;
-          if(row.key==='acceso_clave'&&row.value&&row.value.user) ACCESO_USER=row.value.user;
           if(row.key==='admin_credentials'&&row.value&&row.value.user) ADMIN_USER=row.value.user;
           if(row.key==='admin_credentials'&&row.value&&row.value.pass_hash) ADMIN_PASS_HASH=row.value.pass_hash;
         });
