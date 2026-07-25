@@ -6014,18 +6014,27 @@ function eliminarCobroAdmin(caId){
 function eliminarRenovacion(renId){
   var rv=renovaciones.find(function(x){return x.id===renId;});
   if(!rv) return;
-  if(rv.fecha!==diaOperativo()){
-    var overlay2=document.getElementById('modal-overlay');
-    document.getElementById('modal-subtitulo').textContent='No se puede eliminar';
-    document.getElementById('modal-mensaje').textContent='Solo se puede eliminar una renovación el mismo día en que se hizo. Esta renovación es del '+rv.fecha+'.';
-    document.getElementById('modal-btn-si').style.display='none';
-    overlay2.style.display='flex';
-    return;
-  }
+  var _hoy=parseLocalDate(diaOperativo());
+  var _fRv=parseLocalDate(rv.fecha);
+  var _diasAtras=Math.floor((_hoy-_fRv)/86400000);
   var overlay=document.getElementById('modal-overlay');
   document.getElementById('modal-btn-si').style.display='';
+  if(_diasAtras>7){
+    document.getElementById('modal-subtitulo').textContent='No se puede eliminar';
+    document.getElementById('modal-mensaje').textContent='Solo se pueden eliminar renovaciones de los últimos 7 días. Esta es del '+rv.fecha+' (hace '+_diasAtras+' días).';
+    document.getElementById('modal-btn-si').style.display='none';
+    overlay.style.display='flex';
+    return;
+  }
+  if(!rv._prevState){
+    document.getElementById('modal-subtitulo').textContent='No se puede eliminar';
+    document.getElementById('modal-mensaje').textContent='Esta renovación no tiene datos de respaldo suficientes para revertirla sin corromper el préstamo. Contactá al administrador principal.';
+    document.getElementById('modal-btn-si').style.display='none';
+    overlay.style.display='flex';
+    return;
+  }
   document.getElementById('modal-subtitulo').textContent='Eliminar renovación';
-  document.getElementById('modal-mensaje').textContent='¿Eliminar la renovación de '+rv.cliente+'? Esto revierte el préstamo al estado anterior.';
+  document.getElementById('modal-mensaje').textContent='¿Eliminar la renovación de '+rv.cliente+'? El préstamo vuelve exactamente al estado anterior.';
   document.getElementById('modal-btn-si').textContent='Sí, eliminar';
   document.getElementById('modal-btn-si').style.background='#dc2626';
   overlay.style.display='flex';
@@ -6035,29 +6044,20 @@ function eliminarRenovacion(renId){
     // Restaurar el préstamo al estado anterior a la renovación
     var p=prestamos.find(function(x){return x.id===rv.id_prestamo;});
     if(p){
-      if(rv._prevState){
-        // Restauración completa desde snapshot guardado
-        p.montoPrestado=rv._prevState.montoPrestado;
-        p.tasaInteres=rv._prevState.tasaInteres;
-        p.Total_A_Cobrar=rv._prevState.Total_A_Cobrar;
-        p.Total_Intereses=rv._prevState.Total_Intereses;
-        p.Cuota_Quincenal=rv._prevState.Cuota_Quincenal;
-        p.cantidadDeQuincenas=rv._prevState.cantidadDeQuincenas;
-        p.diasPorCuota=rv._prevState.diasPorCuota;
-        p.tipo=rv._prevState.tipo;
-        p.fechaInicio=rv._prevState.fechaInicio;
-        p._fechaCreacion=rv._prevState._fechaCreacion||rv._prevState.fechaInicio;
-        p.proximaFechaPago=rv._prevState.proximaFechaPago;
-        p.baseRenovacion=rv._prevState.baseRenovacion;
-        p.estado=rv._prevState.estado||'Activo';
-      } else {
-        // Renovación antigua sin snapshot: restaurar usando saldoAnterior
-        var sumPagos=pagos.filter(function(x){return x.id_prestamo===p.id;}).reduce(function(s,x){return s+x.montoAbonado;},0);
-        p.Total_A_Cobrar=rv.saldoAnterior;
-        p.montoPrestado=rv.saldoAnterior;
-        p.Total_Intereses=0;
-        p.baseRenovacion=sumPagos;
-      }
+      // Restauración completa desde snapshot guardado
+      p.montoPrestado=rv._prevState.montoPrestado;
+      p.tasaInteres=rv._prevState.tasaInteres;
+      p.Total_A_Cobrar=rv._prevState.Total_A_Cobrar;
+      p.Total_Intereses=rv._prevState.Total_Intereses;
+      p.Cuota_Quincenal=rv._prevState.Cuota_Quincenal;
+      p.cantidadDeQuincenas=rv._prevState.cantidadDeQuincenas;
+      p.diasPorCuota=rv._prevState.diasPorCuota;
+      p.tipo=rv._prevState.tipo;
+      p.fechaInicio=rv._prevState.fechaInicio;
+      p._fechaCreacion=rv._prevState._fechaCreacion||rv._prevState.fechaInicio;
+      p.proximaFechaPago=rv._prevState.proximaFechaPago;
+      p.baseRenovacion=rv._prevState.baseRenovacion;
+      p.estado=rv._prevState.estado||'Activo';
     }
     renovaciones=renovaciones.filter(function(x){return x.id!==renId;});
     cobrosAdmin=cobrosAdmin.filter(function(x){return !(x.id_prestamo===rv.id_prestamo&&x.fecha===rv.fecha);});
