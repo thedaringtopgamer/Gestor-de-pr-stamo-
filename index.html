@@ -5895,7 +5895,7 @@ function marcarVerificado(){
   var p=prestamos.find(function(x){return x.id===currentId;});
   if(!p) return;
   var verif=clienteNecesitaVerificacion(p);
-  if(verif.razon==='Documentos incompletos'){toast('⚠ Faltan documentos antes de verificar');return;}
+  if(verif.necesita){toast('⚠ '+verif.razon+' — completá los documentos antes de verificar');return;}
   p.fechaVerificacion=hoyLocal();
   guardarDatos();
   toast('✓ Documentos verificados — próxima verificación en 2 meses');
