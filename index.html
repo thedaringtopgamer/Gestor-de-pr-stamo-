@@ -6838,11 +6838,12 @@ function fechaOffset(dias){
     else { _msg='⚠ Error de conexión.'; _sub='Código '+_ultimoCodigo+' — intente de nuevo.'; }
     var errDiv=document.createElement('div');
     errDiv.style.cssText='position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a8a);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999';
-    errDiv.innerHTML='<div style="font-size:80px;font-weight:900;color:#fff;letter-spacing:-3px">JD</div>'
-      +'<div style="font-size:14px;font-weight:700;color:#60a5fa;letter-spacing:8px;margin-bottom:32px">FINANCIERA</div>'
-      +'<div style="color:#f87171;font-size:15px;font-weight:600;text-align:center;padding:0 32px;margin-bottom:8px">'+_msg+'</div>'
-      +'<div style="color:#94a3b8;font-size:12px;text-align:center;padding:0 32px;margin-bottom:24px">'+_sub+'</div>'
-      +'<button onclick="location.reload()" style="background:#2563eb;color:#fff;border:none;border-radius:12px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px">↺ Reintentar</button>';
+    var _eLogo=document.createElement('div'); _eLogo.style.cssText='font-size:80px;font-weight:900;color:#fff;letter-spacing:-3px'; _eLogo.textContent='JD';
+    var _eSub=document.createElement('div'); _eSub.style.cssText='font-size:14px;font-weight:700;color:#60a5fa;letter-spacing:8px;margin-bottom:32px'; _eSub.textContent='FINANCIERA';
+    var _eMsg=document.createElement('div'); _eMsg.style.cssText='color:#f87171;font-size:15px;font-weight:600;text-align:center;padding:0 32px;margin-bottom:8px'; _eMsg.textContent=_msg;
+    var _eDetail=document.createElement('div'); _eDetail.style.cssText='color:#94a3b8;font-size:12px;text-align:center;padding:0 32px;margin-bottom:24px'; _eDetail.textContent=_sub;
+    var _eBtn=document.createElement('button'); _eBtn.style.cssText='background:#2563eb;color:#fff;border:none;border-radius:12px;padding:12px 32px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px'; _eBtn.textContent='↺ Reintentar'; _eBtn.onclick=function(){location.reload();};
+    errDiv.appendChild(_eLogo); errDiv.appendChild(_eSub); errDiv.appendChild(_eMsg); errDiv.appendChild(_eDetail); errDiv.appendChild(_eBtn);
     document.body.appendChild(errDiv);
     return;
   }
