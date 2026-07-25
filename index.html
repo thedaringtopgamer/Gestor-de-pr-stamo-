@@ -5169,12 +5169,14 @@ function abonoRapido(id,nombre,cuota){
     overlay.style.display='none';
     var pp=prestamos.find(function(x){return x.id===id;});
     var cuotasAntes=pp?calcDerived(pp).cuotasPagadas:0;
+    var _prevFecha=pp?pp.proximaFechaPago:null;
     pagos.push({
       id_pago:Date.now().toString(),
       id_prestamo:id,
       fechaRegistro:diaOperativo(),
       fechaPago:diaOperativo(),
-      montoAbonado:cuota
+      montoAbonado:cuota,
+      _prevProximaFecha:_prevFecha
     });
     if(pp){ var advance=calcDerived(pp).cuotasPagadas-cuotasAntes; _autoProximaFecha(pp,advance); }
     pagos[pagos.length-1].mensajeWA=mensajeAbono(pp);
@@ -5204,12 +5206,14 @@ function registrarAbono(){
     overlay.style.display='none';
     var pp2=prestamos.find(function(x){return x.id===currentId;});
     var cuotasAntes2=pp2?calcDerived(pp2).cuotasPagadas:0;
+    var _prevFecha2=pp2?pp2.proximaFechaPago:null;
     pagos.push({
       id_pago:Date.now().toString(),
       id_prestamo:currentId,
       fechaRegistro:diaOperativo(),
       fechaPago:fecha,
-      montoAbonado:monto
+      montoAbonado:monto,
+      _prevProximaFecha:_prevFecha2
     });
     if(pp2){ var advance2=calcDerived(pp2).cuotasPagadas-cuotasAntes2; _autoProximaFecha(pp2,advance2); }
     pagos[pagos.length-1].mensajeWA=mensajeAbono(pp2);
@@ -6130,20 +6134,15 @@ function eliminarAbono(pagoId){
   _modalCallback=function(){
     overlay.style.display='none';
     document.getElementById('modal-btn-si').style.background='#16a34a';
+    // Restaurar proximaFechaPago exactamente como estaba antes del abono
+    var _prevFechaRest=pg._prevProximaFecha!==undefined?pg._prevProximaFecha:null;
     pagos=pagos.filter(function(x){return x.id_pago!==pagoId;});
-    // Recalcular proximaFechaPago desde el calendario (sin el abono borrado)
     if(p){
       var dPost=calcDerived(p);
       if(dPost.saldoPendiente<=0){
         p.proximaFechaPago=null;
       } else {
-        var proxCuotaPost=dPost.cuotasPagadas+1;
-        if(proxCuotaPost<=p.cantidadDeQuincenas){
-          var vencPost=getCuotaVencimiento(p,proxCuotaPost);
-          p.proximaFechaPago=vencPost.getFullYear()+'-'+String(vencPost.getMonth()+1).padStart(2,'0')+'-'+String(vencPost.getDate()).padStart(2,'0');
-        } else {
-          p.proximaFechaPago=null;
-        }
+        p.proximaFechaPago=_prevFechaRest;
       }
     }
     guardarDatos();
