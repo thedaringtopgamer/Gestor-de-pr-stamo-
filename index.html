@@ -3513,7 +3513,7 @@ function _capturarDetalleCaja(fecha, ruta){
   // Gastos del día
   var gastosD=gastos.filter(function(x){ return x.fecha===fecha&&(ruta==='todas'||x.ruta===ruta); });
   // Cobros admin del día
-  var cobrosAdmD=cobrosAdmin.filter(function(x){ return x.fecha===fecha&&idsRuta.indexOf(x.id_prestamo)>=0; });
+  var cobrosAdmD=cobrosAdmin.filter(function(x){ return !x._ocultarPanel&&x.fecha===fecha&&idsRuta.indexOf(x.id_prestamo)>=0; });
   return {
     cobros: pagosD.map(function(x){ return {cliente:x.cliente||'',monto:x.montoAbonado,id_prestamo:x.id_prestamo}; }),
     nuevos: nuevosD.map(function(p){ return {cliente:p.cliente,monto:p.montoPrestado,subruta:p.subruta||''}; }),
@@ -6131,6 +6131,46 @@ function quitarDelPanelHoy(pagoId){
   toast('✓ Cobro quitado del panel de hoy');
 }
 
+function quitarCobroAdminDePanel(caId){
+  var ca=cobrosAdmin.find(function(x){return x.id===caId;});
+  if(!ca) return;
+  var overlay=document.getElementById('modal-overlay');
+  document.getElementById('modal-subtitulo').textContent='Quitar del panel';
+  document.getElementById('modal-mensaje').textContent='¿Quitar el cobro administrativo de '+ca.cliente+' (₡'+fmt(ca.monto)+') del panel? No se borra el registro.';
+  document.getElementById('modal-btn-si').textContent='Sí, quitar';
+  document.getElementById('modal-btn-si').style.background='#dc2626';
+  overlay.style.display='flex';
+  _modalCallback=function(){
+    overlay.style.display='none';
+    document.getElementById('modal-btn-si').style.background='#16a34a';
+    ca._ocultarPanel=true;
+    guardarDatos();
+    renderPanelRecolector();
+    toast('✓ Cobro admin quitado del panel');
+  };
+  document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
+}
+
+function quitarRenovDePanel(renId){
+  var rv=renovaciones.find(function(x){return x.id===renId;});
+  if(!rv) return;
+  var overlay=document.getElementById('modal-overlay');
+  document.getElementById('modal-subtitulo').textContent='Quitar del panel';
+  document.getElementById('modal-mensaje').textContent='¿Quitar la renovación de '+rv.cliente+' del panel? No se revierte ni se borra.';
+  document.getElementById('modal-btn-si').textContent='Sí, quitar';
+  document.getElementById('modal-btn-si').style.background='#dc2626';
+  overlay.style.display='flex';
+  _modalCallback=function(){
+    overlay.style.display='none';
+    document.getElementById('modal-btn-si').style.background='#16a34a';
+    rv._ocultarPanel=true;
+    guardarDatos();
+    renderPanelRecolector();
+    toast('✓ Renovación quitada del panel');
+  };
+  document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
+}
+
 function eliminarAbono(pagoId){
   var pg=pagos.find(function(x){return x.id_pago===pagoId;});
   if(!pg) return;
@@ -6376,7 +6416,7 @@ function renderPanelRecolector(userPickedDate){
     :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros registrados</p>';
 
   // Cobros admin de esta ruta
-  var adminHoy=cobrosAdmin.filter(function(x){return x.fecha===fecha && idsRuta.indexOf(x.id_prestamo)!==-1;});
+  var adminHoy=cobrosAdmin.filter(function(x){return !x._ocultarPanel&&x.fecha===fecha && idsRuta.indexOf(x.id_prestamo)!==-1;});
   var totalAdmin=adminHoy.reduce(function(s,x){return s+x.monto;},0);
   document.getElementById('panel-stat-admin').textContent='₡'+fmt(totalAdmin);
   document.getElementById('panel-admin-lista').innerHTML=adminHoy.length
@@ -6401,7 +6441,7 @@ function renderPanelRecolector(userPickedDate){
           '<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">'+fechaFmt+'</td>'+
           '<td style="padding:16px 12px;text-align:center;white-space:nowrap">'+
             (p?'<button style="background:#dbeafe;color:#1e40af;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-right:3px" onclick="verDetalle(\''+p.id+'\')">Ver</button>':'')+
-            (rolActual==='admin'?'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer" onclick="eliminarCobroAdmin(\''+ca.id+'\')">✕</button>':'')+
+            (rolActual==='admin'?'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer" onclick="quitarCobroAdminDePanel(\''+ca.id+'\')">✕</button>':'')+
           '</td>'+
           '</tr>';
       }).join('')
@@ -6417,7 +6457,7 @@ function renderPanelRecolector(userPickedDate){
       ?renovHoy.map(function(rv){
         return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">'
           +'<div><div style="font-size:13px;font-weight:600">'+rv.cliente+'</div><div style="font-size:11px;color:var(--text-muted)">₡'+fmt(rv.montoNuevo)+' · '+rv.tipo+'</div></div>'
-          +'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer" onclick="eliminarRenovacion(\''+rv.id+'\')">🗑 Eliminar</button>'
+          +'<button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer" onclick="quitarRenovDePanel(\''+rv.id+'\')">✕ Quitar</button>'
           +'</div>';
       }).join('')
       :'<p style="font-size:13px;color:var(--text-muted)">Sin renovaciones</p>';
