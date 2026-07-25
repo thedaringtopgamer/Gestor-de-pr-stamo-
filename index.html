@@ -5018,6 +5018,7 @@ function mensajeAbonoAt(p, targetPagoId){
 }
 
 function mensajeRenovacion(p, rv){
+  if(rv&&rv.mensajeWA) return rv.mensajeWA;
   var diasSemRen=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
   var fechaProx;
   if(p.proximaFechaPago){
@@ -5479,6 +5480,8 @@ function confirmarRenovacion(){
     _prevState:_prevState});
   // ren-fecha ya ES la próxima fecha de pago, guardarla directo
   p.proximaFechaPago=fecha;
+  // Congelar mensaje WhatsApp de renovación en el momento exacto
+  renovaciones[renovaciones.length-1].mensajeWA=mensajeRenovacion(p,renovaciones[renovaciones.length-1]);
   guardarDatos();
   currentId=p.id;
   toast('✓ Préstamo renovado correctamente');
