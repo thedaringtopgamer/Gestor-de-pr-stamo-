@@ -1857,10 +1857,9 @@ function entrarComoRuta(ruta){
   _registrarLoginNube(_getDeviceId(),ruta);
   mostrarApp();
 }
-var ADMIN_USER='TheDaring';
+var ADMIN_USER='';
 var ADMIN_PASS_HASH='';
-var ADMIN_PASS_LEGACY='';
-var ACCESO_USER='Financiera JD';
+var ACCESO_USER='';
 var ACCESO_PASS_HASH='';
 
 function _sha256(str){
@@ -1910,12 +1909,12 @@ function loginAdmin(){
     err.style.display='block';
     document.getElementById('login-pass-admin').value='';
   }
-  if(ADMIN_PASS_HASH&&/^[a-f0-9]{64}$/.test(ADMIN_PASS_HASH)){
+  if(!ADMIN_PASS_HASH){
+    _adminFail();
+  } else {
     _sha256(p).then(function(hash){
       if(u===ADMIN_USER&&hash===ADMIN_PASS_HASH) _adminOk(); else _adminFail();
     });
-  } else {
-    if(u===ADMIN_USER&&p===ADMIN_PASS_LEGACY) _adminOk(); else _adminFail();
   }
 }
 function loginMostrarAdmin(){
@@ -3632,10 +3631,10 @@ function sincronizarSupabaseFondo(){
       if(row.key==='clientes_bloqueados'&&row.value&&typeof row.value==='object') clientesBloqueados=row.value;
       if(row.key==='passwords'&&Array.isArray(row.value)) row.value.forEach(function(p,i){if(USUARIOS[i]&&p) USUARIOS[i].pass=p;});
       if(row.key==='acceso_clave'&&row.value&&row.value.user) ACCESO_USER=row.value.user;
-      if(row.key==='acceso_clave'&&row.value&&(row.value.pass_hash||row.value.pass)) ACCESO_PASS_HASH=row.value.pass_hash||row.value.pass;
+      if(row.key==='acceso_clave'&&row.value&&row.value.pass_hash) ACCESO_PASS_HASH=row.value.pass_hash;
+      if(row.key==='acceso_clave'&&row.value&&row.value.user) ACCESO_USER=row.value.user;
       if(row.key==='admin_credentials'&&row.value&&row.value.user) ADMIN_USER=row.value.user;
       if(row.key==='admin_credentials'&&row.value&&row.value.pass_hash) ADMIN_PASS_HASH=row.value.pass_hash;
-      if(row.key==='admin_pass'&&row.value&&typeof row.value==='string') ADMIN_PASS_LEGACY=row.value;
       if(row.key==='fotos'&&row.value&&typeof row.value==='object') fotosMapBg=row.value;
       if(row.key==='cierres_diarios'&&Array.isArray(row.value)) cierresDiarios=row.value;
       if(row.key==='cajas_cerradas'&&row.value&&typeof row.value==='object') cajasCerradas=row.value;
@@ -6581,7 +6580,6 @@ function cambiarPasswordAdmin(){
     modal.style.display='none';
     _sha256(nueva).then(function(hash){
       ADMIN_PASS_HASH=hash;
-      ADMIN_PASS_LEGACY='';
       fetch(SUPA_URL+'/rest/v1/app_data?key=eq.admin_credentials',{method:'GET',headers:SUPA_HDR})
       .then(function(r){return r.ok?r.json():[];}).then(function(rows){
         var method=rows&&rows.length?'PATCH':'POST';
@@ -6782,10 +6780,10 @@ function fechaOffset(dias){
           if(row.key==='session_revoked'&&row.value&&typeof row.value==='object') window._sessionRevoked=row.value;
           if(row.key==='session_revoked_device'&&row.value&&typeof row.value==='object') window._sessionRevokedDevice=row.value;
           if(row.key==='acceso_clave'&&row.value&&row.value.user) ACCESO_USER=row.value.user;
-          if(row.key==='acceso_clave'&&row.value&&(row.value.pass_hash||row.value.pass)) ACCESO_PASS_HASH=row.value.pass_hash||row.value.pass;
+          if(row.key==='acceso_clave'&&row.value&&row.value.pass_hash) ACCESO_PASS_HASH=row.value.pass_hash;
+          if(row.key==='acceso_clave'&&row.value&&row.value.user) ACCESO_USER=row.value.user;
           if(row.key==='admin_credentials'&&row.value&&row.value.user) ADMIN_USER=row.value.user;
           if(row.key==='admin_credentials'&&row.value&&row.value.pass_hash) ADMIN_PASS_HASH=row.value.pass_hash;
-          if(row.key==='admin_pass'&&row.value&&typeof row.value==='string') ADMIN_PASS_LEGACY=row.value;
         });
         // Reparar baseRenovacion corruptos una sola vez al cargar
         var _baseRenovFix2=false;
