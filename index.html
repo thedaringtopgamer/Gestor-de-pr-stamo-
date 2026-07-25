@@ -5464,6 +5464,13 @@ function confirmarRenovacion(){
     _fechaCreacion:p._fechaCreacion,
     proximaFechaPago:p.proximaFechaPago,baseRenovacion:p.baseRenovacion||0,estado:p.estado
   };
+  // Congelar mensajes de abonos y renovaciones anteriores sin mensajeWA, antes de modificar p
+  pagos.filter(function(x){return x.id_prestamo===p.id&&!x.mensajeWA;}).forEach(function(pg){
+    pg.mensajeWA=mensajeAbonoAt(p,pg.id_pago);
+  });
+  renovaciones.filter(function(x){return x.id_prestamo===p.id&&!x.mensajeWA;}).forEach(function(rv){
+    rv.mensajeWA=mensajeRenovacion(p,rv);
+  });
   // Guardar cuánto se había pagado antes de renovar (para que calcDerived ignore esos pagos)
   p.baseRenovacion=(p.baseRenovacion||0)+d.totalPagado;
   // Actualizar la misma tarjeta con los nuevos valores
