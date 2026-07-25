@@ -6299,11 +6299,24 @@ function imprimirPanelRecolector(){
   if(cajEl) cajEl.style.display='block';
   var cajaBase=document.getElementById('caja-base-wrap');
   var prevCajaBase='';
-  if(cajaBase){ prevCajaBase=cajaBase.style.display; cajaBase.style.display=(rolActual==='admin')?'':'none'; }
+  if(cajaBase){ prevCajaBase=cajaBase.style.display; cajaBase.style.display='none'; }
+  // Mostrar fecha como texto para impresión (aunque sea admin)
+  var fechaEl=document.getElementById('panel-fecha');
+  var fechaRO=document.getElementById('panel-fecha-readonly');
+  var prevRODisplay=fechaRO?fechaRO.style.display:'';
+  var prevFechaDisplay=fechaEl?fechaEl.style.display:'';
+  if(fechaEl&&fechaRO){
+    var _fp=fechaEl.value.split('-');
+    fechaRO.textContent=_fp.length===3?_fp[2]+'/'+_fp[1]+'/'+_fp[0]:fechaEl.value;
+    fechaRO.style.display='';
+    fechaEl.style.display='none';
+  }
   window.print();
   setTimeout(function(){
     if(cajEl) cajEl.style.display=prevCaj;
     if(cajaBase) cajaBase.style.display=prevCajaBase;
+    if(fechaRO) fechaRO.style.display=prevRODisplay;
+    if(fechaEl) fechaEl.style.display=prevFechaDisplay;
   },500);
 }
 
