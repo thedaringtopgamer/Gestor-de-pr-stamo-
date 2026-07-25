@@ -4975,7 +4975,12 @@ function mensajeAbonoAt(p, targetPagoId){
   var montoAbonado=pp[idx].montoAbonado;
   var pagosHasta=pp.slice(0,idx+1);
   var totalPagadoGlobal=pagosHasta.reduce(function(s,x){return s+x.montoAbonado;},0);
-  var totalPagado=totalPagadoGlobal-(p.baseRenovacion||0);
+  // Encontrar baseRenovacion vigente en el momento del pago
+  var _targetFecha=pp[idx].fechaPago;
+  var _rensDelP=renovaciones.filter(function(rv){return rv.id_prestamo===p.id;}).sort(function(a,b){return a.fecha.localeCompare(b.fecha);});
+  var _primerRenDespues=_rensDelP.find(function(rv){return rv.fecha>_targetFecha;});
+  var _baseAtTime=(_primerRenDespues&&_primerRenDespues._prevState)?(_primerRenDespues._prevState.baseRenovacion||0):(p.baseRenovacion||0);
+  var totalPagado=totalPagadoGlobal-_baseAtTime;
   var saldoPendiente=Math.max(0,p.Total_A_Cobrar-totalPagado);
   var cuotasPagadas=Math.min(p.cantidadDeQuincenas,Math.floor(totalPagado/p.Cuota_Quincenal));
   var _esLargoA=(p.tipo==='Diario'&&(p.cantidadDeQuincenas||30)>=60)||(p.tipo==='Semanal'&&(p.cantidadDeQuincenas||5)>6);
