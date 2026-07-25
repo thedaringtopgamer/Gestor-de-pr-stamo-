@@ -6505,7 +6505,7 @@ function renderPanelRecolector(userPickedDate){
     :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros administrativos</p>';
 
   // Renovaciones del día
-  var renovHoy=renovaciones.filter(function(x){return x.fecha===fecha && idsRuta.indexOf(x.id_prestamo)!==-1;});
+  var renovHoy=renovaciones.filter(function(x){return x.fecha===fecha && idsRuta.indexOf(x.id_prestamo)!==-1 && !x._ocultarPanel;});
   var panelRenov=document.getElementById('panel-renov-lista');
   if(panelRenov){
     document.getElementById('panel-stat-renov').textContent=renovHoy.length+' renovación'+(renovHoy.length!==1?'es':'');
