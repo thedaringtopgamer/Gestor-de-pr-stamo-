@@ -3680,10 +3680,10 @@ function sincronizarSupabaseFondo(){
       localStorage.setItem('fjd_ts',tsRemoto.toString());
     }catch(e){}
     _chequearCajaCerrada();
-    var pantalla=localStorage.getItem('fjd_pantalla')||'screen-cobros';
+    try{ updateHome(); }catch(e){}
+    var pantalla=sessionStorage.getItem('fjd_pantalla')||'screen-cobros';
     if(pantalla==='screen-cobros') { renderCobros(); renderTarjetas(); }
     else if(pantalla==='screen-tarjetas') renderTarjetas();
-    else if(pantalla==='screen-home') updateHome();
     else if(pantalla==='screen-panel'||pantalla==='screen-panel-recolector') renderPanelRecolector();
   }).catch(function(){});
 }
