@@ -4295,9 +4295,10 @@ function renderCobros(filtro){
     if(clientesBloqueados[p.id]){p.bloqueado=true;p.motivoBloqueo=p.motivoBloqueo||clientesBloqueados[p.id].motivo||'';}
   });
 
-  var totalHoy=items.filter(function(p){return getEstadoCobro(p)==='hoy';}).length;
   var totalAtrasados=items.filter(function(p){return getEstadoCobro(p)==='atrasado';}).length;
-  document.getElementById('cobros-titulo').textContent='Hoy ('+totalHoy+') · Atrasados ('+totalAtrasados+')';
+  var tituloStr='Hoy ('+items.length+')';
+  if(totalAtrasados>0) tituloStr+=' · Atrasados ('+totalAtrasados+')';
+  document.getElementById('cobros-titulo').textContent=tituloStr;
 
   if(!items.length){
     lista.innerHTML='<div style="padding:14px"><span class="no-data">No hay cobros para hoy ni atrasados.</span></div>';
