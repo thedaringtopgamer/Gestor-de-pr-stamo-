@@ -6332,11 +6332,11 @@ function renderPanelRecolector(){
     :(salidaGuardada+inyeccionHoy);
   if(inputSalida) inputSalida.value=salidaDisplay>0?fmt(salidaDisplay):'';
   var cajaTotal=baseConInyeccion+recogidaTotal-totalSoloNuevos-totalEntregadoRenov-totalAdminRenov-totalGastos;
-  document.getElementById('caja-recogida').textContent='₡'+fmt(recogidaTotal);
-  document.getElementById('caja-base-display').textContent='₡'+fmt(baseConInyeccion);
-  document.getElementById('caja-prestamos').textContent='₡'+fmt(prestamosTotal);
-  document.getElementById('caja-gastos').textContent='₡'+fmt(totalGastos);
-  document.getElementById('caja-total').textContent='₡'+fmt(cajaTotal);
+  _setCajaEl('caja-recogida','₡'+fmt(recogidaTotal));
+  _setCajaEl('caja-base-display','₡'+fmt(baseConInyeccion));
+  _setCajaEl('caja-prestamos','₡'+fmt(prestamosTotal));
+  _setCajaEl('caja-gastos','₡'+fmt(totalGastos));
+  _setCajaEl('caja-total','₡'+fmt(cajaTotal));
   document.getElementById('panel-stat-caja').textContent='Total: ₡'+fmt(cajaTotal);
 
   // Guardar proactivamente la caja de HOY como base de MAÑANA
@@ -6678,12 +6678,12 @@ function mostrarResumenCaja(){
   else if(bases['_cf_'+_bkModal]!==undefined) baseGuardada=parseInt(bases['_cf_'+_bkModal])||0;
   else baseGuardada=parseInt(bases[_bkModal])||0;
   document.getElementById('caja-base-modal').value=baseGuardada>0?fmt(baseGuardada):'';
-  document.getElementById('caja-recogida').textContent='₡'+fmt(recogida);
-  document.getElementById('caja-prestamos').textContent='₡'+fmt(prestamosHoy);
-  document.getElementById('caja-gastos').textContent='₡'+fmt(totalGastos);
   var base=baseGuardada;
-  document.getElementById('caja-base-display').textContent='₡'+fmt(base);
-  document.getElementById('caja-total').textContent='₡'+fmt(recogida+base-prestamosHoy-totalGastos);
+  _setCajaEl('caja-recogida','₡'+fmt(recogida));
+  _setCajaEl('caja-prestamos','₡'+fmt(prestamosHoy));
+  _setCajaEl('caja-gastos','₡'+fmt(totalGastos));
+  _setCajaEl('caja-base-display','₡'+fmt(base));
+  _setCajaEl('caja-total','₡'+fmt(recogida+base-prestamosHoy-totalGastos));
   document.getElementById('caja-modal').style.display='flex';
 }
 function guardarBase(){
@@ -6720,6 +6720,7 @@ function guardarSalida(){
   renderPanelRecolector();
   toast('✓ Salida guardada: ₡'+fmt(salida));
 }
+function _setCajaEl(id,texto){document.querySelectorAll('[id="'+id+'"]').forEach(function(el){el.textContent=texto;});}
 function calcCaja(){
   var fecha=document.getElementById('panel-fecha').value||diaOperativo();
   var base=readMoneyInput('caja-base-modal');
@@ -6728,8 +6729,8 @@ function calcCaja(){
   var recogida=pagos.filter(function(x){return x.fechaPago===fecha&&idsR.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
   var prestamosHoy=pRuta.filter(function(p){return p.fechaInicio===fecha&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
   var totalGastos=gastos.filter(function(x){return x.fecha===fecha&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
-  document.getElementById('caja-base-display').textContent='₡'+fmt(base);
-  document.getElementById('caja-total').textContent='₡'+fmt(recogida+base-prestamosHoy-totalGastos);
+  _setCajaEl('caja-base-display','₡'+fmt(base));
+  _setCajaEl('caja-total','₡'+fmt(recogida+base-prestamosHoy-totalGastos));
 }
 function guardarBaseModal(){
   var fecha=document.getElementById('panel-fecha').value||diaOperativo();
