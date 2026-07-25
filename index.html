@@ -2467,38 +2467,19 @@ var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 var SUPA_HDR={'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY};
 
 async function fixFechas(){
-  var MIDNIGHT=1753423200000,CUATRO_AM=1753437600000;
   var rp=await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.pagos',{headers:SUPA_HDR});
   var dp=await rp.json();
   var pgs=dp[0].value;
-  var mp=0;
-  pgs=pgs.map(function(p){
-    var id=parseInt(p.id);
-    if(!isNaN(id)&&id>=MIDNIGHT&&id<=CUATRO_AM&&p.fechaRegistro==='2026-07-25'){
-      mp++;
-      console.log('Pago movido:',p.id,p.fechaRegistro,'->','2026-07-24');
-      return Object.assign({},p,{fechaRegistro:'2026-07-24',fechaPago:p.fechaPago==='2026-07-25'?'2026-07-24':p.fechaPago});
-    }
-    return p;
-  });
-  console.log('Pagos modificados:',mp);
+  var del25=pgs.filter(function(p){return p.fechaRegistro==='2026-07-25';});
+  console.log('Pagos con fecha 25:',del25.length);
+  del25.forEach(function(p){console.log('  id='+p.id+' monto='+p.monto+' fechaRegistro='+p.fechaRegistro+' fechaPago='+p.fechaPago);});
   var rr=await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.renovaciones',{headers:SUPA_HDR});
   var dr=await rr.json();
   var ren=dr[0].value;
-  var mr=0;
-  ren=ren.map(function(r){
-    var id=parseInt(r.id);
-    if(!isNaN(id)&&id>=MIDNIGHT&&id<=CUATRO_AM&&r.fecha==='2026-07-25'){
-      mr++;
-      console.log('Renovacion movida:',r.id,r.fecha,'->','2026-07-24');
-      return Object.assign({},r,{fecha:'2026-07-24'});
-    }
-    return r;
-  });
-  console.log('Renovaciones modificadas:',mr);
-  await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.pagos',{method:'PATCH',headers:SUPA_HDR,body:JSON.stringify({value:pgs})});
-  await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.renovaciones',{method:'PATCH',headers:SUPA_HDR,body:JSON.stringify({value:ren})});
-  console.log('LISTO. Pagos:'+mp+' Renovaciones:'+mr+'. Recarga la pagina.');
+  var ren25=ren.filter(function(r){return r.fecha==='2026-07-25';});
+  console.log('Renovaciones con fecha 25:',ren25.length);
+  ren25.forEach(function(r){console.log('  id='+r.id+' fecha='+r.fecha);});
+  console.log('--- Copia estos IDs y dime cuales mover ---');
 }
 var prestamos = [];
 var pagos = [];
