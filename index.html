@@ -4987,11 +4987,18 @@ function mensajeAbonoAt(p, targetPagoId){
   var _tdiasA=_esLargoA?60:30;
   var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/_tdiasA:0;
   var diasPagados=cuotaDiaria>0?Math.min(_tdiasA,Math.floor(totalPagado/cuotaDiaria)):0;
-  var proxCuota=cuotasPagadas+1;
   var fechaProxStr='Préstamo cancelado ✅';
-  if(proxCuota<=p.cantidadDeQuincenas && saldoPendiente>0){
-    var fp=getCuotaVencimiento(p,proxCuota);
-    fechaProxStr=fmtFechaWA(fp);
+  if(saldoPendiente>0){
+    // Usar el siguiente pago real del historial; si no existe, calcular desde la fecha del pago actual
+    var sigPago=pp[idx+1];
+    if(sigPago){
+      fechaProxStr=fmtFechaWA(parseLocalDate(sigPago.fechaPago));
+    } else {
+      var _diasC=p.diasPorCuota||1;
+      var _fpBase=parseLocalDate(pp[idx].fechaPago);
+      _fpBase.setDate(_fpBase.getDate()+_diasC);
+      fechaProxStr=fmtFechaWA(_fpBase);
+    }
   }
   return '📋 *Nota Informativa de Pago*\n'
     +'_Financiera JD_\n'
