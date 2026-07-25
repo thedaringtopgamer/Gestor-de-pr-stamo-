@@ -237,11 +237,11 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
   input,textarea{-webkit-user-select:text;user-select:text}
   @media print{
     #nav-bar,#desktop-sidebar,.gam-trigger,#global-admin-menu,.toast,#modal-overlay,
-    #_panel-fecha-wrap button,#panel-fecha{display:none!important}
+    #panel-fecha,#btn-imprimir-panel{display:none!important}
     #panel-fecha-readonly{display:block!important}
     .screen{display:none!important}
     #screen-panel-recolector{display:block!important}
-    #panel-sec-gastos,#panel-sec-nuevos,#panel-sec-cobros,#panel-sec-admin,#panel-sec-renov,#panel-sec-caja{display:block!important}
+    #panel-sec-caja{display:block!important}
     body,html{background:#fff!important}
     #app{padding:0!important}
   }
@@ -1327,7 +1327,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <span style="font-size:13px;color:var(--text-muted);font-weight:500">Fecha:</span>
         <input type="date" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="panel-fecha" onchange="renderPanelRecolector(true)" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
         <span id="panel-fecha-readonly" style="display:none;flex:1;padding:7px 10px;font-size:13px;font-weight:600;color:var(--text)"></span>
-        <button onclick="imprimirPanelRecolector()" style="background:#1e40af;color:#fff;border:none;border-radius:var(--radius);padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">🖨 Imprimir</button>
+        <button id="btn-imprimir-panel" onclick="imprimirPanelRecolector()" style="background:#1e40af;color:#fff;border:none;border-radius:var(--radius);padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">🖨 Imprimir</button>
       </div>
       <div id="_panel-hist-botones-reales" style="display:flex;gap:8px;margin-bottom:14px">
         <button class="btn btn-green btn-full" style="padding:11px;font-size:13px" onclick="goTo('screen-nuevo-cliente')">➕ Nuevo Préstamo</button>
@@ -6277,22 +6277,15 @@ function eliminarRenovacion(renId){
 }
 
 function imprimirPanelRecolector(){
-  var secs=['gastos','nuevos','cobros','admin','renov','caja'];
-  var prev={};
-  secs.forEach(function(s){
-    var el=document.getElementById('panel-sec-'+s);
-    prev[s]=el?el.style.display:'';
-    if(el) el.style.display='block';
-  });
-  var prevCajaBase='';
+  var cajEl=document.getElementById('panel-sec-caja');
+  var prevCaj=cajEl?cajEl.style.display:'';
+  if(cajEl) cajEl.style.display='block';
   var cajaBase=document.getElementById('caja-base-wrap');
+  var prevCajaBase='';
   if(cajaBase){ prevCajaBase=cajaBase.style.display; cajaBase.style.display=(rolActual==='admin')?'':'none'; }
   window.print();
   setTimeout(function(){
-    secs.forEach(function(s){
-      var el=document.getElementById('panel-sec-'+s);
-      if(el) el.style.display=prev[s];
-    });
+    if(cajEl) cajEl.style.display=prevCaj;
     if(cajaBase) cajaBase.style.display=prevCajaBase;
   },500);
 }
@@ -6335,9 +6328,11 @@ function renderPanelRecolector(userPickedDate){
   var _fechaRO=document.getElementById('panel-fecha-readonly');
   if(rolActual==='admin'){
     fechaEl.style.display='';
+    fechaEl.disabled=false;
     if(_fechaRO) _fechaRO.style.display='none';
   } else {
     fechaEl.style.display='none';
+    fechaEl.disabled=true;
     if(_fechaRO){
       var _fp=fecha.split('-');
       _fechaRO.textContent=_fp.length===3?_fp[2]+'/'+_fp[1]+'/'+_fp[0]:fecha;
