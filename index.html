@@ -2884,8 +2884,8 @@ function abrirListaMora(){
       var d=calcDerived(p);
       return '<div onclick="verDetalle(\''+p.id+'\')" style="padding:14px 0;border-bottom:1px solid #fee2e2;cursor:pointer">'
         +'<div style="display:flex;justify-content:space-between;align-items:center">'
-        +'<div><div style="font-weight:700;font-size:14px;color:#1e293b">'+p.cliente+'</div>'
-        +(p.subruta?'<div style="font-size:11px;color:#6b7280">'+p.subruta+'</div>':'')
+        +'<div><div style="font-weight:700;font-size:14px;color:#1e293b">'+esc(p.cliente)+'</div>'
+        +(p.subruta?'<div style="font-size:11px;color:#6b7280">'+esc(p.subruta)+'</div>':'')
         +'</div>'
         +'<div style="text-align:right"><div style="font-weight:800;font-size:15px;color:#dc2626">₡'+fmt(d.montoPorPagar)+'</div>'
         +'<div style="font-size:10px;color:#9ca3af">cuota atrasada</div></div>'
@@ -2911,7 +2911,7 @@ function _verListaNuevos(tipo){
       var fi=(p._fechaCreacion||p.fechaInicio||'').split('-');
       var fd=fi.length===3?fi[2]+'/'+fi[1]+'/'+fi[0]:p.fechaInicio;
       return '<div onclick="verDetalle(\''+id+'\')" style="background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.08);cursor:pointer;border-left:4px solid #3b82f6">'
-        +'<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:4px">'+p.cliente+'</div>'
+        +'<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:4px">'+esc(p.cliente)+'</div>'
         +'<div style="display:flex;gap:16px;font-size:13px;color:#6b7280">'
         +'<span>💰 ₡'+fmt(p.montoPrestado)+'</span>'
         +'<span>📅 '+fd+'</span>'
@@ -2939,7 +2939,7 @@ function _abrirListaNuevos(el){
       var fi=(p._fechaCreacion||p.fechaInicio||'').split('-');
       var fd=fi.length===3?fi[2]+'/'+fi[1]+'/'+fi[0]:p.fechaInicio;
       return '<div onclick="verDetalle(\''+id+'\')" style="background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.08);cursor:pointer;border-left:4px solid #3b82f6">'
-        +'<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:4px">'+p.cliente+'</div>'
+        +'<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:4px">'+esc(p.cliente)+'</div>'
         +'<div style="display:flex;gap:16px;font-size:13px;color:#6b7280">'
         +'<span>💰 ₡'+fmt(p.montoPrestado)+'</span>'
         +'<span>📅 '+fd+'</span>'
@@ -3711,6 +3711,7 @@ function readMoneyInput(id){
   return parseInt((document.getElementById(id).value||'').replace(/[^0-9]/g,''),10)||0;
 }
 
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function toast(msg){
   var t=document.getElementById('toast');
   t.textContent=msg;
@@ -4293,9 +4294,9 @@ function renderCobros(filtro){
       return '<div data-pid="'+idCliente+'" style="display:flex;gap:8px;align-items:center;padding:12px 16px;border-bottom:1px solid #991b1b;background-color:#dc2626;border-left:4px solid #7f1d1d">'
         +'<button class="icon-btn icon-btn-blue" onclick="verDetalle(\''+idCliente+'\')" title="Ver detalle">✓</button>'
         +btnRenovarBloq
-        +'<button class="icon-btn icon-btn-green" onclick="abonoRapido(\''+idCliente+'\',\''+p.cliente+'\','+d.montoPorPagar+')" title="Abonar cuota">🐷</button>'
+        +'<button class="icon-btn icon-btn-green" onclick="abonoRapido(\''+idCliente+'\',\''+esc(p.cliente)+'\','+d.montoPorPagar+')" title="Abonar cuota">🐷</button>'
         +'<div style="flex:1;padding-left:6px;min-width:0">'
-          +'<div style="font-size:15px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+'</div>'
+          +'<div style="font-size:15px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.cliente)+'</div>'
           +'<div style="font-size:13px;margin-top:2px;color:rgba(255,255,255,0.9)">Cuota: ₡'+fmt(d.montoPorPagar)+'&nbsp;&nbsp;<span style="background:rgba(0,0,0,0.25);color:#fff;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:600">'+(esAtrasado?'Atrasado':'Hoy')+'</span></div>'
         +'</div>'
       +'</div>';
@@ -4309,9 +4310,9 @@ function renderCobros(filtro){
       +badgeVerif
       +'<button class="icon-btn icon-btn-blue" onclick="verDetalle(\''+p.id+'\')" title="Ver detalle">✓</button>'
       +btnRenovar
-      +'<button class="icon-btn icon-btn-green" onclick="abonoRapido(\''+p.id+'\',\''+p.cliente+'\','+d.montoPorPagar+')" title="Abonar cuota">🐷</button>'
+      +'<button class="icon-btn icon-btn-green" onclick="abonoRapido(\''+p.id+'\',\''+esc(p.cliente)+'\','+d.montoPorPagar+')" title="Abonar cuota">🐷</button>'
       +'<div style="flex:1;padding-left:6px;min-width:0">'
-        +'<div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+'</div>'
+        +'<div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.cliente)+'</div>'
         +'<div style="font-size:13px;margin-top:2px">Cuota: ₡'+fmt(d.montoPorPagar)+'&nbsp;&nbsp;<span style="background:'+colorEtiqueta+';color:#fff;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:600">'+etiqueta+'</span></div>'
       +'</div>'
     +'</div>';
@@ -4433,7 +4434,7 @@ function renderTarjetas(filtro){
       return '<div class="loan-row" style="border-left:4px solid #f59e0b">'
         +'<div style="font-size:22px;padding:0 8px;cursor:pointer" onclick="continuarClienteIncompleto(\''+p.id+'\')">⚠️</div>'
         +'<div style="flex:1;padding-left:6px;min-width:0;cursor:pointer" onclick="continuarClienteIncompleto(\''+p.id+'\')">'
-          +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.cliente+'</div>'
+          +'<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.cliente)+'</div>'
           +'<div style="font-size:11px;color:#b45309;font-weight:500">'+(p.incompleto==='paso1'?'Falta: documentos y préstamo':'Falta: datos del préstamo')+' — toca para continuar</div>'
         +'</div>'
         +btnEliminar
@@ -4449,7 +4450,7 @@ function renderTarjetas(filtro){
     return '<div class="loan-row" style="'+borderColor+';'+bgBloq+(cancelado&&!p.bloqueado?'opacity:0.7':''+'')+'">'
       +'<button class="icon-btn icon-btn-cyan btn-sm" style="width:auto;padding:7px 14px;border-radius:var(--radius);'+(p.bloqueado?'background:#fff;color:#dc2626;':'')+'" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
       +'<div style="flex:1;padding-left:10px;min-width:0">'
-        +'<div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+txtBloq+'">'+p.cliente+(p.bloqueado?' 🚫':'')+badgeTarjeta+'</div>'
+        +'<div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+txtBloq+'">'+esc(p.cliente)+(p.bloqueado?' 🚫':'')+badgeTarjeta+'</div>'
         +'<div style="font-size:13px;color:'+(p.bloqueado?'rgba(255,255,255,0.85)':'var(--text-muted)')+'">'+estadoTag(d.estado)+' &nbsp;'+p.cantidadDeQuincenas+' cuotas</div>'
       +'</div>'
       +(cancelado
@@ -4505,7 +4506,7 @@ function imprimirCuotas(){
     var atraso=diffDias>0?'Atrasado '+diffDias+' día(s)':'al día';
     var bgRow=diffDias>0?'#fff3f3':'#fff';
     return '<tr style="background:'+bgRow+'">'
-      +'<td>'+p.cliente+'</td>'
+      +'<td>'+esc(p.cliente)+'</td>'
       +'<td>'+( p.subruta||'')+'</td>'
       +'<td style="text-align:right">'+p.montoPrestado.toLocaleString('es-CR')+'.00</td>'
       +'<td style="text-align:center">'+p.cantidadDeQuincenas+'</td>'
@@ -4598,7 +4599,7 @@ function imprimirTarjetas(){
     var estado=saldo<=0?'Cancelado':(diffDias>0?'Atrasado '+diffDias+' día(s)':'Al día');
     var bgRow=saldo<=0?'#f0fdf4':(diffDias>0?'#fff3f3':'#fff');
     return '<tr style="background:'+bgRow+'">'
-      +'<td>'+p.cliente+'</td>'
+      +'<td>'+esc(p.cliente)+'</td>'
       +'<td>'+(p.subruta||'')+'</td>'
       +'<td style="text-align:right">'+p.montoPrestado.toLocaleString('es-CR')+'.00</td>'
       +'<td style="text-align:right">'+saldo.toLocaleString('es-CR')+'.00</td>'
@@ -6123,7 +6124,7 @@ function renderPanelRecolector(){
     var fechaFmt=partes.length===3?partes[2]+'-'+partes[1]+'-'+partes[0]:p.fechaInicio;
     return '<tr style="border-bottom:1px solid #eff6ff">'+
       '<td style="padding:16px 12px;text-align:right;font-weight:700;color:#2563eb;white-space:nowrap">₡'+fmt(p.montoPrestado)+'</td>'+
-      '<td style="padding:16px 12px;font-weight:600;color:#1e293b;white-space:nowrap">'+p.cliente+'</td>'+
+      '<td style="padding:16px 12px;font-weight:600;color:#1e293b;white-space:nowrap">'+esc(p.cliente)+'</td>'+
       '<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">'+fechaFmt+'</td>'+
       '<td style="padding:16px 12px;color:#6b7280;white-space:nowrap">'+(p.subruta||'—')+'</td>'+
       '<td style="padding:16px 12px;text-align:center;white-space:nowrap">'+
