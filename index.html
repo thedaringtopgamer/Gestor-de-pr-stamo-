@@ -5569,6 +5569,11 @@ function guardarCorreccion(){
   p.cantidadDeQuincenas=ncuotas;
   p.baseRenovacion=base;
   p.tipo=tipo;
+  // Actualizar diasPorCuota según el tipo corregido
+  if(tipo==='Diario') p.diasPorCuota=1;
+  else if(tipo==='Semanal') p.diasPorCuota=7;
+  else if(tipo==='Quincenal') p.diasPorCuota=15;
+  else if(tipo==='Mensual') p.diasPorCuota=30;
   if(fechaInicioCorr) p.fechaInicio=fechaInicioCorr;
   if(fechaCreacionCorr) p._fechaCreacion=fechaCreacionCorr;
   p.fechaUltimaVerificacion=hoyLocal(); // reiniciar contador 60 días al corregir
