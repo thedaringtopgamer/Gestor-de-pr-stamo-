@@ -840,6 +840,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <div class="summary-card">
           <div class="s-label">Cobros hoy</div>
           <div class="s-value" id="home-cobros-dia">0</div>
+          <div id="home-cobros-atrasados" style="font-size:11px;color:#dc2626;font-weight:600;margin-top:2px;display:none"></div>
         </div>
       </div>
     </div>
@@ -5636,16 +5637,23 @@ function updateHome(){
     var d=calcDerived(p);
     return s+d.saldoPendiente;
   },0);
-  var cobrosDia=activos.filter(function(p){
-    if(p.incompleto) return false;
+  var atrasados=0, totalHoy=0;
+  activos.forEach(function(p){
+    if(p.incompleto) return;
     var d=calcDerived(p);
     var fecha=d.proximaFecha||p.fechaInicio||'';
-    return fecha<=hoy;
-  }).length;
+    if(fecha<hoy){ atrasados++; totalHoy++; }
+    else if(fecha===hoy){ totalHoy++; }
+  });
   document.getElementById('home-total-prestamos').textContent=activos.length;
   document.getElementById('home-capital').textContent='₡'+fmt(capital);
   document.getElementById('home-cobrar').textContent='₡'+fmt(cobrar);
-  document.getElementById('home-cobros-dia').textContent=cobrosDia;
+  document.getElementById('home-cobros-dia').textContent=totalHoy;
+  var elAt=document.getElementById('home-cobros-atrasados');
+  if(elAt){
+    if(atrasados>0){ elAt.textContent='⚠ '+atrasados+' atrasado'+(atrasados>1?'s':''); elAt.style.display='block'; }
+    else { elAt.style.display='none'; }
+  }
 }
 
 // ----- RUTAS Y SUBRUTAS -----
