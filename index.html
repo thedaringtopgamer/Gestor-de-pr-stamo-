@@ -2609,7 +2609,7 @@ function renderInversion(){
   var interesesPendientes=Math.max(0,enCalle-capitalPrestado);
   var invFiltradas=inversiones.filter(function(i){
     if(rutaInvFiltro==='todas') return true;
-    return i.ruta===rutaInvFiltro;
+    return !i.ruta||i.ruta==='todas'||i.ruta===rutaInvFiltro;
   });
   var capitalTotal=invFiltradas.reduce(function(s,i){ return s+i.monto; },0);
 
