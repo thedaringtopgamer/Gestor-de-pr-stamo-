@@ -6135,15 +6135,18 @@ function eliminarAbono(pagoId){
     overlay.style.display='none';
     document.getElementById('modal-btn-si').style.background='#16a34a';
     // Restaurar proximaFechaPago exactamente como estaba antes del abono
-    var _prevFechaRest=pg._prevProximaFecha!==undefined?pg._prevProximaFecha:null;
+    var _tienePrev='_prevProximaFecha' in pg;
+    var _prevFechaRest=pg._prevProximaFecha||null;
     pagos=pagos.filter(function(x){return x.id_pago!==pagoId;});
     if(p){
       var dPost=calcDerived(p);
       if(dPost.saldoPendiente<=0){
         p.proximaFechaPago=null;
-      } else {
+      } else if(_tienePrev){
+        // Pago nuevo: restaurar fecha exacta guardada antes del abono
         p.proximaFechaPago=_prevFechaRest;
       }
+      // Pago viejo sin _prevProximaFecha: no tocar proximaFechaPago, sigue siendo válida
     }
     guardarDatos();
     if(currentId) verDetalle(currentId); else renderPanelRecolector();
