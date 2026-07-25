@@ -593,7 +593,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           </button>
           <div id="inv-agregar-sec" style="display:none;padding:0 14px 14px">
             <select id="inv-ruta" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;margin-bottom:6px;background:#fff;color:#111">
-              <option value="todas">🌐 Todas las rutas</option>
+              <option value="">— Elegir ruta —</option>
               <option value="Heredia">📍 Heredia</option>
               <option value="Alajuela">📍 Alajuela</option>
               <option value="San Ramón">📍 San Ramón</option>
@@ -2665,7 +2665,8 @@ function registrarInversion(){
   var monto=parseInt(montoRaw,10);
   if(!monto||monto<=0){ toast('⚠ Ingrese un monto válido'); return; }
   var nota=document.getElementById('inv-nota').value.trim();
-  var rutaInv=document.getElementById('inv-ruta').value||'todas';
+  var rutaInv=document.getElementById('inv-ruta').value;
+  if(!rutaInv||rutaInv==='todas'||rutaInv===''){toast('⚠ Debes elegir una ruta para la inyección');return;}
   inversiones.push({id:Date.now().toString(),monto:monto,nota:nota,fecha:hoyLocal(),ruta:rutaInv});
   guardarDatos();
   document.getElementById('inv-monto').value='';
