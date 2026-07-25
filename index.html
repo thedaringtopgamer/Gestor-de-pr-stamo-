@@ -5367,12 +5367,12 @@ function abrirRenovar(){
   var tipoActual=p.tipo||'Quincenal';
   var proximaFechaRen;
   if(tipoActual==='Diario'){
-    // Diario: próximo día hábil después de hoy
-    var manana=new Date(); manana.setDate(manana.getDate()+1);
+    // Diario: próximo día hábil después del día operativo
+    var manana=parseLocalDate(diaOperativo()); manana.setDate(manana.getDate()+1);
     proximaFechaRen=siguienteDiaHabil(manana);
   } else {
-    // Renovación desde HOY: próxima fecha = hoy + un intervalo
-    var hoyBase=new Date();
+    // Renovación desde día operativo: próxima fecha = diaOperativo + un intervalo
+    var hoyBase=parseLocalDate(diaOperativo());
     var firstNew=new Date(hoyBase);
     firstNew.setDate(firstNew.getDate()+p.diasPorCuota);
     proximaFechaRen=siguienteDiaHabil(firstNew);
