@@ -2468,41 +2468,66 @@ var SUPA_HDR={'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization
 
 async function fixFechas(){
   var MIDNIGHT=1784959200000,CUATRO_AM=1784973600000;
-  var rp=await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.pagos',{headers:SUPA_HDR});
-  var dp=await rp.json();
-  var pgs=dp[0].value;
-  var mp=0;
+  var DE='2026-07-25',PARA='2026-07-24';
+  function enRango(id){var n=parseInt(id);return isNaN(n)||(n>=MIDNIGHT&&n<=CUATRO_AM);}
+  var totales={};
+
+  // Pagos
+  var d=await (await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.pagos',{headers:SUPA_HDR})).json();
+  var pgs=d[0].value; var c=0;
   pgs=pgs.map(function(p){
-    if(p.fechaRegistro!=='2026-07-25') return p;
-    var id=parseInt(p.id);
-    var enRango=isNaN(id)||(id>=MIDNIGHT&&id<=CUATRO_AM);
-    if(enRango){
-      mp++;
-      console.log('Pago movido id='+p.id);
-      return Object.assign({},p,{fechaRegistro:'2026-07-24',fechaPago:p.fechaPago==='2026-07-25'?'2026-07-24':p.fechaPago});
-    }
-    return p;
-  });
-  console.log('Pagos modificados:',mp);
-  var rr=await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.renovaciones',{headers:SUPA_HDR});
-  var dr=await rr.json();
-  var ren=dr[0].value;
-  var mr=0;
-  ren=ren.map(function(r){
-    if(r.fecha!=='2026-07-25') return r;
-    var id=parseInt(r.id);
-    var enRango=isNaN(id)||(id>=MIDNIGHT&&id<=CUATRO_AM);
-    if(enRango){
-      mr++;
-      console.log('Renovacion movida id='+r.id);
-      return Object.assign({},r,{fecha:'2026-07-24'});
-    }
-    return r;
-  });
-  console.log('Renovaciones modificadas:',mr);
+    if(p.fechaRegistro===DE&&enRango(p.id)){c++;
+      return Object.assign({},p,{fechaRegistro:PARA,fechaPago:p.fechaPago===DE?PARA:p.fechaPago});}
+    return p;});
   await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.pagos',{method:'PATCH',headers:SUPA_HDR,body:JSON.stringify({value:pgs})});
+  totales.pagos=c; console.log('Pagos:',c);
+
+  // Cobros admin
+  d=await (await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.cobrosadmin',{headers:SUPA_HDR})).json();
+  var ca=d[0].value; c=0;
+  ca=ca.map(function(x){
+    if(x.fecha===DE&&enRango(x.id)){c++;return Object.assign({},x,{fecha:PARA});}
+    return x;});
+  await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.cobrosadmin',{method:'PATCH',headers:SUPA_HDR,body:JSON.stringify({value:ca})});
+  totales.cobrosAdmin=c; console.log('Cobros admin:',c);
+
+  // Renovaciones
+  d=await (await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.renovaciones',{headers:SUPA_HDR})).json();
+  var ren=d[0].value; c=0;
+  ren=ren.map(function(x){
+    if(x.fecha===DE&&enRango(x.id)){c++;return Object.assign({},x,{fecha:PARA});}
+    return x;});
   await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.renovaciones',{method:'PATCH',headers:SUPA_HDR,body:JSON.stringify({value:ren})});
-  console.log('LISTO. Pagos:'+mp+' Renovaciones:'+mr+'. Recarga la pagina.');
+  totales.renovaciones=c; console.log('Renovaciones:',c);
+
+  // Gastos
+  d=await (await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.gastos',{headers:SUPA_HDR})).json();
+  var gas=d[0].value; c=0;
+  gas=gas.map(function(x){
+    if(x.fecha===DE&&enRango(x.id)){c++;return Object.assign({},x,{fecha:PARA});}
+    return x;});
+  await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.gastos',{method:'PATCH',headers:SUPA_HDR,body:JSON.stringify({value:gas})});
+  totales.gastos=c; console.log('Gastos:',c);
+
+  // Prestamos nuevos
+  d=await (await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.prestamos',{headers:SUPA_HDR})).json();
+  var prs=d[0].value; c=0;
+  prs=prs.map(function(x){
+    if(x.fechaInicio===DE&&enRango(x.id)){c++;return Object.assign({},x,{fechaInicio:PARA});}
+    return x;});
+  await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.prestamos',{method:'PATCH',headers:SUPA_HDR,body:JSON.stringify({value:prs})});
+  totales.prestamos=c; console.log('Prestamos:',c);
+
+  // Inversiones
+  d=await (await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.inversiones',{headers:SUPA_HDR})).json();
+  var inv=d[0].value; c=0;
+  inv=inv.map(function(x){
+    if(x.fecha===DE&&enRango(x.id)){c++;return Object.assign({},x,{fecha:PARA});}
+    return x;});
+  await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.inversiones',{method:'PATCH',headers:SUPA_HDR,body:JSON.stringify({value:inv})});
+  totales.inversiones=c; console.log('Inversiones:',c);
+
+  console.log('=== LISTO ===',JSON.stringify(totales),'Recarga la pagina.');
 }
 var prestamos = [];
 var pagos = [];
