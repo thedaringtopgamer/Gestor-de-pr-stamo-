@@ -5400,13 +5400,13 @@ function confirmarRenovacion(){
   p.fechaInicio=fechaHoy;
   p.estado='Activo';
   var adminMonto=readMoneyInput('ren-cobro-admin');
+  var renId=Date.now().toString();
   if(adminMonto>0){
-    cobrosAdmin.push({id:Date.now().toString(),id_prestamo:p.id,cliente:p.cliente,fecha:fechaHoy,monto:adminMonto});
+    cobrosAdmin.push({id:Date.now().toString(),id_prestamo:p.id,cliente:p.cliente,fecha:fechaHoy,monto:adminMonto,id_renovacion:renId});
   }
   // Registrar renovación en historial
   var saldoAnterior=d.saldoPendiente;
   var montoEntregado=monto-saldoAnterior-adminMonto; // puede ser negativo (cliente paga diferencia)
-  var renId=Date.now().toString();
   renovaciones.push({id:renId,id_prestamo:p.id,cliente:p.cliente,fecha:fechaHoy,
     montoNuevo:monto,cuotaNueva:cuotaVal,tipo:tipo,cuotas:cuotas,tasa:Math.round(tasa*100),
     adminMonto:adminMonto,saldoAnterior:saldoAnterior,montoEntregado:montoEntregado,
@@ -6058,7 +6058,7 @@ function eliminarRenovacion(renId){
       }
     }
     renovaciones=renovaciones.filter(function(x){return x.id!==renId;});
-    cobrosAdmin=cobrosAdmin.filter(function(x){return !(x.id_prestamo===rv.id_prestamo&&x.fecha===rv.fecha);});
+    cobrosAdmin=cobrosAdmin.filter(function(x){return !(x.id_renovacion===renId||(x.id_prestamo===rv.id_prestamo&&x.fecha===rv.fecha&&!x.id_renovacion));});
     guardarDatos();
     if(currentId) verDetalle(currentId); else renderPanelRecolector();
     toast('✓ Renovación eliminada — préstamo restaurado al estado anterior');
