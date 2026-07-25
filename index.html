@@ -6381,13 +6381,20 @@ async function _autoBackupDiario(){
 
 function exportarBackup(){
   var datos={
-    version:1,
+    version:2,
     fecha:new Date().toISOString(),
     prestamos:prestamos,
     pagos:pagos,
     cobrosAdmin:cobrosAdmin,
     gastos:gastos,
-    renovaciones:renovaciones
+    renovaciones:renovaciones,
+    inversiones:inversiones,
+    cierres:cierres,
+    cierresDiarios:cierresDiarios,
+    bases:bases,
+    salidas:salidas,
+    metas:metas,
+    invOverrides:invOverrides
   };
   var json=JSON.stringify(datos,null,2);
   var blob=new Blob([json],{type:'application/json'});
@@ -6473,6 +6480,13 @@ function importarBackup(input){
       cobrosAdmin=datos.cobrosAdmin||[];
       gastos=datos.gastos||[];
       renovaciones=datos.renovaciones||[];
+      if(Array.isArray(datos.inversiones)) inversiones=datos.inversiones;
+      if(Array.isArray(datos.cierres)) cierres=datos.cierres;
+      if(Array.isArray(datos.cierresDiarios)) cierresDiarios=datos.cierresDiarios;
+      if(Array.isArray(datos.bases)) bases=datos.bases;
+      if(Array.isArray(datos.salidas)) salidas=datos.salidas;
+      if(Array.isArray(datos.metas)) metas=datos.metas;
+      if(datos.invOverrides&&typeof datos.invOverrides==='object') invOverrides=datos.invOverrides;
       guardarDatos();
       toast('✓ Backup del '+_fechaBackup+' restaurado correctamente');
       closeMenu();
