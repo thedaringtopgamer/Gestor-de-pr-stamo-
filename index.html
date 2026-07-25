@@ -4964,6 +4964,9 @@ function mensajeAbono(p){
 }
 
 function mensajeAbonoAt(p, targetPagoId){
+  // Si el pago tiene mensaje guardado, devolverlo exactamente como fue
+  var pagoGuardado=pagos.find(function(x){return x.id_pago===targetPagoId;});
+  if(pagoGuardado&&pagoGuardado.mensajeWA) return pagoGuardado.mensajeWA;
   // Reproduce el estado del préstamo justo después de ese abono específico
   var pp=pagos.filter(function(x){return x.id_prestamo===p.id;});
   pp.sort(function(a,b){
@@ -5078,7 +5081,7 @@ function abrirWhatsApp(id, tipo, movId){
   if(!p) return;
   var msg='';
   if(tipo==='abono'){
-    msg=mensajeAbono(p);
+    msg=movId?mensajeAbonoAt(p,movId):mensajeAbono(p);
   } else if(tipo==='renovacion'){
     var rv=movId?renovaciones.find(function(x){return x.id===movId;}):renovaciones.filter(function(x){return x.id_prestamo===id;}).slice(-1)[0];
     if(!rv){toast('⚠ Renovación no encontrada');return;}
@@ -5162,6 +5165,7 @@ function abonoRapido(id,nombre,cuota){
       montoAbonado:cuota
     });
     if(pp){ var advance=calcDerived(pp).cuotasPagadas-cuotasAntes; _autoProximaFecha(pp,advance); }
+    pagos[pagos.length-1].mensajeWA=mensajeAbono(pp);
     guardarDatos();
     toast('✓ ₡'+fmt(cuota)+' abonado a '+nombre);
     renderCobros();
@@ -5196,6 +5200,7 @@ function registrarAbono(){
       montoAbonado:monto
     });
     if(pp2){ var advance2=calcDerived(pp2).cuotasPagadas-cuotasAntes2; _autoProximaFecha(pp2,advance2); }
+    pagos[pagos.length-1].mensajeWA=mensajeAbono(pp2);
     guardarDatos();
     document.getElementById('abonar-monto').value='';
     toast('✓ Abono registrado: ₡'+fmt(monto));
