@@ -2509,11 +2509,11 @@ async function fixFechas(){
   await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.gastos',{method:'PATCH',headers:SUPA_HDR,body:JSON.stringify({value:gas})});
   totales.gastos=c; console.log('Gastos:',c);
 
-  // Prestamos nuevos
+  // Prestamos (renovados): el ID es antiguo, se filtra solo por fechaInicio
   d=await (await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.prestamos',{headers:SUPA_HDR})).json();
   var prs=d[0].value; c=0;
   prs=prs.map(function(x){
-    if(x.fechaInicio===DE&&enRango(x.id)){c++;return Object.assign({},x,{fechaInicio:PARA});}
+    if(x.fechaInicio===DE){c++;return Object.assign({},x,{fechaInicio:PARA});}
     return x;});
   await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.prestamos',{method:'PATCH',headers:SUPA_HDR,body:JSON.stringify({value:prs})});
   totales.prestamos=c; console.log('Prestamos:',c);
