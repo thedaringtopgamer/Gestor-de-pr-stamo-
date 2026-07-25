@@ -2467,7 +2467,7 @@ var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 var SUPA_HDR={'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY};
 
 async function fixFechas(){
-  var MIDNIGHT=1753412400000,CUATRO_AM=1753426800000;
+  var MIDNIGHT=1753423200000,CUATRO_AM=1753437600000;
   var rp=await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.pagos',{headers:SUPA_HDR});
   var dp=await rp.json();
   var pgs=dp[0].value;
