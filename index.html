@@ -3176,7 +3176,7 @@ function _htmlTarjetaCierre(c){
         +(rolActual==='admin'?'<button style="background:#fee2e2;color:#991b1b;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-family:\'DM Sans\',sans-serif;cursor:pointer" onclick="eliminarCierre(\''+c.id+'\')">✕</button>':'')
       +'</div>'
     +'</div>'
-    +_statsHtml(d)
+    +_statsHtml(d,c.tipo)
     +'</div>';
 }
 
