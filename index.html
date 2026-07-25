@@ -1580,7 +1580,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         </div>
         <div class="field-group">
           <label>Cobro Administrativo</label>
-          <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric" id="ren-cobro-admin" placeholder="0" oninput="fmtMoneyInput(this)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+          <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric" id="ren-cobro-admin" placeholder="0" oninput="fmtMoneyInput(this);_renCobroEditado=true;" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
         </div>
         <div>
           <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:500;margin-bottom:4px">Entregar al cliente</div>
@@ -2459,6 +2459,7 @@ var invOverrides = {};
 var clientesBloqueados = {}; // {id: {motivo:'', ts:0}}
 var renovaciones = [];
 var currentId = null;
+var _renCobroEditado = false;
 var historial = ['screen-cobros'];
 
 function guardarFechaPago(){
@@ -5208,6 +5209,7 @@ function abrirRenovar(){
   var p=prestamos.find(function(x){return x.id===currentId;});
   if(!p) return;
   if(p.bloqueado){ toast('🚫 Cliente bloqueado'+(p.motivoBloqueo?': '+p.motivoBloqueo:'')); return; }
+  _renCobroEditado=false; // resetear al abrir el modal
   var d=calcDerived(p);
   // Cobro admin = 4% del monto prestado (₡2,000 por cada ₡50,000)
   var cobroAdmin=Math.round(p.montoPrestado*0.04);
@@ -5326,13 +5328,13 @@ function calcRenovar(){
   var total=Math.round(monto*(1+tasa));
   var cuotaVal=cuotas>0?Math.round(total/cuotas):0;
   document.getElementById('ren-cuota-display').textContent=cuotaVal>0?'₡'+fmt(cuotaVal):'—';
-  // Auto-calcular cobro administrativo = 4% del monto
+  // Auto-calcular cobro administrativo = 4% del monto (solo si el admin no lo editó manualmente)
   var adminAuto=Math.round(monto*0.04);
-  document.getElementById('ren-cobro-admin').value=monto>0?fmt(adminAuto):'';
+  if(!_renCobroEditado) document.getElementById('ren-cobro-admin').value=monto>0?fmt(adminAuto):'';
   // Entregar
   var p=prestamos.find(function(x){return x.id===currentId;});
   var saldo=p?calcDerived(p).saldoPendiente:0;
-  var admin=adminAuto;
+  var admin=_renCobroEditado?readMoneyInput('ren-cobro-admin'):adminAuto;
   var entregar=monto-saldo-admin;
   var eEl=document.getElementById('ren-entregar');
   eEl.textContent=(entregar>=0?'₡':'-₡')+fmt(Math.abs(entregar));
