@@ -2466,6 +2466,40 @@ var SUPA_URL='https://crylhkioshvlmiywzldz.supabase.co';
 var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyeWxoa2lvc2h2bG1peXd6bGR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4Nzc3OTksImV4cCI6MjA5NjQ1Mzc5OX0.RF6SYR5w7m1CfCR6pFMCNcn9-jL_qq8c8vxWmZvEH2k';
 var SUPA_HDR={'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY};
 
+async function fixFechas(){
+  var MIDNIGHT=1753412400000,CUATRO_AM=1753426800000;
+  var rp=await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.pagos',{headers:SUPA_HDR});
+  var dp=await rp.json();
+  var pgs=dp[0].value;
+  var mp=0;
+  pgs=pgs.map(function(p){
+    var id=parseInt(p.id);
+    if(!isNaN(id)&&id>=MIDNIGHT&&id<=CUATRO_AM&&p.fechaRegistro==='2026-07-25'){
+      mp++;
+      console.log('Pago movido:',p.id,p.fechaRegistro,'->','2026-07-24');
+      return Object.assign({},p,{fechaRegistro:'2026-07-24',fechaPago:p.fechaPago==='2026-07-25'?'2026-07-24':p.fechaPago});
+    }
+    return p;
+  });
+  console.log('Pagos modificados:',mp);
+  var rr=await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.renovaciones',{headers:SUPA_HDR});
+  var dr=await rr.json();
+  var ren=dr[0].value;
+  var mr=0;
+  ren=ren.map(function(r){
+    var id=parseInt(r.id);
+    if(!isNaN(id)&&id>=MIDNIGHT&&id<=CUATRO_AM&&r.fecha==='2026-07-25'){
+      mr++;
+      console.log('Renovacion movida:',r.id,r.fecha,'->','2026-07-24');
+      return Object.assign({},r,{fecha:'2026-07-24'});
+    }
+    return r;
+  });
+  console.log('Renovaciones modificadas:',mr);
+  await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.pagos',{method:'PATCH',headers:SUPA_HDR,body:JSON.stringify({value:pgs})});
+  await fetch(SUPA_URL+'/rest/v1/app_data?key=eq.renovaciones',{method:'PATCH',headers:SUPA_HDR,body:JSON.stringify({value:ren})});
+  console.log('LISTO. Pagos:'+mp+' Renovaciones:'+mr+'. Recarga la pagina.');
+}
 var prestamos = [];
 var pagos = [];
 var cobrosAdmin = [];
