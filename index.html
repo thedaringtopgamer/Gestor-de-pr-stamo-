@@ -3906,9 +3906,9 @@ function selSemanasCustom(val){
     btn.style.background='#fff';
     btn.style.color='inherit';
   });
-  // >6 semanas → 44%
+  // >6 semanas → 40%
   var tasaEl=document.getElementById('np-tasa');
-  if(tasaEl) tasaEl.value=n>6?'44':'20';
+  if(tasaEl) tasaEl.value=n>6?'40':'20';
   calcPreview();
   calcProxFechaPago();
 }
@@ -5299,7 +5299,7 @@ function calcRenovar(){
       document.querySelectorAll('[id^="rsem-"]').forEach(function(el){el.classList.remove('selected');});
       // ajustar tasa automático
       var tasaRenEl=document.getElementById('ren-tasa');
-      if(tasaRenEl && !document.getElementById('ren-digitar-check').checked) tasaRenEl.value=customSemVal>6?'44':'20';
+      if(tasaRenEl && !document.getElementById('ren-digitar-check').checked) tasaRenEl.value=customSemVal>6?'40':'20';
     } else {
       var sem=document.querySelector('input[name="ren-sem"]:checked');
       var semVal=sem?parseInt(sem.value):6;
