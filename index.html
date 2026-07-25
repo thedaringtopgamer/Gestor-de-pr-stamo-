@@ -6014,16 +6014,7 @@ function eliminarCobroAdmin(caId){
 function eliminarRenovacion(renId){
   var rv=renovaciones.find(function(x){return x.id===renId;});
   if(!rv) return;
-  if(rv.fecha!==diaOperativo()){
-    var overlay2=document.getElementById('modal-overlay');
-    document.getElementById('modal-subtitulo').textContent='No se puede eliminar';
-    document.getElementById('modal-mensaje').textContent='Solo se puede eliminar una renovación el mismo día en que se hizo. Esta renovación es del '+rv.fecha+'.';
-    document.getElementById('modal-btn-si').style.display='none';
-    overlay2.style.display='flex';
-    return;
-  }
   var overlay=document.getElementById('modal-overlay');
-  document.getElementById('modal-btn-si').style.display='';
   document.getElementById('modal-subtitulo').textContent='Eliminar renovación';
   document.getElementById('modal-mensaje').textContent='¿Eliminar la renovación de '+rv.cliente+'? Esto revierte el préstamo al estado anterior.';
   document.getElementById('modal-btn-si').textContent='Sí, eliminar';
