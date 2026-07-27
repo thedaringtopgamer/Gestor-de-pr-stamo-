@@ -1807,8 +1807,16 @@ function _actualizarPendiente(deviceId,ruta,dispositivo){
 
 function _marcaDispositivo(ua){
   if(!ua) return {icono:'📱',marca:'Otro'};
-  if(ua.indexOf('iPhone')!==-1) return {icono:'📱',marca:'iPhone'};
-  if(ua.indexOf('iPad')!==-1) return {icono:'📟',marca:'iPad'};
+  if(ua.indexOf('iPhone')!==-1){
+    var iosMatch=ua.match(/OS ([\d_]+) like/);
+    var iosVer=iosMatch?iosMatch[1].replace(/_/g,'.'):'';
+    return {icono:'📱',marca:'iPhone'+(iosVer?' iOS '+iosVer:'')};
+  }
+  if(ua.indexOf('iPad')!==-1){
+    var iosMatchP=ua.match(/OS ([\d_]+) like/);
+    var iosVerP=iosMatchP?iosMatchP[1].replace(/_/g,'.'):'';
+    return {icono:'📟',marca:'iPad'+(iosVerP?' iOS '+iosVerP:'')};
+  }
   if(ua.indexOf('Android')!==-1){
     var modelMatch=ua.match(/Android[\s\d.]+;\s*([^)]+)\)/);
     var modelo=modelMatch?modelMatch[1].replace(/\s*Build\/.*/,'').trim():'';
@@ -1831,8 +1839,9 @@ function _marcaDispositivo(ua){
     else if(ml.indexOf('oneplus')!==-1||ml.match(/^(be|in|kb|le|ac|dn)\d{4}/i)) marca='OnePlus';
     else if(ml.indexOf('tcl')!==-1||ml.match(/^(5\d{3}[a-z]|6\d{3}[a-z])/i)) marca='TCL';
     else{ marca=modelo&&modelo.length>2?modelo:'Android'; }
-    // Mostrar modelo completo si es conocido, sino la marca sola
-    return {icono:icono,marca:marca};
+    // Mostrar modelo completo si está disponible, sino la marca sola
+    var marcaFinal=modelo&&modelo.length>2?modelo:marca;
+    return {icono:icono,marca:marcaFinal};
   }
   if(ua.indexOf('Windows')!==-1) return {icono:'💻',marca:'PC'};
   if(ua.indexOf('Macintosh')!==-1||ua.indexOf('Mac OS')!==-1) return {icono:'💻',marca:'Mac'};
