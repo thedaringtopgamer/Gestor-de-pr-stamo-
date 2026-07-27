@@ -4448,6 +4448,7 @@ function renderCobros(filtro){
   var zonasConClientes=[];
   ordenZonas.forEach(function(zona){
     var grupo=items.filter(function(p){return p.subruta===zona;});
+    grupo.sort(function(a,b){return (a.cliente||'').localeCompare(b.cliente||'','es',{sensitivity:'base'});});
     if(grupo.length) zonasConClientes.push({zona:zona,grupo:grupo});
   });
   // Clientes sin subruta al final
