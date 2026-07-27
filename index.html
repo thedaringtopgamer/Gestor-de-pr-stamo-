@@ -1774,7 +1774,8 @@ function solicitarAcceso(ruta){
   // Registrar dispositivo pendiente en Supabase
   var deviceId=_getDeviceId();
   var ua=navigator.userAgent;
-  var dispositivo=ua.indexOf('iPhone')!==-1?'iPhone':ua.indexOf('Android')!==-1?'Android':ua.indexOf('iPad')!==-1?'iPad':'Otro';
+  var _devD=_marcaDispositivo(ua);
+  var dispositivo=_devD.icono+' '+_devD.marca;
   _actualizarPendiente(deviceId,ruta,dispositivo);
   // Polling para ver si admin activó
   _esperaInterval=setInterval(function(){
