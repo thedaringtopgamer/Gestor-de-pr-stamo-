@@ -3160,8 +3160,8 @@ function renderCierres(){
     btn.style.cursor=activo?'pointer':'not-allowed';
     btn.style.pointerEvents=activo?'auto':'none';
   };
-  _estiloBtnCierre(btnSem,true,'#1e40af');
-  _estiloBtnCierre(btnMes,true,'#166534');
+  _estiloBtnCierre(btnSem,puedesSem,'#1e40af');
+  _estiloBtnCierre(btnMes,puedesMes,'#166534');
 
   var hoy=hoyLocal();
   var rFiltro=rutaInvFiltro||'todas';
@@ -3286,8 +3286,8 @@ function imprimirCierre(id){
 }
 
 function _esFridayNight(){
-  var now=new Date();
-  return now.getDay()===5 && now.getHours()>=20;
+  var d=parseLocalDate(diaOperativo());
+  return d.getDay()===5;
 }
 
 function _puedesCerrarMes(){
