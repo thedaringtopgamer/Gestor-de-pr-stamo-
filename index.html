@@ -3306,11 +3306,13 @@ function _esFridayNight(){
 }
 
 function _puedesCerrarMes(){
-  if(!_esFridayNight()) return false;
   var rFiltro=rutaInvFiltro||'todas';
   var ciorresMes=cierres.filter(function(c){ return c.tipo==='mes'&&(c.ruta||'todas')===rFiltro; })
     .sort(function(a,b){ return b.hasta.localeCompare(a.hasta); });
   var desdeStr=ciorresMes.length?ciorresMes[0].hasta:'0000-00-00';
+  // Ya cerró el mes después del último viernes → no se puede cerrar otra vez
+  var viernesStr=_ultimoViernesStr();
+  if(ciorresMes.length&&ciorresMes[0].hasta>=viernesStr) return false;
   var semanasDesde=cierres.filter(function(c){
     return c.tipo==='semana'&&(c.ruta||'todas')===rFiltro&&c.hasta>desdeStr;
   }).length;
