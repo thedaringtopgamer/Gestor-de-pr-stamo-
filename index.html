@@ -4122,6 +4122,13 @@ function guardarPrestamo(){
   var existente=clienteTemporal._id?prestamos.find(function(x){return x.id===clienteTemporal._id;}):null;
   if(existente){
     existente.cliente=nombre;
+    existente.cedula=clienteTemporal.cedula||existente.cedula||'';
+    existente.telefono=clienteTemporal.telefono||existente.telefono||'';
+    existente.ruta=clienteTemporal.ruta||existente.ruta||'';
+    existente.subruta=clienteTemporal.subruta||existente.subruta||'';
+    existente.coordCasa=clienteTemporal.coordCasa||existente.coordCasa||'';
+    existente.coordTrabajo=clienteTemporal.coordTrabajo||existente.coordTrabajo||'';
+    existente.fotos=clienteTemporal.fotos||existente.fotos||{};
     existente.montoPrestado=monto;
     existente.tasaInteres=tasaDec;
     existente.cantidadDeQuincenas=cd.cuotas;
