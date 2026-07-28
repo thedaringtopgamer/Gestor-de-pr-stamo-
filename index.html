@@ -4877,7 +4877,14 @@ function verDetalle(id){
   if(btnEliminar) btnEliminar.style.display=esAdmin?'':'none';
   // Cancelado: ocultar Abonar y Renovar, mostrar Nuevo Préstamo
   if(wrapAbonar) wrapAbonar.style.display=esCancelado?'none':'';
-  if(btnRenovar) btnRenovar.style.display=esCancelado?'none':'';
+  if(btnRenovar){
+    var _puedeRen=!esCancelado&&calcDerived(p).saldoPendiente<=p.montoPrestado;
+    btnRenovar.style.display=esCancelado?'none':'';
+    btnRenovar.disabled=!_puedeRen;
+    btnRenovar.style.opacity=_puedeRen?'1':'0.4';
+    btnRenovar.style.cursor=_puedeRen?'pointer':'not-allowed';
+    btnRenovar.title=_puedeRen?'Renovar':'Pague los intereses primero';
+  }
   if(btnNuevoPrestamo) btnNuevoPrestamo.style.display=esCancelado?'':'none';
   // Precargar campos del modal corregir (siempre, para cuando se abra)
   if(esAdmin){
@@ -5385,6 +5392,8 @@ function abrirRenovar(){
   var p=prestamos.find(function(x){return x.id===currentId;});
   if(!p) return;
   if(p.bloqueado){ toast('🚫 Cliente bloqueado'+(p.motivoBloqueo?': '+p.motivoBloqueo:'')); return; }
+  var _dRen=calcDerived(p);
+  if(_dRen.saldoPendiente>p.montoPrestado){ toast('⚠ Pague los intereses primero para renovar'); return; }
   _renCobroEditado=false; // resetear al abrir el modal
   var d=calcDerived(p);
   // Cobro admin = 4% del monto prestado (₡2,000 por cada ₡50,000)
