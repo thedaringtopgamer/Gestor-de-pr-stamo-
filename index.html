@@ -5615,6 +5615,8 @@ function confirmarRenovacion(){
   guardarDatos();
   currentId=p.id;
   toast('✓ Préstamo renovado correctamente');
+  // Limpiar screen-renovar del historial para que "atrás" vaya a cobros, no al panel de renovación
+  historial=historial.filter(function(h){return h!=='screen-renovar';});
   verDetalle(p.id);
   // Ofrecer WhatsApp si tiene teléfono
   setTimeout(function(){ ofrecerWhatsApp(p.id,'renovacion'); },400);
