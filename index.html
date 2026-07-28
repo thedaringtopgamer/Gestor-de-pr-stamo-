@@ -3285,9 +3285,24 @@ function imprimirCierre(id){
   win.document.close();
 }
 
-function _esFridayNight(){
+function _ultimoViernesStr(){
+  // Retorna la fecha del último viernes (día operativo o anterior)
   var d=parseLocalDate(diaOperativo());
-  return d.getDay()===5;
+  var dow=d.getDay(); // 0=dom,1=lun,...,5=vie,6=sab
+  var diasAtras=dow>=5?(dow-5):(dow+2); // cuántos días desde el último viernes
+  d.setDate(d.getDate()-diasAtras);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function _esFridayNight(){
+  // Activo si el último viernes ya llegó y aún no se cerró la semana para esta ruta
+  var rFiltro=rutaInvFiltro||'todas';
+  var viernesStr=_ultimoViernesStr();
+  var ultimoCierre=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===rFiltro; })
+    .sort(function(a,b){ return b.hasta.localeCompare(a.hasta); })[0];
+  // Si ya cerró después del último viernes, no se puede cerrar otra vez
+  if(ultimoCierre&&ultimoCierre.hasta>=viernesStr) return false;
+  return true;
 }
 
 function _puedesCerrarMes(){
