@@ -3721,7 +3721,11 @@ function sincronizarSupabaseFondo(){
       if(row.key==='renovaciones'&&Array.isArray(row.value)) renovaciones=row.value;
       if(row.key==='inversiones'&&Array.isArray(row.value)) inversiones=row.value;
       if(row.key==='cierres'&&Array.isArray(row.value)) cierres=row.value;
-      if(row.key==='bases'&&row.value&&typeof row.value==='object') bases=row.value;
+      if(row.key==='bases'&&row.value&&typeof row.value==='object'){
+        var _localCf1={};
+        Object.keys(bases).forEach(function(k){if(k.indexOf('_cf_')===0||k.indexOf('_m_')===0) _localCf1[k]=bases[k];});
+        bases=Object.assign({},row.value,_localCf1);
+      }
       if(row.key==='salidas'&&row.value&&typeof row.value==='object') salidas=row.value;
       if(row.key==='metas'&&row.value&&typeof row.value==='object') metas=row.value;
       if(row.key==='inv_overrides'&&row.value&&typeof row.value==='object') invOverrides=row.value;
@@ -7121,7 +7125,11 @@ function fechaOffset(dias){
           if(row.key==='cierres'&&Array.isArray(row.value)) cierres=row.value;
           if(row.key==='cierres_diarios'&&Array.isArray(row.value)) cierresDiarios=row.value;
           if(row.key==='cajas_cerradas'&&row.value&&typeof row.value==='object') cajasCerradas=row.value;
-          if(row.key==='bases'&&row.value&&typeof row.value==='object') bases=row.value;
+          if(row.key==='bases'&&row.value&&typeof row.value==='object'){
+            var _localCf2={};
+            Object.keys(bases).forEach(function(k){if(k.indexOf('_cf_')===0||k.indexOf('_m_')===0) _localCf2[k]=bases[k];});
+            bases=Object.assign({},row.value,_localCf2);
+          }
           if(row.key==='salidas'&&row.value&&typeof row.value==='object') salidas=row.value;
           if(row.key==='metas'&&row.value&&typeof row.value==='object') metas=row.value;
           if(row.key==='inv_overrides'&&row.value&&typeof row.value==='object') invOverrides=row.value;
