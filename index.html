@@ -2931,7 +2931,7 @@ function _calcCierreData(desde,hasta,rutaParam){
     return p.fechaInicio>=desde&&p.fechaInicio<=hasta&&idsRenovados.indexOf(p.id)<0;
   });
   var prestado=nuevosP.reduce(function(s,p){ return s+p.montoPrestado; },0);
-  var renovP=renovaciones.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
+  var renovP=renovaciones.filter(function(x){ return !x._ocultarPanel&&x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
   var montoRenov=renovP.reduce(function(s,x){ return s+(x.montoNuevo||0); },0);
   var entregadoRenov=renovP.reduce(function(s,x){ return s+Math.max(0,x.montoEntregado||0); },0);
   var gastosP=gastos.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||x.ruta===ruta); });
@@ -6614,9 +6614,10 @@ function renderPanelRecolector(userPickedDate){
     }
     // CajaTotal de ayer = base de ayer + movimientos de ayer
     var _idsR=prestamosRuta.map(function(p){return p.id;});
-    var _recAyer=pagos.filter(function(x){return (x.fechaRegistro||x.fechaPago)===_ayerStr&&_idsR.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
-    var _presAyer=prestamosRuta.filter(function(p){return p.fechaInicio===_ayerStr&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
-    var _renovAyer=renovaciones.filter(function(x){return x.fecha===_ayerStr&&(rutaActual==='todas'||prestamos.find(function(p){return p.id===x.id_prestamo&&p.ruta===rutaActual;}));}).reduce(function(s,x){return s+(x.montoEntregado||0);},0);
+    var _recAyer=pagos.filter(function(x){return !x._ocultarPanel&&(x.fechaRegistro||x.fechaPago)===_ayerStr&&_idsR.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
+    var _idsRenovAyer=renovaciones.filter(function(x){return x.fecha===_ayerStr;}).map(function(x){return x.id_prestamo;});
+    var _presAyer=prestamosRuta.filter(function(p){return p.fechaInicio===_ayerStr&&!p.incompleto&&_idsRenovAyer.indexOf(p.id)===-1;}).reduce(function(s,p){return s+p.montoPrestado;},0);
+    var _renovAyer=renovaciones.filter(function(x){return !x._ocultarPanel&&x.fecha===_ayerStr&&(rutaActual==='todas'||prestamos.find(function(p){return p.id===x.id_prestamo&&p.ruta===rutaActual;}));}).reduce(function(s,x){return s+(x.montoEntregado||0);},0);
     var _gastosAyer=gastos.filter(function(x){return x.fecha===_ayerStr&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
     var _inyecAyer=inversiones.filter(function(x){return x.fecha===_ayerStr&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
     var _cajaAyer=_recAyer+_baseAyer+_inyecAyer-_presAyer-_renovAyer-_gastosAyer;
@@ -6665,10 +6666,10 @@ function renderPanelRecolector(userPickedDate){
     ?(salidaGuardada+Math.max(0,inyeccionHoy-inyecAlSaveSalida))
     :(salidaGuardada+inyeccionHoy);
   if(inputSalida) inputSalida.value=salidaDisplay>0?fmt(salidaDisplay):'';
-  var cajaTotal=baseConInyeccion+recogidaTotal-totalSoloNuevos-totalEntregadoRenov-totalAdminRenov-totalGastos;
+  var cajaTotal=baseConInyeccion+recogidaTotal-totalSoloNuevos-totalEntregadoRenov-totalGastos;
   _setCajaEl('caja-recogida','₡'+fmt(recogidaTotal));
   _setCajaEl('caja-base-display','₡'+fmt(baseConInyeccion));
-  _setCajaEl('caja-prestamos','₡'+fmt(prestamosTotal));
+  _setCajaEl('caja-prestamos','₡'+fmt(totalSoloNuevos+totalEntregadoRenov));
   _setCajaEl('caja-gastos','₡'+fmt(totalGastos));
   _setCajaEl('caja-total','₡'+fmt(cajaTotal));
   document.getElementById('panel-stat-caja').textContent='Total: ₡'+fmt(cajaTotal);
