@@ -573,7 +573,10 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     <div class="navbar">
       <button class="btn btn-cyan btn-sm" onclick="goBack()">← Volver</button>
       <span class="navbar-title">Inversión</span>
-      <button class="gam-trigger" onclick="_toggleGlobalAdminMenu(event)" style="display:none;background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:#374151;line-height:1">⋮</button>
+      <div style="display:flex;align-items:center;gap:4px">
+        <button class="gam-trigger" onclick="_toggleGlobalAdminMenu(event)" style="display:none;background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:#374151;line-height:1">⋮</button>
+        <button class="menu-icon" onclick="toggleMenu()">☰</button>
+      </div>
     </div>
     <!-- Filtro de ruta -->
     <div style="display:flex;gap:8px;padding:10px 16px 0;flex-wrap:wrap">
@@ -690,7 +693,10 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     <div class="navbar">
       <button class="btn btn-cyan btn-sm" onclick="goBack()">← Volver</button>
       <span class="navbar-title">📦 Cajas</span>
-      <button class="gam-trigger" onclick="_toggleGlobalAdminMenu(event)" style="display:none;background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:#374151;line-height:1">⋮</button>
+      <div style="display:flex;align-items:center;gap:4px">
+        <button class="gam-trigger" onclick="_toggleGlobalAdminMenu(event)" style="display:none;background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:#374151;line-height:1">⋮</button>
+        <button class="menu-icon" onclick="toggleMenu()">☰</button>
+      </div>
     </div>
     <div class="section" style="padding-top:12px">
 
@@ -1328,6 +1334,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <div style="display:flex;align-items:center;gap:4px">
         <span id="navbar-ruta-label-panel" style="font-size:11px;background:#dbeafe;color:#1e40af;border-radius:8px;padding:3px 8px;font-weight:600;cursor:pointer" onclick="if(rolActual==='admin')cambiarRuta()"></span>
         <button class="gam-trigger" onclick="_toggleGlobalAdminMenu(event)" style="display:none;background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:#374151;line-height:1">⋮</button>
+        <button class="menu-icon" onclick="toggleMenu()">☰</button>
       </div>
     </div>
     <div class="section">
