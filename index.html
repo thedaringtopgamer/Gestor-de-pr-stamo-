@@ -4551,16 +4551,28 @@ function _diaSemanaCliente(p){
 function renderTarjetas(filtro){
   var lista=document.getElementById('tarjetas-lista');
   var f=(filtro||'').toLowerCase().trim();
-  // Detectar búsqueda por día: /lunes, lunes, /martes, martes, etc. (con o sin slash)
+  // Detectar búsqueda por día: /lunes = próximo lunes exacto; lunes = cualquier lunes
   var filtroDia=-1;
-  var _fDia=f.replace(/^[\/⁄∕]*/,'').trim(); // quitar cualquier tipo de slash al inicio
+  var _tieneSlash=/^[\/⁄∕]/.test(f);
+  var _fDia=f.replace(/^[\/⁄∕]*/,'').trim();
+  var _filtroDiaExacto=null; // fecha exacta para /lunes
+  var _DIAS_HABIL=[1,2,3,4,5]; // lunes a viernes
   if(_fDia&&_DIAS_SEMANA.hasOwnProperty(_fDia)){
     filtroDia=_DIAS_SEMANA[_fDia];
-    f=''; // no tratar como búsqueda de nombre
+    // /lunes (con slash) y día hábil → calcular próxima fecha exacta de ese día
+    if(_tieneSlash&&_DIAS_HABIL.indexOf(filtroDia)>=0){
+      var _hoy=parseLocalDate(diaOperativo());
+      var _dow=_hoy.getDay();
+      var _diff=filtroDia-_dow;
+      if(_diff<=0) _diff+=7;
+      var _proxFecha=new Date(_hoy); _proxFecha.setDate(_hoy.getDate()+_diff);
+      _filtroDiaExacto=_proxFecha.getFullYear()+'-'+String(_proxFecha.getMonth()+1).padStart(2,'0')+'-'+String(_proxFecha.getDate()).padStart(2,'0');
+    }
+    f='';
   }
   var todos=prestamosVisibles();
   var items=todos.filter(function(p){
-    if(filtroDia>=0){ if(p.incompleto) return false; var _dc=calcDerived(p); if(_dc.saldoPendiente<=0) return false; var _pf=_dc.proximaFecha||p.fechaInicio; if(!_pf) return false; return new Date(_pf+'T12:00:00').getDay()===filtroDia; }
+    if(filtroDia>=0){ if(p.incompleto) return false; var _dc=calcDerived(p); if(_dc.saldoPendiente<=0) return false; var _pf=_dc.proximaFecha||p.fechaInicio; if(!_pf) return false; if(_filtroDiaExacto) return _pf===_filtroDiaExacto; return new Date(_pf+'T12:00:00').getDay()===filtroDia; }
     if(f) return p.cliente.toLowerCase().includes(f);
     // Sin búsqueda: solo activos (cancelados solo aparecen al buscar por nombre)
     if(p.incompleto) return false;
@@ -4573,7 +4585,7 @@ function renderTarjetas(filtro){
   var totalIncompletos=todos.filter(function(p){return p.incompleto;}).length;
   var _NOMBRES_DIA=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
   var titulo='Tarjetas activas ('+totalActivos+')';
-  if(filtroDia>=0) titulo='Préstamos del '+_NOMBRES_DIA[filtroDia]+' ('+items.length+')';
+  if(filtroDia>=0) titulo=(_filtroDiaExacto?'Cobro próximo '+_NOMBRES_DIA[filtroDia]+' ('+_filtroDiaExacto+')':'Préstamos del '+_NOMBRES_DIA[filtroDia])+' ('+items.length+')';
   else if(totalIncompletos>0&&!f) titulo+=' · ⚠️ '+totalIncompletos+' incompleta'+(totalIncompletos===1?'':'s')+' (busca el nombre)';
   else if(f) titulo+=' · Búsqueda: '+items.length;
   document.getElementById('tarjetas-titulo').textContent=titulo;
