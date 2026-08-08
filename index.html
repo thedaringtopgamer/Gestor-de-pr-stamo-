@@ -4678,8 +4678,9 @@ function imprimirCuotas(){
     return '<tr style="background:'+bgRow+'">'
       +'<td style="text-align:center;font-size:11pt;width:46px;white-space:nowrap">'+_iconImp+'</td>'
       +'<td>'+esc(p.cliente)+'</td>'
-      +'<td>'+( p.subruta||'')+'</td>'
+      +'<td>'+(p.subruta||'')+'</td>'
       +'<td style="text-align:right">'+p.montoPrestado.toLocaleString('es-CR')+'.00</td>'
+      +'<td style="text-align:right">'+d.saldoPendiente.toLocaleString('es-CR')+'.00</td>'
       +'<td style="text-align:center">'+p.cantidadDeQuincenas+'</td>'
       +'<td style="text-align:center">'+actual+'</td>'
       +'<td style="text-align:center">'+tipo+'</td>'
@@ -4706,7 +4707,7 @@ function imprimirCuotas(){
     +'<div class="ts">'+fechaDisplay+', '+horaDisplay+'</div>'
     +'</div>'
     +'<table><thead><tr>'
-    +'<th style="width:46px"></th><th>Cliente</th><th>SubRuta</th><th>Monto</th><th>Cuotas</th><th>Actual</th><th>Tipo</th><th>Fecha</th><th>Atraso</th>'
+    +'<th style="width:46px"></th><th>Cliente</th><th>SubRuta</th><th>Monto</th><th>Saldo</th><th>Cuotas</th><th>Actual</th><th>Tipo</th><th>Próximo Pago</th><th>Estado</th>'
     +'</tr></thead><tbody>'+filas+'</tbody></table>'
     +'</body></html>';
 
