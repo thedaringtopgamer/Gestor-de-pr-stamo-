@@ -4610,15 +4610,10 @@ function renderTarjetas(filtro){
     var verif=clienteNecesitaVerificacion(p);
     var badgeTarjeta=verif.necesita?'<span title="'+verif.razon+'" style="font-size:15px;margin-left:4px">⚠️</span>':'';
     var cancelado=d.saldoPendiente<=0;
-    var _puedeRenovar=!cancelado&&!p.bloqueado&&d.saldoPendiente<=p.montoPrestado;
-    var _iconos='<div style="width:18px;flex-shrink:0;display:flex;flex-direction:column;gap:3px;align-items:center;padding-top:2px">'
-      +(p.bloqueado?'<span title="Bloqueado" style="font-size:14px;line-height:1">🚫</span>':'')
-      +(_puedeRenovar?'<span title="Puede renovar" style="font-size:14px;line-height:1">🔄</span>':'')
-      +'</div>';
     var borderColor=p.bloqueado?'':(cancelado?'border-left:4px solid #93c5fd':'');
     var bgBloq=p.bloqueado?'background:#dc2626;':'';
     var txtBloq=p.bloqueado?'color:#fff;':'';
-    return '<div style="display:flex;align-items:flex-start;gap:4px;margin-bottom:6px">'+_iconos+'<div class="loan-row" style="flex:1;margin-bottom:0;'+borderColor+';'+bgBloq+(cancelado&&!p.bloqueado?'opacity:0.7':''+'')+'">'
+    return '<div class="loan-row" style="'+borderColor+';'+bgBloq+(cancelado&&!p.bloqueado?'opacity:0.7':''+'')+'">'
       +'<button class="icon-btn icon-btn-cyan btn-sm" style="width:auto;padding:7px 14px;border-radius:var(--radius);'+(p.bloqueado?'background:#fff;color:#dc2626;':'')+'" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
       +'<div style="flex:1;padding-left:10px;min-width:0">'
         +'<div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+txtBloq+'">'+esc(p.cliente)+(p.bloqueado?' 🚫':'')+badgeTarjeta+'</div>'
@@ -4633,7 +4628,7 @@ function renderTarjetas(filtro){
           +'<div style="font-size:14px;font-weight:600;'+(p.bloqueado?'color:#fff;':'')+'">₡'+fmt(p.montoPrestado)+'</div>'
           +'<div style="font-size:13px;font-weight:600;color:'+(p.bloqueado?'rgba(255,255,255,0.8)':'#2563eb')+'">'+(p.subruta||p.ruta||'')+'</div>'
           +'</div>')
-    +'</div></div>';
+    +'</div>';
   }).join('');
 }
 
@@ -4676,7 +4671,11 @@ function imprimirCuotas(){
     var diffDias=Math.floor((hoyDate-fechaProxDate)/86400000);
     var atraso=diffDias>0?'Atrasado '+diffDias+' día(s)':'al día';
     var bgRow=diffDias>0?'#fff3f3':'#fff';
+    var _bloq=!!(p.bloqueado||clientesBloqueados[p.id]);
+    var _puedeRen=!_bloq&&d.saldoPendiente<=p.montoPrestado;
+    var _iconImp=(_bloq?'&#x1F6AB;':'')+(_puedeRen?'&#x1F504;':'');
     return '<tr style="background:'+bgRow+'">'
+      +'<td style="text-align:center;font-size:11pt;width:28px">'+_iconImp+'</td>'
       +'<td>'+esc(p.cliente)+'</td>'
       +'<td>'+( p.subruta||'')+'</td>'
       +'<td style="text-align:right">'+p.montoPrestado.toLocaleString('es-CR')+'.00</td>'
@@ -4706,7 +4705,7 @@ function imprimirCuotas(){
     +'<div class="ts">'+fechaDisplay+', '+horaDisplay+'</div>'
     +'</div>'
     +'<table><thead><tr>'
-    +'<th>Cliente</th><th>SubRuta</th><th>Monto</th><th>Cuotas</th><th>Actual</th><th>Tipo</th><th>Fecha</th><th>Atraso</th>'
+    +'<th style="width:28px"></th><th>Cliente</th><th>SubRuta</th><th>Monto</th><th>Cuotas</th><th>Actual</th><th>Tipo</th><th>Fecha</th><th>Atraso</th>'
     +'</tr></thead><tbody>'+filas+'</tbody></table>'
     +'</body></html>';
 
