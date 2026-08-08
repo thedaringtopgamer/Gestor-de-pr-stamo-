@@ -4675,7 +4675,7 @@ function imprimirCuotas(){
     var _puedeRen=d.saldoPendiente<=p.montoPrestado;
     var _iconImp=(_bloq?'&#x1F6AB; ':'')+(_puedeRen?'&#x1F504;':'');
     return '<tr style="background:'+bgRow+'">'
-      +'<td style="text-align:center;font-size:11pt;width:28px">'+_iconImp+'</td>'
+      +'<td style="text-align:center;font-size:11pt;width:46px;white-space:nowrap">'+_iconImp+'</td>'
       +'<td>'+esc(p.cliente)+'</td>'
       +'<td>'+( p.subruta||'')+'</td>'
       +'<td style="text-align:right">'+p.montoPrestado.toLocaleString('es-CR')+'.00</td>'
@@ -4705,7 +4705,7 @@ function imprimirCuotas(){
     +'<div class="ts">'+fechaDisplay+', '+horaDisplay+'</div>'
     +'</div>'
     +'<table><thead><tr>'
-    +'<th style="width:28px"></th><th>Cliente</th><th>SubRuta</th><th>Monto</th><th>Cuotas</th><th>Actual</th><th>Tipo</th><th>Fecha</th><th>Atraso</th>'
+    +'<th style="width:46px"></th><th>Cliente</th><th>SubRuta</th><th>Monto</th><th>Cuotas</th><th>Actual</th><th>Tipo</th><th>Fecha</th><th>Atraso</th>'
     +'</tr></thead><tbody>'+filas+'</tbody></table>'
     +'</body></html>';
 
