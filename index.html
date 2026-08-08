@@ -4610,10 +4610,15 @@ function renderTarjetas(filtro){
     var verif=clienteNecesitaVerificacion(p);
     var badgeTarjeta=verif.necesita?'<span title="'+verif.razon+'" style="font-size:15px;margin-left:4px">⚠️</span>':'';
     var cancelado=d.saldoPendiente<=0;
+    var _puedeRenovar=!cancelado&&!p.bloqueado&&d.saldoPendiente<=p.montoPrestado;
+    var _iconos='<div style="width:18px;flex-shrink:0;display:flex;flex-direction:column;gap:3px;align-items:center;padding-top:2px">'
+      +(p.bloqueado?'<span title="Bloqueado" style="font-size:14px;line-height:1">🚫</span>':'')
+      +(_puedeRenovar?'<span title="Puede renovar" style="font-size:14px;line-height:1">🔄</span>':'')
+      +'</div>';
     var borderColor=p.bloqueado?'':(cancelado?'border-left:4px solid #93c5fd':'');
     var bgBloq=p.bloqueado?'background:#dc2626;':'';
     var txtBloq=p.bloqueado?'color:#fff;':'';
-    return '<div class="loan-row" style="'+borderColor+';'+bgBloq+(cancelado&&!p.bloqueado?'opacity:0.7':''+'')+'">'
+    return '<div style="display:flex;align-items:flex-start;gap:4px;margin-bottom:6px">'+_iconos+'<div class="loan-row" style="flex:1;margin-bottom:0;'+borderColor+';'+bgBloq+(cancelado&&!p.bloqueado?'opacity:0.7':''+'')+'">'
       +'<button class="icon-btn icon-btn-cyan btn-sm" style="width:auto;padding:7px 14px;border-radius:var(--radius);'+(p.bloqueado?'background:#fff;color:#dc2626;':'')+'" onclick="verDetalle(\''+p.id+'\')">Ver</button>'
       +'<div style="flex:1;padding-left:10px;min-width:0">'
         +'<div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+txtBloq+'">'+esc(p.cliente)+(p.bloqueado?' 🚫':'')+badgeTarjeta+'</div>'
@@ -4628,7 +4633,7 @@ function renderTarjetas(filtro){
           +'<div style="font-size:14px;font-weight:600;'+(p.bloqueado?'color:#fff;':'')+'">₡'+fmt(p.montoPrestado)+'</div>'
           +'<div style="font-size:13px;font-weight:600;color:'+(p.bloqueado?'rgba(255,255,255,0.8)':'#2563eb')+'">'+(p.subruta||p.ruta||'')+'</div>'
           +'</div>')
-    +'</div>';
+    +'</div></div>';
   }).join('');
 }
 
