@@ -4672,8 +4672,8 @@ function imprimirCuotas(){
     var atraso=diffDias>0?'Atrasado '+diffDias+' día(s)':'al día';
     var bgRow=diffDias>0?'#fff3f3':'#fff';
     var _bloq=!!(p.bloqueado||clientesBloqueados[p.id]);
-    var _puedeRen=!_bloq&&d.saldoPendiente<=p.montoPrestado;
-    var _iconImp=(_bloq?'&#x1F6AB;':'')+(_puedeRen?'&#x1F504;':'');
+    var _puedeRen=d.saldoPendiente<=p.montoPrestado;
+    var _iconImp=(_bloq?'&#x1F6AB; ':'')+(_puedeRen?'&#x1F504;':'');
     return '<tr style="background:'+bgRow+'">'
       +'<td style="text-align:center;font-size:11pt;width:28px">'+_iconImp+'</td>'
       +'<td>'+esc(p.cliente)+'</td>'
@@ -4695,9 +4695,9 @@ function imprimirCuotas(){
     +'.top h2{font-size:13pt;font-weight:bold}'
     +'.top .ts{font-size:8pt;color:#555}'
     +'table{border-collapse:collapse;width:100%}'
-    +'th{background:#ddd;border:1px solid #aaa;padding:3px 5px;font-size:8pt;text-align:left;font-weight:bold}'
-    +'td{border:1px solid #ccc;padding:2px 4px;font-size:8pt}'
-    +'tr:nth-child(even) td{background:#f7f7f7}'
+    +'th{background:#bbb;border:1.5px solid #666;padding:3px 5px;font-size:8.5pt;text-align:left;font-weight:bold;color:#000}'
+    +'td{border:1px solid #999;padding:2px 4px;font-size:8.5pt;font-weight:600;color:#111}'
+    +'tr:nth-child(even) td{background:#efefef}'
     +'@media print{body{padding:5mm}}'
     +'</style></head><body>'
     +'<div class="top">'
