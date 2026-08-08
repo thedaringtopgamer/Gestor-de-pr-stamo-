@@ -4719,17 +4719,10 @@ function imprimirTarjetas(){
   var filtroActual=document.getElementById('filtro-tarjetas')?document.getElementById('filtro-tarjetas').value:'';
   var f=(filtroActual||'').toLowerCase().trim();
   var items=prestamosVisibles().filter(function(p){
-    if(f) return p.cliente.toLowerCase().includes(f);
     if(p.incompleto) return false;
     var d=calcDerived(p);
-    if(d.saldoPendiente<=0){
-      var pagosCliente=pagos.filter(function(x){return x.id_prestamo===p.id;});
-      if(!pagosCliente.length) return false;
-      pagosCliente.sort(function(a,b){return new Date(b.fechaPago)-new Date(a.fechaPago);});
-      var ultimoPago=new Date(pagosCliente[0].fechaPago+'T12:00:00');
-      var unAno=new Date(ultimoPago); unAno.setFullYear(unAno.getFullYear()+1);
-      return new Date()<=unAno;
-    }
+    if(d.saldoPendiente<=0) return false;
+    if(f) return p.cliente.toLowerCase().includes(f);
     return true;
   });
   items.sort(function(a,b){
