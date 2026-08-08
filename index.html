@@ -4673,7 +4673,8 @@ function imprimirCuotas(){
     var bgRow=diffDias>0?'#fff3f3':'#fff';
     var _bloq=!!(p.bloqueado||clientesBloqueados[p.id]);
     var _puedeRen=d.saldoPendiente<=p.montoPrestado;
-    var _iconImp=(_bloq?'&#x1F6AB; ':'')+(_puedeRen?'&#x1F504;':'');
+    var _verif=clienteNecesitaVerificacion(p).necesita;
+    var _iconImp=(_verif?'&#x26A0;&#xFE0F; ':'')+(_bloq?'&#x1F6AB; ':'')+(_puedeRen?'&#x1F504;':'');
     return '<tr style="background:'+bgRow+'">'
       +'<td style="text-align:center;font-size:11pt;width:46px;white-space:nowrap">'+_iconImp+'</td>'
       +'<td>'+esc(p.cliente)+'</td>'
