@@ -3244,7 +3244,7 @@ function renderCierres(){
     +_barMeta(dSem.prestado+dSem.montoRenov,metaSem,'Meta préstamos semana',true)
     +_barMeta(dSem.numPrestamos,metaSemC,'Meta clientes nuevos semana',false);
   var elPorRutaSem=document.getElementById('cierre-semana-porruta');
-  if(elPorRutaSem) elPorRutaSem.innerHTML=rFiltro==='todas'?_tablaPorRuta(inicioSem,hoy):'';
+  if(elPorRutaSem) elPorRutaSem.innerHTML='';
 
   // Mes en curso
   var dMes=_calcCierreData(inicioMes,hoy);
@@ -3270,7 +3270,7 @@ function renderCierres(){
     +_barMeta(dMes.numPrestamos,metaClientes,'Meta clientes nuevos mes',false)
     +_barMetaTarjetas(activosCartera,metaTarjetas);
   var elPorRutaMes=document.getElementById('cierre-mes-porruta');
-  if(elPorRutaMes) elPorRutaMes.innerHTML=rFiltroMes==='todas'?_tablaPorRuta(inicioMes,hoy):'';
+  if(elPorRutaMes) elPorRutaMes.innerHTML='';
 
   // Actualizar contadores en botones de historial
   var rFiltroC=rutaInvFiltro||'todas';
