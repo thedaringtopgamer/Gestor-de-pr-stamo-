@@ -2432,12 +2432,12 @@ function guardarDatos(){
     {key:'cierres_diarios',value:cierresDiarios},
     {key:'bases',value:bases},
     {key:'salidas',value:salidas},
-    {key:'metas',value:metas},
+    (Object.keys(metas).length>0?{key:'metas',value:metas}:null),
     {key:'inv_overrides',value:invOverrides},
     {key:'clientes_bloqueados',value:clientesBloqueados},
     {key:'passwords',value:USUARIOS.map(function(u){return u.pass;})},
     {key:'ts',value:ts}
-  ];
+  ].filter(Boolean);
 
   fetch(SUPA_URL+'/rest/v1/app_data',{
     method:'POST',
