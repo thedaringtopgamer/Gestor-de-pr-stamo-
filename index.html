@@ -3128,8 +3128,9 @@ function _tablaPorRuta(desde,hasta){
     });
     var saldo=activos.reduce(function(s,p){ return s+calcDerived(p).saldoPendiente; },0);
     var prestadoPer=d.prestado+d.montoRenov;
+    var prestadoSinInt=d.prestado+d.entregadoRenov;
     var balance=d.recogida-(d.prestado+d.entregadoRenov)-d.totalGastos;
-    return {ruta:r,saldo:saldo,prestado:prestadoPer,balance:balance,cobroAdm:d.totalCobroAdm,activos:activos.length,nuevos:d.numPrestamos,renovados:d.numRenov,gastos:d.totalGastos};
+    return {ruta:r,saldo:saldo,prestado:prestadoPer,prestadoSinInt:prestadoSinInt,balance:balance,cobroAdm:d.totalCobroAdm,activos:activos.length,nuevos:d.numPrestamos,renovados:d.numRenov,gastos:d.totalGastos};
   });
   var th=function(t){ return '<th style="padding:6px 8px;text-align:right;font-size:10px;color:#6b7280;font-weight:700;white-space:nowrap">'+t+'</th>'; };
   var td=function(v,color){ return '<td style="padding:6px 8px;text-align:right;font-size:11px;font-weight:700;color:'+(color||'#1f2937')+';white-space:nowrap">'+v+'</td>'; };
@@ -3138,6 +3139,7 @@ function _tablaPorRuta(desde,hasta){
       +'<td style="padding:6px 8px;text-align:left;font-size:11px;font-weight:800;color:#1e40af;white-space:nowrap">'+f.ruta+'</td>'
       +td(_fmtCol(f.saldo))
       +td(_fmtCol(f.prestado))
+      +td(_fmtCol(f.prestadoSinInt))
       +td((f.balance>=0?'+':'')+_fmtCol(f.balance),f.balance>=0?'#166534':'#dc2626')
       +td(_fmtCol(f.cobroAdm))
       +td(f.activos)
@@ -3147,10 +3149,10 @@ function _tablaPorRuta(desde,hasta){
       +'</tr>';
   }).join('');
   return '<div style="overflow-x:auto;margin-top:10px">'
-    +'<table style="border-collapse:collapse;width:100%;min-width:560px">'
+    +'<table style="border-collapse:collapse;width:100%;min-width:660px">'
     +'<thead><tr>'
       +'<th style="padding:6px 8px;text-align:left;font-size:10px;color:#6b7280;font-weight:700">Ruta</th>'
-      +th('Saldo')+th('Prestado')+th('Balance')+th('CobroAdm')+th('Activos')+th('Nuevos')+th('Renovados')+th('Gastos')
+      +th('Saldo')+th('Prestado')+th('Préstamo sin int.')+th('Balance')+th('CobroAdm')+th('Activos')+th('Nuevos')+th('Renovados')+th('Gastos')
     +'</tr></thead>'
     +'<tbody>'+filasHtml+'</tbody>'
     +'</table></div>';
