@@ -3128,7 +3128,7 @@ function _tablaPorRuta(desde,hasta){
     });
     var saldo=activos.reduce(function(s,p){ return s+calcDerived(p).saldoPendiente; },0);
     var prestadoPer=d.prestado+d.montoRenov;
-    var prestadoSinInt=d.prestado+d.entregadoRenov;
+    var prestadoSinInt=activos.reduce(function(s,p){ return s+p.montoPrestado; },0);
     var balance=d.recogida-(d.prestado+d.entregadoRenov)-d.totalGastos;
     return {ruta:r,saldo:saldo,prestado:prestadoPer,prestadoSinInt:prestadoSinInt,balance:balance,cobroAdm:d.totalCobroAdm,activos:activos.length,nuevos:d.numPrestamos,renovados:d.numRenov,gastos:d.totalGastos};
   });
