@@ -3110,6 +3110,7 @@ function _statsHtml(d,tipo){
         +'</div>'
       )
     +'</div>'
+    +'<div style="background:#fce7f3;border-radius:8px;padding:8px"><div style="color:#6b7280">🔄 Renovaciones</div><div style="font-weight:700;color:#9d174d">'+(d.numRenov||0)+'</div></div>'
     +(d.totalCobroAdm?'<div style="background:#ede9fe;border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:#7c3aed">'+_fmtCol(d.totalCobroAdm)+'</div></div>':'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:#9ca3af">₡0</div></div>')
     +'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💸 Gastos</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(d.totalGastos||0)+'</div></div>'
     +(d.totalInyeccion?'<div style="background:#e0f2fe;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💉 Capital inyectado</div><div style="font-weight:700;color:#0369a1">+'+_fmtCol(d.totalInyeccion)+'</div></div>':'')
