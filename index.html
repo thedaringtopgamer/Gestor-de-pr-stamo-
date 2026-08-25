@@ -727,6 +727,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           <button id="btn-cerrar-semana" onclick="cerrarSemana()" style="background:#1e40af;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Cerrar semana</button>
         </div>
         <div id="cierre-semana-stats"></div>
+        <div id="cierre-semana-porruta"></div>
       </div>
 
       <!-- Mes en curso de esta ruta -->
@@ -739,6 +740,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           <button id="btn-cerrar-mes" onclick="cerrarMes()" style="background:#166534;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Cerrar mes</button>
         </div>
         <div id="cierre-mes-stats"></div>
+        <div id="cierre-mes-porruta"></div>
       </div>
 
       <!-- Historial de cierres -->
@@ -3117,6 +3119,43 @@ function _statsHtml(d,tipo){
     +'</div>';
 }
 
+function _tablaPorRuta(desde,hasta){
+  var filas=_RUTAS_CAJA.map(function(r){
+    var d=_calcCierreData(desde,hasta,r);
+    var activos=prestamos.filter(function(p){
+      if(p.ruta!==r||p.incompleto||p.estado==='Cancelado') return false;
+      return calcDerived(p).saldoPendiente>0;
+    });
+    var saldo=activos.reduce(function(s,p){ return s+calcDerived(p).saldoPendiente; },0);
+    var prestadoPer=d.prestado+d.montoRenov;
+    var balance=d.recogida-(d.prestado+d.entregadoRenov)-d.totalGastos;
+    return {ruta:r,saldo:saldo,prestado:prestadoPer,balance:balance,cobroAdm:d.totalCobroAdm,activos:activos.length,nuevos:d.numPrestamos,renovados:d.numRenov,gastos:d.totalGastos};
+  });
+  var th=function(t){ return '<th style="padding:6px 8px;text-align:right;font-size:10px;color:#6b7280;font-weight:700;white-space:nowrap">'+t+'</th>'; };
+  var td=function(v,color){ return '<td style="padding:6px 8px;text-align:right;font-size:11px;font-weight:700;color:'+(color||'#1f2937')+';white-space:nowrap">'+v+'</td>'; };
+  var filasHtml=filas.map(function(f){
+    return '<tr style="border-top:1px solid #e5e7eb">'
+      +'<td style="padding:6px 8px;text-align:left;font-size:11px;font-weight:800;color:#1e40af;white-space:nowrap">'+f.ruta+'</td>'
+      +td(_fmtCol(f.saldo))
+      +td(_fmtCol(f.prestado))
+      +td((f.balance>=0?'+':'')+_fmtCol(f.balance),f.balance>=0?'#166534':'#dc2626')
+      +td(_fmtCol(f.cobroAdm))
+      +td(f.activos)
+      +td(f.nuevos)
+      +td(f.renovados)
+      +td(_fmtCol(f.gastos))
+      +'</tr>';
+  }).join('');
+  return '<div style="overflow-x:auto;margin-top:10px">'
+    +'<table style="border-collapse:collapse;width:100%;min-width:560px">'
+    +'<thead><tr>'
+      +'<th style="padding:6px 8px;text-align:left;font-size:10px;color:#6b7280;font-weight:700">Ruta</th>'
+      +th('Saldo')+th('Prestado')+th('Balance')+th('CobroAdm')+th('Activos')+th('Nuevos')+th('Renovados')+th('Gastos')
+    +'</tr></thead>'
+    +'<tbody>'+filasHtml+'</tbody>'
+    +'</table></div>';
+}
+
 function _barMetaTarjetas(activos,meta){
   if(!meta) return '';
   var faltan=Math.max(0,meta-activos);
@@ -3202,6 +3241,8 @@ function renderCierres(){
   if(elStatsSem) elStatsSem.innerHTML=_statsHtml(dSem,'semana')
     +_barMeta(dSem.prestado+dSem.montoRenov,metaSem,'Meta préstamos semana',true)
     +_barMeta(dSem.numPrestamos,metaSemC,'Meta clientes nuevos semana',false);
+  var elPorRutaSem=document.getElementById('cierre-semana-porruta');
+  if(elPorRutaSem) elPorRutaSem.innerHTML=rFiltro==='todas'?_tablaPorRuta(inicioSem,hoy):'';
 
   // Mes en curso
   var dMes=_calcCierreData(inicioMes,hoy);
@@ -3226,6 +3267,8 @@ function renderCierres(){
     +_barMeta(dMes.prestado+dMes.montoRenov,metaPrestamos,'Meta préstamos mes',true)
     +_barMeta(dMes.numPrestamos,metaClientes,'Meta clientes nuevos mes',false)
     +_barMetaTarjetas(activosCartera,metaTarjetas);
+  var elPorRutaMes=document.getElementById('cierre-mes-porruta');
+  if(elPorRutaMes) elPorRutaMes.innerHTML=rFiltroMes==='todas'?_tablaPorRuta(inicioMes,hoy):'';
 
   // Actualizar contadores en botones de historial
   var rFiltroC=rutaInvFiltro||'todas';
