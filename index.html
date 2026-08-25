@@ -85,6 +85,9 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
   }
   @media(max-width:767px){
     #desktop-sidebar{display:none!important}
+    .navbar{position:fixed;top:0;left:0;right:0}
+    .screen{padding-top:52px}
+    .menu-dropdown{position:fixed;top:52px}
   }
 
   /* NAVBAR */
@@ -2604,12 +2607,12 @@ function guardarDatos(){
     {key:'cajas_cerradas',value:cajasCerradas},
     {key:'bases',value:bases},
     {key:'salidas',value:salidas},
-    {key:'metas',value:metas},
+    (Object.keys(metas).length>0?{key:'metas',value:metas}:null),
     {key:'inv_overrides',value:invOverrides},
     {key:'clientes_bloqueados',value:clientesBloqueados},
     {key:'passwords',value:USUARIOS.map(function(u){return u.pass;})},
     {key:'ts',value:ts}
-  ];
+  ].filter(Boolean);
 
   fetch(SUPA_URL+'/rest/v1/app_data',{
     method:'POST',
