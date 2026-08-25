@@ -85,9 +85,6 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
   }
   @media(max-width:767px){
     #desktop-sidebar{display:none!important}
-    .navbar{position:fixed;top:0;left:0;right:0}
-    .screen{padding-top:52px}
-    .menu-dropdown{position:fixed;top:52px}
   }
 
   /* NAVBAR */
@@ -99,6 +96,12 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
   .screen{display:none;padding-bottom:40px;animation:fadeIn 0.18s ease}
   .screen.active{display:block}
   @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+  @media(max-width:767px){
+    .navbar{position:fixed;top:0;left:0;right:0}
+    .screen{padding-top:52px}
+    .menu-dropdown{position:fixed;top:52px}
+  }
 
   /* MENU DROPDOWN */
   .menu-dropdown{display:none;position:absolute;top:52px;right:0;left:0;background:var(--surface);border-bottom:1px solid var(--border);z-index:99;box-shadow:0 4px 16px rgba(0,0,0,0.08)}
