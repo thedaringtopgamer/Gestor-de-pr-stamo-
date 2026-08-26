@@ -3125,6 +3125,8 @@ function _statsHtml(d,tipo){
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">'
     +(typeof d.saldoInicio==='number'?'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">📍 Saldo inicio</div><div style="font-weight:700;color:#374151">'+_fmtCol(d.saldoInicio)+'</div></div>':'')
     +(typeof d.saldoFin==='number'?'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">🏁 Saldo fin</div><div style="font-weight:700;color:#374151">'+_fmtCol(d.saldoFin)+'</div></div>':'')
+    +(typeof d.clientesInicio==='number'?'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">📍 Clientes activos inicio</div><div style="font-weight:700;color:#374151">'+d.clientesInicio+'</div></div>':'')
+    +(typeof d.clientesFin==='number'?'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">🏁 Clientes activos fin</div><div style="font-weight:700;color:#374151">'+d.clientesFin+'</div></div>':'')
     +'<div style="background:#f0fdf4;border-radius:8px;padding:8px"><div style="color:#6b7280">💰 Recogida</div><div style="font-weight:700;color:#166534">'+_fmtCol(d.recogida)+'</div></div>'
     +'<div style="background:#dbeafe;border-radius:8px;padding:8px;'+editStyle+'" onclick="_editarStatInv(\''+tipo+'\',\'prestado\',\'Prestado\',true,'+prestadoCalc+')"><div style="color:#6b7280">📤 Prestado'+editHint+'</div><div style="font-weight:700;color:#1e40af">'+_fmtCol(prestadoVal)+'</div></div>'
     +'<div style="background:#f3f4f6;border-radius:8px;overflow:hidden">'
@@ -3272,6 +3274,8 @@ function renderCierres(){
   var dSem=_calcCierreData(inicioSem,hoy);
   dSem.saldoInicio=(ultimoSem&&ultimoSem.data&&typeof ultimoSem.data.saldoFin==='number')?ultimoSem.data.saldoFin:_enCalleActual(rFiltro);
   dSem.saldoFin=_enCalleActual(rFiltro);
+  dSem.clientesInicio=(ultimoSem&&ultimoSem.data&&typeof ultimoSem.data.clientesFin==='number')?ultimoSem.data.clientesFin:_clientesActivosActual(rFiltro);
+  dSem.clientesFin=_clientesActivosActual(rFiltro);
   var elRangoSem=document.getElementById('cierre-semana-rango');
   var elStatsSem=document.getElementById('cierre-semana-stats');
   if(elRangoSem) elRangoSem.textContent=inicioSem+' → '+hoy;
@@ -3287,6 +3291,8 @@ function renderCierres(){
   var dMes=_calcCierreData(inicioMes,hoy);
   dMes.saldoInicio=(ultimoMes&&ultimoMes.data&&typeof ultimoMes.data.saldoFin==='number')?ultimoMes.data.saldoFin:_enCalleActual(rFiltro);
   dMes.saldoFin=_enCalleActual(rFiltro);
+  dMes.clientesInicio=(ultimoMes&&ultimoMes.data&&typeof ultimoMes.data.clientesFin==='number')?ultimoMes.data.clientesFin:_clientesActivosActual(rFiltro);
+  dMes.clientesFin=_clientesActivosActual(rFiltro);
   var elRangoMes=document.getElementById('cierre-mes-rango');
   var elStatsMes=document.getElementById('cierre-mes-stats');
   // Contar semanas cerradas desde inicio del mes actual
@@ -3457,6 +3463,14 @@ function _enCalleActual(ruta){
   }).reduce(function(s,p){ return s+calcDerived(p).saldoPendiente; },0);
 }
 
+function _clientesActivosActual(ruta){
+  return prestamos.filter(function(p){
+    if(p.incompleto||p.estado==='Cancelado') return false;
+    if(ruta!=='todas'&&p.ruta!==ruta) return false;
+    return calcDerived(p).saldoPendiente>0;
+  }).length;
+}
+
 function _guardarCierre(tipo,desde,hasta){
   var nota=document.getElementById('confirmar-cierre-nota').value.trim();
   var rutaActiva=rutaInvFiltro||'todas';
@@ -3465,6 +3479,7 @@ function _guardarCierre(tipo,desde,hasta){
   rutasAGuardar.forEach(function(ruta,i){
     var data=_calcCierreData(desde,hasta,ruta);
     data.saldoFin=_enCalleActual(ruta);
+    data.clientesFin=_clientesActivosActual(ruta);
     cierres.push({id:(ahora+i).toString(),tipo:tipo,desde:desde,hasta:hasta,nota:nota,data:data,fechaRegistro:hoyLocal(),ruta:ruta});
   });
   guardarDatos();
