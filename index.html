@@ -856,6 +856,30 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
     </div>
   </div>
 
+  <!-- Modal Agregar documento extra -->
+  <div id="modal-doc-extra" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9500;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:16px;width:92%;max-width:400px;padding:20px;max-height:88vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <p style="font-size:15px;font-weight:800;margin:0;color:#059669">➕ Agregar documento extra</p>
+        <button onclick="cerrarModalDocExtra()" style="background:#f3f4f6;border:none;border-radius:8px;padding:7px 13px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">✕</button>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Nombre del documento *</label>
+        <input type="text" autocomplete="off" id="doc-extra-titulo" placeholder="Ej: Entrada del pasillo" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Descripción (opcional)</label>
+        <textarea id="doc-extra-desc" rows="2" placeholder="Detalles adicionales..." style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;resize:none;box-sizing:border-box"></textarea>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Foto *</label>
+        <input type="file" accept="image/*" id="doc-extra-file" onchange="onDocExtraFilePick(this)" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px">
+        <img id="doc-extra-preview" style="display:none;width:100%;margin-top:8px;border-radius:8px;max-height:200px;object-fit:cover">
+      </div>
+      <button onclick="guardarDocExtraModal()" style="width:100%;padding:12px;background:#059669;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">💾 Agregar</button>
+    </div>
+  </div>
+
   <!-- ==================== HOME ==================== -->
   <div id="screen-home" class="screen active">
     <div class="navbar">
@@ -6189,40 +6213,34 @@ function _renderDocsFotos(){
   });
   extras.forEach(function(ex){
     var src=fotos[ex.key]||(_docsExtraNuevos[ex.key]?_docsExtraNuevos[ex.key].data:'');
+    var desc=ex.desc||(_docsExtraNuevos[ex.key]?_docsExtraNuevos[ex.key].desc:'')||'';
     html+='<div style="padding:8px 0;border-bottom:1px solid var(--border)">'
       +'<div style="display:flex;align-items:center;justify-content:space-between">'
       +'<div style="font-size:13px;font-weight:500;color:#374151">'+esc(ex.label)+'</div>'
       +'<div style="display:flex;align-items:center;gap:8px">'
       +(src?'<button onclick="verFoto(\''+ex.key+'\')" style="font-size:12px;color:#2563eb;background:none;border:none;cursor:pointer;font-weight:500;padding:0;font-family:\'DM Sans\',sans-serif">👁 Ver</button>':'<span style="font-size:11px;color:var(--text-muted)">Sin foto</span>')
-      +'<label style="font-size:11px;color:#059669;font-weight:600;cursor:pointer;border:1px solid #059669;border-radius:6px;padding:3px 8px">📷 '+(src?'Cambiar':'Subir')+'<input type="file" accept="image/*" data-key="'+ex.key+'" onchange="onDocsFotoChange(this)" style="display:none"></label>'
       +'<button onclick="quitarDocExtra(\''+ex.key+'\')" style="font-size:12px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0">🗑</button>'
-      +'</div></div></div>';
+      +'</div></div>'
+      +(desc?'<div style="font-size:11px;color:#6b7280;margin-top:3px">'+esc(desc)+'</div>':'')
+      +'</div>';
   });
   html+='</div>'
-    +'<div style="margin-top:12px;padding-top:12px;border-top:2px dashed var(--border)">'
-    +'<div style="font-size:12px;font-weight:600;margin-bottom:6px;color:#374151">➕ Agregar otro documento</div>'
-    +'<div style="display:flex;gap:6px">'
-    +'<input type="text" autocomplete="off" id="nuevo-doc-label" placeholder="¿Qué es? (ej: Entrada del pasillo)" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:\'DM Sans\',sans-serif;outline:none;box-sizing:border-box">'
-    +'<label style="font-size:11px;color:#059669;font-weight:600;cursor:pointer;border:1px solid #059669;border-radius:6px;padding:7px 10px;white-space:nowrap">📷 Subir<input type="file" accept="image/*" onchange="onDocsExtraFotoChange(this)" style="display:none"></label>'
-    +'</div></div>';
+    +'<button type="button" onclick="abrirModalDocExtra()" style="width:100%;margin-top:12px;padding:11px;border:2px dashed #059669;border-radius:10px;background:#f0fdf4;color:#059669;font-size:13px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">➕ Agregar documento extra</button>';
   document.getElementById('docs-fotos-edit').innerHTML=html;
 }
 
-function quitarDocExtra(key){
-  if(_docsExtraNuevos[key]){ delete _docsExtraNuevos[key]; _renderDocsFotos(); return; }
-  var p=prestamos.find(function(x){return x.id===currentId;});
-  if(!p) return;
-  p.fotosExtra=(p.fotosExtra||[]).filter(function(ex){return ex.key!==key;});
-  if(p.fotos) delete p.fotos[key];
-  guardarDatos();
-  _renderDocsFotos();
-  toast('✓ Documento eliminado');
+function abrirModalDocExtra(){
+  document.getElementById('doc-extra-titulo').value='';
+  document.getElementById('doc-extra-desc').value='';
+  document.getElementById('doc-extra-file').value='';
+  document.getElementById('doc-extra-preview').style.display='none';
+  window._docExtraFileData=null;
+  document.getElementById('modal-doc-extra').style.display='flex';
 }
-
-function onDocsExtraFotoChange(input){
-  var labelInput=document.getElementById('nuevo-doc-label');
-  var label=(labelInput.value||'').trim();
-  if(!label){toast('⚠ Escribí primero qué es el documento');input.value='';return;}
+function cerrarModalDocExtra(){
+  document.getElementById('modal-doc-extra').style.display='none';
+}
+function onDocExtraFilePick(input){
   var file=input.files&&input.files[0];
   if(!file) return;
   var img=new Image();
@@ -6235,13 +6253,34 @@ function onDocsExtraFotoChange(input){
     var canvas=document.createElement('canvas');
     canvas.width=w; canvas.height=h;
     canvas.getContext('2d').drawImage(img,0,0,w,h);
-    var data=canvas.toDataURL('image/jpeg',0.7);
+    window._docExtraFileData=canvas.toDataURL('image/jpeg',0.7);
     URL.revokeObjectURL(url);
-    var key='extra-'+Date.now();
-    _docsExtraNuevos[key]={label:label,data:data};
-    _renderDocsFotos();
+    document.getElementById('doc-extra-preview').src=window._docExtraFileData;
+    document.getElementById('doc-extra-preview').style.display='block';
   };
   img.src=url;
+}
+function guardarDocExtraModal(){
+  var titulo=document.getElementById('doc-extra-titulo').value.trim();
+  var desc=document.getElementById('doc-extra-desc').value.trim();
+  if(!titulo){toast('⚠ Escribí el nombre del documento');return;}
+  if(!window._docExtraFileData){toast('⚠ Elegí una foto');return;}
+  var key='extra-'+Date.now();
+  _docsExtraNuevos[key]={label:titulo,desc:desc,data:window._docExtraFileData};
+  cerrarModalDocExtra();
+  _renderDocsFotos();
+  toast('✓ Documento agregado — dale a Guardar cambios para confirmarlo');
+}
+
+function quitarDocExtra(key){
+  if(_docsExtraNuevos[key]){ delete _docsExtraNuevos[key]; _renderDocsFotos(); return; }
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  p.fotosExtra=(p.fotosExtra||[]).filter(function(ex){return ex.key!==key;});
+  if(p.fotos) delete p.fotos[key];
+  guardarDatos();
+  _renderDocsFotos();
+  toast('✓ Documento eliminado');
 }
 
 var _docsNewFotos={};
@@ -6300,7 +6339,7 @@ function guardarDocsCliente(){
   // Documentos extra nuevos — agregarlos a la lista de fotosExtra del cliente
   if(!p.fotosExtra) p.fotosExtra=[];
   Object.keys(_docsExtraNuevos).forEach(function(k){
-    p.fotosExtra.push({key:k,label:_docsExtraNuevos[k].label});
+    p.fotosExtra.push({key:k,label:_docsExtraNuevos[k].label,desc:_docsExtraNuevos[k].desc||''});
   });
   // Fotos nuevas — subir a Storage
   if(!p.fotos) p.fotos={};
