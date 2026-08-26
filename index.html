@@ -362,6 +362,13 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <span>San Ramón</span>
         <span style="margin-left:auto;color:#475569;font-size:18px">›</span>
       </button>
+      <button onclick="entrarComoRuta('Ciudad Quesada')"
+        style="padding:18px 20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:14px;color:#fff;transition:all 0.2s;text-align:left"
+        onmouseover="this.style.background='rgba(37,99,235,0.2)';this.style.borderColor='rgba(59,130,246,0.5)'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.1)'">
+        <span style="width:40px;height:40px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📍</span>
+        <span>Ciudad Quesada</span>
+        <span style="margin-left:auto;color:#475569;font-size:18px">›</span>
+      </button>
       <div style="display:flex;align-items:center;gap:12px;margin:6px 0">
         <div style="flex:1;height:1px;background:rgba(255,255,255,0.07)"></div>
         <span style="font-size:11px;color:#334155;letter-spacing:1px;text-transform:uppercase">o</span>
@@ -475,6 +482,9 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       </button>
       <button onclick="seleccionarRuta('San Ramón')" style="padding:14px 16px;background:#fff;color:#1e40af;border:2px solid #bfdbfe;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:10px">
         <span style="font-size:20px">📍</span><span>San Ramón</span>
+      </button>
+      <button onclick="seleccionarRuta('Ciudad Quesada')" style="padding:14px 16px;background:#fff;color:#1e40af;border:2px solid #bfdbfe;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">📍</span><span>Ciudad Quesada</span>
       </button>
       <!-- Cerrar todas las sesiones -->
       <div style="margin-top:8px;border-top:1.5px solid #e5e7eb;padding-top:16px">
@@ -590,6 +600,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <button id="inv-rbtn-Heredia" onclick="setRutaInv('Heredia')" style="padding:6px 14px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;background:#e5e7eb;color:#374151">Heredia</button>
       <button id="inv-rbtn-Alajuela" onclick="setRutaInv('Alajuela')" style="padding:6px 14px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;background:#e5e7eb;color:#374151">Alajuela</button>
       <button id="inv-rbtn-San Ramón" onclick="setRutaInv('San Ramón')" style="padding:6px 14px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;background:#e5e7eb;color:#374151">San Ramón</button>
+      <button id="inv-rbtn-Ciudad Quesada" onclick="setRutaInv('Ciudad Quesada')" style="padding:6px 14px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;background:#e5e7eb;color:#374151">Ciudad Quesada</button>
     </div>
     <div class="section">
 
@@ -642,6 +653,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
               <option value="Heredia">📍 Heredia</option>
               <option value="Alajuela">📍 Alajuela</option>
               <option value="San Ramón">📍 San Ramón</option>
+              <option value="Ciudad Quesada">📍 Ciudad Quesada</option>
             </select>
             <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric" id="inv-monto" placeholder="Monto" oninput="fmtMoneyInput(this)" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;margin-bottom:6px">
             <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="inv-nota" placeholder="Nota (opcional)" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;margin-bottom:8px">
@@ -712,6 +724,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <button id="cajas-rbtn-Heredia" onclick="setCajasRuta('Heredia')" style="flex-shrink:0;padding:7px 16px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Heredia</button>
         <button id="cajas-rbtn-Alajuela" onclick="setCajasRuta('Alajuela')" style="flex-shrink:0;padding:7px 16px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Alajuela</button>
         <button id="cajas-rbtn-SanRamon" onclick="setCajasRuta('San Ramón')" style="flex-shrink:0;padding:7px 16px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">San Ramón</button>
+        <button id="cajas-rbtn-CiudadQuesada" onclick="setCajasRuta('Ciudad Quesada')" style="flex-shrink:0;padding:7px 16px;border-radius:20px;border:none;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Ciudad Quesada</button>
       </div>
 
       <!-- Estado de la caja hoy -->
@@ -1015,6 +1028,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           <option value="Heredia">Heredia</option>
           <option value="Alajuela">Alajuela</option>
           <option value="San Ramón">San Ramón</option>
+          <option value="Ciudad Quesada">Ciudad Quesada</option>
         </select>
       </div>
       <div class="field-group">
@@ -1333,6 +1347,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
             <option value="Heredia">Heredia</option>
             <option value="Alajuela">Alajuela</option>
             <option value="San Ramón">San Ramón</option>
+            <option value="Ciudad Quesada">Ciudad Quesada</option>
           </select>
         </div>
         <div class="field-group">
@@ -1709,7 +1724,8 @@ var USUARIOS=[
   {user:'The Daring',    pass:'', rol:'admin'},
   {user:'Ruta Heredia',  pass:'', rol:'ruta', ruta:'Heredia'},
   {user:'Ruta Alajuela', pass:'', rol:'ruta', ruta:'Alajuela'},
-  {user:'Ruta San Ramón',pass:'', rol:'ruta', ruta:'San Ramón'}
+  {user:'Ruta San Ramón',pass:'', rol:'ruta', ruta:'San Ramón'},
+  {user:'Ruta Ciudad Quesada',pass:'', rol:'ruta', ruta:'Ciudad Quesada'}
 ];
 
 var rolActual=localStorage.getItem('fjd_rol')||'ruta';
@@ -2703,7 +2719,7 @@ function subirFotoStorage(prestamoId, key, dataUrl){
 
 function renderInversion(){
   // Sincronizar pills con la ruta guardada
-  ['todas','Heredia','Alajuela','San Ramón'].forEach(function(r){
+  ['todas','Heredia','Alajuela','San Ramón','Ciudad Quesada'].forEach(function(r){
     var btn=document.getElementById('inv-rbtn-'+r);
     if(!btn) return;
     btn.style.background=r===rutaInvFiltro?'#1e40af':'#e5e7eb';
@@ -2824,7 +2840,7 @@ function abrirHistorialInversion(){
           +(rolActual==='admin'?'<button onclick="eliminarInversion(\''+inv.id+'\');document.getElementById(\'modal-hist-inversion\').style.display=\'none\'" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">🗑</button>':'')
         +'</div>'
         +(rolActual==='admin'?'<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'
-          +['Heredia','Alajuela','San Ramón'].map(function(r){
+          +['Heredia','Alajuela','San Ramón','Ciudad Quesada'].map(function(r){
             var activa=inv.ruta===r;
             return '<button onclick="asignarRutaInversion(\''+inv.id+'\',\''+r+'\')" style="padding:4px 10px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:'+(activa?'#1e40af':'#e0e7ff')+';color:'+(activa?'#fff':'#1e40af')+'">'+r+'</button>';
           }).join('')
@@ -2850,7 +2866,7 @@ function setRutaInv(ruta){
   rutaInvFiltro=ruta;
   localStorage.setItem('fjd_inv_ruta',ruta);
   // Update pill buttons
-  ['todas','Heredia','Alajuela','San Ramón'].forEach(function(r){
+  ['todas','Heredia','Alajuela','San Ramón','Ciudad Quesada'].forEach(function(r){
     var btn=document.getElementById('inv-rbtn-'+r);
     if(!btn) return;
     btn.style.background=r===ruta?'#1e40af':'#e5e7eb';
@@ -2885,7 +2901,7 @@ function _ejecutarGuardarMetas(){
   metaTarjetas=parseInt((document.getElementById('meta-tarjetas').value||'').replace(/[^\d]/g,'')||'0',10);
   if(rutaInvFiltro==='todas'){
     // "Todas" es el jefe — sobreescribe TODAS las rutas sin excepción
-    var rutas=['todas','Heredia','Alajuela','San Ramón'];
+    var rutas=['todas','Heredia','Alajuela','San Ramón','Ciudad Quesada'];
     rutas.forEach(function(r){
       var k=r==='todas'?'todas':r.toLowerCase().replace(/\s+/g,'_');
       metas['fjd_meta_prestamos_'+k]=metaPrestamos;
@@ -3480,7 +3496,7 @@ function _abrirConfirmarCierre(tipo,desde,hasta){
   document.getElementById('modal-confirmar-cierre').style.display='flex';
 }
 
-var _RUTAS_TODAS=['todas','Heredia','Alajuela','San Ramón'];
+var _RUTAS_TODAS=['todas','Heredia','Alajuela','San Ramón','Ciudad Quesada'];
 
 function _enCalleActual(ruta){
   return prestamos.filter(function(p){
@@ -3539,7 +3555,7 @@ function reiniciarCierres(){
   var ayer=new Date(); ayer.setDate(ayer.getDate()-1);
   var ayerStr=ayer.getFullYear()+'-'+String(ayer.getMonth()+1).padStart(2,'0')+'-'+String(ayer.getDate()).padStart(2,'0');
   var ahora=Date.now();
-  ['todas','Heredia','Alajuela','San Ramón'].forEach(function(ruta,i){
+  ['todas','Heredia','Alajuela','San Ramón','Ciudad Quesada'].forEach(function(ruta,i){
     cierres.push({id:(ahora+i).toString(),tipo:'semana',desde:ayerStr,hasta:ayerStr,nota:'Reinicio',data:{recogida:0,prestado:0,montoRenov:0,totalGastos:0,utilidad:0,numPrestamos:0,numRenov:0,totalCobroAdm:0},fechaRegistro:hoyLocal(),ruta:ruta});
     cierres.push({id:(ahora+10+i).toString(),tipo:'mes',desde:ayerStr,hasta:ayerStr,nota:'Reinicio',data:{recogida:0,prestado:0,montoRenov:0,totalGastos:0,utilidad:0,numPrestamos:0,numRenov:0,totalCobroAdm:0},fechaRegistro:hoyLocal(),ruta:ruta});
   });
@@ -3599,7 +3615,7 @@ function abrirHistorialCierres(){ abrirHistorialTipo('semana'); }
 
 // ── PANEL DE CAJAS ────────────────────────────────────────────────────────────
 
-var _RUTAS_CAJA=['Heredia','Alajuela','San Ramón'];
+var _RUTAS_CAJA=['Heredia','Alajuela','San Ramón','Ciudad Quesada'];
 
 function setCajasRuta(ruta){
   rutaCajasFiltro=ruta;
@@ -3612,8 +3628,8 @@ function renderCajas(){
   var ruta=rutaCajasFiltro||'todas';
   var diaOp=diaOperativo();
   // Pills
-  ['todas','Heredia','Alajuela','San Ramón'].forEach(function(r){
-    var id='cajas-rbtn-'+(r==='San Ramón'?'SanRamon':r==='todas'?'todas':r);
+  ['todas','Heredia','Alajuela','San Ramón','Ciudad Quesada'].forEach(function(r){
+    var id='cajas-rbtn-'+(r==='San Ramón'?'SanRamon':r==='Ciudad Quesada'?'CiudadQuesada':r==='todas'?'todas':r);
     var btn=document.getElementById(id);
     if(!btn) return;
     btn.style.background=r===ruta?'#1e40af':'#e5e7eb';
@@ -5959,7 +5975,8 @@ function updateHome(){
 var rutasData = {
   'Heredia': ['Belén','San Joaquín','Heredia Centro','Guararí','Santo Domingo','San Pedro','San Rafael','Barva','Santa Bárbara'],
   'Alajuela': ['La Garita','Yarita','Turrúcares','Ciruelas','Roble','Rincón','Herrera','Guácima','San Rafael','Río Segundo','Santa Bárbara','Heredia Centro','Alajuela','San José'],
-  'San Ramón': ['San Ramón Centro','Santiago','San Juan','Piedades Norte','Piedades Sur','San Rafael','San Isidro','Ángeles','Alfaro','Volio','Concepción','Zapotal','Peñas Blancas','La Angostura']
+  'San Ramón': ['San Ramón Centro','Santiago','San Juan','Piedades Norte','Piedades Sur','San Rafael','San Isidro','Ángeles','Alfaro','Volio','Concepción','Zapotal','Peñas Blancas','La Angostura'],
+  'Ciudad Quesada': ['Zarcero','Ciudad Quesada','Aguas Zarcas','San Ramón']
 };
 
 function onRutaChange(){
@@ -7289,7 +7306,7 @@ function guardarBase(){
   var base=readMoneyInput('caja-base');
   var rk=rutaActual||'todas';
   var inyecActual=inversiones.filter(function(x){return x.fecha===fecha&&(rk==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rk);}).reduce(function(s,x){return s+x.monto;},0);
-  var rutas=['todas','Heredia','Alajuela','San Ramón'];
+  var rutas=['todas','Heredia','Alajuela','San Ramón','Ciudad Quesada'];
   if(rutaActual==='todas'){
     rutas.forEach(function(r){
       bases[r+'_'+fecha]=base;
@@ -7335,7 +7352,7 @@ function guardarBaseModal(){
   var base=readMoneyInput('caja-base-modal');
   var rk=rutaActual||'todas';
   var inyecActual=inversiones.filter(function(x){return x.fecha===fecha&&(rk==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rk);}).reduce(function(s,x){return s+x.monto;},0);
-  var rutas=['todas','Heredia','Alajuela','San Ramón'];
+  var rutas=['todas','Heredia','Alajuela','San Ramón','Ciudad Quesada'];
   if(rutaActual==='todas'){
     rutas.forEach(function(r){
       bases[r+'_'+fecha]=base;
