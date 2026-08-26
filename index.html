@@ -5330,7 +5330,7 @@ function switchTab(tab){
 
 function verFoto(key){
   var p=prestamos.find(function(x){return x.id===currentId;});
-  var src=(p&&p.fotos&&p.fotos[key])||_docsNewFotos[key]||'';
+  var src=(p&&p.fotos&&p.fotos[key])||_docsNewFotos[key]||(_docsExtraNuevos[key]&&_docsExtraNuevos[key].data)||'';
   if(!src) return;
   var nombre=(p?p.cliente.replace(/\s+/g,'_'):'foto')+'_'+key+'.jpg';
   document.getElementById('foto-viewer-img').src=src;
@@ -6162,17 +6162,24 @@ function verDocsCliente(){
   document.getElementById('docs-edit-coord-trabajo').value=p.coordTrabajo||'';
   previewCoordDocs('casa');
   previewCoordDocs('trabajo');
-  // Fotos: link para ver + botón para cambiar
+  _renderDocsFotos();
+  goTo('screen-docs-cliente');
+}
+
+var LABELS_FOTOS_FIJAS={'cedula-frente':'Cédula frente','cedula-detras':'Cédula detrás','foto-cliente':'Foto cliente','foto-casa':'Foto casa','foto-trabajo':'Foto trabajo'};
+function _renderDocsFotos(){
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
   var fotos=p.fotos||{};
-  var labels={'cedula-frente':'Cédula frente','cedula-detras':'Cédula detrás','foto-cliente':'Foto cliente','foto-casa':'Foto casa','foto-trabajo':'Foto trabajo'};
   var notas=p.notas||{};
+  var extras=(p.fotosExtra||[]).concat(Object.keys(_docsExtraNuevos).map(function(k){return {key:k,label:_docsExtraNuevos[k].label};}));
   var html='<div style="display:flex;flex-direction:column;gap:10px">';
-  Object.keys(labels).forEach(function(k){
+  Object.keys(LABELS_FOTOS_FIJAS).forEach(function(k){
     var src=fotos[k]||'';
     var tieneNota=(k==='foto-casa'||k==='foto-trabajo');
     html+='<div style="padding:8px 0;border-bottom:1px solid var(--border)">'
       +'<div style="display:flex;align-items:center;justify-content:space-between">'
-      +'<div style="font-size:13px;font-weight:500;color:#374151">'+labels[k]+'</div>'
+      +'<div style="font-size:13px;font-weight:500;color:#374151">'+LABELS_FOTOS_FIJAS[k]+'</div>'
       +'<div style="display:flex;align-items:center;gap:8px">'
       +(src?'<button onclick="verFoto(\''+k+'\')" style="font-size:12px;color:#2563eb;background:none;border:none;cursor:pointer;font-weight:500;padding:0;font-family:\'DM Sans\',sans-serif">👁 Ver</button>':'<span style="font-size:11px;color:var(--text-muted)">Sin foto</span>')
       +'<label style="font-size:11px;color:#059669;font-weight:600;cursor:pointer;border:1px solid #059669;border-radius:6px;padding:3px 8px">📷 '+(src?'Cambiar':'Subir')+'<input type="file" accept="image/*" data-key="'+k+'" onchange="onDocsFotoChange(this)" style="display:none"></label>'
@@ -6180,12 +6187,65 @@ function verDocsCliente(){
       +(tieneNota?'<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="nota-'+k+'" placeholder="Nota sobre '+(k==='foto-casa'?'la casa':'el trabajo')+'..." rows="2" style="width:100%;margin-top:6px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:\'DM Sans\',sans-serif;outline:none;resize:none;box-sizing:border-box;color:#374151">'+((notas[k]||'').replace(/</g,'&lt;'))+'</textarea>':'')
       +'</div>';
   });
-  html+='</div>';
+  extras.forEach(function(ex){
+    var src=fotos[ex.key]||(_docsExtraNuevos[ex.key]?_docsExtraNuevos[ex.key].data:'');
+    html+='<div style="padding:8px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between">'
+      +'<div style="font-size:13px;font-weight:500;color:#374151">'+esc(ex.label)+'</div>'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+      +(src?'<button onclick="verFoto(\''+ex.key+'\')" style="font-size:12px;color:#2563eb;background:none;border:none;cursor:pointer;font-weight:500;padding:0;font-family:\'DM Sans\',sans-serif">👁 Ver</button>':'<span style="font-size:11px;color:var(--text-muted)">Sin foto</span>')
+      +'<label style="font-size:11px;color:#059669;font-weight:600;cursor:pointer;border:1px solid #059669;border-radius:6px;padding:3px 8px">📷 '+(src?'Cambiar':'Subir')+'<input type="file" accept="image/*" data-key="'+ex.key+'" onchange="onDocsFotoChange(this)" style="display:none"></label>'
+      +'<button onclick="quitarDocExtra(\''+ex.key+'\')" style="font-size:12px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0">🗑</button>'
+      +'</div></div></div>';
+  });
+  html+='</div>'
+    +'<div style="margin-top:12px;padding-top:12px;border-top:2px dashed var(--border)">'
+    +'<div style="font-size:12px;font-weight:600;margin-bottom:6px;color:#374151">➕ Agregar otro documento</div>'
+    +'<div style="display:flex;gap:6px">'
+    +'<input type="text" autocomplete="off" id="nuevo-doc-label" placeholder="¿Qué es? (ej: Entrada del pasillo)" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:\'DM Sans\',sans-serif;outline:none;box-sizing:border-box">'
+    +'<label style="font-size:11px;color:#059669;font-weight:600;cursor:pointer;border:1px solid #059669;border-radius:6px;padding:7px 10px;white-space:nowrap">📷 Subir<input type="file" accept="image/*" onchange="onDocsExtraFotoChange(this)" style="display:none"></label>'
+    +'</div></div>';
   document.getElementById('docs-fotos-edit').innerHTML=html;
-  goTo('screen-docs-cliente');
+}
+
+function quitarDocExtra(key){
+  if(_docsExtraNuevos[key]){ delete _docsExtraNuevos[key]; _renderDocsFotos(); return; }
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  p.fotosExtra=(p.fotosExtra||[]).filter(function(ex){return ex.key!==key;});
+  if(p.fotos) delete p.fotos[key];
+  guardarDatos();
+  _renderDocsFotos();
+  toast('✓ Documento eliminado');
+}
+
+function onDocsExtraFotoChange(input){
+  var labelInput=document.getElementById('nuevo-doc-label');
+  var label=(labelInput.value||'').trim();
+  if(!label){toast('⚠ Escribí primero qué es el documento');input.value='';return;}
+  var file=input.files&&input.files[0];
+  if(!file) return;
+  var img=new Image();
+  var url=URL.createObjectURL(file);
+  img.onload=function(){
+    var maxW=800,maxH=800;
+    var w=img.width,h=img.height;
+    if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+    if(h>maxH){w=Math.round(w*maxH/h);h=maxH;}
+    var canvas=document.createElement('canvas');
+    canvas.width=w; canvas.height=h;
+    canvas.getContext('2d').drawImage(img,0,0,w,h);
+    var data=canvas.toDataURL('image/jpeg',0.7);
+    URL.revokeObjectURL(url);
+    var key='extra-'+Date.now();
+    _docsExtraNuevos[key]={label:label,data:data};
+    _renderDocsFotos();
+  };
+  img.src=url;
 }
 
 var _docsNewFotos={};
+var _docsExtraNuevos={};
 function onDocsFotoChange(input){
   var k=input.getAttribute('data-key');
   var file=input.files&&input.files[0];
@@ -6237,10 +6297,17 @@ function guardarDocsCliente(){
   if(notaCasa) p.notas['foto-casa']=notaCasa.value.trim();
   if(notaTrabajo) p.notas['foto-trabajo']=notaTrabajo.value.trim();
   p.coordTrabajo=document.getElementById('docs-edit-coord-trabajo').value.trim();
+  // Documentos extra nuevos — agregarlos a la lista de fotosExtra del cliente
+  if(!p.fotosExtra) p.fotosExtra=[];
+  Object.keys(_docsExtraNuevos).forEach(function(k){
+    p.fotosExtra.push({key:k,label:_docsExtraNuevos[k].label});
+  });
   // Fotos nuevas — subir a Storage
   if(!p.fotos) p.fotos={};
   var fotasNuevas=Object.assign({},_docsNewFotos);
+  Object.keys(_docsExtraNuevos).forEach(function(k){ fotasNuevas[k]=_docsExtraNuevos[k].data; });
   _docsNewFotos={};
+  _docsExtraNuevos={};
   var clavesNuevas=Object.keys(fotasNuevas).filter(function(k){return fotasNuevas[k]&&fotasNuevas[k].startsWith('data:');});
   function finalizarGuardarDocs(){
     var verif2=clienteNecesitaVerificacion(p);
