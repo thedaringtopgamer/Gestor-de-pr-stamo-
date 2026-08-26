@@ -1152,7 +1152,15 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <div class="card" style="margin-bottom:12px">
         <div style="font-size:11px;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:0.04em">Cliente *</div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin:2px 0 10px;gap:8px">
-          <div style="font-size:16px;font-weight:600" id="det-cliente"></div>
+          <div style="display:flex;align-items:center;gap:4px" id="det-cliente-display">
+            <div style="font-size:16px;font-weight:600" id="det-cliente"></div>
+            <button onclick="editarClienteInline()" style="background:none;border:none;cursor:pointer;color:#2563eb;font-size:14px;padding:2px 4px;line-height:1">✏</button>
+          </div>
+          <div style="display:none;align-items:center;gap:4px" id="det-cliente-edit">
+            <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="det-cliente-input" style="width:140px;padding:4px 8px;border:1.5px solid var(--cyan);border-radius:6px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none">
+            <button onclick="guardarClienteInline()" style="background:var(--cyan);color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;font-weight:600">✓</button>
+            <button onclick="cancelarClienteInline()" style="background:#e5e7eb;color:#374151;border:none;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer">✕</button>
+          </div>
           <div style="display:flex;align-items:center;gap:4px;flex-shrink:0" id="det-tel-display">
             <span style="font-size:12px;color:var(--text-muted)" id="det-telefono-txt"></span>
             <a id="det-btn-wa" href="#" target="_blank" rel="noopener" style="display:none;background:#25d366;color:#fff;border:none;border-radius:6px;padding:4px 7px;font-size:13px;text-decoration:none;line-height:1;align-items:center" title="WhatsApp">
@@ -4893,6 +4901,8 @@ function verDetalle(id){
   if(!p) return;
   var d=calcDerived(p);
   document.getElementById('det-cliente').textContent=p.cliente;
+  document.getElementById('det-cliente-display').style.display='flex';
+  document.getElementById('det-cliente-edit').style.display='none';
   document.getElementById('det-telefono-txt').textContent=p.telefono||'';
   document.getElementById('det-tel-display').style.display='flex';
   var telNum=p.telefono?p.telefono.replace(/\D/g,''):'';
@@ -6055,6 +6065,30 @@ function guardarDocumentos(){
     img.src=url;
   });
   if(pendientes===0) finalizarDocumentos();
+}
+
+function editarClienteInline(){
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  document.getElementById('det-cliente-input').value=p?p.cliente||'':'';
+  document.getElementById('det-cliente-display').style.display='none';
+  document.getElementById('det-cliente-edit').style.display='flex';
+  document.getElementById('det-cliente-input').focus();
+}
+function cancelarClienteInline(){
+  document.getElementById('det-cliente-display').style.display='flex';
+  document.getElementById('det-cliente-edit').style.display='none';
+}
+function guardarClienteInline(){
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  var nombre=document.getElementById('det-cliente-input').value.trim();
+  if(!nombre){toast('⚠ El nombre no puede quedar vacío');return;}
+  p.cliente=nombre;
+  guardarDatos();
+  document.getElementById('det-cliente').textContent=p.cliente;
+  document.getElementById('det-cliente-display').style.display='flex';
+  document.getElementById('det-cliente-edit').style.display='none';
+  toast('✓ Nombre actualizado');
 }
 
 function editarTelefonoInline(){
