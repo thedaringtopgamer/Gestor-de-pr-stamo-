@@ -3048,6 +3048,31 @@ function _verListaNuevos(tipo){
   goTo('screen-nuevos-periodo');
 }
 
+function _verListaGastos(tipo){
+  var f=window['_filtroGastos_'+tipo]||{};
+  var gastosP=gastos.filter(function(x){ return x.fecha>=f.desde&&x.fecha<=f.hasta&&(f.ruta==='todas'||x.ruta===f.ruta); });
+  document.getElementById('nuevos-periodo-titulo').textContent='💸 Gastos — '+(tipo==='semana'?'Semana':'Mes');
+  document.getElementById('nuevos-periodo-rango').textContent=(f.desde+' → '+f.hasta)+' ('+gastosP.length+' gasto'+(gastosP.length!==1?'s':'')+')';
+  var lista=document.getElementById('nuevos-periodo-lista');
+  if(!gastosP.length){
+    lista.innerHTML='<p style="color:#6b7280;font-size:14px;text-align:center;margin-top:40px">Ningún gasto en este período.</p>';
+  } else {
+    lista.innerHTML=gastosP.slice().sort(function(a,b){return b.fecha.localeCompare(a.fecha);}).map(function(g){
+      var fi=(g.fecha||'').split('-');
+      var fd=fi.length===3?fi[2]+'/'+fi[1]+'/'+fi[0]:g.fecha;
+      return '<div style="background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:4px solid #f59e0b">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+        +'<div style="font-size:15px;font-weight:700;color:#1e293b">'+esc(g.tipo||'Gasto')+'</div>'
+        +'<div style="font-size:15px;font-weight:800;color:#854d0e">₡'+fmt(g.monto)+'</div>'
+        +'</div>'
+        +(g.obs?'<div style="font-size:13px;color:#6b7280;margin-bottom:4px">'+esc(g.obs)+'</div>':'')
+        +'<div style="font-size:12px;color:#9ca3af">📅 '+fd+(g.ruta&&g.ruta!=='todas'?' · 📍 '+esc(g.ruta):'')+'</div>'
+        +'</div>';
+    }).join('');
+  }
+  goTo('screen-nuevos-periodo');
+}
+
 function _abrirListaNuevos(el){
   var ids=JSON.parse(el.getAttribute('data-ids')||'[]');
   var rango=el.getAttribute('data-rango')||'';
@@ -3146,7 +3171,7 @@ function _statsHtml(d,tipo){
     +'</div>'
     +'<div style="background:#fce7f3;border-radius:8px;padding:8px"><div style="color:#6b7280">🔄 Renovaciones</div><div style="font-weight:700;color:#9d174d">'+(d.numRenov||0)+'</div></div>'
     +(d.totalCobroAdm?'<div style="background:#ede9fe;border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:#7c3aed">'+_fmtCol(d.totalCobroAdm)+'</div></div>':'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:#9ca3af">₡0</div></div>')
-    +'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💸 Gastos</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(d.totalGastos||0)+'</div></div>'
+    +'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2;cursor:pointer" onclick="_verListaGastos(\''+tipo+'\')"><div style="color:#6b7280">💸 Gastos 🔍</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(d.totalGastos||0)+'</div></div>'
     +(d.totalInyeccion?'<div style="background:#e0f2fe;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💉 Capital inyectado</div><div style="font-weight:700;color:#0369a1">+'+_fmtCol(d.totalInyeccion)+'</div></div>':'')
     +'<div style="border-radius:8px;padding:10px;grid-column:span 2;background:'+(pos?'#dcfce7':'#fee2e2')+';border:2px solid '+(pos?'#86efac':'#fca5a5')+'">'
       +'<div style="color:#6b7280;font-size:11px">📊 Ganancia neta</div>'
@@ -3281,6 +3306,7 @@ function renderCierres(){
   if(elRangoSem) elRangoSem.textContent=inicioSem+' → '+hoy;
   window._idsNuevos_semana=dSem.idsNuevos||[];
   window._rangoNuevos_semana=inicioSem+' → '+hoy;
+  window._filtroGastos_semana={desde:inicioSem,hasta:hoy,ruta:rFiltro};
   if(elStatsSem) elStatsSem.innerHTML=_statsHtml(dSem,'semana')
     +_barMeta(dSem.prestado+dSem.montoRenov,metaSem,'Meta préstamos semana',true)
     +_barMeta(dSem.numPrestamos,metaSemC,'Meta clientes nuevos semana',false);
@@ -3310,6 +3336,7 @@ function renderCierres(){
   }).length;
   window._idsNuevos_mes=dMes.idsNuevos||[];
   window._rangoNuevos_mes=inicioMes+' → '+hoy;
+  window._filtroGastos_mes={desde:inicioMes,hasta:hoy,ruta:rFiltroMes};
   if(elStatsMes) elStatsMes.innerHTML=_statsHtml(dMes,'mes')
     +_barMeta(dMes.prestado+dMes.montoRenov,metaPrestamos,'Meta préstamos mes',true)
     +_barMeta(dMes.numPrestamos,metaClientes,'Meta clientes nuevos mes',false)
