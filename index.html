@@ -2596,6 +2596,7 @@ var gastos = [];
 var bases = {};
 var salidas = {};
 var metas = {};
+var saldoInicios = {};
 var invOverrides = {};
 var clientesBloqueados = {}; // {id: {motivo:'', ts:0}}
 var renovaciones = [];
@@ -2661,6 +2662,7 @@ function guardarDatos(){
     {key:'bases',value:bases},
     {key:'salidas',value:salidas},
     (Object.keys(metas).length>0?{key:'metas',value:metas}:null),
+    (Object.keys(saldoInicios).length>0?{key:'saldoInicios',value:saldoInicios}:null),
     {key:'inv_overrides',value:invOverrides},
     {key:'clientes_bloqueados',value:clientesBloqueados},
     {key:'passwords',value:USUARIOS.map(function(u){return u.pass;})},
@@ -3313,9 +3315,21 @@ function renderCierres(){
 
   // Semana en curso
   var dSem=_calcCierreData(inicioSem,hoy);
-  dSem.saldoInicio=(ultimoSem&&ultimoSem.data&&typeof ultimoSem.data.saldoFin==='number')?ultimoSem.data.saldoFin:_enCalleActual(rFiltro);
+  if(ultimoSem&&ultimoSem.data&&typeof ultimoSem.data.saldoFin==='number'){
+    dSem.saldoInicio=ultimoSem.data.saldoFin;
+  } else {
+    var _claveSaldoSem=rFiltro+'|semana|'+inicioSem;
+    if(typeof saldoInicios[_claveSaldoSem]!=='number'){ saldoInicios[_claveSaldoSem]=_enCalleActual(rFiltro); guardarDatos(); }
+    dSem.saldoInicio=saldoInicios[_claveSaldoSem];
+  }
   dSem.saldoFin=_enCalleActual(rFiltro);
-  dSem.clientesInicio=(ultimoSem&&ultimoSem.data&&typeof ultimoSem.data.clientesFin==='number')?ultimoSem.data.clientesFin:_clientesActivosActual(rFiltro);
+  if(ultimoSem&&ultimoSem.data&&typeof ultimoSem.data.clientesFin==='number'){
+    dSem.clientesInicio=ultimoSem.data.clientesFin;
+  } else {
+    var _claveClientesSem=rFiltro+'|semanaC|'+inicioSem;
+    if(typeof saldoInicios[_claveClientesSem]!=='number'){ saldoInicios[_claveClientesSem]=_clientesActivosActual(rFiltro); guardarDatos(); }
+    dSem.clientesInicio=saldoInicios[_claveClientesSem];
+  }
   dSem.clientesFin=_clientesActivosActual(rFiltro);
   var elRangoSem=document.getElementById('cierre-semana-rango');
   var elStatsSem=document.getElementById('cierre-semana-stats');
@@ -3331,9 +3345,21 @@ function renderCierres(){
 
   // Mes en curso
   var dMes=_calcCierreData(inicioMes,hoy);
-  dMes.saldoInicio=(ultimoMes&&ultimoMes.data&&typeof ultimoMes.data.saldoFin==='number')?ultimoMes.data.saldoFin:_enCalleActual(rFiltro);
+  if(ultimoMes&&ultimoMes.data&&typeof ultimoMes.data.saldoFin==='number'){
+    dMes.saldoInicio=ultimoMes.data.saldoFin;
+  } else {
+    var _claveSaldoMes=rFiltro+'|mes|'+inicioMes;
+    if(typeof saldoInicios[_claveSaldoMes]!=='number'){ saldoInicios[_claveSaldoMes]=_enCalleActual(rFiltro); guardarDatos(); }
+    dMes.saldoInicio=saldoInicios[_claveSaldoMes];
+  }
   dMes.saldoFin=_enCalleActual(rFiltro);
-  dMes.clientesInicio=(ultimoMes&&ultimoMes.data&&typeof ultimoMes.data.clientesFin==='number')?ultimoMes.data.clientesFin:_clientesActivosActual(rFiltro);
+  if(ultimoMes&&ultimoMes.data&&typeof ultimoMes.data.clientesFin==='number'){
+    dMes.clientesInicio=ultimoMes.data.clientesFin;
+  } else {
+    var _claveClientesMes=rFiltro+'|mesC|'+inicioMes;
+    if(typeof saldoInicios[_claveClientesMes]!=='number'){ saldoInicios[_claveClientesMes]=_clientesActivosActual(rFiltro); guardarDatos(); }
+    dMes.clientesInicio=saldoInicios[_claveClientesMes];
+  }
   dMes.clientesFin=_clientesActivosActual(rFiltro);
   var elRangoMes=document.getElementById('cierre-mes-rango');
   var elStatsMes=document.getElementById('cierre-mes-stats');
@@ -3892,6 +3918,7 @@ function sincronizarSupabaseFondo(){
       }
       if(row.key==='salidas'&&row.value&&typeof row.value==='object') salidas=row.value;
       if(row.key==='metas'&&row.value&&typeof row.value==='object') metas=row.value;
+      if(row.key==='saldoInicios'&&row.value&&typeof row.value==='object') saldoInicios=row.value;
       if(row.key==='inv_overrides'&&row.value&&typeof row.value==='object') invOverrides=row.value;
       if(row.key==='clientes_bloqueados'&&row.value&&typeof row.value==='object') clientesBloqueados=row.value;
       if(row.key==='passwords'&&Array.isArray(row.value)) row.value.forEach(function(p,i){if(USUARIOS[i]&&p) USUARIOS[i].pass=p;});
@@ -7416,6 +7443,7 @@ function fechaOffset(dias){
           }
           if(row.key==='salidas'&&row.value&&typeof row.value==='object') salidas=row.value;
           if(row.key==='metas'&&row.value&&typeof row.value==='object') metas=row.value;
+      if(row.key==='saldoInicios'&&row.value&&typeof row.value==='object') saldoInicios=row.value;
           if(row.key==='inv_overrides'&&row.value&&typeof row.value==='object') invOverrides=row.value;
           if(row.key==='clientes_bloqueados'&&row.value&&typeof row.value==='object') clientesBloqueados=row.value;
           if(row.key==='passwords'&&Array.isArray(row.value)) row.value.forEach(function(p,i){if(USUARIOS[i]&&p) USUARIOS[i].pass=p;});
