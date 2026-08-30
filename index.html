@@ -2142,7 +2142,35 @@ function mostrarApp(){
         verDetalle(detId); return;
       }
     }
+    if(ultimaPantalla==='screen-renovar'){
+      var renId=sessionStorage.getItem('fjd_detalle_id');
+      if(renId && prestamos.find(function(x){return x.id===renId;})){
+        currentId=renId; abrirRenovar(); return;
+      }
+    }
+    if(ultimaPantalla==='screen-docs-cliente'){
+      var docId=sessionStorage.getItem('fjd_detalle_id');
+      if(docId && prestamos.find(function(x){return x.id===docId;})){
+        currentId=docId; verDocsCliente(); return;
+      }
+    }
     if(['screen-nuevo-cliente','screen-documentos','screen-nuevo-prestamo'].indexOf(ultimaPantalla)!==-1){
+      try{
+        var _ctemp=JSON.parse(localStorage.getItem('fjd_cliente_temp')||'{}');
+        if(_ctemp&&_ctemp._id&&prestamos.find(function(x){return x.id===_ctemp._id;})){
+          continuarClienteIncompleto(_ctemp._id); return;
+        }
+        if(_ctemp&&_ctemp.nombre){
+          clienteTemporal=_ctemp;
+          document.getElementById('nc-nombre').value=_ctemp.nombre||'';
+          document.getElementById('nc-cedula').value=_ctemp.cedula||'';
+          document.getElementById('nc-telefono').value=_ctemp.telefono||'';
+          document.getElementById('nc-ruta').value=_ctemp.ruta||'';
+          onRutaChange();
+          setTimeout(function(){ document.getElementById('nc-subruta').value=_ctemp.subruta||''; },50);
+          goTo('screen-nuevo-cliente'); return;
+        }
+      }catch(e){}
       goTo('screen-tarjetas'); return;
     }
     goTo(ultimaPantalla);
@@ -4013,11 +4041,11 @@ function toast(msg){
 }
 
 // Pantallas que se pueden restaurar al refrescar (tienen datos persistentes)
-var _pantallasRestaurables=['screen-cobros','screen-tarjetas','screen-panel-recolector','screen-home','screen-detalle','screen-renovar','screen-docs-cliente','screen-inversion','screen-cajas'];
+var _pantallasRestaurables=['screen-cobros','screen-tarjetas','screen-panel-recolector','screen-home','screen-detalle','screen-renovar','screen-docs-cliente','screen-inversion','screen-cajas','screen-nuevo-cliente','screen-documentos','screen-nuevo-prestamo'];
 
 function _guardarPantalla(id){
   sessionStorage.setItem('fjd_pantalla',id);
-  if(id==='screen-detalle'&&currentId) sessionStorage.setItem('fjd_detalle_id',currentId);
+  if((id==='screen-detalle'||id==='screen-renovar'||id==='screen-docs-cliente')&&currentId) sessionStorage.setItem('fjd_detalle_id',currentId);
   if(['screen-nuevo-cliente','screen-documentos','screen-nuevo-prestamo'].indexOf(id)!==-1){
     try{ localStorage.setItem('fjd_cliente_temp',JSON.stringify(clienteTemporal)); }catch(e){}
   }
