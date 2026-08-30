@@ -3281,6 +3281,7 @@ function _barMeta(actual,meta,etiqueta,esDinero){
 }
 
 function renderCierres(){
+  _cargarMetas();
   // Activar/desactivar botones de cierre según día y hora
   var puedesSem=_esFridayNight();
   var puedesMes=_puedesCerrarMes();
