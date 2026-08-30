@@ -1018,12 +1018,12 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <div style="font-size:12px;color:#7f1d1d">Han pasado más de 60 días desde la última actualización. Revise y confirme los datos antes de continuar.</div>
       </div>
       <div id="nc-verif-ok" style="display:none;background:#f0fdf4;border:2px solid #86efac;border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;font-size:13px;font-weight:700;color:#166534">✅ Datos verificados y actualizados</div>
-      <div class="field-group"><label>Nombre completo *</label><input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="nc-nombre" placeholder="Nombre del cliente"></div>
-      <div class="field-group"><label>Cédula *</label><input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="nc-cedula" placeholder="0-0000-0000"></div>
-      <div class="field-group"><label>Teléfono *</label><input type="tel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="nc-telefono" placeholder="0000-0000"></div>
+      <div class="field-group"><label>Nombre completo *</label><input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="nc-nombre" placeholder="Nombre del cliente" oninput="_guardarClienteTempParcial()"></div>
+      <div class="field-group"><label>Cédula *</label><input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="nc-cedula" placeholder="0-0000-0000" oninput="_guardarClienteTempParcial()"></div>
+      <div class="field-group"><label>Teléfono *</label><input type="tel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="nc-telefono" placeholder="0000-0000" oninput="_guardarClienteTempParcial()"></div>
       <div class="field-group">
         <label>Ruta *</label>
-        <select id="nc-ruta" onchange="onRutaChange()" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none">
+        <select id="nc-ruta" onchange="onRutaChange();_guardarClienteTempParcial()" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none">
           <option value="">-- Seleccione ruta --</option>
           <option value="Heredia">Heredia</option>
           <option value="Alajuela">Alajuela</option>
@@ -1033,7 +1033,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       </div>
       <div class="field-group">
         <label>SubRuta *</label>
-        <select id="nc-subruta" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none">
+        <select id="nc-subruta" onchange="_guardarClienteTempParcial()" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none">
           <option value="">-- Seleccione primero la ruta --</option>
         </select>
       </div>
@@ -4726,6 +4726,21 @@ function renderCobros(filtro){
       row.style.borderBottom='1px solid #991b1b';
     });
   });
+}
+
+function _guardarClienteTempParcial(){
+  try{
+    var partial={
+      _id:clienteTemporal._id||null,
+      _clienteOriginalId:clienteTemporal._clienteOriginalId||null,
+      nombre:document.getElementById('nc-nombre').value,
+      cedula:document.getElementById('nc-cedula').value,
+      telefono:document.getElementById('nc-telefono').value,
+      ruta:document.getElementById('nc-ruta').value,
+      subruta:document.getElementById('nc-subruta').value
+    };
+    localStorage.setItem('fjd_cliente_temp',JSON.stringify(partial));
+  }catch(e){}
 }
 
 function continuarClienteIncompleto(id){
