@@ -3646,6 +3646,7 @@ var _RUTAS_CAJA=['Heredia','Alajuela','San Ramón','Ciudad Quesada'];
 function setCajasRuta(ruta){
   rutaCajasFiltro=ruta;
   rutaInvFiltro=ruta==='todas'?'todas':ruta;
+  localStorage.setItem('fjd_inv_ruta',rutaInvFiltro);
   sessionStorage.setItem('fjd_cajas_ruta',ruta);
   renderCajas();
 }
