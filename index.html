@@ -4685,12 +4685,21 @@ function renderCobros(filtro){
     +'</div>';
   }
 
-  // Agrupar por subruta en el orden de rutasData
-  var _rutaZona=localStorage.getItem('fjd_ruta_actual')||rutaActual||'';
-  var ordenZonas=_rutaZona&&rutasData[_rutaZona]?rutasData[_rutaZona].slice():[];
-  // Zonas que no estén en el orden definido las agregamos al final (sin mutar rutasData)
+  // Agrupar por subruta en el orden de rutasData — usando la ruta propia de cada cliente,
+  // no una sola ruta global (evita que se rompa el orden cuando la pantalla mezcla rutas)
+  var ordenZonas=[];
   items.forEach(function(p){
-    if(p.subruta&&ordenZonas.indexOf(p.subruta)===-1) ordenZonas.push(p.subruta);
+    if(!p.subruta||ordenZonas.indexOf(p.subruta)!==-1) return;
+    var listaRuta=rutasData[p.ruta]||[];
+    var idx=listaRuta.indexOf(p.subruta);
+    if(idx===-1){ ordenZonas.push(p.subruta); return; }
+    // Insertar respetando el orden relativo definido en rutasData de esa ruta
+    var pos=ordenZonas.length;
+    for(var oi=0;oi<ordenZonas.length;oi++){
+      var otroIdx=listaRuta.indexOf(ordenZonas[oi]);
+      if(otroIdx!==-1&&otroIdx>idx){ pos=oi; break; }
+    }
+    ordenZonas.splice(pos,0,p.subruta);
   });
 
   var html='';
