@@ -4517,6 +4517,15 @@ function clienteNecesitaVerificacion(p){
   var faltaFoto=clavesFotos.some(function(k){return !fotos[k];});
   var faltaCoord=!p.coordCasa&&!p.coordTrabajo;
   if(faltaFoto||faltaCoord) return {necesita:true,razon:'Documentos incompletos'};
+  // Si algún documento existente ya pasó los 60 días sin verificar, también hace falta actualizar
+  var fechasDoc=p.fechasDoc||{};
+  var fechaFallback=p.fechaUltimaVerificacion||p._fechaCreacion||p.fechaInicio||'';
+  var hayVencido=clavesFotos.some(function(k){
+    if(!fotos[k]) return false;
+    var fecha=fechasDoc[k]||fechaFallback;
+    return _fechaDocVencida(fecha);
+  });
+  if(hayVencido) return {necesita:true,razon:'Documentos desactualizados (más de 60 días)'};
   // Si tiene todas las fotos y al menos una ubicación, está completo
   return {necesita:false};
 }
