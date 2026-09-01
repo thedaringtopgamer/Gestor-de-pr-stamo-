@@ -6387,13 +6387,13 @@ function _renderDocsUbicacion(){
   var fechasDoc=p.fechasDoc||{};
   var fechaFallback=p.fechaUltimaVerificacion||p._fechaCreacion||p.fechaInicio||'';
   var LABELS_UBIC={casa:{key:'coord-casa',label:'Coordenadas Casa',campo:'coordCasa'},trabajo:{key:'coord-trabajo',label:'Coordenadas Trabajo',campo:'coordTrabajo'}};
-  var html='';
+  var html='<div style="display:flex;flex-direction:column;gap:10px">';
   Object.keys(LABELS_UBIC).forEach(function(tipo){
     var info=LABELS_UBIC[tipo];
     var valor=p[info.campo]||'';
     var fecha=fechasDoc[info.key]||(valor?fechaFallback:'');
     var vencida=valor&&fecha&&_fechaDocVencida(fecha);
-    html+='<div class="field-group" style="padding:8px;border-radius:8px'+(vencida?';background:#fee2e2;border-left:4px solid #dc2626':'')+'">'
+    html+='<div class="field-group" style="padding:10px;border-radius:10px;border:1.5px solid '+(vencida?'#fca5a5':'var(--border)')+(vencida?';background:#fee2e2;border-left:4px solid #dc2626':'')+'">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
       +'<label style="color:'+(vencida?'#991b1b':'inherit')+'">'+(vencida?'⚠️ ':'')+info.label+'</label>'
       +'</div>';
@@ -6413,6 +6413,7 @@ function _renderDocsUbicacion(){
     }
     html+='</div>';
   });
+  html+='</div>';
   document.getElementById('docs-ubicacion-edit').innerHTML=html;
 }
 function _editarCoordDocs(tipo){ _editandoCoord[tipo]=true; _renderDocsUbicacion(); }
