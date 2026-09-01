@@ -6651,6 +6651,10 @@ function guardarDocsCliente(){
     document.getElementById('det-telefono-txt').textContent=p.telefono||'';
     _renderDocsFotos();
     _renderDocsUbicacion();
+    // Refrescar de una vez el aviso ⚠️ en las demás pantallas, sin esperar a que el usuario recargue
+    try{ renderCobros(); }catch(e){}
+    try{ renderTarjetas(); }catch(e){}
+    try{ renderPanelRecolector(); }catch(e){}
     toast('✓ Datos del cliente actualizados');
   }
   if(clavesNuevas.length){
