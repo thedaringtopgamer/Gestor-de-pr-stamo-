@@ -4724,6 +4724,7 @@ function renderCobros(filtro){
         ?'<button class="icon-btn icon-btn-cyan" onclick="renovarDesdeLista(\''+idCliente+'\')" title="Renovar">↻</button>'
         :'<button class="icon-btn" style="background:#991b1b;color:#fff;cursor:not-allowed" title="Pague los intereses primero">↻</button>';
       return '<div data-pid="'+idCliente+'" style="display:flex;gap:8px;align-items:center;padding:12px 16px;border-bottom:1px solid #991b1b;background-color:#dc2626;border-left:4px solid #7f1d1d">'
+        +badgeVerif
         +'<button class="icon-btn icon-btn-blue" onclick="verDetalle(\''+idCliente+'\')" title="Ver detalle">✓</button>'
         +btnRenovarBloq
         +'<button class="icon-btn icon-btn-green" onclick="abonoRapido(\''+idCliente+'\',\''+esc(p.cliente)+'\','+d.montoPorPagar+')" title="Abonar cuota">🐷</button>'
