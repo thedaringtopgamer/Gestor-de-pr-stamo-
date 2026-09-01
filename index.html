@@ -5559,7 +5559,7 @@ function switchTab(tab){
 
 function verFoto(key){
   var p=prestamos.find(function(x){return x.id===currentId;});
-  var src=(p&&p.fotos&&p.fotos[key])||_docsNewFotos[key]||(_docsExtraNuevos[key]&&_docsExtraNuevos[key].data)||'';
+  var src=_docsNewFotos[key]||(_docsExtraNuevos[key]&&_docsExtraNuevos[key].data)||(p&&p.fotos&&p.fotos[key])||'';
   if(!src) return;
   var nombre=(p?p.cliente.replace(/\s+/g,'_'):'foto')+'_'+key+'.jpg';
   document.getElementById('foto-viewer-img').src=src;
@@ -6425,10 +6425,10 @@ function _renderDocsFotos(){
   var extras=(p.fotosExtra||[]).concat(Object.keys(_docsExtraNuevos).map(function(k){return {key:k,label:_docsExtraNuevos[k].label};}));
   var html='<div style="display:flex;flex-direction:column;gap:10px">';
   Object.keys(LABELS_FOTOS_FIJAS).forEach(function(k){
-    var src=fotos[k]||'';
+    var src=_docsNewFotos[k]||fotos[k]||'';
     var tieneNota=(k==='foto-casa'||k==='foto-trabajo');
-    var fecha=fechasDoc[k]||(src?fechaFallback:'');
-    var vencida=src&&_fechaDocVencida(fecha);
+    var fecha=_docsNewFotos[k]?'':(fechasDoc[k]||(src?fechaFallback:''));
+    var vencida=src&&fecha&&_fechaDocVencida(fecha);
     html+='<div style="padding:8px 0;border-bottom:1px solid var(--border)'+(vencida?';background:#fee2e2;border-radius:8px;border-left:4px solid #dc2626;padding-left:8px':'')+'">'
       +'<div style="display:flex;align-items:center;justify-content:space-between">'
       +'<div style="font-size:13px;font-weight:500;color:'+(vencida?'#991b1b':'#374151')+'">'+(vencida?'⚠️ ':'')+LABELS_FOTOS_FIJAS[k]+'</div>'
@@ -6547,21 +6547,8 @@ function onDocsFotoChange(input){
     var data=canvas.toDataURL('image/jpeg',0.7);
     URL.revokeObjectURL(url);
     _docsNewFotos[k]=data;
-    var fila=input.closest('label').closest('div[style*="justify-content"]');
-    if(fila){
-      var existing=fila.querySelector('button[onclick^="verFoto"]');
-      if(existing){ existing.setAttribute('onclick','verFoto(\''+k+'\')'); }
-      else {
-        var sinFoto=fila.querySelector('span');
-        if(sinFoto){
-          var newBtn=document.createElement('button');
-          newBtn.setAttribute('onclick','verFoto(\''+k+'\')');
-          newBtn.setAttribute('style','font-size:12px;color:#2563eb;background:none;border:none;cursor:pointer;font-weight:500;padding:0;font-family:\'DM Sans\',sans-serif');
-          newBtn.textContent='👁 Ver';
-          sinFoto.replaceWith(newBtn);
-        }
-      }
-    }
+    _renderDocsFotos();
+    toast('✓ Foto lista — dale a "Guardar cambios" para confirmarla');
   };
   img.src=url;
 }
