@@ -6221,6 +6221,10 @@ function guardarDocumentos(){
   // Partir de fotos ya guardadas en el cliente, no de objeto vacío
   var ex=clienteTemporal._id?prestamos.find(function(x){return x.id===clienteTemporal._id;}):null;
   var fotos=Object.assign({},ex&&ex.fotos?ex.fotos:{});
+  var clavesTocadas=claves.filter(function(k){
+    var el=document.getElementById('doc-'+k);
+    return !!_docsNewFotos[k]||!!(el&&el.files&&el.files[0]);
+  });
   // Mezclar fotos nuevas comprimidas (de _docsNewFotos)
   claves.forEach(function(k){
     if(_docsNewFotos[k]) fotos[k]=_docsNewFotos[k];
@@ -6243,12 +6247,16 @@ function guardarDocumentos(){
       if(!clienteTemporal.notas) clienteTemporal.notas={};
       clienteTemporal.notas['foto-casa']=notaCasa.trim();
       clienteTemporal.notas['foto-trabajo']=notaTrabajo.trim();
+      if(!clienteTemporal.fechasDoc) clienteTemporal.fechasDoc={};
+      clavesTocadas.forEach(function(k){ clienteTemporal.fechasDoc[k]=hoyLocal(); });
       if(ex){
         ex.coordCasa=coordCasa;ex.coordTrabajo=coordTrabajo;ex.fotos=fotos;ex.incompleto='paso2';
         if(!ex.notas) ex.notas={};
         ex.notas['foto-casa']=notaCasa.trim();
         ex.notas['foto-trabajo']=notaTrabajo.trim();
         ex.fechaUltimaVerificacion=hoyLocal(); // reiniciar contador 60 días al actualizar fotos/ubicación
+        if(!ex.fechasDoc) ex.fechasDoc={};
+        clavesTocadas.forEach(function(k){ ex.fechasDoc[k]=hoyLocal(); });
       }
       // También actualizar el registro original si viene de irNuevoPrestamo
       var _origId=clienteTemporal._clienteOriginalId;
@@ -6388,37 +6396,54 @@ function verDocsCliente(){
 }
 
 var LABELS_FOTOS_FIJAS={'cedula-frente':'Cédula frente','cedula-detras':'Cédula detrás','foto-cliente':'Foto cliente','foto-casa':'Foto casa','foto-trabajo':'Foto trabajo'};
+function _fechaDocVencida(fecha){
+  if(!fecha) return false;
+  var dias=Math.round((parseLocalDate(hoyLocal())-parseLocalDate(fecha))/86400000);
+  return dias>60;
+}
+function _fmtFechaDoc(fecha){
+  if(!fecha) return '';
+  var fi=fecha.split('-');
+  return fi.length===3?fi[2]+'/'+fi[1]+'/'+fi[0]:fecha;
+}
 function _renderDocsFotos(){
   var p=prestamos.find(function(x){return x.id===currentId;});
   if(!p) return;
   var fotos=p.fotos||{};
   var notas=p.notas||{};
+  var fechasDoc=p.fechasDoc||{};
   var extras=(p.fotosExtra||[]).concat(Object.keys(_docsExtraNuevos).map(function(k){return {key:k,label:_docsExtraNuevos[k].label};}));
   var html='<div style="display:flex;flex-direction:column;gap:10px">';
   Object.keys(LABELS_FOTOS_FIJAS).forEach(function(k){
     var src=fotos[k]||'';
     var tieneNota=(k==='foto-casa'||k==='foto-trabajo');
-    html+='<div style="padding:8px 0;border-bottom:1px solid var(--border)">'
+    var fecha=fechasDoc[k]||'';
+    var vencida=src&&_fechaDocVencida(fecha);
+    html+='<div style="padding:8px 0;border-bottom:1px solid var(--border)'+(vencida?';background:#fee2e2;border-radius:8px;border-left:4px solid #dc2626;padding-left:8px':'')+'">'
       +'<div style="display:flex;align-items:center;justify-content:space-between">'
-      +'<div style="font-size:13px;font-weight:500;color:#374151">'+LABELS_FOTOS_FIJAS[k]+'</div>'
+      +'<div style="font-size:13px;font-weight:500;color:'+(vencida?'#991b1b':'#374151')+'">'+(vencida?'⚠️ ':'')+LABELS_FOTOS_FIJAS[k]+'</div>'
       +'<div style="display:flex;align-items:center;gap:8px">'
       +(src?'<button onclick="verFoto(\''+k+'\')" style="font-size:12px;color:#2563eb;background:none;border:none;cursor:pointer;font-weight:500;padding:0;font-family:\'DM Sans\',sans-serif">👁 Ver</button>':'<span style="font-size:11px;color:var(--text-muted)">Sin foto</span>')
       +'<label style="font-size:11px;color:#059669;font-weight:600;cursor:pointer;border:1px solid #059669;border-radius:6px;padding:3px 8px">📷 '+(src?'Cambiar':'Subir')+'<input type="file" accept="image/*" data-key="'+k+'" onchange="onDocsFotoChange(this)" style="display:none"></label>'
       +'</div></div>'
+      +(fecha?'<div style="font-size:10px;color:'+(vencida?'#dc2626;font-weight:700':'#9ca3af')+';margin-top:3px">'+(vencida?'⚠️ Hay que actualizar — ':'')+'Última actualización: '+_fmtFechaDoc(fecha)+'</div>':'')
       +(tieneNota?'<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="nota-'+k+'" placeholder="Nota sobre '+(k==='foto-casa'?'la casa':'el trabajo')+'..." rows="2" style="width:100%;margin-top:6px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:\'DM Sans\',sans-serif;outline:none;resize:none;box-sizing:border-box;color:#374151">'+((notas[k]||'').replace(/</g,'&lt;'))+'</textarea>':'')
       +'</div>';
   });
   extras.forEach(function(ex){
     var src=fotos[ex.key]||(_docsExtraNuevos[ex.key]?_docsExtraNuevos[ex.key].data:'');
     var desc=ex.desc||(_docsExtraNuevos[ex.key]?_docsExtraNuevos[ex.key].desc:'')||'';
-    html+='<div style="padding:8px 0;border-bottom:1px solid var(--border)">'
+    var fecha=fechasDoc[ex.key]||'';
+    var vencida=src&&_fechaDocVencida(fecha);
+    html+='<div style="padding:8px 0;border-bottom:1px solid var(--border)'+(vencida?';background:#fee2e2;border-radius:8px;border-left:4px solid #dc2626;padding-left:8px':'')+'">'
       +'<div style="display:flex;align-items:center;justify-content:space-between">'
-      +'<div style="font-size:13px;font-weight:500;color:#374151">'+esc(ex.label)+'</div>'
+      +'<div style="font-size:13px;font-weight:500;color:'+(vencida?'#991b1b':'#374151')+'">'+(vencida?'⚠️ ':'')+esc(ex.label)+'</div>'
       +'<div style="display:flex;align-items:center;gap:8px">'
       +(src?'<button onclick="verFoto(\''+ex.key+'\')" style="font-size:12px;color:#2563eb;background:none;border:none;cursor:pointer;font-weight:500;padding:0;font-family:\'DM Sans\',sans-serif">👁 Ver</button>':'<span style="font-size:11px;color:var(--text-muted)">Sin foto</span>')
       +'<button onclick="quitarDocExtra(\''+ex.key+'\')" style="font-size:12px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0">🗑</button>'
       +'</div></div>'
       +(desc?'<div style="font-size:11px;color:#6b7280;margin-top:3px">'+esc(desc)+'</div>':'')
+      +(fecha?'<div style="font-size:10px;color:'+(vencida?'#dc2626;font-weight:700':'#9ca3af')+';margin-top:3px">'+(vencida?'⚠️ Hay que actualizar — ':'')+'Última actualización: '+_fmtFechaDoc(fecha)+'</div>':'')
       +'</div>';
   });
   html+='</div>'
@@ -6540,8 +6565,11 @@ function guardarDocsCliente(){
   });
   // Fotos nuevas — subir a Storage
   if(!p.fotos) p.fotos={};
+  if(!p.fechasDoc) p.fechasDoc={};
   var fotasNuevas=Object.assign({},_docsNewFotos);
   Object.keys(_docsExtraNuevos).forEach(function(k){ fotasNuevas[k]=_docsExtraNuevos[k].data; });
+  // Cualquier foto que se suba o cambie hoy actualiza su fecha
+  Object.keys(fotasNuevas).forEach(function(k){ p.fechasDoc[k]=hoyLocal(); });
   _docsNewFotos={};
   _docsExtraNuevos={};
   var clavesNuevas=Object.keys(fotasNuevas).filter(function(k){return fotasNuevas[k]&&fotasNuevas[k].startsWith('data:');});
