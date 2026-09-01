@@ -6386,7 +6386,7 @@ function _renderDocsUbicacion(){
   if(!p) return;
   var fechasDoc=p.fechasDoc||{};
   var fechaFallback=p.fechaUltimaVerificacion||p._fechaCreacion||p.fechaInicio||'';
-  var LABELS_UBIC={casa:{key:'coord-casa',label:'Coordenadas Casa',campo:'coordCasa'},trabajo:{key:'coord-trabajo',label:'Coordenadas Trabajo',campo:'coordTrabajo'}};
+  var LABELS_UBIC={casa:{key:'coord-casa',label:'Ubicación de la casa',campo:'coordCasa'},trabajo:{key:'coord-trabajo',label:'Ubicación del trabajo',campo:'coordTrabajo'}};
   var html='<div style="display:flex;flex-direction:column;gap:10px">';
   Object.keys(LABELS_UBIC).forEach(function(tipo){
     var info=LABELS_UBIC[tipo];
