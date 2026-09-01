@@ -4516,7 +4516,13 @@ function clienteNecesitaVerificacion(p){
     var fecha=fechasDoc[k]||fechaFallback;
     return _fechaDocVencida(fecha);
   });
-  if(hayVencido) return {necesita:true,razon:'Documentos desactualizados (más de 60 días)'};
+  // Ubicaciones (casa/trabajo) también cuentan si están vencidas
+  var hayCoordVencida=[['coord-casa',p.coordCasa],['coord-trabajo',p.coordTrabajo]].some(function(par){
+    if(!par[1]) return false;
+    var fecha=fechasDoc[par[0]]||fechaFallback;
+    return _fechaDocVencida(fecha);
+  });
+  if(hayVencido||hayCoordVencida) return {necesita:true,razon:'Documentos desactualizados (más de 60 días)'};
   // Si tiene todas las fotos y al menos una ubicación, está completo
   return {necesita:false};
 }
