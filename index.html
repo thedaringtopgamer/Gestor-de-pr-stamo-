@@ -537,7 +537,8 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <div style="padding:14px 16px;border-bottom:1px solid #f3f4f6;font-size:14px;font-weight:600;color:#1d4ed8">⬆ Importar backup</div>
       <input type="file" accept=".json" onchange="importarBackup(this);_closeGlobalAdminMenu()" style="display:none">
     </label>
-    <button onclick="abrirRevocarSesiones();_closeGlobalAdminMenu()" style="width:100%;padding:14px 16px;background:none;border:none;text-align:left;font-size:14px;font-weight:600;color:#7c3aed;cursor:pointer;font-family:'DM Sans',sans-serif">📱 Sesiones activas</button>
+    <button onclick="abrirRevocarSesiones();_closeGlobalAdminMenu()" style="width:100%;padding:14px 16px;background:none;border:none;border-bottom:1px solid #f3f4f6;text-align:left;font-size:14px;font-weight:600;color:#7c3aed;cursor:pointer;font-family:'DM Sans',sans-serif">📱 Sesiones activas</button>
+    <button onclick="abrirUbicacionesRutas();_closeGlobalAdminMenu()" style="width:100%;padding:14px 16px;background:none;border:none;text-align:left;font-size:14px;font-weight:600;color:#0369a1;cursor:pointer;font-family:'DM Sans',sans-serif">📍 Ubicaciones de ruta</button>
   </div>
 
   <!-- MODAL VISOR DE FOTO -->
@@ -949,6 +950,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
               <input type="file" accept=".json" onchange="importarBackup(this);toggleAdminMenu()" style="display:none">
             </label>
             <button onclick="abrirRevocarSesiones();toggleAdminMenu()" style="width:100%;padding:14px 16px;background:none;border:none;border-bottom:1px solid #f3f4f6;text-align:left;font-size:14px;font-weight:600;color:#7c3aed;cursor:pointer;font-family:'DM Sans',sans-serif">📱 Sesiones activas</button>
+            <button onclick="abrirUbicacionesRutas();toggleAdminMenu()" style="width:100%;padding:14px 16px;background:none;border:none;text-align:left;font-size:14px;font-weight:600;color:#0369a1;cursor:pointer;font-family:'DM Sans',sans-serif">📍 Ubicaciones de ruta</button>
           </div>
         </div>
         <button class="menu-icon" onclick="toggleMenu()">☰</button>
@@ -2458,6 +2460,58 @@ function verDispositivosConectados(){
 function _cerrarSesionesModal(el){
   var m=el; while(m&&m.parentElement!==document.body) m=m.parentElement; if(m) m.remove();
   fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'admin_ui_state',value:{sesiones_abiertas:false}}])}).catch(function(){});
+}
+
+var _ubicRutasInterval=null;
+function abrirUbicacionesRutas(){
+  var modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:24px;max-width:400px;width:100%;max-height:85vh;overflow-y:auto">'
+    +'<p style="font-size:16px;font-weight:800;margin-bottom:4px">📍 Ubicaciones de ruta</p>'
+    +'<p style="font-size:12px;color:#6b7280;margin-bottom:16px">Última posición conocida — se actualiza sola</p>'
+    +'<div id="ubic-rutas-lista"><p style="text-align:center;color:#6b7280;padding:20px">Cargando...</p></div>'
+    +'<button onclick="_cerrarUbicacionesRutas(this)" style="width:100%;margin-top:16px;padding:12px;background:#f3f4f6;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">Cerrar</button>'
+    +'</div>';
+  document.body.appendChild(modal);
+  _renderUbicacionesRutas();
+  if(_ubicRutasInterval) clearInterval(_ubicRutasInterval);
+  _ubicRutasInterval=setInterval(_renderUbicacionesRutas,12000);
+}
+function _cerrarUbicacionesRutas(btn){
+  if(_ubicRutasInterval){ clearInterval(_ubicRutasInterval); _ubicRutasInterval=null; }
+  btn.closest('[style*=fixed]').remove();
+}
+function _renderUbicacionesRutas(){
+  var cont=document.getElementById('ubic-rutas-lista');
+  if(!cont) return; // el modal se cerró
+  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.device_sessions&select=value',{headers:SUPA_HDR})
+  .then(function(r){return r.ok?r.json():[];})
+  .then(function(rows){
+    cont=document.getElementById('ubic-rutas-lista');
+    if(!cont) return;
+    var sesiones=(rows&&rows[0]&&rows[0].value)||{};
+    var lista=Object.values(sesiones).filter(function(s){return typeof s.lat==='number'&&typeof s.lng==='number';});
+    lista.sort(function(a,b){return (a.ruta||'').localeCompare(b.ruta||'','es');});
+    if(!lista.length){
+      cont.innerHTML='<p style="text-align:center;color:#6b7280;padding:20px">Sin ubicaciones disponibles todavía</p>';
+      return;
+    }
+    var cutoff=Date.now()-45000;
+    cont.innerHTML=lista.map(function(s){
+      var appAbierta=s.lastSeen>=cutoff;
+      var dotColor=appAbierta?'#a3e635':'#ef4444';
+      var segsAtras=Math.max(0,Math.round((Date.now()-s.lastSeen)/1000));
+      var haceStr=segsAtras<60?segsAtras+'s':Math.round(segsAtras/60)+' min';
+      return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px">'
+        +'<span style="display:inline-block;width:12px;height:12px;border-radius:50%;flex-shrink:0;background:'+dotColor+';box-shadow:0 0 7px '+dotColor+'"></span>'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:14px;font-weight:800;color:#111">'+esc(s.ruta||'—')+'</div>'
+        +'<div style="font-size:10px;color:#6b7280;margin-top:1px">'+(s.dispositivo||'')+' · hace '+haceStr+'</div>'
+        +'</div>'
+        +'<a href="https://www.google.com/maps?q='+s.lat+','+s.lng+'" target="_blank" rel="noopener" style="background:#0369a1;color:#fff;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;text-decoration:none;flex-shrink:0">Ver mapa</a>'
+        +'</div>';
+    }).join('');
+  }).catch(function(){});
 }
 
 function abrirRevocarSesiones(){
