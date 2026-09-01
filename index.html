@@ -1362,16 +1362,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <!-- Ubicaciones -->
       <div class="card" style="margin-bottom:12px">
         <p style="font-size:13px;font-weight:600;margin-bottom:12px">📍 Ubicaciones</p>
-        <div class="field-group">
-          <label>Coordenadas Casa</label>
-          <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="docs-edit-coord-casa" placeholder="lat, lng (ej: 9.9281, -84.0907)" oninput="previewCoordDocs('casa')" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
-          <div id="docs-link-casa" style="display:none;margin-top:6px"><a id="docs-link-casa-a" target="_blank" style="color:#2563eb;font-size:12px;text-decoration:none"></a></div>
-        </div>
-        <div class="field-group">
-          <label>Coordenadas Trabajo</label>
-          <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="docs-edit-coord-trabajo" placeholder="lat, lng (ej: 9.9281, -84.0907)" oninput="previewCoordDocs('trabajo')" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
-          <div id="docs-link-trabajo" style="display:none;margin-top:6px"><a id="docs-link-trabajo-a" target="_blank" style="color:#2563eb;font-size:12px;text-decoration:none"></a></div>
-        </div>
+        <div id="docs-ubicacion-edit"></div>
       </div>
       <!-- Fotos -->
       <div class="card" style="margin-bottom:12px">
@@ -6362,18 +6353,6 @@ function onRutaDocsChange(){
   }
 }
 
-function previewCoordDocs(tipo){
-  var val=document.getElementById('docs-edit-coord-'+tipo).value.trim();
-  var linkDiv=document.getElementById('docs-link-'+tipo);
-  var linkA=document.getElementById('docs-link-'+tipo+'-a');
-  var match=val.match(/^(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)$/);
-  if(match){
-    linkA.href='https://www.google.com/maps?q='+match[1]+','+match[2];
-    linkA.textContent='📍 '+val+' — Ver en Google Maps';
-    linkDiv.style.display='block';
-  } else { linkDiv.style.display='none'; }
-}
-
 function verDocsCliente(){
   var p=prestamos.find(function(x){return x.id===currentId;});
   if(!p) return;
@@ -6395,13 +6374,62 @@ function verDocsCliente(){
   rutaSel.value=p.ruta||'';
   onRutaDocsChange();
   document.getElementById('docs-edit-subruta').value=p.subruta||'';
-  // Coordenadas
-  document.getElementById('docs-edit-coord-casa').value=p.coordCasa||'';
-  document.getElementById('docs-edit-coord-trabajo').value=p.coordTrabajo||'';
-  previewCoordDocs('casa');
-  previewCoordDocs('trabajo');
+  _editandoCoord={casa:false,trabajo:false};
+  _renderDocsUbicacion();
   _renderDocsFotos();
   goTo('screen-docs-cliente');
+}
+
+var _editandoCoord={casa:false,trabajo:false};
+function _renderDocsUbicacion(){
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  var fechasDoc=p.fechasDoc||{};
+  var fechaFallback=p.fechaUltimaVerificacion||p._fechaCreacion||p.fechaInicio||'';
+  var LABELS_UBIC={casa:{key:'coord-casa',label:'Coordenadas Casa',campo:'coordCasa'},trabajo:{key:'coord-trabajo',label:'Coordenadas Trabajo',campo:'coordTrabajo'}};
+  var html='';
+  Object.keys(LABELS_UBIC).forEach(function(tipo){
+    var info=LABELS_UBIC[tipo];
+    var valor=p[info.campo]||'';
+    var fecha=fechasDoc[info.key]||(valor?fechaFallback:'');
+    var vencida=valor&&fecha&&_fechaDocVencida(fecha);
+    html+='<div class="field-group" style="padding:8px;border-radius:8px'+(vencida?';background:#fee2e2;border-left:4px solid #dc2626':'')+'">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+      +'<label style="color:'+(vencida?'#991b1b':'inherit')+'">'+(vencida?'⚠️ ':'')+info.label+'</label>'
+      +'</div>';
+    if(_editandoCoord[tipo]){
+      html+='<input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="docs-edit-coord-'+tipo+'" placeholder="lat, lng (ej: 9.9281, -84.0907)" value="'+esc(valor)+'" style="width:100%;padding:8px 10px;border:1.5px solid var(--cyan);border-radius:var(--radius);font-size:13px;font-family:\'DM Sans\',sans-serif;outline:none;box-sizing:border-box">'
+        +'<div style="display:flex;gap:6px;margin-top:6px">'
+        +'<button onclick="_guardarCoordDocs(\''+tipo+'\')" style="flex:1;padding:8px;background:#059669;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">💾 Guardar</button>'
+        +'<button onclick="_cancelarCoordDocs(\''+tipo+'\')" style="flex:1;padding:8px;background:#e5e7eb;color:#374151;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">✕ Cancelar</button>'
+        +'</div>';
+    } else {
+      html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
+        +(valor?'<a href="https://www.google.com/maps?q='+encodeURIComponent(valor)+'" target="_blank" rel="noopener" style="color:#2563eb;font-size:12px;text-decoration:none;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📍 '+esc(valor)+'</a>':'<span style="font-size:12px;color:var(--text-muted);flex:1">Sin ubicación registrada</span>')
+        +(vencida?'<button onclick="_verificarDocIndividual(\''+info.key+'\')" style="font-size:11px;color:#fff;font-weight:700;cursor:pointer;background:#16a34a;border:none;border-radius:6px;padding:4px 8px;flex-shrink:0">✓ Verificar</button>':'')
+        +'<button onclick="_editarCoordDocs(\''+tipo+'\')" style="font-size:11px;color:#059669;font-weight:600;cursor:pointer;border:1px solid #059669;background:none;border-radius:6px;padding:4px 8px;flex-shrink:0">✏️ Cambiar</button>'
+        +'</div>'
+        +(fecha?'<div style="font-size:10px;color:'+(vencida?'#dc2626;font-weight:700':'#9ca3af')+';margin-top:3px">'+(vencida?'⚠️ Hay que actualizar — ':'')+'Última actualización: '+_fmtFechaDoc(fecha)+'</div>':'');
+    }
+    html+='</div>';
+  });
+  document.getElementById('docs-ubicacion-edit').innerHTML=html;
+}
+function _editarCoordDocs(tipo){ _editandoCoord[tipo]=true; _renderDocsUbicacion(); }
+function _cancelarCoordDocs(tipo){ _editandoCoord[tipo]=false; _renderDocsUbicacion(); }
+function _guardarCoordDocs(tipo){
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  var campo=tipo==='casa'?'coordCasa':'coordTrabajo';
+  var key=tipo==='casa'?'coord-casa':'coord-trabajo';
+  var val=document.getElementById('docs-edit-coord-'+tipo).value.trim();
+  p[campo]=val;
+  if(!p.fechasDoc) p.fechasDoc={};
+  p.fechasDoc[key]=hoyLocal();
+  guardarDatos();
+  _editandoCoord[tipo]=false;
+  _renderDocsUbicacion();
+  toast('✓ Ubicación actualizada');
 }
 
 var LABELS_FOTOS_FIJAS={'cedula-frente':'Cédula frente','cedula-detras':'Cédula detrás','foto-cliente':'Foto cliente','foto-casa':'Foto casa','foto-trabajo':'Foto trabajo'};
@@ -6512,7 +6540,8 @@ function _verificarDocIndividual(key){
   if(!p.fechasDoc) p.fechasDoc={};
   p.fechasDoc[key]=hoyLocal();
   guardarDatos();
-  _renderDocsFotos();
+  if(key==='coord-casa'||key==='coord-trabajo') _renderDocsUbicacion();
+  else _renderDocsFotos();
   toast('✓ Documento verificado');
 }
 
@@ -6559,14 +6588,12 @@ function guardarDocsCliente(){
   p.telefono=document.getElementById('docs-edit-telefono').value.trim();
   p.ruta=document.getElementById('docs-edit-ruta').value;
   p.subruta=document.getElementById('docs-edit-subruta').value;
-  p.coordCasa=document.getElementById('docs-edit-coord-casa').value.trim();
   // Guardar notas de casa y trabajo
   if(!p.notas) p.notas={};
   var notaCasa=document.getElementById('nota-foto-casa');
   var notaTrabajo=document.getElementById('nota-foto-trabajo');
   if(notaCasa) p.notas['foto-casa']=notaCasa.value.trim();
   if(notaTrabajo) p.notas['foto-trabajo']=notaTrabajo.value.trim();
-  p.coordTrabajo=document.getElementById('docs-edit-coord-trabajo').value.trim();
   // Documentos extra nuevos — agregarlos a la lista de fotosExtra del cliente
   if(!p.fotosExtra) p.fotosExtra=[];
   Object.keys(_docsExtraNuevos).forEach(function(k){
