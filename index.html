@@ -1378,8 +1378,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <p style="font-size:13px;font-weight:600;margin-bottom:12px">📷 Fotos</p>
         <div id="docs-fotos-edit"></div>
       </div>
-      <button class="btn btn-blue btn-full" style="padding:12px;margin-bottom:8px" onclick="guardarDocsCliente()">💾 Guardar cambios</button>
-      <button class="btn btn-full" style="padding:11px;margin-bottom:16px;background:#16a34a;color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600" onclick="marcarVerificado()">✔ Marcar documentos verificados</button>
+      <button class="btn btn-blue btn-full" style="padding:12px;margin-bottom:16px" onclick="guardarDocsCliente()">💾 Guardar cambios</button>
     </div>
   </div>
 
@@ -6425,6 +6424,7 @@ function _renderDocsFotos(){
       +'<div style="font-size:13px;font-weight:500;color:'+(vencida?'#991b1b':'#374151')+'">'+(vencida?'⚠️ ':'')+LABELS_FOTOS_FIJAS[k]+'</div>'
       +'<div style="display:flex;align-items:center;gap:8px">'
       +(src?'<button onclick="verFoto(\''+k+'\')" style="font-size:12px;color:#2563eb;background:none;border:none;cursor:pointer;font-weight:500;padding:0;font-family:\'DM Sans\',sans-serif">👁 Ver</button>':'<span style="font-size:11px;color:var(--text-muted)">Sin foto</span>')
+      +(vencida?'<button onclick="_verificarDocIndividual(\''+k+'\')" style="font-size:11px;color:#fff;font-weight:700;cursor:pointer;background:#16a34a;border:none;border-radius:6px;padding:4px 8px">✓ Verificar</button>':'')
       +'<label style="font-size:11px;color:#059669;font-weight:600;cursor:pointer;border:1px solid #059669;border-radius:6px;padding:3px 8px">📷 '+(src?'Cambiar':'Subir')+'<input type="file" accept="image/*" data-key="'+k+'" onchange="onDocsFotoChange(this)" style="display:none"></label>'
       +'</div></div>'
       +(fecha?'<div style="font-size:10px;color:'+(vencida?'#dc2626;font-weight:700':'#9ca3af')+';margin-top:3px">'+(vencida?'⚠️ Hay que actualizar — ':'')+'Última actualización: '+_fmtFechaDoc(fecha)+'</div>':'')
@@ -6441,6 +6441,7 @@ function _renderDocsFotos(){
       +'<div style="font-size:13px;font-weight:500;color:'+(vencida?'#991b1b':'#374151')+'">'+(vencida?'⚠️ ':'')+esc(ex.label)+'</div>'
       +'<div style="display:flex;align-items:center;gap:8px">'
       +(src?'<button onclick="verFoto(\''+ex.key+'\')" style="font-size:12px;color:#2563eb;background:none;border:none;cursor:pointer;font-weight:500;padding:0;font-family:\'DM Sans\',sans-serif">👁 Ver</button>':'<span style="font-size:11px;color:var(--text-muted)">Sin foto</span>')
+      +(vencida?'<button onclick="_verificarDocIndividual(\''+ex.key+'\')" style="font-size:11px;color:#fff;font-weight:700;cursor:pointer;background:#16a34a;border:none;border-radius:6px;padding:4px 8px">✓ Verificar</button>':'')
       +'<button onclick="quitarDocExtra(\''+ex.key+'\')" style="font-size:12px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0">🗑</button>'
       +'</div></div>'
       +(desc?'<div style="font-size:11px;color:#6b7280;margin-top:3px">'+esc(desc)+'</div>':'')
@@ -6493,6 +6494,16 @@ function guardarDocExtraModal(){
   cerrarModalDocExtra();
   _renderDocsFotos();
   toast('✓ Documento agregado — dale a Guardar cambios para confirmarlo');
+}
+
+function _verificarDocIndividual(key){
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  if(!p.fechasDoc) p.fechasDoc={};
+  p.fechasDoc[key]=hoyLocal();
+  guardarDatos();
+  _renderDocsFotos();
+  toast('✓ Documento verificado');
 }
 
 function quitarDocExtra(key){
@@ -6590,17 +6601,6 @@ function guardarDocsCliente(){
     finalizarGuardarDocs();
   }
 }
-
-function marcarVerificado(){
-  var p=prestamos.find(function(x){return x.id===currentId;});
-  if(!p) return;
-  var verif=clienteNecesitaVerificacion(p);
-  if(verif.necesita){toast('⚠ '+verif.razon+' — completá los documentos antes de verificar');return;}
-  p.fechaVerificacion=hoyLocal();
-  guardarDatos();
-  toast('✓ Documentos verificados — próxima verificación en 2 meses');
-}
-
 
 function quitarNuevoDeCaja(prestamoId){
   var p=prestamos.find(function(x){return x.id===prestamoId;});
