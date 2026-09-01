@@ -6649,6 +6649,8 @@ function guardarDocsCliente(){
     if(!verif2.necesita) p.fechaVerificacion=hoyLocal();
     guardarDatos();
     document.getElementById('det-telefono-txt').textContent=p.telefono||'';
+    _renderDocsFotos();
+    _renderDocsUbicacion();
     toast('✓ Datos del cliente actualizados');
   }
   if(clavesNuevas.length){
