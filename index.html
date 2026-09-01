@@ -6412,12 +6412,13 @@ function _renderDocsFotos(){
   var fotos=p.fotos||{};
   var notas=p.notas||{};
   var fechasDoc=p.fechasDoc||{};
+  var fechaFallback=p.fechaUltimaVerificacion||p._fechaCreacion||p.fechaInicio||'';
   var extras=(p.fotosExtra||[]).concat(Object.keys(_docsExtraNuevos).map(function(k){return {key:k,label:_docsExtraNuevos[k].label};}));
   var html='<div style="display:flex;flex-direction:column;gap:10px">';
   Object.keys(LABELS_FOTOS_FIJAS).forEach(function(k){
     var src=fotos[k]||'';
     var tieneNota=(k==='foto-casa'||k==='foto-trabajo');
-    var fecha=fechasDoc[k]||'';
+    var fecha=fechasDoc[k]||(src?fechaFallback:'');
     var vencida=src&&_fechaDocVencida(fecha);
     html+='<div style="padding:8px 0;border-bottom:1px solid var(--border)'+(vencida?';background:#fee2e2;border-radius:8px;border-left:4px solid #dc2626;padding-left:8px':'')+'">'
       +'<div style="display:flex;align-items:center;justify-content:space-between">'
@@ -6433,7 +6434,7 @@ function _renderDocsFotos(){
   extras.forEach(function(ex){
     var src=fotos[ex.key]||(_docsExtraNuevos[ex.key]?_docsExtraNuevos[ex.key].data:'');
     var desc=ex.desc||(_docsExtraNuevos[ex.key]?_docsExtraNuevos[ex.key].desc:'')||'';
-    var fecha=fechasDoc[ex.key]||'';
+    var fecha=fechasDoc[ex.key]||(src?fechaFallback:'');
     var vencida=src&&_fechaDocVencida(fecha);
     html+='<div style="padding:8px 0;border-bottom:1px solid var(--border)'+(vencida?';background:#fee2e2;border-radius:8px;border-left:4px solid #dc2626;padding-left:8px':'')+'">'
       +'<div style="display:flex;align-items:center;justify-content:space-between">'
