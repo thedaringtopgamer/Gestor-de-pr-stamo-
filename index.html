@@ -6404,12 +6404,16 @@ function verDocsCliente(){
   onRutaDocsChange();
   document.getElementById('docs-edit-subruta').value=p.subruta||'';
   _editandoCoord={casa:false,trabajo:false};
+  _docsCoordPendientes={};
+  _docsFechasVerificadas={};
   _renderDocsUbicacion();
   _renderDocsFotos();
   goTo('screen-docs-cliente');
 }
 
 var _editandoCoord={casa:false,trabajo:false};
+var _docsCoordPendientes={};
+var _docsFechasVerificadas={};
 function _renderDocsUbicacion(){
   var p=prestamos.find(function(x){return x.id===currentId;});
   if(!p) return;
@@ -6419,9 +6423,10 @@ function _renderDocsUbicacion(){
   var html='<div style="display:flex;flex-direction:column;gap:10px">';
   Object.keys(LABELS_UBIC).forEach(function(tipo){
     var info=LABELS_UBIC[tipo];
-    var valor=p[info.campo]||'';
-    var fecha=fechasDoc[info.key]||(valor?fechaFallback:'');
-    var vencida=valor&&fecha&&_fechaDocVencida(fecha);
+    var valor=(_docsCoordPendientes[tipo]!==undefined?_docsCoordPendientes[tipo]:(p[info.campo]||''));
+    var fecha=_docsFechasVerificadas[info.key]?'':(fechasDoc[info.key]||(valor?fechaFallback:''));
+    var pendiente=_docsCoordPendientes[tipo]!==undefined||!!_docsFechasVerificadas[info.key];
+    var vencida=!pendiente&&valor&&fecha&&_fechaDocVencida(fecha);
     html+='<div class="field-group" style="padding:10px;border-radius:10px;border:1.5px solid '+(vencida?'#fca5a5':'var(--border)')+(vencida?';background:#fee2e2;border-left:4px solid #dc2626':'')+'">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
       +'<label style="color:'+(vencida?'#991b1b':'inherit')+'">'+(vencida?'⚠️ ':'')+info.label+'</label>'
@@ -6438,7 +6443,8 @@ function _renderDocsUbicacion(){
         +(vencida?'<button onclick="_verificarDocIndividual(\''+info.key+'\')" style="font-size:11px;color:#fff;font-weight:700;cursor:pointer;background:#16a34a;border:none;border-radius:6px;padding:4px 8px;flex-shrink:0">✓ Verificar</button>':'')
         +'<button onclick="_editarCoordDocs(\''+tipo+'\')" style="font-size:11px;color:#059669;font-weight:600;cursor:pointer;border:1px solid #059669;background:none;border-radius:6px;padding:4px 8px;flex-shrink:0">✏️ Cambiar</button>'
         +'</div>'
-        +(fecha?'<div style="font-size:10px;color:'+(vencida?'#dc2626;font-weight:700':'#9ca3af')+';margin-top:3px">'+(vencida?'⚠️ Hay que actualizar — ':'')+'Última actualización: '+_fmtFechaDoc(fecha)+'</div>':'');
+        +(pendiente?'<div style="font-size:10px;color:#d97706;font-weight:700;margin-top:3px">⏳ Cambio sin guardar — dale a "Guardar cambios" abajo</div>'
+          :(fecha?'<div style="font-size:10px;color:'+(vencida?'#dc2626;font-weight:700':'#9ca3af')+';margin-top:3px">'+(vencida?'⚠️ Hay que actualizar — ':'')+'Última actualización: '+_fmtFechaDoc(fecha)+'</div>':''));
     }
     html+='</div>';
   });
@@ -6448,18 +6454,11 @@ function _renderDocsUbicacion(){
 function _editarCoordDocs(tipo){ _editandoCoord[tipo]=true; _renderDocsUbicacion(); }
 function _cancelarCoordDocs(tipo){ _editandoCoord[tipo]=false; _renderDocsUbicacion(); }
 function _guardarCoordDocs(tipo){
-  var p=prestamos.find(function(x){return x.id===currentId;});
-  if(!p) return;
-  var campo=tipo==='casa'?'coordCasa':'coordTrabajo';
-  var key=tipo==='casa'?'coord-casa':'coord-trabajo';
   var val=document.getElementById('docs-edit-coord-'+tipo).value.trim();
-  p[campo]=val;
-  if(!p.fechasDoc) p.fechasDoc={};
-  p.fechasDoc[key]=hoyLocal();
-  guardarDatos();
+  _docsCoordPendientes[tipo]=val;
   _editandoCoord[tipo]=false;
   _renderDocsUbicacion();
-  toast('✓ Ubicación actualizada');
+  toast('✓ Ubicación lista — dale a "Guardar cambios" para confirmarla');
 }
 
 var LABELS_FOTOS_FIJAS={'cedula-frente':'Cédula frente','cedula-detras':'Cédula detrás','foto-cliente':'Foto cliente','foto-casa':'Foto casa','foto-trabajo':'Foto trabajo'};
@@ -6485,8 +6484,9 @@ function _renderDocsFotos(){
   Object.keys(LABELS_FOTOS_FIJAS).forEach(function(k){
     var src=_docsNewFotos[k]||fotos[k]||'';
     var tieneNota=(k==='foto-casa'||k==='foto-trabajo');
-    var fecha=_docsNewFotos[k]?'':(fechasDoc[k]||(src?fechaFallback:''));
-    var vencida=src&&fecha&&_fechaDocVencida(fecha);
+    var pendienteVerif=!!_docsFechasVerificadas[k];
+    var fecha=(_docsNewFotos[k]||pendienteVerif)?'':(fechasDoc[k]||(src?fechaFallback:''));
+    var vencida=!pendienteVerif&&src&&fecha&&_fechaDocVencida(fecha);
     html+='<div style="padding:8px 0;border-bottom:1px solid var(--border)'+(vencida?';background:#fee2e2;border-radius:8px;border-left:4px solid #dc2626;padding-left:8px':'')+'">'
       +'<div style="display:flex;align-items:center;justify-content:space-between">'
       +'<div style="font-size:13px;font-weight:500;color:'+(vencida?'#991b1b':'#374151')+'">'+(vencida?'⚠️ ':'')+LABELS_FOTOS_FIJAS[k]+'</div>'
@@ -6495,15 +6495,16 @@ function _renderDocsFotos(){
       +(vencida?'<button onclick="_verificarDocIndividual(\''+k+'\')" style="font-size:11px;color:#fff;font-weight:700;cursor:pointer;background:#16a34a;border:none;border-radius:6px;padding:4px 8px">✓ Verificar</button>':'')
       +'<label style="font-size:11px;color:#059669;font-weight:600;cursor:pointer;border:1px solid #059669;border-radius:6px;padding:3px 8px">📷 '+(src?'Cambiar':'Subir')+'<input type="file" accept="image/*" data-key="'+k+'" onchange="onDocsFotoChange(this)" style="display:none"></label>'
       +'</div></div>'
-      +(fecha?'<div style="font-size:10px;color:'+(vencida?'#dc2626;font-weight:700':'#9ca3af')+';margin-top:3px">'+(vencida?'⚠️ Hay que actualizar — ':'')+'Última actualización: '+_fmtFechaDoc(fecha)+'</div>':'')
+      +(pendienteVerif?'<div style="font-size:10px;color:#d97706;font-weight:700;margin-top:3px">⏳ Verificación pendiente de guardar</div>':(fecha?'<div style="font-size:10px;color:'+(vencida?'#dc2626;font-weight:700':'#9ca3af')+';margin-top:3px">'+(vencida?'⚠️ Hay que actualizar — ':'')+'Última actualización: '+_fmtFechaDoc(fecha)+'</div>':''))
       +(tieneNota?'<textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="nota-'+k+'" placeholder="Nota sobre '+(k==='foto-casa'?'la casa':'el trabajo')+'..." rows="2" style="width:100%;margin-top:6px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:\'DM Sans\',sans-serif;outline:none;resize:none;box-sizing:border-box;color:#374151">'+((notas[k]||'').replace(/</g,'&lt;'))+'</textarea>':'')
       +'</div>';
   });
   extras.forEach(function(ex){
     var src=fotos[ex.key]||(_docsExtraNuevos[ex.key]?_docsExtraNuevos[ex.key].data:'');
     var desc=ex.desc||(_docsExtraNuevos[ex.key]?_docsExtraNuevos[ex.key].desc:'')||'';
-    var fecha=fechasDoc[ex.key]||(src?fechaFallback:'');
-    var vencida=src&&_fechaDocVencida(fecha);
+    var pendienteVerif=!!_docsFechasVerificadas[ex.key];
+    var fecha=pendienteVerif?'':(fechasDoc[ex.key]||(src?fechaFallback:''));
+    var vencida=!pendienteVerif&&src&&_fechaDocVencida(fecha);
     html+='<div style="padding:8px 0;border-bottom:1px solid var(--border)'+(vencida?';background:#fee2e2;border-radius:8px;border-left:4px solid #dc2626;padding-left:8px':'')+'">'
       +'<div style="display:flex;align-items:center;justify-content:space-between">'
       +'<div style="font-size:13px;font-weight:500;color:'+(vencida?'#991b1b':'#374151')+'">'+(vencida?'⚠️ ':'')+esc(ex.label)+'</div>'
@@ -6513,7 +6514,7 @@ function _renderDocsFotos(){
       +'<button onclick="quitarDocExtra(\''+ex.key+'\')" style="font-size:12px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0">🗑</button>'
       +'</div></div>'
       +(desc?'<div style="font-size:11px;color:#6b7280;margin-top:3px">'+esc(desc)+'</div>':'')
-      +(fecha?'<div style="font-size:10px;color:'+(vencida?'#dc2626;font-weight:700':'#9ca3af')+';margin-top:3px">'+(vencida?'⚠️ Hay que actualizar — ':'')+'Última actualización: '+_fmtFechaDoc(fecha)+'</div>':'')
+      +(pendienteVerif?'<div style="font-size:10px;color:#d97706;font-weight:700;margin-top:3px">⏳ Verificación pendiente de guardar</div>':(fecha?'<div style="font-size:10px;color:'+(vencida?'#dc2626;font-weight:700':'#9ca3af')+';margin-top:3px">'+(vencida?'⚠️ Hay que actualizar — ':'')+'Última actualización: '+_fmtFechaDoc(fecha)+'</div>':''))
       +'</div>';
   });
   html+='</div>'
@@ -6565,14 +6566,10 @@ function guardarDocExtraModal(){
 }
 
 function _verificarDocIndividual(key){
-  var p=prestamos.find(function(x){return x.id===currentId;});
-  if(!p) return;
-  if(!p.fechasDoc) p.fechasDoc={};
-  p.fechasDoc[key]=hoyLocal();
-  guardarDatos();
+  _docsFechasVerificadas[key]=hoyLocal();
   if(key==='coord-casa'||key==='coord-trabajo') _renderDocsUbicacion();
   else _renderDocsFotos();
-  toast('✓ Documento verificado');
+  toast('✓ Verificado — dale a "Guardar cambios" para confirmarlo');
 }
 
 function quitarDocExtra(key){
@@ -6636,8 +6633,14 @@ function guardarDocsCliente(){
   Object.keys(_docsExtraNuevos).forEach(function(k){ fotasNuevas[k]=_docsExtraNuevos[k].data; });
   // Cualquier foto que se suba o cambie hoy actualiza su fecha
   Object.keys(fotasNuevas).forEach(function(k){ p.fechasDoc[k]=hoyLocal(); });
+  // Ubicaciones cambiadas (pendientes de "Cambiar") y verificaciones individuales pendientes
+  if(_docsCoordPendientes.casa!==undefined){ p.coordCasa=_docsCoordPendientes.casa; p.fechasDoc['coord-casa']=hoyLocal(); }
+  if(_docsCoordPendientes.trabajo!==undefined){ p.coordTrabajo=_docsCoordPendientes.trabajo; p.fechasDoc['coord-trabajo']=hoyLocal(); }
+  Object.keys(_docsFechasVerificadas).forEach(function(k){ p.fechasDoc[k]=_docsFechasVerificadas[k]; });
   _docsNewFotos={};
   _docsExtraNuevos={};
+  _docsCoordPendientes={};
+  _docsFechasVerificadas={};
   var clavesNuevas=Object.keys(fotasNuevas).filter(function(k){return fotasNuevas[k]&&fotasNuevas[k].startsWith('data:');});
   function finalizarGuardarDocs(){
     var verif2=clienteNecesitaVerificacion(p);
