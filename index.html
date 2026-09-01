@@ -6655,6 +6655,12 @@ function guardarDocsCliente(){
     try{ renderCobros(); }catch(e){}
     try{ renderTarjetas(); }catch(e){}
     try{ renderPanelRecolector(); }catch(e){}
+    var btnDocs2=document.getElementById('btn-ver-docs');
+    if(btnDocs2){
+      btnDocs2.innerHTML=verif2.necesita?'📁 Ver documentos del cliente &nbsp;⚠️':'📁 Ver documentos del cliente';
+      btnDocs2.style.borderColor=verif2.necesita?'#f59e0b':'';
+      btnDocs2.style.color=verif2.necesita?'#b45309':'';
+    }
     toast('✓ Datos del cliente actualizados');
   }
   if(clavesNuevas.length){
