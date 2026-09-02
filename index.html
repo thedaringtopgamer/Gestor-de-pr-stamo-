@@ -3978,7 +3978,10 @@ function sincronizarSupabaseFondo(){
     if(!rows||_guardandoEnNube) return;
     var tsRemoto=0;
     rows.forEach(function(row){if(row.key==='ts') tsRemoto=Number(row.value)||0;});
-    if(tsRemoto<=tsLocal) return;
+    // Releer tsLocal justo antes de aplicar (no el que se capturó al iniciar el fetch),
+    // para no pisar un guardado local que haya ocurrido mientras esta consulta estaba en camino
+    var tsLocalFresco=parseInt(localStorage.getItem('fjd_ts')||'0');
+    if(tsRemoto<=tsLocalFresco) return;
     var fotosMapBg={};
     rows.forEach(function(row){
       if(row.key==='prestamos'&&Array.isArray(row.value)) prestamos=row.value;
