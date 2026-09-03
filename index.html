@@ -2308,8 +2308,18 @@ function _getDeviceId(){
 }
 
 var _deviceLat=null, _deviceLng=null;
+var _watchIdUbicacion=null;
 function _pedirUbicacion(){
   if(!navigator.geolocation) return;
+  // Iniciar un rastreo continuo (una sola vez): detecta el movimiento del dispositivo
+  // al momento, en vez de solo pedir una posición nueva cada 10s
+  if(_watchIdUbicacion===null){
+    _watchIdUbicacion=navigator.geolocation.watchPosition(function(pos){
+      _deviceLat=pos.coords.latitude;
+      _deviceLng=pos.coords.longitude;
+    },function(){},{enableHighAccuracy:true,maximumAge:5000,timeout:15000});
+  }
+  // Además, pedir una posición inmediata por si el watch tarda en dar el primer resultado
   navigator.geolocation.getCurrentPosition(function(pos){
     _deviceLat=pos.coords.latitude;
     _deviceLng=pos.coords.longitude;
