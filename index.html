@@ -2788,7 +2788,8 @@ function _base64ToBlob(dataUrl){
   return new Blob([arr],{type:mime});
 }
 
-function subirFotoStorage(prestamoId, key, dataUrl){
+function subirFotoStorage(prestamoId, key, dataUrl, _intento){
+  _intento=_intento||0;
   var path=prestamoId+'/'+key+'.jpg';
   var blob=_base64ToBlob(dataUrl);
   return fetch(SUPA_URL+'/storage/v1/object/'+FOTOS_BUCKET+'/'+path,{
@@ -2797,8 +2798,12 @@ function subirFotoStorage(prestamoId, key, dataUrl){
     body:blob
   }).then(function(r){
     if(r.ok) return SUPA_URL+'/storage/v1/object/public/'+FOTOS_BUCKET+'/'+path;
+    if(_intento<2) return new Promise(function(res){ setTimeout(function(){ res(subirFotoStorage(prestamoId,key,dataUrl,_intento+1)); },1500); });
     return null;
-  }).catch(function(){ return null; });
+  }).catch(function(){
+    if(_intento<2) return new Promise(function(res){ setTimeout(function(){ res(subirFotoStorage(prestamoId,key,dataUrl,_intento+1)); },1500); });
+    return null;
+  });
 }
 
 function renderInversion(){
@@ -6277,12 +6282,14 @@ function guardarDocumentos(){
     // Subir fotos nuevas (base64) a Storage, reemplazar con URL
     var pid=clienteTemporal._id||('tmp_'+Date.now());
     var clavesNuevas=Object.keys(fotos).filter(function(k){return fotos[k]&&fotos[k].startsWith('data:');});
+    var _fotosFallidas=[];
     var promesas=clavesNuevas.map(function(k){
       return subirFotoStorage(pid,k,fotos[k]).then(function(url){
-        if(url) fotos[k]=url;
+        if(url) fotos[k]=url; else _fotosFallidas.push(LABELS_FOTOS_FIJAS[k]||k);
       });
     });
     Promise.all(promesas).then(function(){
+      if(_fotosFallidas.length){ toast('⚠ No se pudo subir: '+_fotosFallidas.join(', ')+' — sin conexión, vuelve a intentarlo'); }
       clienteTemporal.coordCasa=coordCasa;
       clienteTemporal.coordTrabajo=coordTrabajo;
       clienteTemporal.fotos=fotos;
@@ -6678,9 +6685,16 @@ function guardarDocsCliente(){
   }
   if(clavesNuevas.length){
     toast('⏳ Subiendo fotos...');
+    var _fotosFallidas2=[];
     Promise.all(clavesNuevas.map(function(k){
-      return subirFotoStorage(p.id,k,fotasNuevas[k]).then(function(url){p.fotos[k]=url||fotasNuevas[k];});
-    })).then(finalizarGuardarDocs);
+      return subirFotoStorage(p.id,k,fotasNuevas[k]).then(function(url){
+        p.fotos[k]=url||fotasNuevas[k];
+        if(!url) _fotosFallidas2.push(LABELS_FOTOS_FIJAS[k]||k);
+      });
+    })).then(function(){
+      finalizarGuardarDocs();
+      if(_fotosFallidas2.length) toast('⚠ No se pudo subir: '+_fotosFallidas2.join(', ')+' — sin conexión, vuelve a intentarlo');
+    });
   } else {
     finalizarGuardarDocs();
   }
