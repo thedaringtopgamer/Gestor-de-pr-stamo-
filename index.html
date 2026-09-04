@@ -2799,12 +2799,12 @@ function subirFotoStorage(prestamoId, key, dataUrl, _intento){
   }).then(function(r){
     if(r.ok) return SUPA_URL+'/storage/v1/object/public/'+FOTOS_BUCKET+'/'+path;
     return r.text().then(function(t){
-      if(_intento>=2){ toast('⚠ Error real Storage ('+r.status+'): '+t.substring(0,150)); return null; }
+      if(_intento>=2){ window._ultimoErrorStorage='('+r.status+') '+t.substring(0,150); return null; }
       return new Promise(function(res){ setTimeout(function(){ res(subirFotoStorage(prestamoId,key,dataUrl,_intento+1)); },1500); });
     });
   }).catch(function(e){
     if(_intento<2) return new Promise(function(res){ setTimeout(function(){ res(subirFotoStorage(prestamoId,key,dataUrl,_intento+1)); },1500); });
-    toast('⚠ Error de red real: '+(e&&e.message||e));
+    window._ultimoErrorStorage='(red) '+(e&&e.message||e);
     return null;
   });
 }
@@ -6292,7 +6292,7 @@ function guardarDocumentos(){
       });
     });
     Promise.all(promesas).then(function(){
-      if(_fotosFallidas.length){ toast('⚠ No se pudo subir: '+_fotosFallidas.join(', ')+' — sin conexión, vuelve a intentarlo'); }
+      if(_fotosFallidas.length){ toast('⚠ '+_fotosFallidas.join(', ')+' — '+(window._ultimoErrorStorage||'no se pudo subir')); }
       clienteTemporal.coordCasa=coordCasa;
       clienteTemporal.coordTrabajo=coordTrabajo;
       clienteTemporal.fotos=fotos;
@@ -6696,7 +6696,7 @@ function guardarDocsCliente(){
       });
     })).then(function(){
       finalizarGuardarDocs();
-      if(_fotosFallidas2.length) toast('⚠ No se pudo subir: '+_fotosFallidas2.join(', ')+' — sin conexión, vuelve a intentarlo');
+      if(_fotosFallidas2.length) toast('⚠ '+_fotosFallidas2.join(', ')+' — '+(window._ultimoErrorStorage||'no se pudo subir'));
     });
   } else {
     finalizarGuardarDocs();
