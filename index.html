@@ -2798,10 +2798,13 @@ function subirFotoStorage(prestamoId, key, dataUrl, _intento){
     body:blob
   }).then(function(r){
     if(r.ok) return SUPA_URL+'/storage/v1/object/public/'+FOTOS_BUCKET+'/'+path;
+    return r.text().then(function(t){
+      if(_intento>=2){ toast('⚠ Error real Storage ('+r.status+'): '+t.substring(0,150)); return null; }
+      return new Promise(function(res){ setTimeout(function(){ res(subirFotoStorage(prestamoId,key,dataUrl,_intento+1)); },1500); });
+    });
+  }).catch(function(e){
     if(_intento<2) return new Promise(function(res){ setTimeout(function(){ res(subirFotoStorage(prestamoId,key,dataUrl,_intento+1)); },1500); });
-    return null;
-  }).catch(function(){
-    if(_intento<2) return new Promise(function(res){ setTimeout(function(){ res(subirFotoStorage(prestamoId,key,dataUrl,_intento+1)); },1500); });
+    toast('⚠ Error de red real: '+(e&&e.message||e));
     return null;
   });
 }
