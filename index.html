@@ -3372,6 +3372,7 @@ function _barMeta(actual,meta,etiqueta,esDinero){
 
 function renderCierres(){
   _cargarMetas();
+  if(rolActual==='admin') _autoCerrarSemanasFaltantes();
   // Activar/desactivar botones de cierre según día y hora
   var puedesSem=_esFridayNight();
   var puedesMes=_puedesCerrarMes();
@@ -3561,6 +3562,39 @@ function _ultimoViernesStr(){
   var diasAtras=dow>=5?(dow-5):(dow+2); // cuántos días desde el último viernes
   d.setDate(d.getDate()-diasAtras);
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+// Cierra automáticamente cualquier semana ya terminada (domingo pasado) que nadie cerró a mano,
+// para que las rutas que no se usan no se queden atrasadas en el conteo de semanas del mes.
+var _autoCierreYaCorrio=false;
+function _autoCerrarSemanasFaltantes(){
+  if(_autoCierreYaCorrio) return;
+  _autoCierreYaCorrio=true;
+  var hoy=diaOperativo();
+  var huboAlgo=false;
+  var ahora=Date.now();
+  var _rutasAuto=['todas','Heredia','Alajuela','San Ramón','Ciudad Quesada'];
+  _rutasAuto.forEach(function(ruta){
+    var guard=0;
+    while(guard++<52){
+      var cierresRuta=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===ruta; });
+      var ultimo=cierresRuta.sort(function(a,b){ return b.hasta.localeCompare(a.hasta); })[0];
+      var desde=ultimo?_diaSigniente(ultimo.hasta):_inicioSemana(hoy);
+      var _dDomingo=new Date(desde+'T12:00:00'); _dDomingo.setDate(_dDomingo.getDate()+6);
+      var domingoStr=_dDomingo.getFullYear()+'-'+String(_dDomingo.getMonth()+1).padStart(2,'0')+'-'+String(_dDomingo.getDate()).padStart(2,'0');
+      if(domingoStr>=hoy) break; // esa semana todavía no ha terminado
+      var data=_calcCierreData(desde,domingoStr,ruta);
+      data.saldoFin=_enCalleActual(ruta);
+      data.clientesFin=_clientesActivosActual(ruta);
+      var _cierresPrevAuto=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===ruta; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); });
+      var _prevAuto=_cierresPrevAuto[0];
+      data.saldoInicio=(_prevAuto&&_prevAuto.data&&typeof _prevAuto.data.saldoFin==='number')?_prevAuto.data.saldoFin:_enCalleActual(ruta);
+      data.clientesInicio=(_prevAuto&&_prevAuto.data&&typeof _prevAuto.data.clientesFin==='number')?_prevAuto.data.clientesFin:_clientesActivosActual(ruta);
+      cierres.push({id:(ahora+guard+'_'+ruta).toString(),tipo:'semana',desde:desde,hasta:domingoStr,nota:'Cierre automático (no se cerró a tiempo)',data:data,fechaRegistro:hoyLocal(),ruta:ruta});
+      huboAlgo=true;
+    }
+  });
+  if(huboAlgo) guardarDatos();
 }
 
 function _esFridayNight(){
