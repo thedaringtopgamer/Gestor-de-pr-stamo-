@@ -3464,7 +3464,10 @@ function renderCierres(){
     var inicioMesR=ultimoMesR?_diaSigniente(ultimoMesR.hasta):_inicioMes(hoy);
     return cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===r&&c.hasta>inicioMesR&&c.hasta<=hoy&&c.nota!=='Cierre automático (no se cerró a tiempo)'; }).length;
   });
-  var semsMes=Math.min(4,Math.max.apply(null,_semsPorRutaReal.concat([0])));
+  // Piso manual: para el ciclo de este mes, el contador arranca en 3 sin importar el historial,
+  // y de ahí sube normalmente con cada cierre real. El próximo mes ya no aplica (cambia _inicioMes(hoy)).
+  var _pisoSemanasMes=(_inicioMes(hoy)==='2026-09-01')?3:0;
+  var semsMes=Math.min(4,Math.max(_pisoSemanasMes,Math.max.apply(null,_semsPorRutaReal.concat([0]))));
   var puntosM='';
   for(var _i=0;_i<4;_i++) puntosM+=(_i<semsMes?'■':'□');
   var semMesTag=' <span style="font-size:11px;font-weight:700;color:#166534;background:#bbf7d0;border-radius:20px;padding:2px 8px;margin-left:4px">'+puntosM+' '+semsMes+'/4</span>';
