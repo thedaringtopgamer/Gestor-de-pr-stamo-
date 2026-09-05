@@ -3462,7 +3462,7 @@ function renderCierres(){
   var _semsPorRutaReal=_RUTAS_TODAS.filter(function(r){ return r!=='todas'; }).map(function(r){
     var ultimoMesR=cierres.filter(function(c){ return c.tipo==='mes'&&(c.ruta||'todas')===r; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); })[0];
     var inicioMesR=ultimoMesR?_diaSigniente(ultimoMesR.hasta):_inicioMes(hoy);
-    return cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===r&&c.hasta>inicioMesR&&c.hasta<=hoy; }).length;
+    return cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===r&&c.hasta>inicioMesR&&c.hasta<=hoy&&c.nota!=='Cierre automático (no se cerró a tiempo)'; }).length;
   });
   var semsMes=Math.min(4,Math.max.apply(null,_semsPorRutaReal.concat([0])));
   var puntosM='';
