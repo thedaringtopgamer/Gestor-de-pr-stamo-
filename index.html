@@ -3464,12 +3464,11 @@ function renderCierres(){
     var inicioMesR=ultimoMesR?_diaSigniente(ultimoMesR.hasta):_inicioMes(hoy);
     return cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===r&&c.hasta>inicioMesR&&c.hasta<=hoy&&c.nota!=='Cierre automático (no se cerró a tiempo)'; }).length;
   });
-  // Fijado manual: para el ciclo de este mes, el contador siempre muestra 3 hasta que cierres
-  // la semana actual (ahí sube a 4). El próximo mes ya no aplica (cambia _inicioMes(hoy)).
+  // Fijado manual: para el ciclo de este mes, el contador queda fijo en 3 (sin calcular nada).
+  // El próximo mes ya no aplica (cambia _inicioMes(hoy)) y vuelve al cálculo normal.
   var semsMes;
   if(_inicioMes(hoy)==='2026-09-01'){
-    var _maxRealAhora=Math.max.apply(null,_semsPorRutaReal.concat([0]));
-    semsMes=_maxRealAhora>3?4:3;
+    semsMes=3;
   } else {
     semsMes=Math.min(4,Math.max.apply(null,_semsPorRutaReal.concat([0])));
   }
