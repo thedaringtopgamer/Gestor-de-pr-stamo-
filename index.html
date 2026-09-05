@@ -3372,7 +3372,6 @@ function _barMeta(actual,meta,etiqueta,esDinero){
 
 function renderCierres(){
   _cargarMetas();
-  if(rolActual==='admin') _autoCerrarSemanasFaltantes();
   // Activar/desactivar botones de cierre según día y hora
   var puedesSem=_esFridayNight();
   var puedesMes=_puedesCerrarMes();
@@ -3610,13 +3609,8 @@ function _autoCerrarSemanasFaltantes(){
 }
 
 function _esFridayNight(){
-  // Activo si el último viernes ya llegó y aún no se cerró la semana para esta ruta
-  var rFiltro=rutaInvFiltro||'todas';
-  var viernesStr=_ultimoViernesStr();
-  var ultimoCierre=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===rFiltro; })
-    .sort(function(a,b){ return b.hasta.localeCompare(a.hasta); })[0];
-  // Si ya cerró después del último viernes, no se puede cerrar otra vez
-  if(ultimoCierre&&ultimoCierre.hasta>=viernesStr) return false;
+  // El botón de cerrar semana se mantiene siempre activo: se puede cerrar cuantas veces
+  // se quiera (mismo día incluso), para adelantar el conteo manualmente cuando haga falta.
   return true;
 }
 
