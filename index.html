@@ -3750,6 +3750,7 @@ function eliminarCierre(id){
   }
   guardarDatos();
   renderCierres();
+  if(document.getElementById('modal-hist-cierres').style.display==='flex') abrirHistorialTipo(objetivo?objetivo.tipo:'semana');
   toast('✓ Cierre eliminado');
 }
 
@@ -3796,12 +3797,13 @@ function abrirHistorialTipo(tipo){
         semTag=' <span style="font-size:11px;font-weight:700;color:#166534;background:#dcfce7;border-radius:20px;padding:2px 8px;margin-left:4px">'+puntos+' '+semsEnMes+'/'+total+'</span>';
       }
       return '<div style="border-bottom:1px solid #f3f4f6">'
-        +'<div onclick="toggleRenEntry(\''+uid+'\')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;cursor:pointer">'
-          +'<div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0">'
+          +'<div onclick="toggleRenEntry(\''+uid+'\')" style="cursor:pointer;flex:1">'
             +'<div style="font-size:14px;font-weight:800;color:#1e293b">'+label+': '+c.desde+' → '+c.hasta+semTag+'</div>'
             +(c.nota?'<div style="font-size:11px;color:#6b7280;margin-top:2px">'+c.nota+'</div>':'')
           +'</div>'
-          +'<span style="font-size:14px;color:#9ca3af" id="arr-'+uid+'">▶</span>'
+          +(rolActual==='admin'?'<button onclick="event.stopPropagation();eliminarCierre(\''+c.id+'\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer;margin-right:8px;flex-shrink:0">🗑 Eliminar</button>':'')
+          +'<span onclick="toggleRenEntry(\''+uid+'\')" style="font-size:14px;color:#9ca3af;cursor:pointer;flex-shrink:0" id="arr-'+uid+'">▶</span>'
         +'</div>'
         +'<div id="'+uid+'" style="display:none;padding-bottom:12px">'
           +_statsHtml(c.data,c.tipo)
