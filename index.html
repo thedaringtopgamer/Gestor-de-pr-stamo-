@@ -3579,7 +3579,9 @@ function _autoCerrarSemanasFaltantes(){
     while(guard++<52){
       var cierresRuta=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===ruta; });
       var ultimo=cierresRuta.sort(function(a,b){ return b.hasta.localeCompare(a.hasta); })[0];
-      var desde=ultimo?_diaSigniente(ultimo.hasta):_inicioSemana(hoy);
+      // Si la ruta nunca se ha cerrado, arrancar desde el lunes de la semana del inicio del mes
+      // (no de esta semana), para que se ponga al día con las semanas que ya pasaron y quede pareja
+      var desde=ultimo?_diaSigniente(ultimo.hasta):_inicioSemana(_inicioMes(hoy));
       var _dDomingo=new Date(desde+'T12:00:00'); _dDomingo.setDate(_dDomingo.getDate()+6);
       var domingoStr=_dDomingo.getFullYear()+'-'+String(_dDomingo.getMonth()+1).padStart(2,'0')+'-'+String(_dDomingo.getDate()).padStart(2,'0');
       if(domingoStr>=hoy) break; // esa semana todavía no ha terminado
