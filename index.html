@@ -3721,6 +3721,7 @@ function _guardarCierre(tipo,desde,hasta){
   document.getElementById('modal-confirmar-cierre').style.display='none';
   renderInversion();
   try{ renderCajas(); }catch(e){}
+  try{ renderCierres(); }catch(e){}
   toast('✓ Cierre guardado');
 }
 
