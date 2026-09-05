@@ -3460,10 +3460,8 @@ function renderCierres(){
   // Contador de semanas del mes: el mayor entre lo que de verdad cerraste en esta ruta
   // y lo que ya deberías llevar por fecha (para que las rutas que no cierres no se vean atrasadas,
   // pero si cierras de verdad, suba al momento)
-  var _diasTranscurridosMes=Math.round((parseLocalDate(hoy)-parseLocalDate(inicioMes))/86400000);
-  var _semsPorFecha=Math.min(4,Math.floor(_diasTranscurridosMes/7));
-  var _semsCerradas=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===rFiltroMes&&c.hasta>inicioMes&&c.hasta<=hoy; }).length;
-  var semsMes=Math.min(4,Math.max(_semsPorFecha,_semsCerradas));
+  var _diasTranscurridosMes=Math.round((parseLocalDate(hoy)-parseLocalDate(_inicioMes(hoy)))/86400000);
+  var semsMes=Math.min(4,Math.floor(_diasTranscurridosMes/7));
   var puntosM='';
   for(var _i=0;_i<4;_i++) puntosM+=(_i<semsMes?'■':'□');
   var semMesTag=' <span style="font-size:11px;font-weight:700;color:#166534;background:#bbf7d0;border-radius:20px;padding:2px 8px;margin-left:4px">'+puntosM+' '+semsMes+'/4</span>';
