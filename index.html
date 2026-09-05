@@ -3628,6 +3628,12 @@ function _puedesCerrarMes(){
   // Ya cerró el mes después del último viernes → no se puede cerrar otra vez
   var viernesStr=_ultimoViernesStr();
   if(ciorresMes.length&&ciorresMes[0].hasta>=viernesStr) return false;
+  // Fijado manual: para el ciclo de este mes, usar el mismo criterio que el numero mostrado
+  // (piso de 3 + cierres reales desde hoy), en vez del conteo crudo que quedo inflado por historial viejo.
+  if(_inicioMes(hoyLocal())==='2026-09-01'){
+    var _cierresDesdeHoyMes=cierres.filter(function(c){ return c.tipo==='semana'&&c.fechaRegistro>='2026-09-05'&&c.nota!=='Cierre automático (no se cerró a tiempo)'; }).length;
+    return (3+_cierresDesdeHoyMes)>=4;
+  }
   var semanasDesde=cierres.filter(function(c){
     return c.tipo==='semana'&&(c.ruta||'todas')===rFiltro&&c.hasta>desdeStr;
   }).length;
