@@ -3579,8 +3579,9 @@ function _ultimoViernesStr(){
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
-// Cierra automáticamente cualquier semana ya terminada (domingo pasado) que nadie cerró a mano,
-// para que las rutas que no se usan no se queden atrasadas en el conteo de semanas del mes.
+// Cierra automáticamente SOLO la semana actual (viernes ya pasado, ya es sábado 4am o después)
+// si nadie la cerró a mano, para cualquier ruta. No recupera semanas viejas hacia atrás:
+// mira nada más hacia adelante desde ahora, una semana a la vez.
 var _autoCierreYaCorrio=false;
 function _autoCerrarSemanasFaltantes(){
   if(_autoCierreYaCorrio) return;
@@ -3588,40 +3589,34 @@ function _autoCerrarSemanasFaltantes(){
   var hoy=diaOperativo();
   var huboAlgo=false;
   var ahora=Date.now();
-  // Limpieza: borrar cierres automáticos que se hayan creado por error en rutas que sí tienen actividad
-  var _cierresMal=cierres.filter(function(c){
-    return c.tipo==='semana'&&c.nota==='Cierre automático (no se cerró a tiempo)'&&c.ruta&&_clientesActivosActual(c.ruta)>0;
+  // Limpieza: quitar cierres automáticos que se hayan creado antes de tiempo (de una semana
+  // que todavía no había terminado su viernes), por un bug anterior.
+  var _cierresPrematuro=cierres.filter(function(c){
+    return c.tipo==='semana'&&c.nota==='Cierre automático (no se cerró a tiempo)'&&c.hasta>=hoy;
   });
-  if(_cierresMal.length){
-    cierres=cierres.filter(function(c){ return _cierresMal.indexOf(c)===-1; });
+  if(_cierresPrematuro.length){
+    cierres=cierres.filter(function(c){ return _cierresPrematuro.indexOf(c)===-1; });
     huboAlgo=true;
   }
-  var _rutasAuto=['Heredia','Alajuela','San Ramón','Ciudad Quesada'].filter(function(r){
-    return _clientesActivosActual(r)===0; // solo rutas sin clientes activos (de verdad sin usar)
-  });
+  var _rutasAuto=['Heredia','Alajuela','San Ramón','Ciudad Quesada'];
   _rutasAuto.forEach(function(ruta){
-    var guard=0;
-    while(guard++<52){
-      var cierresRuta=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===ruta; });
-      var ultimo=cierresRuta.sort(function(a,b){ return b.hasta.localeCompare(a.hasta); })[0];
-      // Si la ruta nunca se ha cerrado, arrancar desde el lunes de la semana del inicio del mes
-      // (no de esta semana), para que se ponga al día con las semanas que ya pasaron y quede pareja
-      var desde=ultimo?_diaSigniente(ultimo.hasta):_inicioSemana(_inicioMes(hoy));
-      // La semana de negocio cierra el viernes (no el domingo): el cierre automático se activa
-      // el sábado a las 4am si nadie la cerró a mano el viernes.
-      var _dViernes=new Date(desde+'T12:00:00'); _dViernes.setDate(_dViernes.getDate()+4);
-      var viernesStr=_dViernes.getFullYear()+'-'+String(_dViernes.getMonth()+1).padStart(2,'0')+'-'+String(_dViernes.getDate()).padStart(2,'0');
-      if(viernesStr>=hoy) break; // esa semana todavía no ha terminado (hoy ya respeta el corte de las 4am)
-      var data=_calcCierreData(desde,viernesStr,ruta);
-      data.saldoFin=_enCalleActual(ruta);
-      data.clientesFin=_clientesActivosActual(ruta);
-      var _cierresPrevAuto=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===ruta; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); });
-      var _prevAuto=_cierresPrevAuto[0];
-      data.saldoInicio=(_prevAuto&&_prevAuto.data&&typeof _prevAuto.data.saldoFin==='number')?_prevAuto.data.saldoFin:_enCalleActual(ruta);
-      data.clientesInicio=(_prevAuto&&_prevAuto.data&&typeof _prevAuto.data.clientesFin==='number')?_prevAuto.data.clientesFin:_clientesActivosActual(ruta);
-      cierres.push({id:(ahora+guard+'_'+ruta).toString(),tipo:'semana',desde:desde,hasta:viernesStr,nota:'Cierre automático (no se cerró a tiempo)',data:data,fechaRegistro:hoyLocal(),ruta:ruta});
-      huboAlgo=true;
-    }
+    var cierresRuta=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===ruta; });
+    var ultimo=cierresRuta.sort(function(a,b){ return b.hasta.localeCompare(a.hasta); })[0];
+    // Si nunca se ha cerrado, arrancar desde el lunes de ESTA semana (no de atrás), para no
+    // recuperar semanas viejas de golpe.
+    var desde=ultimo?_diaSigniente(ultimo.hasta):_inicioSemana(hoy);
+    // La semana de negocio cierra el viernes (no el domingo): el cierre automático se activa
+    // el sábado a las 4am si nadie la cerró a mano el viernes.
+    var _dViernes=new Date(desde+'T12:00:00'); _dViernes.setDate(_dViernes.getDate()+4);
+    var viernesStr=_dViernes.getFullYear()+'-'+String(_dViernes.getMonth()+1).padStart(2,'0')+'-'+String(_dViernes.getDate()).padStart(2,'0');
+    if(viernesStr>=hoy) return; // esa semana todavía no ha terminado (hoy ya respeta el corte de las 4am)
+    var data=_calcCierreData(desde,viernesStr,ruta);
+    data.saldoFin=_enCalleActual(ruta);
+    data.clientesFin=_clientesActivosActual(ruta);
+    data.saldoInicio=(ultimo&&ultimo.data&&typeof ultimo.data.saldoFin==='number')?ultimo.data.saldoFin:_enCalleActual(ruta);
+    data.clientesInicio=(ultimo&&ultimo.data&&typeof ultimo.data.clientesFin==='number')?ultimo.data.clientesFin:_clientesActivosActual(ruta);
+    cierres.push({id:(ahora+'_'+ruta).toString(),tipo:'semana',desde:desde,hasta:viernesStr,nota:'Cierre automático (no se cerró a tiempo)',data:data,fechaRegistro:hoyLocal(),ruta:ruta});
+    huboAlgo=true;
   });
   if(huboAlgo) guardarDatos();
 }
