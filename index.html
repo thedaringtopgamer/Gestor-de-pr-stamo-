@@ -3643,6 +3643,23 @@ function _guardarCierre(tipo,desde,hasta){
     var data=_calcCierreData(desde,hasta,ruta);
     data.saldoFin=_enCalleActual(ruta);
     data.clientesFin=_clientesActivosActual(ruta);
+    // Saldo/clientes de inicio: el fin del cierre anterior de esta ruta, o el caché del arranque de este período
+    var _cierresPrevRuta=cierres.filter(function(c){ return c.tipo===tipo&&(c.ruta||'todas')===ruta; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); });
+    var _prevCierre=_cierresPrevRuta[0];
+    var _claveSufijo=tipo==='semana'?'semana':'mes';
+    var _claveSufijoC=tipo==='semana'?'semanaC':'mesC';
+    if(_prevCierre&&_prevCierre.data&&typeof _prevCierre.data.saldoFin==='number'){
+      data.saldoInicio=_prevCierre.data.saldoFin;
+    } else {
+      data.saldoInicio=saldoInicios[ruta+'|'+_claveSufijo+'|'+desde];
+      if(typeof data.saldoInicio!=='number') data.saldoInicio=_enCalleActual(ruta);
+    }
+    if(_prevCierre&&_prevCierre.data&&typeof _prevCierre.data.clientesFin==='number'){
+      data.clientesInicio=_prevCierre.data.clientesFin;
+    } else {
+      data.clientesInicio=saldoInicios[ruta+'|'+_claveSufijoC+'|'+desde];
+      if(typeof data.clientesInicio!=='number') data.clientesInicio=_clientesActivosActual(ruta);
+    }
     cierres.push({id:(ahora+i).toString(),tipo:tipo,desde:desde,hasta:hasta,nota:nota,data:data,fechaRegistro:hoyLocal(),ruta:ruta});
   });
   guardarDatos();
