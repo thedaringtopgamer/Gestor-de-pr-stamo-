@@ -3473,8 +3473,10 @@ function renderCierres(){
   var _mesesCerrados=cierres.filter(function(c){ return c.tipo==='mes'; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); });
   var _ultimoMesReciente=_mesesCerrados[0];
   if(_ultimoMesReciente&&_ultimoMesReciente.fechaRegistro>='2026-09-05'){
-    var _inicioNuevoCiclo=_diaSigniente(_ultimoMesReciente.hasta);
-    var _semanasNuevoCiclo=cierres.filter(function(c){ return c.tipo==='semana'&&c.hasta>_inicioNuevoCiclo&&c.nota!=='Cierre automático (no se cerró a tiempo)'; }).length;
+    // Comparar por el momento real en que se guardó cada cierre (no por la fecha "hasta"),
+    // porque al cerrar varias semanas el mismo día todas comparten la misma fecha.
+    var _idMesReciente=parseInt(_ultimoMesReciente.id)||0;
+    var _semanasNuevoCiclo=cierres.filter(function(c){ return c.tipo==='semana'&&(parseInt(c.id)||0)>_idMesReciente&&c.nota!=='Cierre automático (no se cerró a tiempo)'; }).length;
     semsMes=Math.min(4,_semanasNuevoCiclo);
   } else if(_inicioMes(hoy)==='2026-09-01'){
     var _cierresDesdeHoy=cierres.filter(function(c){ return c.tipo==='semana'&&c.fechaRegistro>='2026-09-05'&&c.nota!=='Cierre automático (no se cerró a tiempo)'; }).length;
@@ -3631,8 +3633,8 @@ function _puedesCerrarMes(){
   var _mesesCerradosPCM=cierres.filter(function(c){ return c.tipo==='mes'; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); });
   var _ultimoMesRecientePCM=_mesesCerradosPCM[0];
   if(_ultimoMesRecientePCM&&_ultimoMesRecientePCM.fechaRegistro>='2026-09-05'){
-    var _inicioNuevoCicloPCM=_diaSigniente(_ultimoMesRecientePCM.hasta);
-    var _semanasNuevoCicloPCM=cierres.filter(function(c){ return c.tipo==='semana'&&c.hasta>_inicioNuevoCicloPCM&&c.nota!=='Cierre automático (no se cerró a tiempo)'; }).length;
+    var _idMesRecientePCM=parseInt(_ultimoMesRecientePCM.id)||0;
+    var _semanasNuevoCicloPCM=cierres.filter(function(c){ return c.tipo==='semana'&&(parseInt(c.id)||0)>_idMesRecientePCM&&c.nota!=='Cierre automático (no se cerró a tiempo)'; }).length;
     return _semanasNuevoCicloPCM>=4;
   }
   if(_inicioMes(hoyPCM)==='2026-09-01'){
