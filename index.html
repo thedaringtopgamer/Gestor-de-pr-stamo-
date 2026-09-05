@@ -3470,7 +3470,7 @@ function renderCierres(){
   // durante este mismo ciclo, se reinicia a 0 y cuenta normal desde ese cierre en adelante.
   // El próximo mes ya no aplica (cambia _inicioMes(hoy)) y vuelve al cálculo normal.
   var semsMes;
-  var _mesesCerrados=cierres.filter(function(c){ return c.tipo==='mes'; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); });
+  var _mesesCerrados=cierres.filter(function(c){ return c.tipo==='mes'; }).sort(function(a,b){ return (parseInt(b.id)||0)-(parseInt(a.id)||0); });
   var _ultimoMesReciente=_mesesCerrados[0];
   if(_ultimoMesReciente&&_ultimoMesReciente.fechaRegistro>='2026-09-05'){
     // Comparar por el momento real en que se guardó cada cierre (no por la fecha "hasta"),
@@ -3630,7 +3630,7 @@ function _puedesCerrarMes(){
   var hoyPCM=hoyLocal();
   // Mismo criterio que el número mostrado: si ya se cerró el mes durante este ciclo fijo,
   // reiniciar a 0 y contar normal desde ese cierre; si no, usar el piso de 3 + cierres desde hoy.
-  var _mesesCerradosPCM=cierres.filter(function(c){ return c.tipo==='mes'; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); });
+  var _mesesCerradosPCM=cierres.filter(function(c){ return c.tipo==='mes'; }).sort(function(a,b){ return (parseInt(b.id)||0)-(parseInt(a.id)||0); });
   var _ultimoMesRecientePCM=_mesesCerradosPCM[0];
   if(_ultimoMesRecientePCM&&_ultimoMesRecientePCM.fechaRegistro>='2026-09-05'){
     var _idMesRecientePCM=parseInt(_ultimoMesRecientePCM.id)||0;
