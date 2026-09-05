@@ -2751,16 +2751,18 @@ function guardarDatos(){
     {key:'ts',value:ts}
   ].filter(Boolean);
 
-  fetch(SUPA_URL+'/rest/v1/app_data?on_conflict=key',{
+  return fetch(SUPA_URL+'/rest/v1/app_data?on_conflict=key',{
     method:'POST',
     headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
     body:JSON.stringify(datosPrincipales)
   }).then(function(r){
     _guardandoEnNube=false;
-    if(!r.ok) r.text().then(function(t){ toast('⚠ Error nube: '+t.substring(0,80)); });
+    if(!r.ok){ r.text().then(function(t){ toast('⚠ Error nube: '+t.substring(0,80)); }); return false; }
+    return true;
   }).catch(function(){
     _guardandoEnNube=false;
     toast('⚠ Sin conexión — guardado local');
+    return false;
   });
 }
 
@@ -3711,12 +3713,14 @@ function _guardarCierre(tipo,desde,hasta){
     }
     cierres.push({id:(ahora+i).toString(),tipo:tipo,desde:desde,hasta:hasta,nota:nota,data:data,fechaRegistro:hoyLocal(),ruta:ruta});
   });
-  guardarDatos();
   document.getElementById('modal-confirmar-cierre').style.display='none';
   renderInversion();
   try{ renderCajas(); }catch(e){}
   try{ renderCierres(); }catch(e){}
-  toast('✓ Cierre guardado');
+  toast('⏳ Guardando cierre en la nube...');
+  guardarDatos().then(function(ok){
+    if(ok) toast('✓ Cierre guardado — ya puedes recargar');
+  });
 }
 
 function eliminarCierre(id){
