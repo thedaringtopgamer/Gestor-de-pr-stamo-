@@ -3469,7 +3469,7 @@ function renderCierres(){
   // El próximo mes ya no aplica (cambia _inicioMes(hoy)) y vuelve al cálculo normal.
   var semsMes;
   if(_inicioMes(hoy)==='2026-09-01'){
-    var _cierresDesdeHoy=cierres.filter(function(c){ return c.tipo==='semana'&&c.fechaRegistro>='2026-09-05'&&c.nota!=='Cierre automático (no se cerró a tiempo)'; }).length;
+    var _cierresDesdeHoy=cierres.filter(function(c){ return c.tipo==='semana'&&c.fechaRegistro>='2026-09-05'; }).length;
     semsMes=Math.min(4,3+_cierresDesdeHoy);
   } else {
     semsMes=Math.min(4,Math.max.apply(null,_semsPorRutaReal.concat([0])));
@@ -3633,7 +3633,7 @@ function _puedesCerrarMes(){
   // Fijado manual: para el ciclo de este mes, usar el mismo criterio que el numero mostrado
   // (piso de 3 + cierres reales desde hoy), en vez del conteo crudo que quedo inflado por historial viejo.
   if(_inicioMes(hoyLocal())==='2026-09-01'){
-    var _cierresDesdeHoyMes=cierres.filter(function(c){ return c.tipo==='semana'&&c.fechaRegistro>='2026-09-05'&&c.nota!=='Cierre automático (no se cerró a tiempo)'; }).length;
+    var _cierresDesdeHoyMes=cierres.filter(function(c){ return c.tipo==='semana'&&c.fechaRegistro>='2026-09-05'; }).length;
     return (3+_cierresDesdeHoyMes)>=4;
   }
   var semanasDesde=cierres.filter(function(c){
