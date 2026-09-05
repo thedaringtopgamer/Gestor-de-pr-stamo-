@@ -3464,13 +3464,18 @@ function renderCierres(){
     var inicioMesR=ultimoMesR?_diaSigniente(ultimoMesR.hasta):_inicioMes(hoy);
     return cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===r&&c.hasta>inicioMesR&&c.hasta<=hoy&&c.nota!=='Cierre automático (no se cerró a tiempo)'; }).length;
   });
-  // Fijado manual: para el ciclo de este mes, el contador arranca en 3 y sube +1 por cada
-  // semana real que se cierre desde HOY (2026-09-05) en adelante, hasta 4. Se resetea al cerrar el mes.
+  // Fijado manual: para el ciclo de este mes, cada ruta arranca en 3 y sube +1 (independiente
+  // de las demás) por cada semana real/automática que SU PROPIA ruta cierre desde HOY (2026-09-05)
+  // en adelante, hasta 4. Si la vista es "todas", se toma el mínimo entre las 4 rutas reales.
   // El próximo mes ya no aplica (cambia _inicioMes(hoy)) y vuelve al cálculo normal.
   var semsMes;
   if(_inicioMes(hoy)==='2026-09-01'){
-    var _cierresDesdeHoy=cierres.filter(function(c){ return c.tipo==='semana'&&c.fechaRegistro>='2026-09-05'; }).length;
-    semsMes=Math.min(4,3+_cierresDesdeHoy);
+    var _rutasParaContar=rFiltroMes==='todas'?_RUTAS_TODAS.filter(function(r){ return r!=='todas'; }):[rFiltroMes];
+    var _semsPorRutaFija=_rutasParaContar.map(function(r){
+      var n=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===r&&c.fechaRegistro>='2026-09-05'; }).length;
+      return Math.min(4,3+n);
+    });
+    semsMes=Math.min.apply(null,_semsPorRutaFija);
   } else {
     semsMes=Math.min(4,Math.max.apply(null,_semsPorRutaReal.concat([0])));
   }
@@ -3630,11 +3635,14 @@ function _puedesCerrarMes(){
   // Ya cerró el mes después del último viernes → no se puede cerrar otra vez
   var viernesStr=_ultimoViernesStr();
   if(ciorresMes.length&&ciorresMes[0].hasta>=viernesStr) return false;
-  // Fijado manual: para el ciclo de este mes, usar el mismo criterio que el numero mostrado
-  // (piso de 3 + cierres reales desde hoy), en vez del conteo crudo que quedo inflado por historial viejo.
+  // Fijado manual: para el ciclo de este mes, usar el mismo criterio por ruta que el numero mostrado
+  // (piso de 3 + cierres reales/automaticos de ESTA ruta desde hoy). Para "todas", exige las 4 rutas.
   if(_inicioMes(hoyLocal())==='2026-09-01'){
-    var _cierresDesdeHoyMes=cierres.filter(function(c){ return c.tipo==='semana'&&c.fechaRegistro>='2026-09-05'; }).length;
-    return (3+_cierresDesdeHoyMes)>=4;
+    var _rutasParaCerrarMes=rFiltro==='todas'?_RUTAS_TODAS.filter(function(r){ return r!=='todas'; }):[rFiltro];
+    return _rutasParaCerrarMes.every(function(r){
+      var n=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===r&&c.fechaRegistro>='2026-09-05'; }).length;
+      return (3+n)>=4;
+    });
   }
   var semanasDesde=cierres.filter(function(c){
     return c.tipo==='semana'&&(c.ruta||'todas')===rFiltro&&c.hasta>desdeStr;
