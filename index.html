@@ -2679,7 +2679,6 @@ var bases = {};
 var salidas = {};
 var metas = {};
 var saldoInicios = {};
-var semanasExtraMes = 1; // ya cerraste una semana bajo el 3/4 fijo; queda en 1 hasta que la nube traiga el valor real
 var invOverrides = {};
 var clientesBloqueados = {}; // {id: {motivo:'', ts:0}}
 var renovaciones = [];
@@ -2746,7 +2745,6 @@ function guardarDatos(){
     {key:'salidas',value:salidas},
     (Object.keys(metas).length>0?{key:'metas',value:metas}:null),
     (Object.keys(saldoInicios).length>0?{key:'saldoInicios',value:saldoInicios}:null),
-    {key:'semanasExtraMes',value:semanasExtraMes},
     {key:'inv_overrides',value:invOverrides},
     {key:'clientes_bloqueados',value:clientesBloqueados},
     {key:'passwords',value:USUARIOS.map(function(u){return u.pass;})},
@@ -3467,11 +3465,12 @@ function renderCierres(){
     return cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===r&&c.hasta>inicioMesR&&c.hasta<=hoy&&c.nota!=='Cierre automático (no se cerró a tiempo)'; }).length;
   });
   // Fijado manual: para el ciclo de este mes, el contador arranca en 3 y sube +1 por cada
-  // semana que cierres de aquí en adelante (semanasExtraMes), hasta 4. Se resetea al cerrar el mes.
+  // semana real que se cierre desde HOY (2026-09-05) en adelante, hasta 4. Se resetea al cerrar el mes.
   // El próximo mes ya no aplica (cambia _inicioMes(hoy)) y vuelve al cálculo normal.
   var semsMes;
   if(_inicioMes(hoy)==='2026-09-01'){
-    semsMes=Math.min(4,3+semanasExtraMes);
+    var _cierresDesdeHoy=cierres.filter(function(c){ return c.tipo==='semana'&&c.fechaRegistro>='2026-09-05'&&c.nota!=='Cierre automático (no se cerró a tiempo)'; }).length;
+    semsMes=Math.min(4,3+_cierresDesdeHoy);
   } else {
     semsMes=Math.min(4,Math.max.apply(null,_semsPorRutaReal.concat([0])));
   }
@@ -3712,8 +3711,6 @@ function _guardarCierre(tipo,desde,hasta){
     }
     cierres.push({id:(ahora+i).toString(),tipo:tipo,desde:desde,hasta:hasta,nota:nota,data:data,fechaRegistro:hoyLocal(),ruta:ruta});
   });
-  if(tipo==='semana') semanasExtraMes++;
-  if(tipo==='mes') semanasExtraMes=0;
   guardarDatos();
   document.getElementById('modal-confirmar-cierre').style.display='none';
   renderInversion();
@@ -4086,7 +4083,6 @@ function sincronizarSupabaseFondo(){
       if(row.key==='salidas'&&row.value&&typeof row.value==='object') salidas=row.value;
       if(row.key==='metas'&&row.value&&typeof row.value==='object') metas=row.value;
       if(row.key==='saldoInicios'&&row.value&&typeof row.value==='object') saldoInicios=row.value;
-      if(row.key==='semanasExtraMes'&&typeof row.value==='number') semanasExtraMes=row.value;
       if(row.key==='inv_overrides'&&row.value&&typeof row.value==='object') invOverrides=row.value;
       if(row.key==='clientes_bloqueados'&&row.value&&typeof row.value==='object') clientesBloqueados=row.value;
       if(row.key==='passwords'&&Array.isArray(row.value)) row.value.forEach(function(p,i){if(USUARIOS[i]&&p) USUARIOS[i].pass=p;});
@@ -7755,7 +7751,6 @@ function fechaOffset(dias){
           if(row.key==='salidas'&&row.value&&typeof row.value==='object') salidas=row.value;
           if(row.key==='metas'&&row.value&&typeof row.value==='object') metas=row.value;
       if(row.key==='saldoInicios'&&row.value&&typeof row.value==='object') saldoInicios=row.value;
-      if(row.key==='semanasExtraMes'&&typeof row.value==='number') semanasExtraMes=row.value;
           if(row.key==='inv_overrides'&&row.value&&typeof row.value==='object') invOverrides=row.value;
           if(row.key==='clientes_bloqueados'&&row.value&&typeof row.value==='object') clientesBloqueados=row.value;
           if(row.key==='passwords'&&Array.isArray(row.value)) row.value.forEach(function(p,i){if(USUARIOS[i]&&p) USUARIOS[i].pass=p;});
