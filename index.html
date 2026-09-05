@@ -3588,7 +3588,17 @@ function _autoCerrarSemanasFaltantes(){
   var hoy=diaOperativo();
   var huboAlgo=false;
   var ahora=Date.now();
-  var _rutasAuto=['todas','Heredia','Alajuela','San Ramón','Ciudad Quesada'];
+  // Limpieza: borrar cierres automáticos que se hayan creado por error en rutas que sí tienen actividad
+  var _cierresMal=cierres.filter(function(c){
+    return c.tipo==='semana'&&c.nota==='Cierre automático (no se cerró a tiempo)'&&c.ruta&&_clientesActivosActual(c.ruta)>0;
+  });
+  if(_cierresMal.length){
+    cierres=cierres.filter(function(c){ return _cierresMal.indexOf(c)===-1; });
+    huboAlgo=true;
+  }
+  var _rutasAuto=['Heredia','Alajuela','San Ramón','Ciudad Quesada'].filter(function(r){
+    return _clientesActivosActual(r)===0; // solo rutas sin clientes activos (de verdad sin usar)
+  });
   _rutasAuto.forEach(function(ruta){
     var guard=0;
     while(guard++<52){
