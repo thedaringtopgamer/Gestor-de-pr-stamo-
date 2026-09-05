@@ -3785,11 +3785,21 @@ function abrirHistorialTipo(tipo){
     lista.innerHTML=filtrados.map(function(c){
       var uid='cierre-det-'+c.id;
       var label=esSem?'Semana':'Mes';
-      // Para cierres mensuales: contar semanas dentro del rango
+      // Para cierres mensuales: contar semanas guardadas entre el cierre de mes anterior y este
+      // (por el momento real de guardado, no por fecha, porque cerrar todo el mismo día repite fechas)
       var semTag='';
       if(!esSem){
+        var _idEsteMes=parseInt(c.id)||0;
+        var _mesesRutaOrd=cierres.filter(function(s){ return s.tipo==='mes'&&(s.ruta||'todas')===rFiltro; })
+          .sort(function(a,b){ return (parseInt(a.id)||0)-(parseInt(b.id)||0); });
+        var _idMesAnterior=0;
+        for(var mi=0;mi<_mesesRutaOrd.length;mi++){
+          var _idIter=parseInt(_mesesRutaOrd[mi].id)||0;
+          if(_idIter<_idEsteMes) _idMesAnterior=_idIter; else break;
+        }
         var semsEnMes=cierres.filter(function(s){
-          return s.tipo==='semana'&&(s.ruta||'todas')===rFiltro&&s.hasta>=c.desde&&s.hasta<=c.hasta;
+          var _idS=parseInt(s.id)||0;
+          return s.tipo==='semana'&&(s.ruta||'todas')===rFiltro&&_idS>_idMesAnterior&&_idS<=_idEsteMes;
         }).length;
         var total=4;
         var puntos='';
