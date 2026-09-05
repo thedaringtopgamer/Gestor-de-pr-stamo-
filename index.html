@@ -1853,7 +1853,7 @@ function _actualizarPendiente(deviceId,ruta,dispositivo){
   .then(function(rows){
     var pending=(rows&&rows[0]&&rows[0].value)||{};
     pending[deviceId]={deviceId:deviceId,ruta:ruta,dispositivo:dispositivo,ts:Date.now()};
-    return fetch(SUPA_URL+'/rest/v1/app_data',{
+    return fetch(SUPA_URL+'/rest/v1/app_data?on_conflict=key',{
       method:'POST',
       headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
       body:JSON.stringify([{key:'session_pending',value:pending}])
@@ -1914,7 +1914,7 @@ function _registrarLoginNube(deviceId,ruta){
   .then(function(rows){
     var ls=(rows&&rows[0]&&rows[0].value)||{};
     ls[deviceId]={deviceId:deviceId,ruta:ruta,dispositivo:dispositivo,loginTs:Date.now(),token:token};
-    return fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'logged_sessions',value:ls}])});
+    return fetch(SUPA_URL+'/rest/v1/app_data?on_conflict=key',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'logged_sessions',value:ls}])});
   }).catch(function(){});
 }
 
@@ -1924,7 +1924,7 @@ function _eliminarLoginNube(deviceId){
   .then(function(rows){
     var ls=(rows&&rows[0]&&rows[0].value)||{};
     delete ls[deviceId];
-    return fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'logged_sessions',value:ls}])});
+    return fetch(SUPA_URL+'/rest/v1/app_data?on_conflict=key',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'logged_sessions',value:ls}])});
   }).catch(function(){});
 }
 
@@ -2343,7 +2343,7 @@ function _enviarHeartbeat(){
     // Limpiar sesiones viejas (más de 2 minutos)
     var cutoff=Date.now()-30000;
     Object.keys(sesiones).forEach(function(k){ if(sesiones[k].lastSeen<cutoff) delete sesiones[k]; });
-    return fetch(SUPA_URL+'/rest/v1/app_data',{
+    return fetch(SUPA_URL+'/rest/v1/app_data?on_conflict=key',{
       method:'POST',
       headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
       body:JSON.stringify([{key:'device_sessions',value:sesiones}])
@@ -2356,7 +2356,7 @@ function _enviarHeartbeat(){
     var ls=(rows&&rows[0]&&rows[0].value)||{};
     if(ls[deviceId]){
       ls[deviceId].dispositivo=dispositivo;
-      return fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'logged_sessions',value:ls}])});
+      return fetch(SUPA_URL+'/rest/v1/app_data?on_conflict=key',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'logged_sessions',value:ls}])});
     }
   }).catch(function(){});
 }
@@ -2407,7 +2407,7 @@ function activarDispositivo(deviceId,ruta,btn){
   .then(function(rows){
     var grants=(rows&&rows[0]&&rows[0].value)||{};
     grants[deviceId]={activo:true,ruta:ruta,grantedAt:Date.now()};
-    return fetch(SUPA_URL+'/rest/v1/app_data',{
+    return fetch(SUPA_URL+'/rest/v1/app_data?on_conflict=key',{
       method:'POST',
       headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
       body:JSON.stringify([{key:'session_grants',value:grants}])
@@ -2459,7 +2459,7 @@ function verDispositivosConectados(){
 
 function _cerrarSesionesModal(el){
   var m=el; while(m&&m.parentElement!==document.body) m=m.parentElement; if(m) m.remove();
-  fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'admin_ui_state',value:{sesiones_abiertas:false}}])}).catch(function(){});
+  fetch(SUPA_URL+'/rest/v1/app_data?on_conflict=key',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'admin_ui_state',value:{sesiones_abiertas:false}}])}).catch(function(){});
 }
 
 var _ubicRutasInterval=null;
@@ -2515,7 +2515,7 @@ function _renderUbicacionesRutas(){
 }
 
 function abrirRevocarSesiones(){
-  fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'admin_ui_state',value:{sesiones_abiertas:true}}])}).catch(function(){});
+  fetch(SUPA_URL+'/rest/v1/app_data?on_conflict=key',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'admin_ui_state',value:{sesiones_abiertas:true}}])}).catch(function(){});
   Promise.all([
     fetch(SUPA_URL+'/rest/v1/app_data?key=eq.session_revoked&select=value',{headers:SUPA_HDR}).then(function(r){return r.ok?r.json():[];}),
     fetch(SUPA_URL+'/rest/v1/app_data?key=eq.device_sessions&select=value',{headers:SUPA_HDR}).then(function(r){return r.ok?r.json():[];}),
@@ -2606,7 +2606,7 @@ function revocarRuta(ruta, btn){
   .then(function(rows){
     var rev=(rows&&rows[0]&&rows[0].value)||{};
     rev[ruta]=Date.now();
-    return fetch(SUPA_URL+'/rest/v1/app_data',{
+    return fetch(SUPA_URL+'/rest/v1/app_data?on_conflict=key',{
       method:'POST',
       headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
       body:JSON.stringify([{key:'session_revoked',value:rev}])
@@ -2626,7 +2626,7 @@ function revocarDispositivo(deviceId, token, btn){
   .then(function(rows){
     var kicks=(rows&&rows[0]&&rows[0].value)||{};
     kicks[deviceId]=Date.now();
-    return fetch(SUPA_URL+'/rest/v1/app_data',{
+    return fetch(SUPA_URL+'/rest/v1/app_data?on_conflict=key',{
       method:'POST',
       headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
       body:JSON.stringify([{key:'kick_signals',value:kicks}])
@@ -2643,7 +2643,7 @@ function revocarDispositivo(deviceId, token, btn){
       .then(function(rows2){
         var log=(rows2&&rows2[0]&&rows2[0].value)||{};
         delete log[deviceId];
-        return fetch(SUPA_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'logged_sessions',value:log}])});
+        return fetch(SUPA_URL+'/rest/v1/app_data?on_conflict=key',{method:'POST',headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify([{key:'logged_sessions',value:log}])});
       }).catch(function(){});
       toast('✓ Sesión cerrada');
     } else { btn.disabled=false; btn.textContent='✕'; toast('⚠ Error'); }
@@ -2654,7 +2654,7 @@ function revocarTodas(){
   if(!confirm('¿Cerrar TODAS las sesiones activas ahora mismo?')) return;
   var ts=Date.now();
   var rev={todas:ts,Heredia:ts,Alajuela:ts,'San Ramón':ts};
-  fetch(SUPA_URL+'/rest/v1/app_data',{
+  fetch(SUPA_URL+'/rest/v1/app_data?on_conflict=key',{
     method:'POST',
     headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
     body:JSON.stringify([{key:'session_revoked',value:rev}])
@@ -2751,7 +2751,7 @@ function guardarDatos(){
     {key:'ts',value:ts}
   ].filter(Boolean);
 
-  fetch(SUPA_URL+'/rest/v1/app_data',{
+  fetch(SUPA_URL+'/rest/v1/app_data?on_conflict=key',{
     method:'POST',
     headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
     body:JSON.stringify(datosPrincipales)
@@ -2769,7 +2769,7 @@ function _syncSupabase(){ guardarDatos(); }
 // Guarda SOLO la clave bases — nunca toca prestamos ni fotos
 function _guardarSoloBases(){
   try{ localStorage.setItem('fjd_bases',JSON.stringify(bases)); }catch(e){}
-  fetch(SUPA_URL+'/rest/v1/app_data',{
+  fetch(SUPA_URL+'/rest/v1/app_data?on_conflict=key',{
     method:'POST',
     headers:Object.assign({},SUPA_HDR,{'Prefer':'resolution=merge-duplicates'}),
     body:JSON.stringify([{key:'bases',value:bases}])
