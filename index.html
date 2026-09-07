@@ -7238,35 +7238,40 @@ function renderPanelRecolector(userPickedDate){
     // Usar carry-forward cacheado (puede ser 0 legítimamente)
     baseGuardada=parseInt(bases['_cf_'+_baseKey])||0;
   } else {
-    // Calcular carry-forward: base hoy = cajaTotal de ayer
-    var _ayer=new Date(fecha+'T12:00:00'); _ayer.setDate(_ayer.getDate()-1);
-    var _ayerStr=_ayer.toISOString().split('T')[0];
-    var _ayerKey=rutaCajaKey+'_'+_ayerStr;
-    // Obtener base de ayer — acepta _m_ (manual), _cf_ (carry-forward) o valor legacy sin marca
-    var _baseAyer=0;
-    if(bases['_m_'+_ayerKey]) _baseAyer=parseInt(bases[_ayerKey])||0;
-    else if(bases['_cf_'+_ayerKey]!==undefined) _baseAyer=parseInt(bases['_cf_'+_ayerKey])||0;
-    else if(bases[_ayerKey]!==undefined) _baseAyer=parseInt(bases[_ayerKey])||0;
-    else {
-      for(var _d=2;_d<=60;_d++){
-        var _pd=new Date(fecha+'T12:00:00'); _pd.setDate(_pd.getDate()-_d);
-        var _pdStr=_pd.toISOString().split('T')[0];
-        var _pdk=rutaCajaKey+'_'+_pdStr;
-        if(bases['_m_'+_pdk]){ _baseAyer=parseInt(bases[_pdk])||0; break; }
-        if(bases['_cf_'+_pdk]!==undefined){ _baseAyer=parseInt(bases['_cf_'+_pdk])||0; break; }
-        if(bases[_pdk]!==undefined){ _baseAyer=parseInt(bases[_pdk])||0; break; }
-      }
-    }
-    // CajaTotal de ayer = base de ayer + movimientos de ayer
+    // Reconstruir la cadena de bases día por día desde el último día con base conocida hasta
+    // ayer, sin saltarse ningún día intermedio (aunque nadie haya abierto la app esos días).
     var _idsR=prestamosRuta.map(function(p){return p.id;});
-    var _recAyer=pagos.filter(function(x){return (x.fechaRegistro||x.fechaPago)===_ayerStr&&_idsR.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
-    var _presAyer=prestamosRuta.filter(function(p){return p.fechaInicio===_ayerStr&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
-    var _renovAyer=renovaciones.filter(function(x){return x.fecha===_ayerStr&&(rutaActual==='todas'||prestamos.find(function(p){return p.id===x.id_prestamo&&p.ruta===rutaActual;}));}).reduce(function(s,x){return s+(x.montoEntregado||0);},0);
-    var _gastosAyer=gastos.filter(function(x){return x.fecha===_ayerStr&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
-    var _inyecAyer=inversiones.filter(function(x){return x.fecha===_ayerStr&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
-    var _cajaAyer=_recAyer+_baseAyer+_inyecAyer-_presAyer-_renovAyer-_gastosAyer;
-    baseGuardada=Math.max(0,_cajaAyer);
-    // Cachear carry-forward siempre (incluso si es 0, para que no recalcule mañana)
+    var _movimientosDelDia=function(diaStr){
+      var _rec=pagos.filter(function(x){return (x.fechaRegistro||x.fechaPago)===diaStr&&_idsR.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
+      var _pres=prestamosRuta.filter(function(p){return p.fechaInicio===diaStr&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
+      var _renov=renovaciones.filter(function(x){return x.fecha===diaStr&&(rutaActual==='todas'||prestamos.find(function(p){return p.id===x.id_prestamo&&p.ruta===rutaActual;}));}).reduce(function(s,x){return s+(x.montoEntregado||0);},0);
+      var _gastos=gastos.filter(function(x){return x.fecha===diaStr&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
+      var _inyec=inversiones.filter(function(x){return x.fecha===diaStr&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
+      return _rec+_inyec-_pres-_renov-_gastos;
+    };
+    // Buscar hacia atrás (desde ayer) el último día con base conocida, acumulando los días sin base
+    var _cursor=new Date(fecha+'T12:00:00'); _cursor.setDate(_cursor.getDate()-1);
+    var _diasFaltantes=[];
+    var _baseConocida=0;
+    for(var _d=0;_d<=60;_d++){
+      var _curStr=_cursor.toISOString().split('T')[0];
+      var _curKey=rutaCajaKey+'_'+_curStr;
+      if(bases['_m_'+_curKey]){ _baseConocida=parseInt(bases[_curKey])||0; break; }
+      if(bases['_cf_'+_curKey]!==undefined){ _baseConocida=parseInt(bases['_cf_'+_curKey])||0; break; }
+      if(bases[_curKey]!==undefined){ _baseConocida=parseInt(bases[_curKey])||0; break; }
+      _diasFaltantes.unshift(_curStr);
+      _cursor.setDate(_cursor.getDate()-1);
+    }
+    // Reconstruir hacia adelante día por día (nunca saltar), cacheando cada paso
+    var _baseCorriendo=_baseConocida;
+    _diasFaltantes.forEach(function(_diaStr){
+      var _totalDia=Math.max(0,_baseCorriendo+_movimientosDelDia(_diaStr));
+      var _dSig=new Date(_diaStr+'T12:00:00'); _dSig.setDate(_dSig.getDate()+1);
+      var _diaSigStr=_dSig.toISOString().split('T')[0];
+      bases['_cf_'+rutaCajaKey+'_'+_diaSigStr]=_totalDia;
+      _baseCorriendo=_totalDia;
+    });
+    baseGuardada=_baseCorriendo;
     bases['_cf_'+_baseKey]=baseGuardada;
     _guardarSoloBases();
   }
