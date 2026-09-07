@@ -4581,7 +4581,7 @@ function guardarPrestamo(){
     +'📆 *Próxima fecha de pago:* '+proxStr+' ('+proxDia+')';
   var waUrl='https://wa.me/'+formatTel(p.telefono||'')+'?text='+encodeURIComponent(msg);
   clienteTemporal={};
-  sessionStorage.removeItem('fjd_cliente_temp');
+  localStorage.removeItem('fjd_cliente_temp');
   document.getElementById('nc-nombre').value='';
   document.getElementById('nc-cedula').value='';
   document.getElementById('nc-telefono').value='';
