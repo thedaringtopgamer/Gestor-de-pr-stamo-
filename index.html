@@ -7282,7 +7282,8 @@ function renderPanelRecolector(userPickedDate){
 
   // Guardar proactivamente la caja de HOY como base de MAÑANA
   // Así mañana no hay que recalcular nada — el valor ya está guardado
-  if(cajaTotal>0){
+  // (>=0 y no solo >0, porque un total en cero es un valor legítimo que también hay que guardar)
+  if(cajaTotal>=0){
     var _manana=new Date(fecha+'T12:00:00'); _manana.setDate(_manana.getDate()+1);
     var _mananaStr=_manana.toISOString().split('T')[0];
     var _mananaKey=rutaCajaKey+'_'+_mananaStr;
