@@ -7222,7 +7222,7 @@ function renderPanelRecolector(userPickedDate){
     // Reconstruir hacia adelante día por día (nunca saltar), cacheando cada paso
     var _baseCorriendo=_baseConocida;
     _diasFaltantes.forEach(function(_diaStr){
-      var _totalDia=Math.max(0,_baseCorriendo+_movimientosDelDia(_diaStr));
+      var _totalDia=_baseCorriendo+_movimientosDelDia(_diaStr);
       var _dSig=new Date(_diaStr+'T12:00:00'); _dSig.setDate(_dSig.getDate()+1);
       var _diaSigStr=_dSig.toISOString().split('T')[0];
       bases['_cf_'+rutaCajaKey+'_'+_diaSigStr]=_totalDia;
@@ -7282,15 +7282,13 @@ function renderPanelRecolector(userPickedDate){
 
   // Guardar proactivamente la caja de HOY como base de MAÑANA
   // Así mañana no hay que recalcular nada — el valor ya está guardado
-  // (>=0 y no solo >0, porque un total en cero es un valor legítimo que también hay que guardar)
-  if(cajaTotal>=0){
-    var _manana=new Date(fecha+'T12:00:00'); _manana.setDate(_manana.getDate()+1);
-    var _mananaStr=_manana.toISOString().split('T')[0];
-    var _mananaKey=rutaCajaKey+'_'+_mananaStr;
-    if(!bases['_m_'+_mananaKey]&&bases['_cf_'+_mananaKey]!==cajaTotal){
-      bases['_cf_'+_mananaKey]=cajaTotal;
-      _guardarSoloBases();
-    }
+  // (siempre, incluso en 0 o negativo — un día en números rojos es real y debe arrastrarse tal cual)
+  var _manana=new Date(fecha+'T12:00:00'); _manana.setDate(_manana.getDate()+1);
+  var _mananaStr=_manana.toISOString().split('T')[0];
+  var _mananaKey=rutaCajaKey+'_'+_mananaStr;
+  if(!bases['_m_'+_mananaKey]&&bases['_cf_'+_mananaKey]!==cajaTotal){
+    bases['_cf_'+_mananaKey]=cajaTotal;
+    _guardarSoloBases();
   }
 }
 
