@@ -3727,6 +3727,10 @@ function _guardarCierre(tipo,desde,hasta){
     }
     cierres.push({id:(ahora+i).toString(),tipo:tipo,desde:desde,hasta:hasta,nota:nota,data:data,fechaRegistro:hoyLocal(),ruta:ruta});
   });
+  // Los ajustes manuales del lápiz (Prestado/Clientes nuevos) son solo para el período en curso;
+  // al cerrarlo hay que limpiarlos para que no se le sigan restando al período nuevo que empieza.
+  delete invOverrides[_invOverrideKey(tipo,'prestado')];
+  delete invOverrides[_invOverrideKey(tipo,'clientes')];
   document.getElementById('modal-confirmar-cierre').style.display='none';
   renderInversion();
   try{ renderCajas(); }catch(e){}
