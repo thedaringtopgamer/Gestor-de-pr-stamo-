@@ -7003,6 +7003,42 @@ function togglePanelSec(sec){
   }
 }
 
+// Calcula la base de caja de un día SIEMPRE en vivo (nunca confía en un valor cacheado de antes),
+// para que cualquier registro con fecha pasada (gasto, pago, préstamo) se refleje de inmediato,
+// sin necesidad de forzar un recálculo cambiando de fecha manualmente.
+function _calcBaseCajaViva(rutaCajaKey,fecha,prestamosRutaParam){
+  var _baseKey=rutaCajaKey+'_'+fecha;
+  if(bases['_m_'+_baseKey]) return parseInt(bases[_baseKey])||0; // base manual del propio día — respetar
+  var rutaActualParam=rutaCajaKey==='todas'?'todas':rutaCajaKey;
+  var prestamosRuta=prestamosRutaParam||prestamos.filter(function(p){ return rutaCajaKey==='todas'||p.ruta===rutaCajaKey; });
+  var _idsR=prestamosRuta.map(function(p){return p.id;});
+  var _movimientosDelDia=function(diaStr){
+    var _rec=pagos.filter(function(x){return (x.fechaRegistro||x.fechaPago)===diaStr&&_idsR.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
+    var _pres=prestamosRuta.filter(function(p){return p.fechaInicio===diaStr&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
+    var _renov=renovaciones.filter(function(x){return x.fecha===diaStr&&(rutaActualParam==='todas'||prestamos.find(function(p){return p.id===x.id_prestamo&&p.ruta===rutaActualParam;}));}).reduce(function(s,x){return s+(x.montoEntregado||0);},0);
+    var _gastos=gastos.filter(function(x){return x.fecha===diaStr&&(rutaActualParam==='todas'||x.ruta===rutaActualParam);}).reduce(function(s,x){return s+x.monto;},0);
+    var _inyec=inversiones.filter(function(x){return x.fecha===diaStr&&(rutaActualParam==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActualParam);}).reduce(function(s,x){return s+x.monto;},0);
+    return _rec+_inyec-_pres-_renov-_gastos;
+  };
+  // Buscar hacia atrás el último día con una base MANUAL guardada (única fuente de verdad fija)
+  var _cursor=new Date(fecha+'T12:00:00'); _cursor.setDate(_cursor.getDate()-1);
+  var _diasFaltantes=[];
+  var _baseConocida=0;
+  for(var _d=0;_d<=60;_d++){
+    var _curStr=_cursor.toISOString().split('T')[0];
+    var _curKey=rutaCajaKey+'_'+_curStr;
+    if(bases['_m_'+_curKey]){ _baseConocida=parseInt(bases[_curKey])||0; break; }
+    _diasFaltantes.unshift(_curStr);
+    _cursor.setDate(_cursor.getDate()-1);
+  }
+  // Reconstruir hacia adelante día por día, con los datos reales actuales (nada cacheado)
+  var _baseCorriendo=_baseConocida;
+  _diasFaltantes.forEach(function(_diaStr){
+    _baseCorriendo=_baseCorriendo+_movimientosDelDia(_diaStr);
+  });
+  return _baseCorriendo;
+}
+
 function renderPanelRecolector(userPickedDate){
   var fechaEl=document.getElementById('panel-fecha');
   var _diaOp=diaOperativo();
@@ -7186,52 +7222,7 @@ function renderPanelRecolector(userPickedDate){
   // Resumen de caja (por ruta)
   var rutaCajaKey=rutaActual||'todas';
   var _baseKey=rutaCajaKey+'_'+fecha;
-  var baseGuardada;
-
-  if(bases['_m_'+_baseKey]){
-    // Admin cambió la base manualmente este día — respetar
-    baseGuardada=parseInt(bases[_baseKey])||0;
-  } else if(bases['_cf_'+_baseKey]!==undefined&&bases['_cf_'+_baseKey]!==null&&bases['_cf_'+_baseKey]!==''){
-    // Usar carry-forward cacheado (puede ser 0 legítimamente)
-    baseGuardada=parseInt(bases['_cf_'+_baseKey])||0;
-  } else {
-    // Reconstruir la cadena de bases día por día desde el último día con base conocida hasta
-    // ayer, sin saltarse ningún día intermedio (aunque nadie haya abierto la app esos días).
-    var _idsR=prestamosRuta.map(function(p){return p.id;});
-    var _movimientosDelDia=function(diaStr){
-      var _rec=pagos.filter(function(x){return (x.fechaRegistro||x.fechaPago)===diaStr&&_idsR.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
-      var _pres=prestamosRuta.filter(function(p){return p.fechaInicio===diaStr&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
-      var _renov=renovaciones.filter(function(x){return x.fecha===diaStr&&(rutaActual==='todas'||prestamos.find(function(p){return p.id===x.id_prestamo&&p.ruta===rutaActual;}));}).reduce(function(s,x){return s+(x.montoEntregado||0);},0);
-      var _gastos=gastos.filter(function(x){return x.fecha===diaStr&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
-      var _inyec=inversiones.filter(function(x){return x.fecha===diaStr&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
-      return _rec+_inyec-_pres-_renov-_gastos;
-    };
-    // Buscar hacia atrás (desde ayer) el último día con base conocida, acumulando los días sin base
-    var _cursor=new Date(fecha+'T12:00:00'); _cursor.setDate(_cursor.getDate()-1);
-    var _diasFaltantes=[];
-    var _baseConocida=0;
-    for(var _d=0;_d<=60;_d++){
-      var _curStr=_cursor.toISOString().split('T')[0];
-      var _curKey=rutaCajaKey+'_'+_curStr;
-      if(bases['_m_'+_curKey]){ _baseConocida=parseInt(bases[_curKey])||0; break; }
-      if(bases['_cf_'+_curKey]!==undefined){ _baseConocida=parseInt(bases['_cf_'+_curKey])||0; break; }
-      if(bases[_curKey]!==undefined){ _baseConocida=parseInt(bases[_curKey])||0; break; }
-      _diasFaltantes.unshift(_curStr);
-      _cursor.setDate(_cursor.getDate()-1);
-    }
-    // Reconstruir hacia adelante día por día (nunca saltar), cacheando cada paso
-    var _baseCorriendo=_baseConocida;
-    _diasFaltantes.forEach(function(_diaStr){
-      var _totalDia=_baseCorriendo+_movimientosDelDia(_diaStr);
-      var _dSig=new Date(_diaStr+'T12:00:00'); _dSig.setDate(_dSig.getDate()+1);
-      var _diaSigStr=_dSig.toISOString().split('T')[0];
-      bases['_cf_'+rutaCajaKey+'_'+_diaSigStr]=_totalDia;
-      _baseCorriendo=_totalDia;
-    });
-    baseGuardada=_baseCorriendo;
-    bases['_cf_'+_baseKey]=baseGuardada;
-    _guardarSoloBases();
-  }
+  var baseGuardada=_calcBaseCajaViva(rutaCajaKey,fecha,prestamosRuta);
   var recogidaTotal=pagosHoy.reduce(function(s,x){return s+x.montoAbonado;},0);
 
   // Separar nuevos reales de renovaciones para caja
@@ -7279,17 +7270,6 @@ function renderPanelRecolector(userPickedDate){
   _setCajaEl('caja-gastos','₡'+fmt(totalGastos));
   _setCajaEl('caja-total','₡'+fmt(cajaTotal));
   document.getElementById('panel-stat-caja').textContent='Total: ₡'+fmt(cajaTotal);
-
-  // Guardar proactivamente la caja de HOY como base de MAÑANA
-  // Así mañana no hay que recalcular nada — el valor ya está guardado
-  // (siempre, incluso en 0 o negativo — un día en números rojos es real y debe arrastrarse tal cual)
-  var _manana=new Date(fecha+'T12:00:00'); _manana.setDate(_manana.getDate()+1);
-  var _mananaStr=_manana.toISOString().split('T')[0];
-  var _mananaKey=rutaCajaKey+'_'+_mananaStr;
-  if(!bases['_m_'+_mananaKey]&&bases['_cf_'+_mananaKey]!==cajaTotal){
-    bases['_cf_'+_mananaKey]=cajaTotal;
-    _guardarSoloBases();
-  }
 }
 
 async function _autoBackupDiario(){
@@ -7616,11 +7596,7 @@ function mostrarResumenCaja(){
   var recogida=pagos.filter(function(x){return x.fechaPago===fecha&&idsR.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
   var prestamosHoy=pRuta.filter(function(p){return p.fechaInicio===fecha&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
   var totalGastos=gastos.filter(function(x){return x.fecha===fecha&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
-  var _bkModal=(rutaActual||'todas')+'_'+fecha;
-  var baseGuardada;
-  if(bases['_m_'+_bkModal]) baseGuardada=parseInt(bases[_bkModal])||0;
-  else if(bases['_cf_'+_bkModal]!==undefined) baseGuardada=parseInt(bases['_cf_'+_bkModal])||0;
-  else baseGuardada=parseInt(bases[_bkModal])||0;
+  var baseGuardada=_calcBaseCajaViva(rutaActual||'todas',fecha,pRuta);
   document.getElementById('caja-base-modal').value=baseGuardada>0?fmt(baseGuardada):'';
   var base=baseGuardada;
   _setCajaEl('caja-recogida','₡'+fmt(recogida));
