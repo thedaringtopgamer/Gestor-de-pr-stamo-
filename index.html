@@ -4517,6 +4517,7 @@ function guardarPrestamo(){
       proximaFechaPago:proxFechaISO
     });
   }
+  _invalidarCajaCacheDesde(fecha,clienteTemporal.ruta||'todas');
   guardarDatos();
   // Construir mensaje WhatsApp con formato de tarjeta
   var p=existente||(prestamos[prestamos.length-1]);
@@ -7003,6 +7004,23 @@ function togglePanelSec(sec){
   }
 }
 
+// Cuando se registra algo (gasto, pago, préstamo) con una fecha que ya pasó, la base cacheada
+// de los días posteriores queda desactualizada. Esto borra esa caché para que se recalcule sola
+// la próxima vez que se vea (usando la misma reconstrucción día por día que ya existe),
+// sin tocar en nada la formula de calculo que ya esta funcionando bien.
+function _invalidarCajaCacheDesde(fechaDesde,ruta){
+  var rutasAfectadas=ruta?[ruta,'todas']:['todas','Heredia','Alajuela','San Ramón','Ciudad Quesada'];
+  var huboAlgo=false;
+  Object.keys(bases).forEach(function(k){
+    if(k.indexOf('_cf_')!==0) return;
+    var resto=k.substring(4);
+    var fechaK=resto.slice(-10);
+    var rutaK=resto.slice(0,resto.length-11);
+    if(fechaK>fechaDesde&&rutasAfectadas.indexOf(rutaK)!==-1){ delete bases[k]; huboAlgo=true; }
+  });
+  if(huboAlgo) _guardarSoloBases();
+}
+
 function renderPanelRecolector(userPickedDate){
   var fechaEl=document.getElementById('panel-fecha');
   var _diaOp=diaOperativo();
@@ -7583,6 +7601,7 @@ function eliminarGasto(id){
     overlay.style.display='none';
     document.getElementById('modal-btn-si').style.background='#16a34a';
     gastos=gastos.filter(function(x){return x.id!==id;});
+    _invalidarCajaCacheDesde(g.fecha,g.ruta||'todas');
     guardarDatos();
     toast('✓ Gasto eliminado');
     renderPanelRecolector();
@@ -7601,6 +7620,7 @@ function guardarGasto(){
   var obs=document.getElementById('gasto-obs').value.trim();
   var fechaPanel=document.getElementById('panel-fecha').value||diaOperativo();
   gastos.push({id:Date.now().toString(),fecha:fechaPanel,monto:monto,tipo:tipo,obs:obs,ruta:rutaActual||'todas'});
+  _invalidarCajaCacheDesde(fechaPanel,rutaActual||'todas');
   guardarDatos();
   cerrarGastoModal();
   toast('✓ Gasto registrado: ₡'+fmt(monto));
