@@ -4479,23 +4479,6 @@ function guardarPrestamo(){
   })();
   var proxFechaISO=proxD.getFullYear()+'-'+String(proxD.getMonth()+1).padStart(2,'0')+'-'+String(proxD.getDate()).padStart(2,'0');
   var existente=clienteTemporal._id?prestamos.find(function(x){return x.id===clienteTemporal._id;}):null;
-  var _reactivarCancelado=existente&&clienteTemporal._reactivarCancelado;
-  var _prevStateReactivar=null;
-  var _dReactivar=null;
-  if(_reactivarCancelado){
-    // Congelar el historial anterior (abonos/renovaciones del préstamo cancelado) para que el
-    // préstamo nuevo empiece a contar desde cero, sin perder ni un registro del historial.
-    _dReactivar=calcDerived(existente);
-    _prevStateReactivar={
-      montoPrestado:existente.montoPrestado,tasaInteres:existente.tasaInteres,
-      Total_A_Cobrar:existente.Total_A_Cobrar,Total_Intereses:existente.Total_Intereses,
-      Cuota_Quincenal:existente.Cuota_Quincenal,cantidadDeQuincenas:existente.cantidadDeQuincenas,
-      diasPorCuota:existente.diasPorCuota,tipo:existente.tipo,fechaInicio:existente.fechaInicio,
-      _fechaCreacion:existente._fechaCreacion,proximaFechaPago:existente.proximaFechaPago,
-      baseRenovacion:existente.baseRenovacion||0,estado:existente.estado
-    };
-    existente.baseRenovacion=(existente.baseRenovacion||0)+_dReactivar.totalPagado;
-  }
   if(existente){
     existente.cliente=nombre;
     existente.cedula=clienteTemporal.cedula||existente.cedula||'';
@@ -4565,18 +4548,6 @@ function guardarPrestamo(){
     +'📆 *Próxima fecha de pago:* '+proxStr+' ('+proxDia+')';
   var waUrl='https://wa.me/'+formatTel(p.telefono||'')+'?text='+encodeURIComponent(msg);
   p.mensajeWANuevo=msg;
-  if(_reactivarCancelado){
-    // Dejar registrado en el historial del cliente que se le volvió a prestar tras estar cancelado,
-    // sin perder los abonos/renovaciones anteriores (quedan congelados, no se borran).
-    renovaciones.push({
-      id:Date.now().toString(),id_prestamo:p.id,cliente:p.cliente,fecha:fecha,
-      montoNuevo:monto,cuotaNueva:cuotaVal,tipo:cd.tipo,cuotas:cd.cuotas,tasa:Math.round(tasaDec*100),
-      adminMonto:0,saldoAnterior:0,montoEntregado:monto,
-      origen:'nuevo_tras_cancelado',mensajeWA:msg,
-      _prevState:_prevStateReactivar
-    });
-    guardarDatos();
-  }
   clienteTemporal={};
   localStorage.removeItem('fjd_cliente_temp');
   document.getElementById('nc-nombre').value='';
@@ -5853,13 +5824,10 @@ function irNuevoPrestamo(){
     var diasDiff=Math.floor((Date.now()-parseLocalDate(fechaRef).getTime())/(1000*60*60*24));
     if(diasDiff>60) necesitaVerif=true;
   }
-  // Llenar clienteTemporal CON _id de la misma tarjeta: si el cliente estaba cancelado,
-  // "Nuevo Préstamo" reactiva esa misma tarjeta (no crea una separada), conservando todo
-  // su historial de abonos/renovaciones y sus documentos.
+  // Llenar clienteTemporal — sin _id, para que se cree una tarjeta separada (más segura:
+  // si se abandona el proceso a medias, la tarjeta original del cliente no se ve afectada)
   clienteTemporal={
-    _id:p.id,
     _clienteOriginalId:p.id,
-    _reactivarCancelado:(p.estado==='Cancelado'),
     nombre:p.cliente||'',
     cedula:p.cedula||'',
     telefono:p.telefono||'',
