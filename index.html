@@ -6368,7 +6368,7 @@ function guardarDocumentos(){
     var _fotosFallidas=[];
     var promesas=clavesNuevas.map(function(k){
       return subirFotoStorage(pid,k,fotos[k]).then(function(url){
-        if(url) fotos[k]=url; else _fotosFallidas.push(LABELS_FOTOS_FIJAS[k]||k);
+        if(url) fotos[k]=url+'?t='+Date.now(); else _fotosFallidas.push(LABELS_FOTOS_FIJAS[k]||k);
       });
     });
     Promise.all(promesas).then(function(){
@@ -6494,7 +6494,7 @@ function verDocsCliente(){
     if(tieneBase64){
       Promise.all(Object.keys(p.fotos).map(function(k){
         if(!p.fotos[k]||!p.fotos[k].startsWith('data:')) return Promise.resolve();
-        return subirFotoStorage(p.id,k,p.fotos[k]).then(function(url){if(url) p.fotos[k]=url;});
+        return subirFotoStorage(p.id,k,p.fotos[k]).then(function(url){if(url) p.fotos[k]=url+'?t='+Date.now();});
       })).then(function(){guardarDatos();});
     }
   }
@@ -6771,7 +6771,10 @@ function guardarDocsCliente(){
     var _fotosFallidas2=[];
     Promise.all(clavesNuevas.map(function(k){
       return subirFotoStorage(p.id,k,fotasNuevas[k]).then(function(url){
-        p.fotos[k]=url||fotasNuevas[k];
+        // Se sube siempre al mismo nombre de archivo (para reemplazar la anterior), así que hay
+        // que agregar una marca de tiempo a la dirección para que el navegador no muestre la
+        // versión vieja que tenía guardada en caché con esa misma dirección.
+        p.fotos[k]=url?(url+'?t='+Date.now()):fotasNuevas[k];
         if(!url) _fotosFallidas2.push(LABELS_FOTOS_FIJAS[k]||k);
       });
     })).then(function(){
