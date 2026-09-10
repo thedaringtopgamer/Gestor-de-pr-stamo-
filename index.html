@@ -5840,6 +5840,12 @@ function irNuevoPrestamo(){
   if(!currentId) return;
   var p=prestamos.find(function(x){return x.id===currentId;});
   if(!p) return;
+  var _bloqueadoNP=!!(p.bloqueado||clientesBloqueados[p.id]);
+  if(_bloqueadoNP){
+    var _motivoNP=p.motivoBloqueo||(clientesBloqueados[p.id]&&clientesBloqueados[p.id].motivo)||'';
+    toast('🚫 Cliente bloqueado'+(_motivoNP?': '+_motivoNP:'')+' — un administrador debe desbloquearlo primero');
+    return;
+  }
   // Verificar si los datos tienen más de 60 días sin actualizar
   var fechaRef=p.fechaUltimaVerificacion||p.fechaInicio||'';
   var necesitaVerif=false;
