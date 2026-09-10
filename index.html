@@ -1056,15 +1056,15 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <div style="background:#dbeafe;border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;font-size:13px;color:#1e40af;font-weight:500">📷 Paso 2 de 3 — Documentos y fotos</div>
       <div class="card">
         <p style="font-size:13px;font-weight:600;margin-bottom:12px">📄 Cédula</p>
-        <div class="field-group"><label>Cédula — Frente</label><input type="file" accept="image/*" id="doc-cedula-frente" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
-        <div class="field-group"><label>Cédula — Detrás</label><input type="file" accept="image/*" id="doc-cedula-detras" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
+        <div class="field-group"><label>Cédula — Frente</label><img id="doc-preview-cedula-frente" style="display:none;max-width:100%;max-height:140px;border-radius:8px;margin-bottom:6px;object-fit:cover"><input type="file" accept="image/*" id="doc-cedula-frente" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
+        <div class="field-group"><label>Cédula — Detrás</label><img id="doc-preview-cedula-detras" style="display:none;max-width:100%;max-height:140px;border-radius:8px;margin-bottom:6px;object-fit:cover"><input type="file" accept="image/*" id="doc-cedula-detras" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
       </div>
       <div class="card">
         <p style="font-size:13px;font-weight:600;margin-bottom:12px">📸 Fotos</p>
-        <div class="field-group"><label>Foto del cliente</label><input type="file" accept="image/*" id="doc-foto-cliente" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
-        <div class="field-group"><label>Foto de la casa</label><input type="file" accept="image/*" id="doc-foto-casa" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
+        <div class="field-group"><label>Foto del cliente</label><img id="doc-preview-foto-cliente" style="display:none;max-width:100%;max-height:140px;border-radius:8px;margin-bottom:6px;object-fit:cover"><input type="file" accept="image/*" id="doc-foto-cliente" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
+        <div class="field-group"><label>Foto de la casa</label><img id="doc-preview-foto-casa" style="display:none;max-width:100%;max-height:140px;border-radius:8px;margin-bottom:6px;object-fit:cover"><input type="file" accept="image/*" id="doc-foto-casa" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
         <div class="field-group"><label style="font-size:12px;color:#6b7280">Nota de la casa (dirección, referencia…)</label><textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="doc-nota-foto-casa" rows="2" placeholder="Ej: Casa amarilla, 200m norte del parque…" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;box-sizing:border-box"></textarea></div>
-        <div class="field-group"><label>Foto del trabajo</label><input type="file" accept="image/*" id="doc-foto-trabajo" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
+        <div class="field-group"><label>Foto del trabajo</label><img id="doc-preview-foto-trabajo" style="display:none;max-width:100%;max-height:140px;border-radius:8px;margin-bottom:6px;object-fit:cover"><input type="file" accept="image/*" id="doc-foto-trabajo" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px"></div>
         <div class="field-group"><label style="font-size:12px;color:#6b7280">Nota del trabajo (nombre, dirección…)</label><textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="doc-nota-foto-trabajo" rows="2" placeholder="Ej: Taller mecánico El Sol, 100m sur…" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;box-sizing:border-box"></textarea></div>
       </div>
       <div class="card">
@@ -4200,6 +4200,16 @@ function goTo(id){
     previewCoord('casa'); previewCoord('trabajo');
     document.getElementById('doc-nota-foto-casa').value=(clienteTemporal.notas&&clienteTemporal.notas['foto-casa'])||'';
     document.getElementById('doc-nota-foto-trabajo').value=(clienteTemporal.notas&&clienteTemporal.notas['foto-trabajo'])||'';
+    // Mostrar las fotos que ya tiene el cliente SOLO al reactivar uno cancelado — un cliente
+    // genuinamente nuevo nunca tiene fotos previas, así que ahí se queda vacío como siempre.
+    ['cedula-frente','cedula-detras','foto-cliente','foto-casa','foto-trabajo'].forEach(function(k){
+      var img=document.getElementById('doc-preview-'+k);
+      var url=clienteTemporal._reactivarCancelado&&clienteTemporal.fotos?clienteTemporal.fotos[k]:null;
+      if(img){
+        if(url){ img.src=url; img.style.display='block'; }
+        else { img.style.display='none'; img.removeAttribute('src'); }
+      }
+    });
   }
   if(id==='screen-nuevo-prestamo'){
     var _h=hoyLocal(); var _hp=_h.split('-');
@@ -4479,6 +4489,23 @@ function guardarPrestamo(){
   })();
   var proxFechaISO=proxD.getFullYear()+'-'+String(proxD.getMonth()+1).padStart(2,'0')+'-'+String(proxD.getDate()).padStart(2,'0');
   var existente=clienteTemporal._id?prestamos.find(function(x){return x.id===clienteTemporal._id;}):null;
+  var _reactivarCancelado=existente&&clienteTemporal._reactivarCancelado;
+  var _prevStateReactivar=null;
+  var _dReactivar=null;
+  if(_reactivarCancelado){
+    // Congelar el historial anterior (abonos/renovaciones del préstamo cancelado) para que el
+    // préstamo nuevo empiece a contar desde cero, sin perder ni un registro del historial.
+    _dReactivar=calcDerived(existente);
+    _prevStateReactivar={
+      montoPrestado:existente.montoPrestado,tasaInteres:existente.tasaInteres,
+      Total_A_Cobrar:existente.Total_A_Cobrar,Total_Intereses:existente.Total_Intereses,
+      Cuota_Quincenal:existente.Cuota_Quincenal,cantidadDeQuincenas:existente.cantidadDeQuincenas,
+      diasPorCuota:existente.diasPorCuota,tipo:existente.tipo,fechaInicio:existente.fechaInicio,
+      _fechaCreacion:existente._fechaCreacion,proximaFechaPago:existente.proximaFechaPago,
+      baseRenovacion:existente.baseRenovacion||0,estado:existente.estado
+    };
+    existente.baseRenovacion=(existente.baseRenovacion||0)+_dReactivar.totalPagado;
+  }
   if(existente){
     existente.cliente=nombre;
     existente.cedula=clienteTemporal.cedula||existente.cedula||'';
@@ -4488,6 +4515,13 @@ function guardarPrestamo(){
     existente.coordCasa=clienteTemporal.coordCasa||existente.coordCasa||'';
     existente.coordTrabajo=clienteTemporal.coordTrabajo||existente.coordTrabajo||'';
     existente.fotos=clienteTemporal.fotos||existente.fotos||{};
+    if(clienteTemporal.notas){
+      existente.notas=Object.assign({},existente.notas||{},clienteTemporal.notas);
+    }
+    if(clienteTemporal.fechasDoc){
+      existente.fechasDoc=Object.assign({},existente.fechasDoc||{},clienteTemporal.fechasDoc);
+    }
+    if(_reactivarCancelado) existente.fechaUltimaVerificacion=hoyLocal();
     existente.montoPrestado=monto;
     existente.tasaInteres=tasaDec;
     existente.cantidadDeQuincenas=cd.cuotas;
@@ -4548,6 +4582,18 @@ function guardarPrestamo(){
     +'📆 *Próxima fecha de pago:* '+proxStr+' ('+proxDia+')';
   var waUrl='https://wa.me/'+formatTel(p.telefono||'')+'?text='+encodeURIComponent(msg);
   p.mensajeWANuevo=msg;
+  if(_reactivarCancelado){
+    // Dejar registrado en el historial del cliente que se le volvió a prestar tras estar cancelado,
+    // sin perder los abonos/renovaciones anteriores (quedan congelados, no se borran).
+    renovaciones.push({
+      id:Date.now().toString(),id_prestamo:p.id,cliente:p.cliente,fecha:fecha,
+      montoNuevo:monto,cuotaNueva:cuotaVal,tipo:cd.tipo,cuotas:cd.cuotas,tasa:Math.round(tasaDec*100),
+      adminMonto:0,saldoAnterior:0,montoEntregado:monto,
+      origen:'nuevo_tras_cancelado',mensajeWA:msg,
+      _prevState:_prevStateReactivar
+    });
+    guardarDatos();
+  }
   clienteTemporal={};
   localStorage.removeItem('fjd_cliente_temp');
   document.getElementById('nc-nombre').value='';
@@ -5824,10 +5870,13 @@ function irNuevoPrestamo(){
     var diasDiff=Math.floor((Date.now()-parseLocalDate(fechaRef).getTime())/(1000*60*60*24));
     if(diasDiff>60) necesitaVerif=true;
   }
-  // Llenar clienteTemporal — sin _id, para que se cree una tarjeta separada (más segura:
-  // si se abandona el proceso a medias, la tarjeta original del cliente no se ve afectada)
+  // Llenar clienteTemporal CON _id de la misma tarjeta: si el cliente estaba cancelado,
+  // "Nuevo Préstamo" reactiva esa misma tarjeta (no crea una separada). La tarjeta real NO
+  // se modifica en los pasos 1 y 2 — todo queda en este borrador hasta completar el paso 3.
   clienteTemporal={
+    _id:p.id,
     _clienteOriginalId:p.id,
+    _reactivarCancelado:(p.estado==='Cancelado'),
     nombre:p.cliente||'',
     cedula:p.cedula||'',
     telefono:p.telefono||'',
@@ -6335,8 +6384,13 @@ function guardarCliente(){
   if(clienteOriginalId){
     var pOrig=prestamos.find(function(x){return x.id===clienteOriginalId;});
     if(pOrig){
-      pOrig.cliente=nombre; pOrig.cedula=cedula; pOrig.telefono=tel; pOrig.ruta=ruta; pOrig.subruta=subruta;
-      pOrig.fechaUltimaVerificacion=hoyLocal(); // reiniciar contador 60 días siempre que se edite
+      // Si es una reactivación de cliente cancelado, NO tocar la tarjeta real todavía —
+      // todo queda en el borrador (clienteTemporal) y solo se aplica al terminar el paso 3.
+      // Así, si se abandona el proceso a medias, la tarjeta original queda intacta.
+      if(!_reactivarCancelado){
+        pOrig.cliente=nombre; pOrig.cedula=cedula; pOrig.telefono=tel; pOrig.ruta=ruta; pOrig.subruta=subruta;
+        pOrig.fechaUltimaVerificacion=hoyLocal(); // reiniciar contador 60 días siempre que se edite
+      }
       // Llevar las fotos y ubicaciones del cliente original, para que la tarjeta nueva no salga vacía
       if(!Object.keys(_fotosHeredadas).length&&pOrig.fotos) _fotosHeredadas=pOrig.fotos;
       if(!_coordCasaHeredada&&pOrig.coordCasa) _coordCasaHeredada=pOrig.coordCasa;
@@ -6362,11 +6416,13 @@ function guardarCliente(){
       fechaInicio:hoyLocal(),estado:'Activo',
       tasaInteres:0.20,Total_Intereses:0,fotos:_fotosHeredadas,coordCasa:_coordCasaHeredada,coordTrabajo:_coordTrabajoHeredado});
     _docsNewFotos={}; // limpiar cualquier foto pendiente de una edición anterior sin relación
-  } else {
+  } else if(!_reactivarCancelado){
     var ex=prestamos.find(function(x){return x.id===clienteTemporal._id;});
     if(ex){ex.cliente=nombre;ex.cedula=cedula;ex.telefono=tel;ex.ruta=ruta;ex.subruta=subruta;ex.incompleto='paso1';}
   }
-  guardarDatos();
+  // Si es reactivación de cliente cancelado, no se guarda nada en la tarjeta real todavía —
+  // solo queda en el borrador (clienteTemporal), así que no hace falta guardarDatos() aquí.
+  if(!_reactivarCancelado) guardarDatos();
   goTo('screen-documentos');
 }
 
@@ -6414,7 +6470,9 @@ function guardarDocumentos(){
       clienteTemporal.notas['foto-trabajo']=notaTrabajo.trim();
       if(!clienteTemporal.fechasDoc) clienteTemporal.fechasDoc={};
       clavesTocadas.forEach(function(k){ clienteTemporal.fechasDoc[k]=hoyLocal(); });
-      if(ex){
+      // Si es reactivación de cliente cancelado, la tarjeta real NO se toca todavía —
+      // todo se queda en el borrador hasta terminar el paso 3.
+      if(ex&&!clienteTemporal._reactivarCancelado){
         ex.coordCasa=coordCasa;ex.coordTrabajo=coordTrabajo;ex.fotos=fotos;ex.incompleto='paso2';
         if(!ex.notas) ex.notas={};
         ex.notas['foto-casa']=notaCasa.trim();
@@ -6423,14 +6481,8 @@ function guardarDocumentos(){
         if(!ex.fechasDoc) ex.fechasDoc={};
         clavesTocadas.forEach(function(k){ ex.fechasDoc[k]=hoyLocal(); });
       }
-      // También actualizar el registro original si viene de irNuevoPrestamo
-      var _origId=clienteTemporal._clienteOriginalId;
-      if(_origId&&_origId!==ex&&_origId!==(ex&&ex.id)){
-        var _pOrig2=prestamos.find(function(x){return x.id===_origId;});
-        if(_pOrig2){_pOrig2.coordCasa=coordCasa;_pOrig2.coordTrabajo=coordTrabajo;_pOrig2.fotos=fotos;_pOrig2.fechaUltimaVerificacion=hoyLocal();}
-      }
       _docsNewFotos={};
-      guardarDatos();
+      if(!clienteTemporal._reactivarCancelado) guardarDatos();
       goTo('screen-nuevo-prestamo');
     });
   }
