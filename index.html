@@ -4192,6 +4192,15 @@ function goTo(id){
   if(id==='screen-home') updateHome();
   if(id==='screen-inversion') renderInversion();
   if(id==='screen-cajas'){ var _cr=sessionStorage.getItem('fjd_cajas_ruta'); if(_cr){ rutaCajasFiltro=_cr; rutaInvFiltro=_cr; } renderCajas(); }
+  if(id==='screen-documentos'){
+    // Precargar coordenadas y notas ya existentes (ej. al volver a prestarle a un cliente
+    // cancelado), para no borrarlas si el usuario no las toca
+    document.getElementById('doc-coord-casa').value=clienteTemporal.coordCasa||'';
+    document.getElementById('doc-coord-trabajo').value=clienteTemporal.coordTrabajo||'';
+    previewCoord('casa'); previewCoord('trabajo');
+    document.getElementById('doc-nota-foto-casa').value=(clienteTemporal.notas&&clienteTemporal.notas['foto-casa'])||'';
+    document.getElementById('doc-nota-foto-trabajo').value=(clienteTemporal.notas&&clienteTemporal.notas['foto-trabajo'])||'';
+  }
   if(id==='screen-nuevo-prestamo'){
     var _h=hoyLocal(); var _hp=_h.split('-');
     document.getElementById('np-fecha').value=_h;
@@ -6306,11 +6315,18 @@ function guardarCliente(){
   }
 
   // Si venía de un préstamo existente, siempre sincronizar datos al registro original
+  var _fotosHeredadas=clienteTemporal.fotos||{};
+  var _coordCasaHeredada=clienteTemporal.coordCasa||'';
+  var _coordTrabajoHeredado=clienteTemporal.coordTrabajo||'';
   if(clienteOriginalId){
     var pOrig=prestamos.find(function(x){return x.id===clienteOriginalId;});
     if(pOrig){
       pOrig.cliente=nombre; pOrig.cedula=cedula; pOrig.telefono=tel; pOrig.ruta=ruta; pOrig.subruta=subruta;
       pOrig.fechaUltimaVerificacion=hoyLocal(); // reiniciar contador 60 días siempre que se edite
+      // Llevar las fotos y ubicaciones del cliente original, para que la tarjeta nueva no salga vacía
+      if(!Object.keys(_fotosHeredadas).length&&pOrig.fotos) _fotosHeredadas=pOrig.fotos;
+      if(!_coordCasaHeredada&&pOrig.coordCasa) _coordCasaHeredada=pOrig.coordCasa;
+      if(!_coordTrabajoHeredado&&pOrig.coordTrabajo) _coordTrabajoHeredado=pOrig.coordTrabajo;
     }
     if(necesitaVerif){
       var bannerV=document.getElementById('nc-verif-banner');
@@ -6320,7 +6336,8 @@ function guardarCliente(){
     }
   }
 
-  clienteTemporal={_id:prevId,_clienteOriginalId:clienteOriginalId,nombre:nombre,cedula:cedula,telefono:tel,ruta:ruta,subruta:subruta};
+  clienteTemporal={_id:prevId,_clienteOriginalId:clienteOriginalId,nombre:nombre,cedula:cedula,telefono:tel,ruta:ruta,subruta:subruta,
+    fotos:_fotosHeredadas,coordCasa:_coordCasaHeredada,coordTrabajo:_coordTrabajoHeredado};
   if(!clienteTemporal._id){
     var id=Date.now().toString();
     clienteTemporal._id=id;
@@ -6328,7 +6345,8 @@ function guardarCliente(){
       incompleto:'paso1',montoPrestado:0,Total_A_Cobrar:0,Cuota_Quincenal:0,
       cantidadDeQuincenas:1,diasPorCuota:15,tipo:'Quincenal',
       fechaInicio:hoyLocal(),estado:'Activo',
-      tasaInteres:0.20,Total_Intereses:0,fotos:{},coordCasa:'',coordTrabajo:''});
+      tasaInteres:0.20,Total_Intereses:0,fotos:_fotosHeredadas,coordCasa:_coordCasaHeredada,coordTrabajo:_coordTrabajoHeredado});
+    _docsNewFotos={}; // limpiar cualquier foto pendiente de una edición anterior sin relación
   } else {
     var ex=prestamos.find(function(x){return x.id===clienteTemporal._id;});
     if(ex){ex.cliente=nombre;ex.cedula=cedula;ex.telefono=tel;ex.ruta=ruta;ex.subruta=subruta;ex.incompleto='paso1';}
