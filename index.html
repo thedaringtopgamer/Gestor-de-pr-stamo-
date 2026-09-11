@@ -1289,6 +1289,13 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <button onclick="abrirModalCorregir()" style="padding:10px 6px;background:#fff;color:#92400e;border:2px solid #fcd34d;border-radius:10px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🔧 Corregir</button>
         <button id="btn-bloquear-toggle" onclick="abrirModalBloqueo()" style="padding:10px 6px;background:#fff;color:#dc2626;border:2px solid #fca5a5;border-radius:10px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🚫 Bloquear</button>
       </div>
+      <!-- Aviso: préstamo excluido de la caja (se quitó del panel alguna vez) -->
+      <div id="ocultocaja-badge" style="display:none;margin-top:8px;background:#fef3c7;border:2px solid #fde047;border-radius:10px;padding:10px 12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <div style="font-size:12px;font-weight:800;color:#92400e">⚠️ Este préstamo está excluido de la caja (se quitó del panel)</div>
+          <button onclick="restaurarNuevoEnCaja()" style="padding:6px 12px;background:#fff;color:#92400e;border:1.5px solid #fde047;border-radius:8px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap">↩ Restaurar</button>
+        </div>
+      </div>
       <!-- Badge bloqueado visible -->
       <div id="bloqueo-badge" style="display:none;margin-top:8px;background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;padding:10px 12px">
         <div style="display:flex;justify-content:space-between;align-items:center">
@@ -4531,6 +4538,7 @@ function guardarPrestamo(){
     // La fecha de creación real del cliente nunca cambia, ni con préstamos nuevos ni renovaciones
     if(!existente._fechaCreacion) existente._fechaCreacion=fecha;
     existente.estado='Activo';
+    delete existente._ocultarPanelNuevo; // un prestamo recien terminado nunca debe quedar excluido de la caja
     existente.Cuota_Quincenal=cuotaVal;
     existente.Total_Intereses=intereses;
     existente.Total_A_Cobrar=totalCobrar;
@@ -5387,6 +5395,8 @@ function verDetalle(id){
   var wrapAdm=document.getElementById('wrap-admin-btns');
   var bloqBadge=document.getElementById('bloqueo-badge');
   if(wrapAdm) wrapAdm.style.display=esAdmin?'grid':'none';
+  var ocultoCajaBadge=document.getElementById('ocultocaja-badge');
+  if(ocultoCajaBadge) ocultoCajaBadge.style.display=(esAdmin&&p._ocultarPanelNuevo)?'block':'none';
   if(bloqBadge){
     var esBloqueadoDetalle=!!(p.bloqueado||clientesBloqueados[p.id]);
     bloqBadge.style.display=esBloqueadoDetalle?'':'none';
@@ -6883,12 +6893,22 @@ function guardarDocsCliente(){
   }
 }
 
+function restaurarNuevoEnCaja(){
+  if(!currentId) return;
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(!p) return;
+  delete p._ocultarPanelNuevo;
+  _invalidarCajaCacheDesde(p._fechaCreacion||p.fechaInicio||hoyLocal(),p.ruta||'todas');
+  guardarDatos();
+  verDetalle(p.id);
+  toast('✓ Préstamo restaurado en los cálculos de caja');
+}
 function quitarNuevoDeCaja(prestamoId){
   var p=prestamos.find(function(x){return x.id===prestamoId;});
   if(!p) return;
   var overlay=document.getElementById('modal-overlay');
   document.getElementById('modal-subtitulo').textContent='Quitar del panel';
-  document.getElementById('modal-mensaje').textContent='¿Quitar el préstamo de '+p.cliente+' (₡'+fmt(p.montoPrestado)+') del panel de hoy? El préstamo no se afecta.';
+  document.getElementById('modal-mensaje').textContent='¿Quitar el préstamo de '+p.cliente+' (₡'+fmt(p.montoPrestado)+') del panel de hoy? El préstamo en sí no se elimina, pero dejará de contarse en la caja hasta que lo restaures desde su tarjeta.';
   document.getElementById('modal-btn-si').textContent='Sí, quitar';
   document.getElementById('modal-btn-si').style.background='#dc2626';
   overlay.style.display='flex';
