@@ -4594,7 +4594,7 @@ function guardarPrestamo(){
   // para no corromper esa entrada vieja del listado con los datos de un préstamo posterior
   // (como una reactivación). Los préstamos nuevos posteriores quedan en su propia entrada
   // (ver el bloque de "renovaciones" con origen:'nuevo_tras_cancelado').
-  if(!p.mensajeWANuevo) p.mensajeWANuevo=msg;
+  if(!p.mensajeWANuevo){ p.mensajeWANuevo=msg; p.montoNuevoCongelado=monto; }
   if(_reactivarCancelado){
     // Dejar registrado en el historial del cliente que se le volvió a prestar tras estar cancelado,
     // sin perder los abonos/renovaciones anteriores (quedan congelados, no se borran).
@@ -5542,7 +5542,7 @@ function renderPagosLista(p){
         +'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;cursor:pointer" onclick="toggleRenEntry(\''+uidN+'\')">'
           +'<div><div style="font-size:13px;font-weight:600;color:#1e40af">🆕 Préstamo nuevo</div><div style="font-size:11px;color:var(--text-muted)">'+(p._fechaCreacion||p.fechaInicio||'')+'</div></div>'
           +'<div style="display:flex;align-items:center;gap:8px">'
-          +'<span style="font-size:12px;color:#1e40af;font-weight:700">₡'+fmt(p.montoPrestado)+'</span>'
+          +'<span style="font-size:12px;color:#1e40af;font-weight:700">₡'+fmt(typeof p.montoNuevoCongelado==='number'?p.montoNuevoCongelado:p.montoPrestado)+'</span>'
           +'<span style="font-size:14px;color:var(--text-muted)" id="arr-'+uidN+'">▶</span>'
           +'</div>'
         +'</div>'
