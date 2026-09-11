@@ -4981,7 +4981,7 @@ function continuarClienteIncompleto(id){
   // ("Nuevo Préstamo" a un cliente cancelado) interrumpida a medias (ej. el teléfono recargó
   // la página) — la tarjeta real nunca se tocó, así que hay que recuperar esa condición desde
   // el propio estado de la tarjeta, no desde un borrador que ya no existe.
-  var _esReactivacion=!p.incompleto&&p.estado==='Cancelado';
+  var _esReactivacion=!p.incompleto&&calcDerived(p).saldoPendiente<=0;
   // Restaurar clienteTemporal con los datos guardados
   clienteTemporal={_id:p.id,nombre:p.cliente,cedula:p.cedula,telefono:p.telefono,
     ruta:p.ruta,subruta:p.subruta,coordCasa:p.coordCasa||'',coordTrabajo:p.coordTrabajo||'',fotos:p.fotos||{},
@@ -5898,7 +5898,7 @@ function irNuevoPrestamo(){
   clienteTemporal={
     _id:p.id,
     _clienteOriginalId:p.id,
-    _reactivarCancelado:(p.estado==='Cancelado'),
+    _reactivarCancelado:(calcDerived(p).saldoPendiente<=0),
     nombre:p.cliente||'',
     cedula:p.cedula||'',
     telefono:p.telefono||'',
