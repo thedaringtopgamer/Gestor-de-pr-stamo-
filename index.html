@@ -4477,6 +4477,7 @@ function calcPreview(){
 }
 
 function guardarPrestamo(){
+  toast('🔍 DIAG paso3: _id='+(clienteTemporal._id?clienteTemporal._id.slice(-5):'NINGUNO')+' reactivar='+clienteTemporal._reactivarCancelado);
   var nombre=clienteTemporal.nombre||document.getElementById('np-cliente').value.trim();
   var monto=readMoneyInput('np-monto');
   var tasa=parseFloat(document.getElementById('np-tasa').value)||0;
@@ -5895,10 +5896,12 @@ function irNuevoPrestamo(){
   // Llenar clienteTemporal CON _id de la misma tarjeta: si el cliente estaba cancelado,
   // "Nuevo Préstamo" reactiva esa misma tarjeta (no crea una separada). La tarjeta real NO
   // se modifica en los pasos 1 y 2 — todo queda en este borrador hasta completar el paso 3.
+  var _diagSaldo=calcDerived(p).saldoPendiente;
+  toast('🔍 DIAG: id='+p.id.slice(-5)+' saldo='+_diagSaldo+' reactivar='+(_diagSaldo<=0));
   clienteTemporal={
     _id:p.id,
     _clienteOriginalId:p.id,
-    _reactivarCancelado:(calcDerived(p).saldoPendiente<=0),
+    _reactivarCancelado:(_diagSaldo<=0),
     nombre:p.cliente||'',
     cedula:p.cedula||'',
     telefono:p.telefono||'',
@@ -6370,6 +6373,7 @@ function previewCoord(tipo){
 }
 
 function guardarCliente(){
+  toast('🔍 DIAG paso1: _id='+(clienteTemporal._id?clienteTemporal._id.slice(-5):'NINGUNO')+' reactivar='+clienteTemporal._reactivarCancelado);
   var nombre=document.getElementById('nc-nombre').value.trim();
   var cedula=document.getElementById('nc-cedula').value.trim();
   var tel=document.getElementById('nc-telefono').value.trim();
@@ -6456,6 +6460,7 @@ window.addEventListener('popstate',function(){
 });
 
 function guardarDocumentos(){
+  toast('🔍 DIAG paso2: _id='+(clienteTemporal._id?clienteTemporal._id.slice(-5):'NINGUNO')+' reactivar='+clienteTemporal._reactivarCancelado+' fotos='+Object.keys(clienteTemporal.fotos||{}).length);
   var coordCasa=document.getElementById('doc-coord-casa').value.trim();
   var coordTrabajo=document.getElementById('doc-coord-trabajo').value.trim();
   var claves=['cedula-frente','cedula-detras','foto-cliente','foto-casa','foto-trabajo'];
