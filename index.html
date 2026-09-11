@@ -2908,6 +2908,11 @@ function eliminarInversion(id){
 function asignarRutaInversion(id, ruta){
   var inv=inversiones.find(function(i){return i.id===id;});
   if(!inv) return;
+  // Una vez asignada a una ruta real, la inyección queda bloqueada ahí — no se puede mover
+  if(inv.ruta&&inv.ruta!=='todas'&&inv.ruta!==ruta){
+    toast('🚫 Esta inyección ya está asignada a '+inv.ruta+' y no se puede mover');
+    return;
+  }
   inv.ruta=ruta;
   guardarDatos();
   renderInversion();
@@ -2934,10 +2939,16 @@ function abrirHistorialInversion(){
           +(rolActual==='admin'?'<button onclick="eliminarInversion(\''+inv.id+'\');document.getElementById(\'modal-hist-inversion\').style.display=\'none\'" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">🗑</button>':'')
         +'</div>'
         +(rolActual==='admin'?'<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'
-          +['Heredia','Alajuela','San Ramón','Ciudad Quesada'].map(function(r){
-            var activa=inv.ruta===r;
-            return '<button onclick="asignarRutaInversion(\''+inv.id+'\',\''+r+'\')" style="padding:4px 10px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif;background:'+(activa?'#1e40af':'#e0e7ff')+';color:'+(activa?'#fff':'#1e40af')+'">'+r+'</button>';
-          }).join('')
+          +(function(){
+            // Una vez que la inyección ya tiene una ruta real asignada, queda bloqueada ahí —
+            // no se puede mover a otra ruta tocando estos botones.
+            var yaAsignada=!!(inv.ruta&&inv.ruta!=='todas');
+            return ['Heredia','Alajuela','San Ramón','Ciudad Quesada'].map(function(r){
+              var activa=inv.ruta===r;
+              var bloqueado=yaAsignada&&!activa;
+              return '<button '+(bloqueado?'disabled':'onclick="asignarRutaInversion(\''+inv.id+'\',\''+r+'\')"')+' style="padding:4px 10px;border:none;border-radius:6px;font-size:11px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:'+(bloqueado?'not-allowed':'pointer')+';opacity:'+(bloqueado?'0.4':'1')+';background:'+(activa?'#1e40af':'#e0e7ff')+';color:'+(activa?'#fff':'#1e40af')+'">'+r+'</button>';
+            }).join('');
+          })()
           +'</div>':'')
         +'</div>';
     }).join('');
