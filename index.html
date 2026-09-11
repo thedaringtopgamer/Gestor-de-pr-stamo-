@@ -4528,7 +4528,8 @@ function guardarPrestamo(){
     existente.diasPorCuota=cd.diasPorCuota;
     existente.tipo=cd.tipo;
     existente.fechaInicio=fecha;
-    existente._fechaCreacion=fecha;
+    // La fecha de creación real del cliente nunca cambia, ni con préstamos nuevos ni renovaciones
+    if(!existente._fechaCreacion) existente._fechaCreacion=fecha;
     existente.estado='Activo';
     existente.Cuota_Quincenal=cuotaVal;
     existente.Total_Intereses=intereses;
