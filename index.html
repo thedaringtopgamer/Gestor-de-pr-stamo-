@@ -3081,14 +3081,14 @@ function _calcCierreData(desde,hasta,rutaParam){
     var f=x.fechaRegistro||x.fechaPago; return !x._ocultarPanel&&f>=desde&&f<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0);
   });
   var recogida=pagosP.reduce(function(s,x){ return s+x.montoAbonado; },0);
-  var idsRenovados=renovaciones.map(function(rv){return rv.id_prestamo;});
+  var idsRenovados=renovaciones.filter(function(rv){return rv.origen!=='nuevo_tras_cancelado';}).map(function(rv){return rv.id_prestamo;});
   var nuevosP=prestamos.filter(function(p){
     if(!porRuta(p)||p.incompleto||p._ocultarPanelNuevo) return false;
     if(p._fechaCreacion) return p._fechaCreacion>=desde&&p._fechaCreacion<=hasta;
     return p.fechaInicio>=desde&&p.fechaInicio<=hasta&&idsRenovados.indexOf(p.id)<0;
   });
   var prestado=nuevosP.reduce(function(s,p){ return s+p.montoPrestado; },0);
-  var renovP=renovaciones.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
+  var renovP=renovaciones.filter(function(x){ return x.origen!=='nuevo_tras_cancelado'&&x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
   var montoRenov=renovP.reduce(function(s,x){ return s+(x.montoNuevo||0); },0);
   var entregadoRenov=renovP.reduce(function(s,x){ return s+Math.max(0,x.montoEntregado||0); },0);
   var gastosP=gastos.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||x.ruta===ruta); });
@@ -3868,10 +3868,10 @@ function _capturarDetalleCaja(fecha, ruta){
   // Cobros del día
   var pagosD=pagos.filter(function(x){ return !x._ocultarPanel&&(x.fechaRegistro||x.fechaPago)===fecha&&idsRuta.indexOf(x.id_prestamo)>=0; });
   // Préstamos nuevos del día
-  var idsRenovHoy=renovaciones.filter(function(x){return x.fecha===fecha&&idsRuta.indexOf(x.id_prestamo)>=0;}).map(function(x){return x.id_prestamo;});
+  var idsRenovHoy=renovaciones.filter(function(x){return x.origen!=='nuevo_tras_cancelado'&&x.fecha===fecha&&idsRuta.indexOf(x.id_prestamo)>=0;}).map(function(x){return x.id_prestamo;});
   var nuevosD=prestamos.filter(function(p){ return porRuta(p)&&!p.incompleto&&!p._ocultarPanelNuevo&&(p._fechaCreacion===fecha||(!p._fechaCreacion&&p.fechaInicio===fecha))&&idsRenovHoy.indexOf(p.id)<0; });
   // Renovaciones del día
-  var renovD=renovaciones.filter(function(x){ return x.fecha===fecha&&idsRuta.indexOf(x.id_prestamo)>=0&&!x._ocultarPanel; });
+  var renovD=renovaciones.filter(function(x){ return x.origen!=='nuevo_tras_cancelado'&&x.fecha===fecha&&idsRuta.indexOf(x.id_prestamo)>=0&&!x._ocultarPanel; });
   // Gastos del día
   var gastosD=gastos.filter(function(x){ return x.fecha===fecha&&(ruta==='todas'||x.ruta===ruta); });
   // Cobros admin del día
@@ -7222,7 +7222,7 @@ function renderPanelRecolector(userPickedDate){
   document.getElementById('panel-gastos-lista').innerHTML=gastosHtml;
 
   // Préstamos nuevos de esta ruta (excluye renovaciones para no contar doble)
-  var renovNuevos=renovaciones.filter(function(x){return x.fecha===fecha&&idsRuta.indexOf(x.id_prestamo)!==-1&&!x._ocultarPanel;});
+  var renovNuevos=renovaciones.filter(function(x){return x.origen!=='nuevo_tras_cancelado'&&x.fecha===fecha&&idsRuta.indexOf(x.id_prestamo)!==-1&&!x._ocultarPanel;});
   var _idsRenovHoy=renovNuevos.map(function(x){return x.id_prestamo;});
   var nuevos=prestamosRuta.filter(function(p){return p.fechaInicio===fecha&&!p.incompleto&&!p._ocultarPanelNuevo&&_idsRenovHoy.indexOf(p.id)===-1;});
   var totalNuevos=nuevos.reduce(function(s,p){return s+p.montoPrestado;},0)+renovNuevos.reduce(function(s,x){return s+(x.montoNuevo||0);},0);
@@ -7333,7 +7333,7 @@ function renderPanelRecolector(userPickedDate){
     :'<p style="font-size:13px;color:var(--text-muted)">Sin cobros administrativos</p>';
 
   // Renovaciones del día
-  var renovHoy=renovaciones.filter(function(x){return x.fecha===fecha && idsRuta.indexOf(x.id_prestamo)!==-1 && !x._ocultarPanel;});
+  var renovHoy=renovaciones.filter(function(x){return x.origen!=='nuevo_tras_cancelado' && x.fecha===fecha && idsRuta.indexOf(x.id_prestamo)!==-1 && !x._ocultarPanel;});
   var panelRenov=document.getElementById('panel-renov-lista');
   if(panelRenov){
     document.getElementById('panel-stat-renov').textContent=renovHoy.length+' renovación'+(renovHoy.length!==1?'es':'');
@@ -7365,7 +7365,7 @@ function renderPanelRecolector(userPickedDate){
     var _movimientosDelDia=function(diaStr){
       var _rec=pagos.filter(function(x){return (x.fechaRegistro||x.fechaPago)===diaStr&&_idsR.indexOf(x.id_prestamo)!==-1;}).reduce(function(s,x){return s+x.montoAbonado;},0);
       var _pres=prestamosRuta.filter(function(p){return p.fechaInicio===diaStr&&!p.incompleto;}).reduce(function(s,p){return s+p.montoPrestado;},0);
-      var _renov=renovaciones.filter(function(x){return x.fecha===diaStr&&(rutaActual==='todas'||prestamos.find(function(p){return p.id===x.id_prestamo&&p.ruta===rutaActual;}));}).reduce(function(s,x){return s+(x.montoEntregado||0);},0);
+      var _renov=renovaciones.filter(function(x){return x.origen!=='nuevo_tras_cancelado'&&x.fecha===diaStr&&(rutaActual==='todas'||prestamos.find(function(p){return p.id===x.id_prestamo&&p.ruta===rutaActual;}));}).reduce(function(s,x){return s+(x.montoEntregado||0);},0);
       var _gastos=gastos.filter(function(x){return x.fecha===diaStr&&(rutaActual==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
       var _inyec=inversiones.filter(function(x){return x.fecha===diaStr&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
       return _rec+_inyec-_pres-_renov-_gastos;
