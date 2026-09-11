@@ -4968,9 +4968,19 @@ function _guardarClienteTempParcial(){
 function continuarClienteIncompleto(id){
   var p=prestamos.find(function(x){return x.id===id;});
   if(!p) return;
+  // Si la tarjeta no tiene incompleto marcado pero está Cancelada, es una reactivación
+  // ("Nuevo Préstamo" a un cliente cancelado) interrumpida a medias (ej. el teléfono recargó
+  // la página) — la tarjeta real nunca se tocó, así que hay que recuperar esa condición desde
+  // el propio estado de la tarjeta, no desde un borrador que ya no existe.
+  var _esReactivacion=!p.incompleto&&p.estado==='Cancelado';
   // Restaurar clienteTemporal con los datos guardados
   clienteTemporal={_id:p.id,nombre:p.cliente,cedula:p.cedula,telefono:p.telefono,
-    ruta:p.ruta,subruta:p.subruta,coordCasa:p.coordCasa||'',coordTrabajo:p.coordTrabajo||'',fotos:p.fotos||{}};
+    ruta:p.ruta,subruta:p.subruta,coordCasa:p.coordCasa||'',coordTrabajo:p.coordTrabajo||'',fotos:p.fotos||{},
+    notas:p.notas||{}};
+  if(_esReactivacion){
+    clienteTemporal._clienteOriginalId=p.id;
+    clienteTemporal._reactivarCancelado=true;
+  }
   // Rellenar campos del paso 1
   document.getElementById('nc-nombre').value=p.cliente;
   document.getElementById('nc-cedula').value=p.cedula;
@@ -4978,8 +4988,9 @@ function continuarClienteIncompleto(id){
   document.getElementById('nc-ruta').value=p.ruta;
   onRutaChange();
   setTimeout(function(){ document.getElementById('nc-subruta').value=p.subruta; },50);
-  // Ir a la pantalla donde se quedó
-  if(p.incompleto==='paso1') goTo('screen-documentos');
+  // Ir a la pantalla donde se quedó (para la reactivación, siempre se reinicia en Documentos,
+  // porque al no tocar la tarjeta real no hay forma de saber si ya se había completado ese paso)
+  if(_esReactivacion||p.incompleto==='paso1') goTo('screen-documentos');
   else goTo('screen-nuevo-prestamo');
 }
 
