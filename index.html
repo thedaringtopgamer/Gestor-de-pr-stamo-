@@ -3221,6 +3221,60 @@ function _abrirListaNuevos(el){
   }
   goTo('screen-nuevos-periodo');
 }
+function _verListaNuevosHist(cierreId){
+  var c=cierres.find(function(x){return x.id===cierreId;});
+  if(!c) return;
+  var ids=(c.data&&c.data.idsNuevos)||[];
+  var titulo='👥 Clientes nuevos — '+(c.tipo==='semana'?'Semana':'Mes')+' ('+c.desde+' → '+c.hasta+')';
+  document.getElementById('nuevos-periodo-titulo').textContent=titulo;
+  document.getElementById('nuevos-periodo-rango').textContent=c.desde+' → '+c.hasta+' ('+ids.length+' cliente'+(ids.length!==1?'s':'')+')';
+  var lista=document.getElementById('nuevos-periodo-lista');
+  if(!ids.length){
+    lista.innerHTML='<p style="color:#6b7280;font-size:14px;text-align:center;margin-top:40px">Ningún cliente nuevo en este período.</p>';
+  } else {
+    lista.innerHTML=ids.map(function(id){
+      var p=prestamos.find(function(x){return x.id===id;});
+      if(!p) return '';
+      var fi=(p._fechaCreacion||p.fechaInicio||'').split('-');
+      var fd=fi.length===3?fi[2]+'/'+fi[1]+'/'+fi[0]:p.fechaInicio;
+      return '<div onclick="verDetalle(\''+id+'\')" style="background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.08);cursor:pointer;border-left:4px solid #3b82f6">'
+        +'<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:4px">'+esc(p.cliente)+'</div>'
+        +'<div style="display:flex;gap:16px;font-size:13px;color:#6b7280">'
+        +'<span>💰 ₡'+fmt(p.montoPrestado)+'</span>'
+        +'<span>📅 '+fd+'</span>'
+        +(p.subruta?'<span>📍 '+p.subruta+'</span>':'')
+        +'</div>'
+        +'</div>';
+    }).join('');
+  }
+  goTo('screen-nuevos-periodo');
+}
+function _verListaGastosHist(cierreId){
+  var c=cierres.find(function(x){return x.id===cierreId;});
+  if(!c) return;
+  var ruta=c.ruta||'todas';
+  var gastosP=gastos.filter(function(x){ return x.fecha>=c.desde&&x.fecha<=c.hasta&&(ruta==='todas'||x.ruta===ruta); });
+  document.getElementById('nuevos-periodo-titulo').textContent='💸 Gastos — '+(c.tipo==='semana'?'Semana':'Mes');
+  document.getElementById('nuevos-periodo-rango').textContent=(c.desde+' → '+c.hasta)+' ('+gastosP.length+' gasto'+(gastosP.length!==1?'s':'')+')';
+  var lista=document.getElementById('nuevos-periodo-lista');
+  if(!gastosP.length){
+    lista.innerHTML='<p style="color:#6b7280;font-size:14px;text-align:center;margin-top:40px">Ningún gasto en este período.</p>';
+  } else {
+    lista.innerHTML=gastosP.slice().sort(function(a,b){return b.fecha.localeCompare(a.fecha);}).map(function(g){
+      var fi=(g.fecha||'').split('-');
+      var fd=fi.length===3?fi[2]+'/'+fi[1]+'/'+fi[0]:g.fecha;
+      return '<div style="background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:4px solid #f59e0b">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+        +'<div style="font-size:15px;font-weight:700;color:#1e293b">'+esc(g.tipo||'Gasto')+'</div>'
+        +'<div style="font-size:15px;font-weight:800;color:#854d0e">₡'+fmt(g.monto)+'</div>'
+        +'</div>'
+        +(g.obs?'<div style="font-size:13px;color:#6b7280;margin-bottom:4px">'+esc(g.obs)+'</div>':'')
+        +'<div style="font-size:12px;color:#9ca3af">📅 '+fd+(g.ruta&&g.ruta!=='todas'?' · 📍 '+esc(g.ruta):'')+'</div>'
+        +'</div>';
+    }).join('');
+  }
+  goTo('screen-nuevos-periodo');
+}
 function _invOverrideKey(tipo,campo){ return tipo+'_'+campo; }
 function _editarStatInv(tipo,campo,label,esMonto,calcActual){
   if(rolActual!=='admin') return;
@@ -3262,7 +3316,11 @@ function _pencilStat(tipo,campo,label,esMonto,calcActual){
   if(rolActual!=='admin') return '';
   return '<button onclick="event.stopPropagation();_editarStatInv(\''+tipo+'\',\''+campo+'\',\''+label+'\','+(esMonto?'true':'false')+','+calcActual+')" style="background:none;border:none;font-size:11px;cursor:pointer;padding:0 0 0 4px;vertical-align:middle">✏️</button>';
 }
-function _statsHtml(d,tipo){
+function _statsHtml(d,tipo,histCierreId){
+  // Si viene de un cierre del historial (ya cerrado), las lupitas de Clientes nuevos/Gastos
+  // deben mostrar los datos de ESE cierre específico, no los de la semana/mes en curso.
+  var _clickNuevos=histCierreId?('_verListaNuevosHist(\''+histCierreId+'\')'):('_verListaNuevos(\''+tipo+'\')');
+  var _clickGastos=histCierreId?('_verListaGastosHist(\''+histCierreId+'\')'):('_verListaGastos(\''+tipo+'\')');
   var prestadoCalc=d.prestado+d.montoRenov;
   var clientesCalc=d.numPrestamos;
   var recogidaCalc=d.recogida;
@@ -3286,14 +3344,14 @@ function _statsHtml(d,tipo){
     +'<div style="background:#f0fdf4;border-radius:8px;padding:8px"><div style="color:#6b7280">💰 Recogida'+_pencilStat(tipo,'recogida','Recogida',true,recogidaCalc)+'</div><div style="font-weight:700;color:#166534">'+_fmtCol(recogidaVal)+'</div></div>'
     +'<div style="background:#dbeafe;border-radius:8px;padding:8px"><div style="color:#6b7280">📤 Prestado'+_pencilStat(tipo,'prestado','Prestado',true,prestadoCalc)+'</div><div style="font-weight:700;color:#1e40af">'+_fmtCol(prestadoVal)+'</div></div>'
     +'<div style="background:#f3f4f6;border-radius:8px;overflow:hidden">'
-      +'<div style="padding:8px;cursor:pointer" onclick="_verListaNuevos(\''+tipo+'\')">'
+      +'<div style="padding:8px;cursor:pointer" onclick="'+_clickNuevos+'">'
         +'<div style="color:#6b7280">👥 Clientes nuevos 🔍'+_pencilStat(tipo,'clientes','Clientes nuevos',false,clientesCalc)+'</div>'
         +'<div style="font-weight:700;color:#374151">'+clientesVal+'</div>'
       +'</div>'
     +'</div>'
     +'<div style="background:#fce7f3;border-radius:8px;padding:8px"><div style="color:#6b7280">🔄 Renovaciones'+_pencilStat(tipo,'renov','Renovaciones',false,renovCalc)+'</div><div style="font-weight:700;color:#9d174d">'+renovVal+'</div></div>'
     +'<div style="background:'+(cobroAdmVal?'#ede9fe':'#f3f4f6')+';border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.'+_pencilStat(tipo,'cobroadm','Cobro adm.',true,cobroAdmCalc)+'</div><div style="font-weight:700;color:'+(cobroAdmVal?'#7c3aed':'#9ca3af')+'">'+_fmtCol(cobroAdmVal)+'</div></div>'
-    +'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2;cursor:pointer" onclick="_verListaGastos(\''+tipo+'\')"><div style="color:#6b7280">💸 Gastos 🔍'+_pencilStat(tipo,'gastos','Gastos',true,gastosCalc)+'</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(gastosVal)+'</div></div>'
+    +'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2;cursor:pointer" onclick="'+_clickGastos+'"><div style="color:#6b7280">💸 Gastos 🔍'+_pencilStat(tipo,'gastos','Gastos',true,gastosCalc)+'</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(gastosVal)+'</div></div>'
     +(d.totalInyeccion?'<div style="background:#e0f2fe;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💉 Capital inyectado</div><div style="font-weight:700;color:#0369a1">+'+_fmtCol(d.totalInyeccion)+'</div></div>':'')
     +'<div style="border-radius:8px;padding:10px;grid-column:span 2;background:'+(pos?'#dcfce7':'#fee2e2')+';border:2px solid '+(pos?'#86efac':'#fca5a5')+'">'
       +'<div style="color:#6b7280;font-size:11px">📊 Ganancia neta</div>'
@@ -3542,7 +3600,7 @@ function _htmlTarjetaCierre(c){
         +(rolActual==='admin'?'<button style="background:#fee2e2;color:#991b1b;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-family:\'DM Sans\',sans-serif;cursor:pointer" onclick="eliminarCierre(\''+c.id+'\')">✕</button>':'')
       +'</div>'
     +'</div>'
-    +_statsHtml(d,c.tipo)
+    +_statsHtml(d,c.tipo,c.id)
     +'</div>';
 }
 
@@ -3843,7 +3901,7 @@ function abrirHistorialTipo(tipo){
           +'<span onclick="toggleRenEntry(\''+uid+'\')" style="font-size:14px;color:#9ca3af;cursor:pointer;flex-shrink:0" id="arr-'+uid+'">▶</span>'
         +'</div>'
         +'<div id="'+uid+'" style="display:none;padding-bottom:12px">'
-          +_statsHtml(c.data,c.tipo)
+          +_statsHtml(c.data,c.tipo,c.id)
           +'<div style="display:flex;gap:8px;margin-top:10px">'
             +'<button onclick="imprimirCierre(\''+c.id+'\')" style="background:#dbeafe;color:#1e40af;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🖨 Imprimir</button>'
             +(rolActual==='admin'?'<button onclick="eliminarCierre(\''+c.id+'\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🗑 Eliminar</button>':'')
