@@ -3259,9 +3259,8 @@ function _valConAjuste(tipo,campo,calcActual){
   return Math.max(0,calcActual-adj);
 }
 function _pencilStat(tipo,campo,label,esMonto,calcActual){
-  // Lapicito oculto por ahora (los ajustes ya guardados se siguen aplicando igual,
-  // esto solo quita el icono de la pantalla para no volver a tocarlo por accidente).
-  return '';
+  if(rolActual!=='admin') return '';
+  return '<button onclick="event.stopPropagation();_editarStatInv(\''+tipo+'\',\''+campo+'\',\''+label+'\','+(esMonto?'true':'false')+','+calcActual+')" style="background:none;border:none;font-size:11px;cursor:pointer;padding:0 0 0 4px;vertical-align:middle">✏️</button>';
 }
 function _statsHtml(d,tipo){
   var prestadoCalc=d.prestado+d.montoRenov;
