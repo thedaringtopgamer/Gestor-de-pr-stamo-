@@ -3718,6 +3718,15 @@ function _guardarCierre(tipo,desde,hasta){
   var ahora=Date.now();
   rutasAGuardar.forEach(function(ruta,i){
     var data=_calcCierreData(desde,hasta,ruta);
+    // Aplicar cualquier corrección manual del lápiz (que solo afectaba la pantalla en vivo)
+    // para que el cierre guarde en el historial el número YA corregido, no el crudo.
+    var _prestadoAjustado=_valConAjuste(tipo,'prestado',data.prestado+data.montoRenov);
+    data.prestado=Math.max(0,_prestadoAjustado-data.montoRenov);
+    data.recogida=_valConAjuste(tipo,'recogida',data.recogida);
+    data.numRenov=_valConAjuste(tipo,'renov',data.numRenov);
+    data.totalCobroAdm=_valConAjuste(tipo,'cobroadm',data.totalCobroAdm);
+    data.totalGastos=_valConAjuste(tipo,'gastos',data.totalGastos);
+    data.numPrestamos=_valConAjuste(tipo,'clientes',data.numPrestamos);
     data.saldoFin=_enCalleActual(ruta);
     data.clientesFin=_clientesActivosActual(ruta);
     // Saldo/clientes de inicio: el fin del cierre anterior de esta ruta, o el caché del arranque de este período
