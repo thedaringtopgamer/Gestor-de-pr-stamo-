@@ -3222,12 +3222,60 @@ function _abrirListaNuevos(el){
   goTo('screen-nuevos-periodo');
 }
 function _invOverrideKey(tipo,campo){ return tipo+'_'+campo; }
+function _editarStatInv(tipo,campo,label,esMonto,calcActual){
+  if(rolActual!=='admin') return;
+  var keyAdj=_invOverrideKey(tipo,campo);
+  var adj=parseInt(invOverrides[keyAdj])||0;
+  var valorMostrado=Math.max(0,calcActual-adj);
+  var overlay=document.getElementById('modal-overlay');
+  document.getElementById('modal-subtitulo').textContent='Corregir '+label;
+  document.getElementById('modal-mensaje').textContent='Valor actual: '+(esMonto?'₡'+fmt(valorMostrado):valorMostrado)+'. Escriba el valor correcto (vacío = automático). Los cierres o cambios reales que sucedan después se van a seguir sumando desde este valor:';
+  document.getElementById('modal-btn-si').textContent='Guardar';
+  document.getElementById('modal-btn-si').style.background='#2563eb';
+  overlay.style.display='flex';
+  var inp=document.getElementById('_inv_edit_inp');
+  if(!inp){ inp=document.createElement('input'); inp.id='_inv_edit_inp'; inp.autocomplete='off'; inp.style.cssText='width:100%;padding:10px;border:1.5px solid #d1d5db;border-radius:10px;font-size:16px;font-family:\'DM Sans\',sans-serif;outline:none;box-sizing:border-box;margin-top:10px;text-align:center'; document.getElementById('modal-mensaje').after(inp); }
+  inp.inputMode='numeric';
+  inp.style.display='block'; inp.value=valorMostrado; inp.placeholder='0';
+  setTimeout(function(){inp.focus();inp.select();},200);
+  _modalCallback=function(){
+    overlay.style.display='none';
+    document.getElementById('modal-btn-si').style.background='#16a34a';
+    inp.style.display='none';
+    var val=inp.value.trim().replace(/,/g,'');
+    if(val===''){ delete invOverrides[keyAdj]; }
+    else {
+      var quiere=parseInt(val)||0;
+      invOverrides[keyAdj]=calcActual-quiere;
+    }
+    guardarDatos();
+    renderInversion();
+    try{ renderCajas(); }catch(e){}
+  };
+  document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
+}
+function _valConAjuste(tipo,campo,calcActual){
+  var adj=parseInt(invOverrides[_invOverrideKey(tipo,campo)])||0;
+  return Math.max(0,calcActual-adj);
+}
+function _pencilStat(tipo,campo,label,esMonto,calcActual){
+  if(rolActual!=='admin') return '';
+  return '<button onclick="event.stopPropagation();_editarStatInv(\''+tipo+'\',\''+campo+'\',\''+label+'\','+(esMonto?'true':'false')+','+calcActual+')" style="background:none;border:none;font-size:11px;cursor:pointer;padding:0 0 0 4px;vertical-align:middle">✏️</button>';
+}
 function _statsHtml(d,tipo){
   var prestadoCalc=d.prestado+d.montoRenov;
   var clientesCalc=d.numPrestamos;
-  var prestadoVal=prestadoCalc;
-  var clientesVal=clientesCalc;
-  var utilidad=d.recogida-d.prestado-(d.entregadoRenov||0)-d.totalGastos;
+  var recogidaCalc=d.recogida;
+  var renovCalc=d.numRenov||0;
+  var cobroAdmCalc=d.totalCobroAdm||0;
+  var gastosCalc=d.totalGastos||0;
+  var prestadoVal=_valConAjuste(tipo,'prestado',prestadoCalc);
+  var clientesVal=_valConAjuste(tipo,'clientes',clientesCalc);
+  var recogidaVal=_valConAjuste(tipo,'recogida',recogidaCalc);
+  var renovVal=_valConAjuste(tipo,'renov',renovCalc);
+  var cobroAdmVal=_valConAjuste(tipo,'cobroadm',cobroAdmCalc);
+  var gastosVal=_valConAjuste(tipo,'gastos',gastosCalc);
+  var utilidad=recogidaVal-prestadoVal-(d.entregadoRenov||0)-gastosVal;
   var pos=utilidad>=0;
   var periodo=tipo==='mes'?'Mes':'Semana';
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">'
@@ -3235,17 +3283,17 @@ function _statsHtml(d,tipo){
     +(typeof d.saldoFin==='number'?'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">🏁 Saldo fin</div><div style="font-weight:700;color:#374151">'+_fmtCol(d.saldoFin)+'</div></div>':'')
     +(typeof d.clientesInicio==='number'?'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">📍 Clientes activos inicio</div><div style="font-weight:700;color:#374151">'+d.clientesInicio+'</div></div>':'')
     +(typeof d.clientesFin==='number'?'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">🏁 Clientes activos fin</div><div style="font-weight:700;color:#374151">'+d.clientesFin+'</div></div>':'')
-    +'<div style="background:#f0fdf4;border-radius:8px;padding:8px"><div style="color:#6b7280">💰 Recogida</div><div style="font-weight:700;color:#166534">'+_fmtCol(d.recogida)+'</div></div>'
-    +'<div style="background:#dbeafe;border-radius:8px;padding:8px"><div style="color:#6b7280">📤 Prestado</div><div style="font-weight:700;color:#1e40af">'+_fmtCol(prestadoVal)+'</div></div>'
+    +'<div style="background:#f0fdf4;border-radius:8px;padding:8px"><div style="color:#6b7280">💰 Recogida'+_pencilStat(tipo,'recogida','Recogida',true,recogidaCalc)+'</div><div style="font-weight:700;color:#166534">'+_fmtCol(recogidaVal)+'</div></div>'
+    +'<div style="background:#dbeafe;border-radius:8px;padding:8px"><div style="color:#6b7280">📤 Prestado'+_pencilStat(tipo,'prestado','Prestado',true,prestadoCalc)+'</div><div style="font-weight:700;color:#1e40af">'+_fmtCol(prestadoVal)+'</div></div>'
     +'<div style="background:#f3f4f6;border-radius:8px;overflow:hidden">'
       +'<div style="padding:8px;cursor:pointer" onclick="_verListaNuevos(\''+tipo+'\')">'
-        +'<div style="color:#6b7280">👥 Clientes nuevos 🔍</div>'
+        +'<div style="color:#6b7280">👥 Clientes nuevos 🔍'+_pencilStat(tipo,'clientes','Clientes nuevos',false,clientesCalc)+'</div>'
         +'<div style="font-weight:700;color:#374151">'+clientesVal+'</div>'
       +'</div>'
     +'</div>'
-    +'<div style="background:#fce7f3;border-radius:8px;padding:8px"><div style="color:#6b7280">🔄 Renovaciones</div><div style="font-weight:700;color:#9d174d">'+(d.numRenov||0)+'</div></div>'
-    +(d.totalCobroAdm?'<div style="background:#ede9fe;border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:#7c3aed">'+_fmtCol(d.totalCobroAdm)+'</div></div>':'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:#9ca3af">₡0</div></div>')
-    +'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2;cursor:pointer" onclick="_verListaGastos(\''+tipo+'\')"><div style="color:#6b7280">💸 Gastos 🔍</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(d.totalGastos||0)+'</div></div>'
+    +'<div style="background:#fce7f3;border-radius:8px;padding:8px"><div style="color:#6b7280">🔄 Renovaciones'+_pencilStat(tipo,'renov','Renovaciones',false,renovCalc)+'</div><div style="font-weight:700;color:#9d174d">'+renovVal+'</div></div>'
+    +'<div style="background:'+(cobroAdmVal?'#ede9fe':'#f3f4f6')+';border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.'+_pencilStat(tipo,'cobroadm','Cobro adm.',true,cobroAdmCalc)+'</div><div style="font-weight:700;color:'+(cobroAdmVal?'#7c3aed':'#9ca3af')+'">'+_fmtCol(cobroAdmVal)+'</div></div>'
+    +'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2;cursor:pointer" onclick="_verListaGastos(\''+tipo+'\')"><div style="color:#6b7280">💸 Gastos 🔍'+_pencilStat(tipo,'gastos','Gastos',true,gastosCalc)+'</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(gastosVal)+'</div></div>'
     +(d.totalInyeccion?'<div style="background:#e0f2fe;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💉 Capital inyectado</div><div style="font-weight:700;color:#0369a1">+'+_fmtCol(d.totalInyeccion)+'</div></div>':'')
     +'<div style="border-radius:8px;padding:10px;grid-column:span 2;background:'+(pos?'#dcfce7':'#fee2e2')+';border:2px solid '+(pos?'#86efac':'#fca5a5')+'">'
       +'<div style="color:#6b7280;font-size:11px">📊 Ganancia neta</div>'
@@ -3691,10 +3739,9 @@ function _guardarCierre(tipo,desde,hasta){
     }
     cierres.push({id:(ahora+i).toString(),tipo:tipo,desde:desde,hasta:hasta,nota:nota,data:data,fechaRegistro:hoyLocal(),ruta:ruta});
   });
-  // Los ajustes manuales del lápiz (Prestado/Clientes nuevos) son solo para el período en curso;
-  // al cerrarlo hay que limpiarlos para que no se le sigan restando al período nuevo que empieza.
-  delete invOverrides[_invOverrideKey(tipo,'prestado')];
-  delete invOverrides[_invOverrideKey(tipo,'clientes')];
+  // Los ajustes manuales del lápiz son solo para el período en curso; al cerrarlo hay que
+  // limpiarlos todos para que no se le sigan restando al período nuevo que empieza.
+  Object.keys(invOverrides).filter(function(k){ return k.indexOf(tipo+'_')===0; }).forEach(function(k){ delete invOverrides[k]; });
   document.getElementById('modal-confirmar-cierre').style.display='none';
   renderInversion();
   try{ renderCajas(); }catch(e){}
