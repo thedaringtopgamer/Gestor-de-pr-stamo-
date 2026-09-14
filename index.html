@@ -1276,10 +1276,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         </div>
         <div class="field-group">
           <label>Fecha de pago</label>
-          <div style="display:flex;gap:8px;align-items:flex-end">
-            <input type="date" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="abonar-fecha" style="flex:1">
-            <button id="btn-guardar-fecha-pago" class="btn btn-outline" style="padding:8px 14px;white-space:nowrap" onclick="guardarFechaPago()">💾 Guardar</button>
-          </div>
+          <input type="date" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="abonar-fecha">
         </div>
         <button id="btn-abonar" class="btn btn-blue btn-full" style="padding:12px" onclick="registrarAbono()">✓ Abonar</button>
       </div>
@@ -2697,6 +2694,11 @@ function guardarFechaPago(){
   var fecha=document.getElementById('abonar-fecha').value;
   if(!fecha){toast('⚠ Ingrese una fecha');return;}
   p.proximaFechaPago=fecha;
+  // Quincenal: esta fecha pasa a ser el ancla de la pareja de días (16/1, 17/2, etc.)
+  if((p.tipo||'Quincenal')==='Quincenal'){
+    p._primeraFechaPago=fecha;
+    p._primeraFechaPagoCuota=calcDerived(p).cuotasPagadas;
+  }
   guardarDatos();
   toast('✓ Fecha guardada: '+fecha);
   // Ir directo a cobros para que aparezca de inmediato
@@ -6009,24 +6011,6 @@ function abonoRapido(id,nombre,cuota){
     setTimeout(function(){ ofrecerWhatsApp(id,'abono'); },400);
   };
   document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
-}
-
-function guardarFechaPago(){
-  if(!currentId) return;
-  var p=prestamos.find(function(x){return x.id===currentId;});
-  if(!p) return;
-  var fecha=document.getElementById('abonar-fecha').value;
-  if(!fecha){toast('⚠ Ingrese una fecha');return;}
-  p.proximaFechaPago=fecha;
-  // Quincenal: esta fecha pasa a ser el ancla de la pareja de días (16/1, 17/2, etc.),
-  // sin registrar ningún abono — solo deja la tarjeta lista para cuando toque cobrar.
-  if((p.tipo||'Quincenal')==='Quincenal'){
-    p._primeraFechaPago=fecha;
-    p._primeraFechaPagoCuota=calcDerived(p).cuotasPagadas;
-  }
-  guardarDatos();
-  toast('✓ Fecha de pago guardada');
-  verDetalle(currentId);
 }
 
 function registrarAbono(){
