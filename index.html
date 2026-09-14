@@ -6124,8 +6124,13 @@ function abrirRenovar(){
     // Diario: próximo día hábil después del día operativo
     var manana=parseLocalDate(diaOperativo()); manana.setDate(manana.getDate()+1);
     proximaFechaRen=siguienteDiaHabil(manana);
+  } else if(tipoActual==='Quincenal'){
+    // La pareja de días no cambia por renovar antes de tiempo — la próxima fecha sugerida
+    // es la pareja de la fecha de pago que ya tenía la tarjeta, no "hoy + 15 días".
+    var _baseQuinc=p.proximaFechaPago?parseLocalDate(p.proximaFechaPago):(p._primeraFechaPago?parseLocalDate(p._primeraFechaPago):parseLocalDate(p.fechaInicio));
+    proximaFechaRen=siguienteDiaHabil(_proximaFechaQuincenal(_baseQuinc));
   } else {
-    // Renovación desde día operativo: próxima fecha = diaOperativo + un intervalo
+    // Semanal, Mensual: próxima fecha = diaOperativo + un intervalo
     var hoyBase=parseLocalDate(diaOperativo());
     var firstNew=new Date(hoyBase);
     firstNew.setDate(firstNew.getDate()+p.diasPorCuota);
