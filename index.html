@@ -853,6 +853,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Tipo</div><select id="corr-tipo" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;background:#fff;box-sizing:border-box"><option value="Diario">Diario</option><option value="Semanal">Semanal</option><option value="Quincenal">Quincenal</option><option value="Mensual">Mensual</option></select></div>
         <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Fecha de inicio</div><input type="date" id="corr-fecha-inicio" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box"></div>
         <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Fecha de creación</div><input type="date" id="corr-fecha-creacion" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box"></div>
+        <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Próxima fecha de pago</div><input type="date" id="corr-proxima-fecha" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box"></div>
       </div>
       <button onclick="guardarCorreccion()" style="width:100%;padding:12px;background:#f59e0b;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">💾 Guardar corrección</button>
     </div>
@@ -6371,6 +6372,7 @@ function abrirModalCorregir(){
     document.getElementById('corr-tipo').value=p.tipo||'Quincenal';
     document.getElementById('corr-fecha-inicio').value=p.fechaInicio||'';
     document.getElementById('corr-fecha-creacion').value=p._fechaCreacion||'';
+    document.getElementById('corr-proxima-fecha').value=p.proximaFechaPago||'';
   }
   document.getElementById('modal-corregir').style.display='flex';
 }
@@ -6442,6 +6444,12 @@ function guardarCorreccion(){
   else if(tipo==='Mensual') p.diasPorCuota=30;
   if(fechaInicioCorr) p.fechaInicio=fechaInicioCorr;
   if(fechaCreacionCorr) p._fechaCreacion=fechaCreacionCorr;
+  var proximaFechaCorr=document.getElementById('corr-proxima-fecha').value;
+  if(proximaFechaCorr){
+    p.proximaFechaPago=proximaFechaCorr;
+    // Esta fecha pasa a ser el ancla de la pareja quincenal de aquí en adelante
+    if(tipo==='Quincenal') p._primeraFechaPago=proximaFechaCorr;
+  }
   p.fechaUltimaVerificacion=hoyLocal(); // reiniciar contador 60 días al corregir
   document.getElementById('modal-corregir').style.display='none';
   guardarDatos();
