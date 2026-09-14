@@ -4708,6 +4708,7 @@ function guardarPrestamo(){
     // Ancla fija para la pareja de días quincenales — la primera fecha de pago real (puede
     // haberse ajustado a mano), nunca la fecha de inicio del préstamo.
     existente._primeraFechaPago=proxFechaISO;
+    existente._primeraFechaPagoCuota=0;
     delete existente.incompleto;
   } else {
     prestamos.push({
@@ -4970,8 +4971,13 @@ function getCuotaVencimiento(p, numCuota){
     // Pareja fija por día del mes (ej: 16 y 1, 3 y 18) — no se suman días, salta al día pareja.
     // El ancla de la pareja es la PRIMERA fecha de pago real (que puede haberse ajustado a mano
     // al crear el cliente), no la fecha de inicio del préstamo — si no, se pierde el ajuste.
+    // El ancla puede haberse fijado a mitad de préstamo (Corregir), en cuyo caso
+    // representa la cuota número (_primeraFechaPagoCuota+1), no la cuota 1 — los saltos
+    // deben contarse desde ahí, si no el sistema salta de más y vuelve a la fecha vieja.
+    var refCuota=p._primeraFechaPagoCuota||0;
     var dq=p._primeraFechaPago?parseLocalDate(p._primeraFechaPago):fecha;
-    for(var i=1;i<numCuota;i++){ dq=_proximaFechaQuincenal(dq); }
+    var hops=numCuota-(refCuota+1);
+    for(var i=0;i<hops;i++){ dq=_proximaFechaQuincenal(dq); }
     return siguienteDiaHabil(dq);
   } else {
     // Semanal, Mensual: días calendario desde fechaInicio + saltar fin de semana
@@ -6346,7 +6352,7 @@ function confirmarRenovacion(){
       var _diaParejo=_proximaFechaQuincenal(_anclaPrevia).getDate();
       _perteneceAPareja=(_diaElegido===_diaAncla||_diaElegido===_diaParejo);
     }
-    if(!_perteneceAPareja) p._primeraFechaPago=fecha;
+    if(!_perteneceAPareja){ p._primeraFechaPago=fecha; p._primeraFechaPagoCuota=0; }
   }
   // Congelar mensaje WhatsApp de renovación en el momento exacto
   renovaciones[renovaciones.length-1].mensajeWA=mensajeRenovacion(p,renovaciones[renovaciones.length-1]);
@@ -6447,8 +6453,13 @@ function guardarCorreccion(){
   var proximaFechaCorr=document.getElementById('corr-proxima-fecha').value;
   if(proximaFechaCorr){
     p.proximaFechaPago=proximaFechaCorr;
-    // Esta fecha pasa a ser el ancla de la pareja quincenal de aquí en adelante
-    if(tipo==='Quincenal') p._primeraFechaPago=proximaFechaCorr;
+    // Esta fecha pasa a ser el ancla de la pareja quincenal de aquí en adelante. Hay que
+    // guardar también con cuántas cuotas ya pagadas quedó fijada, si no el próximo abono
+    // salta de más (cuenta desde la cuota 1 en vez de desde la cuota que se está corrigiendo).
+    if(tipo==='Quincenal'){
+      p._primeraFechaPago=proximaFechaCorr;
+      p._primeraFechaPagoCuota=calcDerived(p).cuotasPagadas;
+    }
   }
   p.fechaUltimaVerificacion=hoyLocal(); // reiniciar contador 60 días al corregir
   document.getElementById('modal-corregir').style.display='none';
