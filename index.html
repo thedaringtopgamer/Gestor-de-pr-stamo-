@@ -6027,13 +6027,23 @@ function registrarAbono(){
     var pp2=prestamos.find(function(x){return x.id===currentId;});
     var cuotasAntes2=pp2?calcDerived(pp2).cuotasPagadas:0;
     var _prevFecha2=pp2?pp2.proximaFechaPago:null;
+    var _prevAncla2=pp2?pp2._primeraFechaPago:null;
+    var _prevAnclaCuota2=pp2?pp2._primeraFechaPagoCuota:null;
+    // Quincenal: la "Fecha de pago" que el usuario elige aquí ES la fecha real de esa cuota,
+    // así que fija la pareja de días desde ahí — igual que si la hubiera puesto en Corregir.
+    if(pp2&&(pp2.tipo||'Quincenal')==='Quincenal'){
+      pp2._primeraFechaPago=fecha;
+      pp2._primeraFechaPagoCuota=cuotasAntes2;
+    }
     pagos.push({
       id_pago:Date.now().toString(),
       id_prestamo:currentId,
       fechaRegistro:diaOperativo(),
       fechaPago:fecha,
       montoAbonado:monto,
-      _prevProximaFecha:_prevFecha2
+      _prevProximaFecha:_prevFecha2,
+      _prevAncla:_prevAncla2,
+      _prevAnclaCuota:_prevAnclaCuota2
     });
     if(pp2){ var advance2=calcDerived(pp2).cuotasPagadas-cuotasAntes2; _autoProximaFecha(pp2,advance2); }
     pagos[pagos.length-1].mensajeWA=mensajeAbono(pp2);
@@ -7209,6 +7219,11 @@ function eliminarAbono(pagoId){
     var _prevFechaRest=pg._prevProximaFecha||null;
     pagos=pagos.filter(function(x){return x.id_pago!==pagoId;});
     if(p){
+      // Si este abono había fijado la pareja quincenal, devolverla a como estaba antes
+      if('_prevAncla' in pg){
+        p._primeraFechaPago=pg._prevAncla;
+        p._primeraFechaPagoCuota=pg._prevAnclaCuota;
+      }
       var dPost=calcDerived(p);
       if(dPost.saldoPendiente<=0){
         p.proximaFechaPago=null;
