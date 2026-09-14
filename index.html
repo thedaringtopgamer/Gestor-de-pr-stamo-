@@ -6329,8 +6329,19 @@ function confirmarRenovacion(){
     _prevState:_prevState});
   // ren-fecha ya ES la próxima fecha de pago, guardarla directo
   p.proximaFechaPago=fecha;
-  // Reiniciar el ancla de la pareja quincenal con este nuevo ciclo de renovación
-  p._primeraFechaPago=fecha;
+  // La pareja de días quincenales NO cambia al renovar — se mantiene la misma de siempre,
+  // a menos que la fecha elegida aquí ya no encaje en esa pareja (ahí sí es un cambio a mano).
+  if(tipo==='Quincenal'){
+    var _diaElegido=parseLocalDate(fecha).getDate();
+    var _anclaPrevia=p._primeraFechaPago?parseLocalDate(p._primeraFechaPago):null;
+    var _perteneceAPareja=false;
+    if(_anclaPrevia){
+      var _diaAncla=_anclaPrevia.getDate();
+      var _diaParejo=_proximaFechaQuincenal(_anclaPrevia).getDate();
+      _perteneceAPareja=(_diaElegido===_diaAncla||_diaElegido===_diaParejo);
+    }
+    if(!_perteneceAPareja) p._primeraFechaPago=fecha;
+  }
   // Congelar mensaje WhatsApp de renovación en el momento exacto
   renovaciones[renovaciones.length-1].mensajeWA=mensajeRenovacion(p,renovaciones[renovaciones.length-1]);
   guardarDatos();
