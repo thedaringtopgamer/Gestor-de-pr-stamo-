@@ -4704,6 +4704,9 @@ function guardarPrestamo(){
     existente.Total_Intereses=intereses;
     existente.Total_A_Cobrar=totalCobrar;
     existente.proximaFechaPago=proxFechaISO;
+    // Ancla fija para la pareja de días quincenales — la primera fecha de pago real (puede
+    // haberse ajustado a mano), nunca la fecha de inicio del préstamo.
+    existente._primeraFechaPago=proxFechaISO;
     delete existente.incompleto;
   } else {
     prestamos.push({
@@ -4727,7 +4730,8 @@ function guardarPrestamo(){
       Cuota_Quincenal:cuotaVal,
       Total_Intereses:intereses,
       Total_A_Cobrar:totalCobrar,
-      proximaFechaPago:proxFechaISO
+      proximaFechaPago:proxFechaISO,
+      _primeraFechaPago:proxFechaISO
     });
   }
   _invalidarCajaCacheDesde(fecha,clienteTemporal.ruta||'todas');
@@ -4962,8 +4966,10 @@ function getCuotaVencimiento(p, numCuota){
     if(numCuota<=1) return fecha;
     return addDiasHabiles(fecha, numCuota-1);
   } else if(tipo==='Quincenal'){
-    // Pareja fija por día del mes (ej: 16 y 1, 3 y 18) — no se suman días, salta al día pareja
-    var dq=fecha;
+    // Pareja fija por día del mes (ej: 16 y 1, 3 y 18) — no se suman días, salta al día pareja.
+    // El ancla de la pareja es la PRIMERA fecha de pago real (que puede haberse ajustado a mano
+    // al crear el cliente), no la fecha de inicio del préstamo — si no, se pierde el ajuste.
+    var dq=p._primeraFechaPago?parseLocalDate(p._primeraFechaPago):fecha;
     for(var i=1;i<numCuota;i++){ dq=_proximaFechaQuincenal(dq); }
     return siguienteDiaHabil(dq);
   } else {
@@ -6323,6 +6329,8 @@ function confirmarRenovacion(){
     _prevState:_prevState});
   // ren-fecha ya ES la próxima fecha de pago, guardarla directo
   p.proximaFechaPago=fecha;
+  // Reiniciar el ancla de la pareja quincenal con este nuevo ciclo de renovación
+  p._primeraFechaPago=fecha;
   // Congelar mensaje WhatsApp de renovación en el momento exacto
   renovaciones[renovaciones.length-1].mensajeWA=mensajeRenovacion(p,renovaciones[renovaciones.length-1]);
   guardarDatos();
