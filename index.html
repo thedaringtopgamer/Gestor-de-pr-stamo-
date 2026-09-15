@@ -3338,7 +3338,11 @@ function _statsHtml(d,tipo,histCierreId){
   var renovVal=_valConAjuste(tipo,'renov',renovCalc);
   var cobroAdmVal=_valConAjuste(tipo,'cobroadm',cobroAdmCalc);
   var gastosVal=_valConAjuste(tipo,'gastos',gastosCalc);
-  var utilidad=recogidaVal-prestadoVal-(d.entregadoRenov||0)-gastosVal;
+  // Ganancia = recogida - (prestado nuevos + entregado en renovaciones) - gastos.
+  // prestadoVal es "nuevos + monto total de renovación" (para mostrar), así que hay que
+  // quitarle montoRenov para dejar solo el préstamo nuevo real — igual que hace _guardarCierre.
+  var prestadoPuroVal=Math.max(0,prestadoVal-(d.montoRenov||0));
+  var utilidad=recogidaVal-prestadoPuroVal-(d.entregadoRenov||0)-gastosVal;
   var pos=utilidad>=0;
   var periodo=tipo==='mes'?'Mes':'Semana';
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">'
