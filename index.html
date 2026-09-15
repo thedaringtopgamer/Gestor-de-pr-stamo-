@@ -5509,10 +5509,17 @@ function verDetalle(id){
   estadoEl.innerHTML=estadoTag(d.estado);
   var tipo=p.tipo||'Quincenal';
   var n=p.cantidadDeQuincenas||1;
-  var _esLargo=(tipo==='Diario'&&n>=60)||(tipo==='Semanal'&&n>6);
-  var _tdias=_esLargo?60:30;
-  var cuotaDiaria=p.Total_A_Cobrar/_tdias;
-  var diasPagados=cuotaDiaria>0?Math.min(_tdias,Math.floor(d.totalPagado/cuotaDiaria)):0;
+  var diasPagados, _tdias;
+  if(tipo==='Quincenal'||tipo==='Mensual'){
+    // Estos tipos se cobran por cuota, no por día — mostrar cuotas pagadas / cuotas totales
+    _tdias=n;
+    diasPagados=Math.min(n,d.cuotasPagadas);
+  } else {
+    var _esLargo=(tipo==='Diario'&&n>=60)||(tipo==='Semanal'&&n>6);
+    _tdias=_esLargo?60:30;
+    var cuotaDiaria=p.Total_A_Cobrar/_tdias;
+    diasPagados=cuotaDiaria>0?Math.min(_tdias,Math.floor(d.totalPagado/cuotaDiaria)):0;
+  }
   document.getElementById('det-progress-txt').textContent=diasPagados+'/'+_tdias;
   var linea1=tipo;
   var linea2='';
