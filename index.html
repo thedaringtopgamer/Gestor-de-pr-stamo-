@@ -5661,10 +5661,13 @@ function renderPagosLista(p){
   var lista=document.getElementById('pagos-lista');
   var ppRaw=pagos.filter(function(x){return x.id_prestamo===p.id;});
   var rrRaw=renovaciones.filter(function(x){return x.id_prestamo===p.id;});
-  var pp=ppRaw.map(function(x,i){return {tipo:'abono',fecha:x.fechaPago,ts:x.fechaRegistro||x.fechaPago||'',idx:i,data:x};});
+  // ts usa el id de cada evento (timestamp en milisegundos de Date.now()), no la fecha del día:
+  // dos eventos del mismo día (ej. préstamo nuevo + renovación el mismo día) tienen la misma
+  // fecha y quedaban empatados, ordenándose mal. El id sí refleja el orden real en que pasaron.
+  var pp=ppRaw.map(function(x,i){return {tipo:'abono',fecha:x.fechaPago,ts:x.id_pago||x.fechaRegistro||x.fechaPago||'',idx:i,data:x};});
   var rrOffset=ppRaw.length;
-  var rr=rrRaw.map(function(x,i){return {tipo:'renovacion',fecha:x.fecha,ts:x.fecha||'',idx:rrOffset+i,data:x};});
-  var nuevo=(p.mensajeWANuevo?[{tipo:'nuevo',fecha:p._fechaCreacion||p.fechaInicio,ts:p._fechaCreacion||p.fechaInicio||'',idx:rrOffset+rrRaw.length,data:p}]:[]);
+  var rr=rrRaw.map(function(x,i){return {tipo:'renovacion',fecha:x.fecha,ts:x.id||x.fecha||'',idx:rrOffset+i,data:x};});
+  var nuevo=(p.mensajeWANuevo?[{tipo:'nuevo',fecha:p._fechaCreacion||p.fechaInicio,ts:p.id||p._fechaCreacion||p.fechaInicio||'',idx:rrOffset+rrRaw.length,data:p}]:[]);
   var todos=pp.concat(rr).concat(nuevo).sort(function(a,b){
     // Sort by registration timestamp desc, then by payment/action date desc, then insertion order desc
     var cmpTs=(b.ts||'').localeCompare(a.ts||'');
