@@ -3096,7 +3096,13 @@ function _calcCierreData(desde,hasta,rutaParam){
     if(p._fechaCreacion) return p._fechaCreacion>=desde&&p._fechaCreacion<=hasta;
     return p.fechaInicio>=desde&&p.fechaInicio<=hasta&&idsRenovados.indexOf(p.id)<0;
   });
-  var prestado=nuevosP.reduce(function(s,p){ return s+p.montoPrestado; },0);
+  // Reactivaciones ("Nuevo Préstamo" a un cliente que estaba Cancelado): quedan guardadas como
+  // una renovación con origen especial, pero SON plata nueva entregada de verdad (como un
+  // préstamo nuevo) — hay que contarlas en "prestado", si no esa plata nunca se resta de la
+  // ganancia. No usan _fechaCreacion (esa es la fecha del cliente original, no la de hoy).
+  var reactivP=renovaciones.filter(function(x){ return x.origen==='nuevo_tras_cancelado'&&x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
+  var montoReactiv=reactivP.reduce(function(s,x){ return s+(x.montoNuevo||0); },0);
+  var prestado=nuevosP.reduce(function(s,p){ return s+p.montoPrestado; },0)+montoReactiv;
   var renovP=renovaciones.filter(function(x){ return x.origen!=='nuevo_tras_cancelado'&&x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
   var montoRenov=renovP.reduce(function(s,x){ return s+(x.montoNuevo||0); },0);
   var entregadoRenov=renovP.reduce(function(s,x){ return s+Math.max(0,x.montoEntregado||0); },0);
@@ -3109,7 +3115,7 @@ function _calcCierreData(desde,hasta,rutaParam){
   var utilidad=recogida-(prestado+entregadoRenov)-totalGastos;
   var cobrosAdmP=cobrosAdmin.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
   var totalCobroAdm=cobrosAdmP.reduce(function(s,x){ return s+(x.monto||0); },0);
-  return {recogida:recogida,prestado:prestado,montoRenov:montoRenov,entregadoRenov:entregadoRenov,totalGastos:totalGastos,utilidad:utilidad,totalInyeccion:totalInyeccion,numPrestamos:nuevosP.length,numRenov:renovP.length,totalCobroAdm:totalCobroAdm,idsNuevos:nuevosP.map(function(p){return p.id;})};
+  return {recogida:recogida,prestado:prestado,montoRenov:montoRenov,entregadoRenov:entregadoRenov,totalGastos:totalGastos,utilidad:utilidad,totalInyeccion:totalInyeccion,numPrestamos:nuevosP.length+reactivP.length,numRenov:renovP.length,totalCobroAdm:totalCobroAdm,idsNuevos:nuevosP.map(function(p){return p.id;}).concat(reactivP.map(function(x){return x.id_prestamo;}))};
 
 }
 
