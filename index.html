@@ -4776,6 +4776,10 @@ function guardarPrestamo(){
   // (como una reactivación). Los préstamos nuevos posteriores quedan en su propia entrada
   // (ver el bloque de "renovaciones" con origen:'nuevo_tras_cancelado').
   if(!p.mensajeWANuevo){ p.mensajeWANuevo=msg; p.montoNuevoCongelado=monto; }
+  // El guardarDatos() de arriba pasó ANTES de armar este mensaje — sin este guardado extra,
+  // mensajeWANuevo queda solo en memoria y nunca llega a grabarse (se pierde el registro
+  // de "Préstamo nuevo" en el Listado del cliente).
+  guardarDatos();
   if(_reactivarCancelado){
     // Dejar registrado en el historial del cliente que se le volvió a prestar tras estar cancelado,
     // sin perder los abonos/renovaciones anteriores (quedan congelados, no se borran).
