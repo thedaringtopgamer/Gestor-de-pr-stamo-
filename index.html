@@ -4751,7 +4751,6 @@ function guardarPrestamo(){
     });
   }
   _invalidarCajaCacheDesde(fecha,clienteTemporal.ruta||'todas');
-  guardarDatos();
   // Construir mensaje WhatsApp con formato de tarjeta
   var p=existente||(prestamos[prestamos.length-1]);
   var diasSemana=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -4776,10 +4775,6 @@ function guardarPrestamo(){
   // (como una reactivación). Los préstamos nuevos posteriores quedan en su propia entrada
   // (ver el bloque de "renovaciones" con origen:'nuevo_tras_cancelado').
   if(!p.mensajeWANuevo){ p.mensajeWANuevo=msg; p.montoNuevoCongelado=monto; }
-  // El guardarDatos() de arriba pasó ANTES de armar este mensaje — sin este guardado extra,
-  // mensajeWANuevo queda solo en memoria y nunca llega a grabarse (se pierde el registro
-  // de "Préstamo nuevo" en el Listado del cliente).
-  guardarDatos();
   if(_reactivarCancelado){
     // Dejar registrado en el historial del cliente que se le volvió a prestar tras estar cancelado,
     // sin perder los abonos/renovaciones anteriores (quedan congelados, no se borran).
@@ -4790,8 +4785,12 @@ function guardarPrestamo(){
       origen:'nuevo_tras_cancelado',mensajeWA:msg,
       _prevState:_prevStateReactivar
     });
-    guardarDatos();
   }
+  // Un solo guardarDatos() con TODO ya armado (mensajeWANuevo, renovación de reactivación) —
+  // llamarlo varias veces seguidas dejaba una ventana donde la sincronización de fondo podía
+  // llegar entre medio con datos viejos del servidor y pisar localmente lo que ya se había
+  // guardado antes (esto perdía el mensajito de "Préstamo nuevo" al usar "Omitir").
+  guardarDatos();
   clienteTemporal={};
   localStorage.removeItem('fjd_cliente_temp');
   document.getElementById('nc-nombre').value='';
