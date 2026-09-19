@@ -3625,6 +3625,37 @@ function imprimirCierre(id){
   var d=c.data;
   var tipo=c.tipo==='semana'?'Cierre Semanal':'Cierre Mensual';
   var pos=d.utilidad>=0;
+  var ruta=c.ruta||'todas';
+  var row=function(label,value,bg,color){
+    return '<div class="row" style="background:'+(bg||'#f9fafb')+'"><span class="label">'+label+'</span><span class="value" style="color:'+(color||'#1f2937')+'">'+value+'</span></div>';
+  };
+  // Metas propias de la ruta de este cierre (con el mismo fallback a "todas" que usa el resto
+  // del sistema), no las de la ruta que esté seleccionada ahora mismo en pantalla.
+  var _claveRuta=ruta==='todas'?'todas':ruta.toLowerCase().replace(/\s+/g,'_');
+  function _leerMetaRuta(sufijo){
+    var val=parseInt(metas['fjd_meta_'+sufijo+'_'+_claveRuta])||0;
+    if(!val&&ruta!=='todas') val=parseInt(metas['fjd_meta_'+sufijo+'_todas'])||0;
+    return val;
+  }
+  var metaPBase=_leerMetaRuta('prestamos');
+  var metaCBase=_leerMetaRuta('clientes');
+  var metaP=c.tipo==='semana'?Math.round(metaPBase/4):metaPBase;
+  var metaC=c.tipo==='semana'?Math.round(metaCBase/4):metaCBase;
+  var prestadoTotal=d.prestado+(d.montoRenov||0);
+  var _barraMeta=function(actual,meta,etiqueta,esDinero){
+    if(!meta) return '';
+    var pct=Math.min(Math.round(actual/meta*100),100);
+    var ok=actual>=meta;
+    var color=ok?'#166534':'#991b1b';
+    var fA=esDinero?_fmtCol(actual):actual;
+    var fM=esDinero?_fmtCol(meta):meta;
+    return '<div class="row" style="background:#f9fafb"><span class="label">🎯 '+etiqueta+'</span><span class="value" style="color:'+color+'">'+(ok?'✅ ':'🔴 ')+fA+' / '+fM+' ('+pct+'%)</span></div>';
+  };
+  var extra='';
+  if(typeof d.saldoInicio==='number') extra+=row('📍 Saldo en calle — inicio',_fmtCol(d.saldoInicio));
+  if(typeof d.saldoFin==='number') extra+=row('🏁 Saldo en calle — fin',_fmtCol(d.saldoFin));
+  if(typeof d.clientesInicio==='number') extra+=row('📍 Clientes activos — inicio',d.clientesInicio);
+  if(typeof d.clientesFin==='number') extra+=row('🏁 Clientes activos — fin',d.clientesFin);
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8">'
     +'<title>Financiera JD — '+tipo+'</title>'
     +'<style>'
@@ -3632,6 +3663,7 @@ function imprimirCierre(id){
     +'body{font-family:Arial,sans-serif;padding:32px;color:#111;max-width:600px;margin:0 auto}'
     +'h1{font-size:22px;font-weight:900;margin-bottom:4px}'
     +'h2{font-size:15px;font-weight:700;color:#374151;margin-bottom:20px}'
+    +'h3{font-size:13px;font-weight:800;color:#374151;margin:18px 0 8px}'
     +'.row{display:flex;justify-content:space-between;padding:10px 14px;border-radius:8px;margin-bottom:8px}'
     +'.label{font-size:13px;color:#6b7280}'
     +'.value{font-size:15px;font-weight:700}'
@@ -3641,14 +3673,20 @@ function imprimirCierre(id){
     +'@media print{body{padding:16px}button{display:none}}'
     +'</style></head><body>'
     +'<h1>Financiera JD</h1>'
-    +'<h2>'+tipo+' — '+c.desde+' al '+c.hasta+'</h2>'
+    +'<h2>'+tipo+' — '+c.desde+' al '+c.hasta+(ruta!=='todas'?' ('+ruta+')':'')+'</h2>'
     +(c.nota?'<p style="font-size:13px;color:#374151;margin-bottom:16px;font-style:italic">'+c.nota+'</p>':'')
-    +'<div class="row" style="background:#f0fdf4"><span class="label">💰 Total recogido</span><span class="value" style="color:#166534">'+_fmtCol(d.recogida)+'</span></div>'
-    +'<div class="row" style="background:#fef2f2"><span class="label">📤 Total prestado (nuevos + renovaciones)</span><span class="value" style="color:#991b1b">'+_fmtCol(d.prestado+d.montoRenov)+'</span></div>'
-    +'<div class="row" style="background:#fef9c3"><span class="label">💸 Total gastos</span><span class="value" style="color:#854d0e">'+_fmtCol(d.totalGastos)+'</span></div>'
-    +'<div class="row" style="background:#f3f4f6"><span class="label">📄 Préstamos nuevos</span><span class="value">'+d.numPrestamos+'</span></div>'
-    +'<div class="row" style="background:#f3f4f6"><span class="label">🔄 Renovaciones</span><span class="value">'+d.numRenov+'</span></div>'
-    +'<div class="total"><span>📊 Utilidad neta</span><span>'+(pos?'+':'')+_fmtCol(d.utilidad)+'</span></div>'
+    +extra
+    +row('💰 Recogida',_fmtCol(d.recogida),'#f0fdf4','#166534')
+    +row('📤 Prestado (nuevos + renovaciones)',_fmtCol(prestadoTotal),'#fef2f2','#991b1b')
+    +row('👥 Clientes nuevos',d.numPrestamos||0)
+    +row('🔄 Renovaciones',d.numRenov||0)
+    +row('💼 Cobro administrativo',_fmtCol(d.totalCobroAdm||0))
+    +row('💸 Gastos',_fmtCol(d.totalGastos),'#fef9c3','#854d0e')
+    +(d.totalInyeccion?row('💉 Capital inyectado','+'+_fmtCol(d.totalInyeccion),'#e0f2fe','#0369a1'):'')
+    +'<div class="total"><span>📊 Ganancia neta</span><span>'+(pos?'+':'')+_fmtCol(d.utilidad)+'</span></div>'
+    +((metaP||metaC)?('<h3>🎯 Metas del período'+(ruta!=='todas'?' ('+ruta+')':'')+'</h3>'
+      +_barraMeta(prestadoTotal,metaP,'Préstamos',true)
+      +_barraMeta(d.numPrestamos||0,metaC,'Clientes nuevos',false)):'')
     +'<div class="footer">'
     +'<p>Generado por Financiera JD — '+c.fechaRegistro+'</p>'
     +'<p style="margin-top:4px">Este documento es de uso interno y confidencial.</p>'
