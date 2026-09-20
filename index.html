@@ -4122,21 +4122,14 @@ function renderCajas(){
   var estadoCard=document.getElementById('cajas-estado-card');
   if(estadoCard){
     if(ruta==='todas'){
-      // Mostrar las 3 rutas en una sola vista
-      estadoCard.innerHTML=_RUTAS_CAJA.map(function(r){
-        var c=cierresDiarios.filter(function(x){ return x.ruta===r&&x.fecha===diaOp; })[0];
-        var cerrada=!!c;
-        var hora='';
-        if(cerrada&&c.timestampCierre){ var dd=new Date(c.timestampCierre); hora=' · '+String(dd.getHours()).padStart(2,'0')+':'+String(dd.getMinutes()).padStart(2,'0'); }
-        return '<div style="background:'+(cerrada?'#f0fdf4':'#fef3c7')+';border:2px solid '+(cerrada?'#86efac':'#fde047')+';border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
-          +'<div><div style="font-size:13px;font-weight:800;color:'+(cerrada?'#166534':'#854d0e')+'">'+r+'</div>'
-          +'<div style="font-size:11px;color:'+(cerrada?'#166534':'#92400e')+';margin-top:1px">'+(cerrada?'🔒 Cerrada'+hora:'🟢 Abierta')+'</div></div>'
-          +(cerrada
-            ?'<button onclick="reabrirCajaDia(\''+r+'\')" style="background:#fff;color:#dc2626;border:2px solid #fca5a5;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">↩ Reabrir</button>'
-            :'<button onclick="cerrarCajaDia(\''+r+'\')" style="background:#1e40af;color:#fff;border:none;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🔒 Cerrar</button>')
-          +'</div>';
-      }).join('')
-      +'<button onclick="cerrarTodasLasCajas()" style="width:100%;margin-top:4px;padding:11px;background:#1e40af;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🔒 Cerrar todas las cajas</button>';
+      // Resumen combinado, sin desglosar ruta por ruta (eso ya no se puede tocar desde "todas")
+      var _cerradasHoy=_RUTAS_CAJA.filter(function(r){ return cierresDiarios.some(function(x){ return x.ruta===r&&x.fecha===diaOp; }); }).length;
+      var _totalRutas=_RUTAS_CAJA.length;
+      var _todasCerradas=_cerradasHoy===_totalRutas;
+      estadoCard.innerHTML='<div style="background:'+(_todasCerradas?'#f0fdf4':'#fef3c7')+';border:2px solid '+(_todasCerradas?'#86efac':'#fde047')+';border-radius:14px;padding:14px 16px;margin-bottom:8px">'
+        +'<div style="font-size:14px;font-weight:800;color:'+(_todasCerradas?'#166534':'#854d0e')+'">'+(_todasCerradas?'🔒 Todas las cajas cerradas':'🟢 '+_cerradasHoy+'/'+_totalRutas+' cajas cerradas')+'</div>'
+        +'</div>'
+        +'<button onclick="cerrarTodasLasCajas()" style="width:100%;padding:11px;background:#1e40af;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🔒 Cerrar todas las cajas</button>';
     } else {
       var cierreHoy=cierresDiarios.filter(function(c){ return c.ruta===ruta&&c.fecha===diaOp; })[0];
       var cajaCerrada=!!cierreHoy;
