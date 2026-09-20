@@ -3489,13 +3489,23 @@ function _calcCierreDataTodasEnVivo(tipo,hoy){
     var ultimoR=cierresR[0];
     var inicioR=ultimoR?_diasiguienteL(ultimoR.hasta):(tipo==='semana'?_inicioSemana(hoy):_inicioMes(hoy));
     var dR=_calcCierreData(inicioR,hoy,r);
+    // Saldo/clientes de inicio de ESTA ruta: el fin de su propio último cierre, o el caché
+    // del arranque de su propio período — igual que hace renderCierres() para una sola ruta.
+    var _claveSufR=tipo==='semana'?'semana':'mes';
+    var _claveSufRC=tipo==='semana'?'semanaC':'mesC';
+    var saldoInicioR,clientesInicioR;
+    if(ultimoR&&ultimoR.data&&typeof ultimoR.data.saldoFin==='number'){ saldoInicioR=ultimoR.data.saldoFin; }
+    else { saldoInicioR=saldoInicios[r+'|'+_claveSufR+'|'+inicioR]; if(typeof saldoInicioR!=='number') saldoInicioR=_enCalleActual(r); }
+    if(ultimoR&&ultimoR.data&&typeof ultimoR.data.clientesFin==='number'){ clientesInicioR=ultimoR.data.clientesFin; }
+    else { clientesInicioR=saldoInicios[r+'|'+_claveSufRC+'|'+inicioR]; if(typeof clientesInicioR!=='number') clientesInicioR=_clientesActivosActual(r); }
     if(!acumulado){
-      acumulado={recogida:0,prestado:0,montoRenov:0,entregadoRenov:0,totalGastos:0,utilidad:0,totalInyeccion:0,numPrestamos:0,numRenov:0,totalCobroAdm:0,idsNuevos:[]};
+      acumulado={recogida:0,prestado:0,montoRenov:0,entregadoRenov:0,totalGastos:0,utilidad:0,totalInyeccion:0,numPrestamos:0,numRenov:0,totalCobroAdm:0,idsNuevos:[],saldoInicio:0,clientesInicio:0};
     }
     acumulado.recogida+=dR.recogida; acumulado.prestado+=dR.prestado; acumulado.montoRenov+=dR.montoRenov;
     acumulado.entregadoRenov+=dR.entregadoRenov; acumulado.totalGastos+=dR.totalGastos; acumulado.utilidad+=dR.utilidad;
     acumulado.totalInyeccion+=dR.totalInyeccion; acumulado.numPrestamos+=dR.numPrestamos; acumulado.numRenov+=dR.numRenov;
     acumulado.totalCobroAdm+=dR.totalCobroAdm; acumulado.idsNuevos=acumulado.idsNuevos.concat(dR.idsNuevos||[]);
+    acumulado.saldoInicio+=saldoInicioR; acumulado.clientesInicio+=clientesInicioR;
   });
   return acumulado;
 }
