@@ -3559,11 +3559,11 @@ function renderCierres(){
     var elStatsSemT=document.getElementById('cierre-semana-stats');
     var elStatsMesT=document.getElementById('cierre-mes-stats');
     if(elStatsSemT) elStatsSemT.innerHTML=_statsHtml(dSemT,'semana',null,true)
-      +_barMeta(dSemT.prestado+dSemT.montoRenov,metaSemTodas,'Meta préstamos semana (suma de rutas)',true)
-      +_barMeta(dSemT.numPrestamos,metaSemCTodas,'Meta clientes nuevos semana (suma de rutas)',false);
+      +_barMeta(dSemT.prestado+dSemT.montoRenov,metaSemTodas,'Meta préstamos semana',true)
+      +_barMeta(dSemT.numPrestamos,metaSemCTodas,'Meta clientes nuevos semana',false);
     if(elStatsMesT) elStatsMesT.innerHTML=_statsHtml(dMesT,'mes',null,true)
-      +_barMeta(dMesT.prestado+dMesT.montoRenov,metaPTodas,'Meta préstamos mes (suma de rutas)',true)
-      +_barMeta(dMesT.numPrestamos,metaCTodas,'Meta clientes nuevos mes (suma de rutas)',false)
+      +_barMeta(dMesT.prestado+dMesT.montoRenov,metaPTodas,'Meta préstamos mes',true)
+      +_barMeta(dMesT.numPrestamos,metaCTodas,'Meta clientes nuevos mes',false)
       +_barMetaTarjetas(dMesT.clientesFin,metaTTodas);
     var elPorRutaSemT=document.getElementById('cierre-semana-porruta'); if(elPorRutaSemT) elPorRutaSemT.innerHTML='';
     var elPorRutaMesT=document.getElementById('cierre-mes-porruta'); if(elPorRutaMesT) elPorRutaMesT.innerHTML='';
