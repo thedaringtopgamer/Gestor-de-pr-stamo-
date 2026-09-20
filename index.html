@@ -3058,8 +3058,12 @@ function _ejecutarGuardarMetas(){
 }
 
 function _cargarMetas(){
-  // Si la ruta tiene meta propia, usarla; si no, usar la de "todas" como fallback
+  // Si la ruta tiene meta propia, usarla (aunque sea 0 — 0 también es un valor válido puesto
+  // a propósito); si no tiene una propia marcada, usar la de "todas" como fallback.
   function _leerMeta(sufijo){
+    if(rutaInvFiltro!=='todas'&&metas[_metaKey(sufijo)+'_propio']){
+      return parseInt(metas[_metaKey(sufijo)])||0;
+    }
     var val=parseInt(metas[_metaKey(sufijo)])||0;
     if(!val&&rutaInvFiltro!=='todas'){
       val=parseInt(metas['fjd_meta_'+sufijo+'_todas'])||0;
@@ -3539,13 +3543,18 @@ function renderCierres(){
     var _sumarMetaTodasRutas=function(sufijo){
       return _RUTAS_TODAS.filter(function(r){ return r!=='todas'; }).reduce(function(s,r){
         var k=r.toLowerCase().replace(/\s+/g,'_');
-        var val=parseInt(metas['fjd_meta_'+sufijo+'_'+k])||0;
-        if(!val) val=parseInt(metas['fjd_meta_'+sufijo+'_todas'])||0;
+        var val;
+        if(metas['fjd_meta_'+sufijo+'_'+k+'_propio']){ val=parseInt(metas['fjd_meta_'+sufijo+'_'+k])||0; }
+        else {
+          val=parseInt(metas['fjd_meta_'+sufijo+'_'+k])||0;
+          if(!val) val=parseInt(metas['fjd_meta_'+sufijo+'_todas'])||0;
+        }
         return s+val;
       },0);
     };
     var metaPTodas=_sumarMetaTodasRutas('prestamos');
     var metaCTodas=_sumarMetaTodasRutas('clientes');
+    var metaTTodas=_sumarMetaTodasRutas('tarjetas');
     var metaSemTodas=Math.round(metaPTodas/4);
     var metaSemCTodas=Math.round(metaCTodas/4);
     var elStatsSemT=document.getElementById('cierre-semana-stats');
@@ -3555,7 +3564,8 @@ function renderCierres(){
       +_barMeta(dSemT.numPrestamos,metaSemCTodas,'Meta clientes nuevos semana (suma de rutas)',false);
     if(elStatsMesT) elStatsMesT.innerHTML=_statsHtml(dMesT,'mes')
       +_barMeta(dMesT.prestado+dMesT.montoRenov,metaPTodas,'Meta préstamos mes (suma de rutas)',true)
-      +_barMeta(dMesT.numPrestamos,metaCTodas,'Meta clientes nuevos mes (suma de rutas)',false);
+      +_barMeta(dMesT.numPrestamos,metaCTodas,'Meta clientes nuevos mes (suma de rutas)',false)
+      +_barMetaTarjetas(dMesT.clientesFin,metaTTodas);
     var elPorRutaSemT=document.getElementById('cierre-semana-porruta'); if(elPorRutaSemT) elPorRutaSemT.innerHTML='';
     var elPorRutaMesT=document.getElementById('cierre-mes-porruta'); if(elPorRutaMesT) elPorRutaMesT.innerHTML='';
     var wrapReinicioT=document.getElementById('wrap-reiniciar-cierres');
@@ -3735,6 +3745,9 @@ function imprimirCierre(id){
   // del sistema), no las de la ruta que esté seleccionada ahora mismo en pantalla.
   var _claveRuta=ruta==='todas'?'todas':ruta.toLowerCase().replace(/\s+/g,'_');
   function _leerMetaRuta(sufijo){
+    if(ruta!=='todas'&&metas['fjd_meta_'+sufijo+'_'+_claveRuta+'_propio']){
+      return parseInt(metas['fjd_meta_'+sufijo+'_'+_claveRuta])||0;
+    }
     var val=parseInt(metas['fjd_meta_'+sufijo+'_'+_claveRuta])||0;
     if(!val&&ruta!=='todas') val=parseInt(metas['fjd_meta_'+sufijo+'_todas'])||0;
     return val;
