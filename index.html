@@ -471,9 +471,6 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <p style="font-size:14px;color:#6b7280;margin-top:6px">Seleccioná tu ruta de trabajo</p>
     </div>
     <div style="display:flex;flex-direction:column;gap:14px;width:100%">
-      <button onclick="seleccionarRuta('todas')" style="padding:14px 16px;background:#1e40af;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:10px">
-        <span style="font-size:20px">🌐</span><span>Todas las rutas</span>
-      </button>
       <button onclick="seleccionarRuta('Heredia')" style="padding:14px 16px;background:#fff;color:#1e40af;border:2px solid #bfdbfe;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:10px">
         <span style="font-size:20px">📍</span><span>Heredia</span>
       </button>
@@ -644,7 +641,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           <div style="font-size:18px;font-weight:800;color:#92400e" id="inv-diferencia">₡0</div>
           <div style="font-size:10px;color:#6b7280;margin-top:2px" id="inv-diferencia-label">—</div>
         </div>
-        <div class="card" style="margin:0;padding:0;overflow:hidden">
+        <div class="card" id="wrap-inyectar-capital" style="margin:0;padding:0;overflow:hidden">
           <button onclick="toggleSecInv()" style="width:100%;padding:12px 14px;background:none;border:none;text-align:left;font-size:13px;font-weight:700;color:#1e40af;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
             <span>➕ Registrar inyección de capital</span><span id="inv-agregar-arrow">▼</span>
           </button>
@@ -661,6 +658,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
             <button class="btn btn-blue btn-full" style="padding:8px;font-size:13px" onclick="registrarInversion()">Registrar</button>
           </div>
         </div>
+        <p id="inv-todas-aviso" style="display:none;font-size:12px;color:#6b7280;text-align:center;padding:10px;background:#f9fafb;border-radius:10px;margin:0">👁 "Todas" es solo un resumen visual — entrá a una ruta específica para inyectar capital o cambiar metas.</p>
       </div>
 
       <!-- Historial de inversiones (últimos 2) -->
@@ -676,10 +674,10 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       <div style="border-top:2px solid #e5e7eb;margin-bottom:16px"></div>
 
       <!-- Metas del mes -->
-      <div class="card" style="margin-bottom:14px;background:#fefce8;border:2px solid #fde047">
+      <div class="card" id="wrap-metas-mes" style="margin-bottom:14px;background:#fefce8;border:2px solid #fde047">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
           <p style="font-size:14px;font-weight:800;margin:0;color:#854d0e">🎯 Metas del mes — <span id="meta-ruta-label" style="font-weight:600">Todas</span></p>
-          <button onclick="guardarMetas()" style="background:#854d0e;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">💾 Guardar</button>
+          <button id="btn-guardar-metas" onclick="guardarMetas()" style="background:#854d0e;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">💾 Guardar</button>
         </div>
         <div style="display:flex;flex-direction:column;gap:10px">
           <div>
@@ -757,7 +755,8 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <div id="cierre-mes-porruta"></div>
       </div>
 
-      <!-- Historial de cierres -->
+      <!-- Historial de cierres (no aplica a "Todas": es solo un resumen visual en vivo) -->
+      <div id="wrap-historial-cierres">
       <p style="font-size:13px;font-weight:700;margin-bottom:10px">🗂 Historial de cierres</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
         <button onclick="abrirHistorialTipo('semana')" style="padding:14px 6px;background:#dbeafe;color:#1e40af;border:2px solid #93c5fd;border-radius:12px;font-size:13px;font-weight:800;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center">
@@ -766,6 +765,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <button onclick="abrirHistorialTipo('mes')" style="padding:14px 6px;background:#dcfce7;color:#166534;border:2px solid #86efac;border-radius:12px;font-size:13px;font-weight:800;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center">
           🗓 Mensual<div id="cnt-mes" style="font-size:10px;font-weight:600;margin-top:3px;color:#16a34a"></div>
         </button>
+      </div>
       </div>
 
 
@@ -2077,6 +2077,13 @@ function cambiarRuta(){
 }
 
 function mostrarApp(){
+  // "Todas las rutas" ya no es una opción válida para Tarjetas/Cobros — si una sesión vieja
+  // quedó con esto guardado, se obliga a elegir una ruta específica de una vez.
+  if(rolActual==='admin'&&rutaActual==='todas'){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('ruta-selector').style.display='block';
+    return;
+  }
   document.getElementById('login-screen').style.display='none';
   document.getElementById('ruta-selector').style.display='none';
   document.getElementById('app').style.display=window.innerWidth>=768?'flex':'block';
@@ -2824,6 +2831,19 @@ function renderInversion(){
     btn.style.background=r===rutaInvFiltro?'#1e40af':'#e5e7eb';
     btn.style.color=r===rutaInvFiltro?'#fff':'#374151';
   });
+  // "Todas" es solo un resumen visual — no se puede inyectar capital ni editar metas ahí,
+  // hay que entrar a la ruta específica para eso.
+  var _esTodasInv=rutaInvFiltro==='todas';
+  var _wrapIny=document.getElementById('wrap-inyectar-capital');
+  var _avisoIny=document.getElementById('inv-todas-aviso');
+  if(_wrapIny) _wrapIny.style.display=_esTodasInv?'none':'';
+  if(_avisoIny) _avisoIny.style.display=_esTodasInv?'block':'none';
+  ['meta-prestamos','meta-tarjetas','meta-clientes'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.disabled=_esTodasInv;
+  });
+  var _btnGuardarMetas=document.getElementById('btn-guardar-metas');
+  if(_btnGuardarMetas) _btnGuardarMetas.style.display=_esTodasInv?'none':'';
   var basePrestamos=rutaInvFiltro==='todas'?prestamos:prestamos.filter(function(p){return p.ruta===rutaInvFiltro;});
   var activos=basePrestamos.filter(function(p){
     if(p.estado==='Cancelado'||p.incompleto) return false;
@@ -3457,13 +3477,69 @@ function _barMeta(actual,meta,etiqueta,esDinero){
     +'</div>';
 }
 
+// "Todas" ya no tiene ciclo propio de cierre — es la suma en vivo de lo que cada ruta real
+// tiene AHORA MISMO en su propia semana/mes en curso (cada una calculada desde su propia
+// última fecha de cierre). Así nunca acumula semanas viejas que nadie cerró bajo "todas".
+function _calcCierreDataTodasEnVivo(tipo,hoy){
+  function _diasiguienteL(fecha){ var d=new Date(fecha+'T12:00:00'); d.setDate(d.getDate()+1); return d.toISOString().split('T')[0]; }
+  var rutasReales=_RUTAS_TODAS.filter(function(r){ return r!=='todas'; });
+  var acumulado=null;
+  rutasReales.forEach(function(r){
+    var cierresR=cierres.filter(function(c){ return c.tipo===tipo&&(c.ruta||'todas')===r; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); });
+    var ultimoR=cierresR[0];
+    var inicioR=ultimoR?_diasiguienteL(ultimoR.hasta):(tipo==='semana'?_inicioSemana(hoy):_inicioMes(hoy));
+    var dR=_calcCierreData(inicioR,hoy,r);
+    if(!acumulado){
+      acumulado={recogida:0,prestado:0,montoRenov:0,entregadoRenov:0,totalGastos:0,utilidad:0,totalInyeccion:0,numPrestamos:0,numRenov:0,totalCobroAdm:0,idsNuevos:[]};
+    }
+    acumulado.recogida+=dR.recogida; acumulado.prestado+=dR.prestado; acumulado.montoRenov+=dR.montoRenov;
+    acumulado.entregadoRenov+=dR.entregadoRenov; acumulado.totalGastos+=dR.totalGastos; acumulado.utilidad+=dR.utilidad;
+    acumulado.totalInyeccion+=dR.totalInyeccion; acumulado.numPrestamos+=dR.numPrestamos; acumulado.numRenov+=dR.numRenov;
+    acumulado.totalCobroAdm+=dR.totalCobroAdm; acumulado.idsNuevos=acumulado.idsNuevos.concat(dR.idsNuevos||[]);
+  });
+  return acumulado;
+}
+
 function renderCierres(){
   _cargarMetas();
+  var hoy=hoyLocal();
+  var rFiltro=rutaInvFiltro||'todas';
+  var esTodas=rFiltro==='todas';
+
+  // "Todas" es solo un resumen visual en vivo: sin cerrar semana/mes, sin historial propio.
+  var btnSem=document.getElementById('btn-cerrar-semana');
+  var btnMes=document.getElementById('btn-cerrar-mes');
+  var wrapHist=document.getElementById('wrap-historial-cierres');
+  if(wrapHist) wrapHist.style.display=esTodas?'none':'block';
+  if(esTodas){
+    [btnSem,btnMes].forEach(function(btn){
+      if(!btn) return;
+      btn.style.display='none';
+    });
+    var dSemT=_calcCierreDataTodasEnVivo('semana',hoy);
+    var dMesT=_calcCierreDataTodasEnVivo('mes',hoy);
+    dSemT.saldoFin=_enCalleActual('todas'); dSemT.clientesFin=_clientesActivosActual('todas');
+    dMesT.saldoFin=_enCalleActual('todas'); dMesT.clientesFin=_clientesActivosActual('todas');
+    var elRangoSemT=document.getElementById('cierre-semana-rango');
+    var elRangoMesT=document.getElementById('cierre-mes-rango');
+    if(elRangoSemT) elRangoSemT.textContent='Suma en vivo de todas las rutas (cada una en su propio ciclo)';
+    if(elRangoMesT) elRangoMesT.textContent='Suma en vivo de todas las rutas (cada una en su propio ciclo)';
+    var elStatsSemT=document.getElementById('cierre-semana-stats');
+    var elStatsMesT=document.getElementById('cierre-mes-stats');
+    if(elStatsSemT) elStatsSemT.innerHTML=_statsHtml(dSemT,'semana');
+    if(elStatsMesT) elStatsMesT.innerHTML=_statsHtml(dMesT,'mes');
+    var elPorRutaSemT=document.getElementById('cierre-semana-porruta'); if(elPorRutaSemT) elPorRutaSemT.innerHTML='';
+    var elPorRutaMesT=document.getElementById('cierre-mes-porruta'); if(elPorRutaMesT) elPorRutaMesT.innerHTML='';
+    var wrapReinicioT=document.getElementById('wrap-reiniciar-cierres');
+    if(wrapReinicioT) wrapReinicioT.style.display='none';
+    return;
+  }
+
   // Activar/desactivar botones de cierre según día y hora
   var puedesSem=_esFridayNight();
   var puedesMes=_puedesCerrarMes();
-  var btnSem=document.getElementById('btn-cerrar-semana');
-  var btnMes=document.getElementById('btn-cerrar-mes');
+  if(btnSem) btnSem.style.display='';
+  if(btnMes) btnMes.style.display='';
   var _estiloBtnCierre=function(btn,activo,bg){
     if(!btn) return;
     btn.style.background=activo?bg:'#d1d5db';
@@ -3475,8 +3551,6 @@ function renderCierres(){
   _estiloBtnCierre(btnSem,puedesSem,'#1e40af');
   _estiloBtnCierre(btnMes,puedesMes,'#166534');
 
-  var hoy=hoyLocal();
-  var rFiltro=rutaInvFiltro||'todas';
   var metaSem=Math.round(metaPrestamos/4);
   var metaSemC=Math.round(metaClientes/4);
 
