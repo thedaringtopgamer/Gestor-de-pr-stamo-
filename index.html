@@ -3534,10 +3534,28 @@ function renderCierres(){
     var elRangoMesT=document.getElementById('cierre-mes-rango');
     if(elRangoSemT) elRangoSemT.textContent='Suma en vivo de todas las rutas (cada una en su propio ciclo)';
     if(elRangoMesT) elRangoMesT.textContent='Suma en vivo de todas las rutas (cada una en su propio ciclo)';
+    // Metas de "Todas" = suma en vivo de la meta propia de cada ruta real (con su mismo
+    // fallback a la meta "todas" si esa ruta no tiene una propia puesta).
+    var _sumarMetaTodasRutas=function(sufijo){
+      return _RUTAS_TODAS.filter(function(r){ return r!=='todas'; }).reduce(function(s,r){
+        var k=r.toLowerCase().replace(/\s+/g,'_');
+        var val=parseInt(metas['fjd_meta_'+sufijo+'_'+k])||0;
+        if(!val) val=parseInt(metas['fjd_meta_'+sufijo+'_todas'])||0;
+        return s+val;
+      },0);
+    };
+    var metaPTodas=_sumarMetaTodasRutas('prestamos');
+    var metaCTodas=_sumarMetaTodasRutas('clientes');
+    var metaSemTodas=Math.round(metaPTodas/4);
+    var metaSemCTodas=Math.round(metaCTodas/4);
     var elStatsSemT=document.getElementById('cierre-semana-stats');
     var elStatsMesT=document.getElementById('cierre-mes-stats');
-    if(elStatsSemT) elStatsSemT.innerHTML=_statsHtml(dSemT,'semana');
-    if(elStatsMesT) elStatsMesT.innerHTML=_statsHtml(dMesT,'mes');
+    if(elStatsSemT) elStatsSemT.innerHTML=_statsHtml(dSemT,'semana')
+      +_barMeta(dSemT.prestado+dSemT.montoRenov,metaSemTodas,'Meta préstamos semana (suma de rutas)',true)
+      +_barMeta(dSemT.numPrestamos,metaSemCTodas,'Meta clientes nuevos semana (suma de rutas)',false);
+    if(elStatsMesT) elStatsMesT.innerHTML=_statsHtml(dMesT,'mes')
+      +_barMeta(dMesT.prestado+dMesT.montoRenov,metaPTodas,'Meta préstamos mes (suma de rutas)',true)
+      +_barMeta(dMesT.numPrestamos,metaCTodas,'Meta clientes nuevos mes (suma de rutas)',false);
     var elPorRutaSemT=document.getElementById('cierre-semana-porruta'); if(elPorRutaSemT) elPorRutaSemT.innerHTML='';
     var elPorRutaMesT=document.getElementById('cierre-mes-porruta'); if(elPorRutaMesT) elPorRutaMesT.innerHTML='';
     var wrapReinicioT=document.getElementById('wrap-reiniciar-cierres');
