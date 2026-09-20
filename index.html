@@ -4180,41 +4180,71 @@ function cerrarCajaDia(ruta){
   var diaOp=diaOperativo();
   var yaExiste=cierresDiarios.some(function(c){ return c.ruta===ruta&&c.fecha===diaOp; });
   if(yaExiste){ toast('⚠ La caja de '+ruta+' ya está cerrada'); return; }
-  var data=_calcCierreData(diaOp,diaOp,ruta);
-  var detalle=_capturarDetalleCaja(diaOp,ruta);
-  if(!confirm('¿Cerrar caja de '+ruta+' del día '+diaOp+'?\n\n💰 Recogida: ₡'+fmt(data.recogida)+'\n👥 Clientes nuevos: '+data.numPrestamos+'\n💰 Cobros: '+detalle.cobros.length+'\n💸 Prestado: ₡'+fmt(data.prestado)+'\n\nPodés reabrir si cometés un error.')) return;
-  cierresDiarios.push({id:Date.now().toString(),tipo:'dia',fecha:diaOp,ruta:ruta,data:data,detalle:detalle,timestampCierre:Date.now(),nota:''});
-  cajasCerradas[ruta]=diaOp;
-  guardarDatos();
-  renderCajas();
-  toast('✓ Caja de '+ruta+' cerrada');
+  var overlay=document.getElementById('modal-overlay');
+  document.getElementById('modal-subtitulo').textContent='Cerrar caja';
+  document.getElementById('modal-mensaje').textContent='¿Cerrar la caja de '+ruta+'?';
+  document.getElementById('modal-btn-si').textContent='Sí, cerrar';
+  document.getElementById('modal-btn-si').style.background='#1e40af';
+  overlay.style.display='flex';
+  _modalCallback=function(){
+    overlay.style.display='none';
+    document.getElementById('modal-btn-si').style.background='#16a34a';
+    var data=_calcCierreData(diaOp,diaOp,ruta);
+    var detalle=_capturarDetalleCaja(diaOp,ruta);
+    cierresDiarios.push({id:Date.now().toString(),tipo:'dia',fecha:diaOp,ruta:ruta,data:data,detalle:detalle,timestampCierre:Date.now(),nota:''});
+    cajasCerradas[ruta]=diaOp;
+    guardarDatos();
+    renderCajas();
+    toast('✓ Caja de '+ruta+' cerrada');
+  };
+  document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
 }
 
 function cerrarTodasLasCajas(){
   var diaOp=diaOperativo();
   var abiertas=_RUTAS_CAJA.filter(function(r){ return !cierresDiarios.some(function(c){ return c.ruta===r&&c.fecha===diaOp; }); });
   if(!abiertas.length){ toast('⚠ Todas las cajas ya están cerradas'); return; }
-  if(!confirm('¿Cerrar todas las cajas del día '+diaOp+'?\n\nRutas: '+abiertas.join(', '))) return;
-  var ts=Date.now();
-  abiertas.forEach(function(r,i){
-    var data=_calcCierreData(diaOp,diaOp,r);
-    var detalle=_capturarDetalleCaja(diaOp,r);
-    cierresDiarios.push({id:(ts+i).toString(),tipo:'dia',fecha:diaOp,ruta:r,data:data,detalle:detalle,timestampCierre:ts,nota:''});
-    cajasCerradas[r]=diaOp;
-  });
-  guardarDatos();
-  renderCajas();
-  toast('✓ Todas las cajas cerradas');
+  var overlay=document.getElementById('modal-overlay');
+  document.getElementById('modal-subtitulo').textContent='Cerrar todas las cajas';
+  document.getElementById('modal-mensaje').textContent='¿Cerrar todas las cajas de hoy?';
+  document.getElementById('modal-btn-si').textContent='Sí, cerrar todas';
+  document.getElementById('modal-btn-si').style.background='#1e40af';
+  overlay.style.display='flex';
+  _modalCallback=function(){
+    overlay.style.display='none';
+    document.getElementById('modal-btn-si').style.background='#16a34a';
+    var ts=Date.now();
+    abiertas.forEach(function(r,i){
+      var data=_calcCierreData(diaOp,diaOp,r);
+      var detalle=_capturarDetalleCaja(diaOp,r);
+      cierresDiarios.push({id:(ts+i).toString(),tipo:'dia',fecha:diaOp,ruta:r,data:data,detalle:detalle,timestampCierre:ts,nota:''});
+      cajasCerradas[r]=diaOp;
+    });
+    guardarDatos();
+    renderCajas();
+    toast('✓ Todas las cajas cerradas');
+  };
+  document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
 }
 
 function reabrirCajaDia(ruta){
   var diaOp=diaOperativo();
-  if(!confirm('¿Reabrir la caja de '+ruta+' del día '+diaOp+'?')) return;
-  cierresDiarios=cierresDiarios.filter(function(c){ return !(c.ruta===ruta&&c.fecha===diaOp); });
-  delete cajasCerradas[ruta];
-  guardarDatos();
-  renderCajas();
-  toast('✓ Caja de '+ruta+' reabierta');
+  var overlay=document.getElementById('modal-overlay');
+  document.getElementById('modal-subtitulo').textContent='Reabrir caja';
+  document.getElementById('modal-mensaje').textContent='¿Reabrir la caja de '+ruta+'?';
+  document.getElementById('modal-btn-si').textContent='Sí, reabrir';
+  document.getElementById('modal-btn-si').style.background='#dc2626';
+  overlay.style.display='flex';
+  _modalCallback=function(){
+    overlay.style.display='none';
+    document.getElementById('modal-btn-si').style.background='#16a34a';
+    cierresDiarios=cierresDiarios.filter(function(c){ return !(c.ruta===ruta&&c.fecha===diaOp); });
+    delete cajasCerradas[ruta];
+    guardarDatos();
+    renderCajas();
+    toast('✓ Caja de '+ruta+' reabierta');
+  };
+  document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
 }
 
 function abrirHistorialCajasTipo(tipo){
