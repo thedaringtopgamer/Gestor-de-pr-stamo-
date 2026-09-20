@@ -3201,10 +3201,18 @@ function _verListaNuevos(tipo){
 }
 
 function _verListaGastos(tipo){
-  var f=window['_filtroGastos_'+tipo]||{};
-  var gastosP=gastos.filter(function(x){ return x.fecha>=f.desde&&x.fecha<=f.hasta&&(f.ruta==='todas'||x.ruta===f.ruta); });
+  var _preList=window['_gastosListaTodas_'+tipo];
+  var gastosP,rangoTxt;
+  if(_preList){
+    gastosP=_preList;
+    rangoTxt='Todas las rutas (cada una en su propio ciclo)';
+  } else {
+    var f=window['_filtroGastos_'+tipo]||{};
+    gastosP=gastos.filter(function(x){ return x.fecha>=f.desde&&x.fecha<=f.hasta&&(f.ruta==='todas'||x.ruta===f.ruta); });
+    rangoTxt=f.desde+' → '+f.hasta;
+  }
   document.getElementById('nuevos-periodo-titulo').textContent='💸 Gastos — '+(tipo==='semana'?'Semana':'Mes');
-  document.getElementById('nuevos-periodo-rango').textContent=(f.desde+' → '+f.hasta)+' ('+gastosP.length+' gasto'+(gastosP.length!==1?'s':'')+')';
+  document.getElementById('nuevos-periodo-rango').textContent=rangoTxt+' ('+gastosP.length+' gasto'+(gastosP.length!==1?'s':'')+')';
   var lista=document.getElementById('nuevos-periodo-lista');
   if(!gastosP.length){
     lista.innerHTML='<p style="color:#6b7280;font-size:14px;text-align:center;margin-top:40px">Ningún gasto en este período.</p>';
@@ -3501,9 +3509,11 @@ function _calcCierreDataTodasEnVivo(tipo,hoy){
     else { saldoInicioR=saldoInicios[r+'|'+_claveSufR+'|'+inicioR]; if(typeof saldoInicioR!=='number') saldoInicioR=_enCalleActual(r); }
     if(ultimoR&&ultimoR.data&&typeof ultimoR.data.clientesFin==='number'){ clientesInicioR=ultimoR.data.clientesFin; }
     else { clientesInicioR=saldoInicios[r+'|'+_claveSufRC+'|'+inicioR]; if(typeof clientesInicioR!=='number') clientesInicioR=_clientesActivosActual(r); }
+    var gastosR=gastos.filter(function(x){ return x.fecha>=inicioR&&x.fecha<=hoy&&x.ruta===r; });
     if(!acumulado){
-      acumulado={recogida:0,prestado:0,montoRenov:0,entregadoRenov:0,totalGastos:0,utilidad:0,totalInyeccion:0,numPrestamos:0,numRenov:0,totalCobroAdm:0,idsNuevos:[],saldoInicio:0,clientesInicio:0};
+      acumulado={recogida:0,prestado:0,montoRenov:0,entregadoRenov:0,totalGastos:0,utilidad:0,totalInyeccion:0,numPrestamos:0,numRenov:0,totalCobroAdm:0,idsNuevos:[],saldoInicio:0,clientesInicio:0,gastosDetalle:[]};
     }
+    acumulado.gastosDetalle=acumulado.gastosDetalle.concat(gastosR);
     acumulado.recogida+=dR.recogida; acumulado.prestado+=dR.prestado; acumulado.montoRenov+=dR.montoRenov;
     acumulado.entregadoRenov+=dR.entregadoRenov; acumulado.totalGastos+=dR.totalGastos; acumulado.utilidad+=dR.utilidad;
     acumulado.totalInyeccion+=dR.totalInyeccion; acumulado.numPrestamos+=dR.numPrestamos; acumulado.numRenov+=dR.numRenov;
@@ -3537,6 +3547,12 @@ function renderCierres(){
     var elRangoMesT=document.getElementById('cierre-mes-rango');
     if(elRangoSemT) elRangoSemT.textContent='Suma en vivo de todas las rutas (cada una en su propio ciclo)';
     if(elRangoMesT) elRangoMesT.textContent='Suma en vivo de todas las rutas (cada una en su propio ciclo)';
+    window._idsNuevos_semana=dSemT.idsNuevos||[];
+    window._rangoNuevos_semana='Todas las rutas';
+    window._gastosListaTodas_semana=dSemT.gastosDetalle||[];
+    window._idsNuevos_mes=dMesT.idsNuevos||[];
+    window._rangoNuevos_mes='Todas las rutas';
+    window._gastosListaTodas_mes=dMesT.gastosDetalle||[];
     // Metas de "Todas" = suma en vivo de la meta propia de cada ruta real (con su mismo
     // fallback a la meta "todas" si esa ruta no tiene una propia puesta).
     var _sumarMetaTodasRutas=function(sufijo){
@@ -3626,6 +3642,7 @@ function renderCierres(){
   window._idsNuevos_semana=dSem.idsNuevos||[];
   window._rangoNuevos_semana=inicioSem+' → '+hoy;
   window._filtroGastos_semana={desde:inicioSem,hasta:hoy,ruta:rFiltro};
+  window._gastosListaTodas_semana=null;
   if(elStatsSem) elStatsSem.innerHTML=_statsHtml(dSem,'semana')
     +_barMeta(_valConAjuste('semana','prestado',dSem.prestado+dSem.montoRenov),metaSem,'Meta préstamos semana',true)
     +_barMeta(_valConAjuste('semana','clientes',dSem.numPrestamos),metaSemC,'Meta clientes nuevos semana',false);
@@ -3693,6 +3710,7 @@ function renderCierres(){
   window._idsNuevos_mes=dMes.idsNuevos||[];
   window._rangoNuevos_mes=inicioMes+' → '+hoy;
   window._filtroGastos_mes={desde:inicioMes,hasta:hoy,ruta:rFiltroMes};
+  window._gastosListaTodas_mes=null;
   if(elStatsMes) elStatsMes.innerHTML=_statsHtml(dMes,'mes')
     +_barMeta(_valConAjuste('mes','prestado',dMes.prestado+dMes.montoRenov),metaPrestamos,'Meta préstamos mes',true)
     +_barMeta(_valConAjuste('mes','clientes',dMes.numPrestamos),metaClientes,'Meta clientes nuevos mes',false)
