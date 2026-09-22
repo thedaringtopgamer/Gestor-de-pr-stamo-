@@ -7736,7 +7736,8 @@ function renderPanelRecolector(userPickedDate){
   var renovHoy=renovaciones.filter(function(x){return x.origen!=='nuevo_tras_cancelado' && x.fecha===fecha && idsRuta.indexOf(x.id_prestamo)!==-1 && !x._ocultarPanel;});
   var panelRenov=document.getElementById('panel-renov-lista');
   if(panelRenov){
-    document.getElementById('panel-stat-renov').textContent=renovHoy.length+' renovación'+(renovHoy.length!==1?'es':'');
+    var _entregadoRenovHoy=renovHoy.reduce(function(s,x){return s+(x.montoEntregado||0);},0);
+    document.getElementById('panel-stat-renov').textContent=renovHoy.length+' renovación'+(renovHoy.length!==1?'es':'')+' · Entregado: ₡'+fmt(_entregadoRenovHoy);
     panelRenov.innerHTML=renovHoy.length
       ?renovHoy.map(function(rv){
         return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">'
