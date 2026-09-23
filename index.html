@@ -5869,7 +5869,7 @@ function renderPagosLista(p){
   // ts usa el id de cada evento (timestamp en milisegundos de Date.now()), no la fecha del día:
   // dos eventos del mismo día (ej. préstamo nuevo + renovación el mismo día) tienen la misma
   // fecha y quedaban empatados, ordenándose mal. El id sí refleja el orden real en que pasaron.
-  var pp=ppRaw.map(function(x,i){return {tipo:'abono',fecha:x.fechaPago,ts:x.id_pago||x.fechaRegistro||x.fechaPago||'',idx:i,data:x};});
+  var pp=ppRaw.map(function(x,i){return {tipo:'abono',fecha:x.fechaRegistro||x.fechaPago,ts:x.id_pago||x.fechaRegistro||x.fechaPago||'',idx:i,data:x};});
   var rrOffset=ppRaw.length;
   var rr=rrRaw.map(function(x,i){return {tipo:'renovacion',fecha:x.fecha,ts:x.id||x.fecha||'',idx:rrOffset+i,data:x};});
   var nuevo=(p.mensajeWANuevo?[{tipo:'nuevo',fecha:p._fechaCreacion||p.fechaInicio,ts:p.id||p._fechaCreacion||p.fechaInicio||'',idx:rrOffset+rrRaw.length,data:p}]:[]);
@@ -5892,7 +5892,7 @@ function renderPagosLista(p){
       var msgAbono=mensajeAbonoAt(p,ab.id_pago).replace(/\n/g,'<br>').replace(/\*(.*?)\*/g,'<b>$1</b>').replace(/_(.*?)_/g,'<i>$1</i>');
       return '<div style="border-bottom:1px solid var(--border)">'
         +'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;cursor:pointer" onclick="toggleRenEntry(\''+uid+'\')">'
-          +'<div><div style="font-size:13px;font-weight:500">💰 Abono</div><div style="font-size:11px;color:var(--text-muted)">'+ab.fechaPago+'</div></div>'
+          +'<div><div style="font-size:13px;font-weight:500">💰 Abono</div><div style="font-size:11px;color:var(--text-muted)">'+(ab.fechaRegistro||ab.fechaPago)+'</div></div>'
           +'<div style="display:flex;align-items:center;gap:8px">'
           +'<span class="vbox-green" style="font-size:12px;padding:5px 10px">₡'+fmt(ab.montoAbonado)+'</span>'
           +'<span style="font-size:14px;color:var(--text-muted)" id="arr-'+uid+'">▶</span>'
