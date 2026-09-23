@@ -5998,13 +5998,7 @@ function mensajeAbono(p){
     +'📊 *Cuota:* '+diasPagados+'/'+_tdiasM+'\n'
     +'📅 *Próxima fecha de pago:*\n'
     +'   '+fechaProxStr+'\n'
-    +(function(){
-      // Solo lo que sobra de ESTE abono sobre la cuota (no todo lo que lleve adelantado
-      // de semanas atrás) — ej. cuota ₡4,000, abona ₡6,000 → ₡2,000 por detrás.
-      var cuotaVal=p.Cuota_Quincenal;
-      var sobrante=cuotaVal>0?(montoAbonado%cuotaVal):0;
-      return (d.saldoPendiente>0&&cuotaVal>0&&montoAbonado>=cuotaVal&&sobrante>0)?'💵 ₡'+fmt(sobrante)+' por detrás\n':'';
-    })()
+    +(d.saldoPendiente>0&&d.adelanto>0?'💵 ₡'+fmt(d.adelanto)+' por detrás\n':'')
     +'────────────────\n'
     +'Gracias por su pago 🙏';
 }
@@ -6032,6 +6026,7 @@ function mensajeAbonoAt(p, targetPagoId){
   var totalPagado=totalPagadoGlobal-_baseAtTime;
   var saldoPendiente=Math.max(0,p.Total_A_Cobrar-totalPagado);
   var cuotasPagadas=Math.min(p.cantidadDeQuincenas,Math.floor(totalPagado/p.Cuota_Quincenal));
+  var adelanto=totalPagado-(cuotasPagadas*p.Cuota_Quincenal);
   var _esLargoA=(p.tipo==='Diario'&&(p.cantidadDeQuincenas||30)>=60)||(p.tipo==='Semanal'&&(p.cantidadDeQuincenas||5)>6);
   var _tdiasA=_esLargoA?60:30;
   var cuotaDiaria=p.Total_A_Cobrar>0?p.Total_A_Cobrar/_tdiasA:0;
@@ -6060,11 +6055,7 @@ function mensajeAbonoAt(p, targetPagoId){
     +'📊 *Cuota:* '+diasPagados+'/'+_tdiasA+'\n'
     +'📅 *Próxima fecha de pago:*\n'
     +'   '+fechaProxStr+'\n'
-    +(function(){
-      var cuotaVal=p.Cuota_Quincenal;
-      var sobrante=cuotaVal>0?(montoAbonado%cuotaVal):0;
-      return (saldoPendiente>0&&cuotaVal>0&&montoAbonado>=cuotaVal&&sobrante>0)?'💵 ₡'+fmt(sobrante)+' por detrás\n':'';
-    })()
+    +(saldoPendiente>0&&adelanto>0?'💵 ₡'+fmt(adelanto)+' por detrás\n':'')
     +'────────────────\n'
     +'Gracias por su pago 🙏';
 }
