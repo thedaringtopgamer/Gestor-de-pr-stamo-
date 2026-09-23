@@ -5823,14 +5823,17 @@ function renderCuotasGrid(p,d){
 
   // Mapear qué pago cubrió cada día
   var pp=pagos.filter(function(x){return x.id_prestamo===p.id;});
-  pp.sort(function(a,b){return new Date(a.fechaPago)-new Date(b.fechaPago);});
+  // Ordenar y etiquetar cada día por la fecha REAL en que se registró el abono
+  // (fechaRegistro), no por "Fecha de pago" — ese campo suele quedar con la próxima
+  // fecha de cobro sugerida, no con el día real en que el cliente entregó la plata.
+  pp.sort(function(a,b){return new Date(a.fechaRegistro||a.fechaPago)-new Date(b.fechaRegistro||b.fechaPago);});
   var diaPago={};
   var acum=0;
   pp.forEach(function(pago){
     var desdeDia=cuotaDiaria>0?Math.floor(acum/cuotaDiaria):0;
     acum+=pago.montoAbonado;
     var hastaDia=Math.min(_tdias,cuotaDiaria>0?Math.floor(acum/cuotaDiaria):0);
-    for(var k=desdeDia+1;k<=hastaDia;k++) diaPago[k]=pago.fechaPago;
+    for(var k=desdeDia+1;k<=hastaDia;k++) diaPago[k]=pago.fechaRegistro||pago.fechaPago;
   });
 
   var html='';
