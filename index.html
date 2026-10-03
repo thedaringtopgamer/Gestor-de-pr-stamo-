@@ -4119,9 +4119,10 @@ function abrirHistorialTipo(tipo){
             +'<div style="font-size:11px;color:#9ca3af;margin-top:2px">Guardado'+_horaGuardado+'</div>'
             +(c.nota?'<div style="font-size:11px;color:#6b7280;margin-top:2px">'+c.nota+'</div>':'')
           +'</div>'
-          +(rolActual==='admin'?(esUltimo
+          +(rolActual==='admin'?((esUltimo
             ?'<button onclick="event.stopPropagation();reabrirCierre(\''+c.id+'\')" style="background:#dbeafe;color:#1e40af;border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer;margin-right:8px;flex-shrink:0">↩ Reabrir</button>'
-            :'<button onclick="event.stopPropagation();eliminarCierre(\''+c.id+'\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer;margin-right:8px;flex-shrink:0">🗑 Eliminar</button>')
+            :'')
+            +'<button onclick="event.stopPropagation();eliminarCierre(\''+c.id+'\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer;margin-right:8px;flex-shrink:0">🗑 Eliminar</button>')
             :'')
           +'<span onclick="toggleRenEntry(\''+uid+'\')" style="font-size:14px;color:#9ca3af;cursor:pointer;flex-shrink:0" id="arr-'+uid+'">▶</span>'
         +'</div>'
@@ -4129,9 +4130,10 @@ function abrirHistorialTipo(tipo){
           +_statsHtml(c.data,c.tipo,c.id)
           +'<div style="display:flex;gap:8px;margin-top:10px">'
             +'<button onclick="imprimirCierre(\''+c.id+'\')" style="background:#dbeafe;color:#1e40af;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🖨 Imprimir</button>'
-            +(rolActual==='admin'?(esUltimo
+            +(rolActual==='admin'?((esUltimo
               ?'<button onclick="reabrirCierre(\''+c.id+'\')" style="background:#dbeafe;color:#1e40af;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">↩ Reabrir</button>'
-              :'<button onclick="eliminarCierre(\''+c.id+'\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🗑 Eliminar</button>')
+              :'')
+              +'<button onclick="eliminarCierre(\''+c.id+'\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🗑 Eliminar</button>')
               :'')
           +'</div>'
         +'</div>'
