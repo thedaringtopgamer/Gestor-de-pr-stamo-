@@ -3720,8 +3720,8 @@ function renderCierres(){
 
   // Actualizar contadores en botones de historial
   var rFiltroC=rutaInvFiltro||'todas';
-  var nSem=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===rFiltroC; }).length;
-  var nMes=cierres.filter(function(c){ return c.tipo==='mes'&&(c.ruta||'todas')===rFiltroC; }).length;
+  var nSem=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===rFiltroC&&!c._ocultoHistorial; }).length;
+  var nMes=cierres.filter(function(c){ return c.tipo==='mes'&&(c.ruta||'todas')===rFiltroC&&!c._ocultoHistorial; }).length;
   var cntSem=document.getElementById('cnt-semana');
   var cntMes=document.getElementById('cnt-mes');
   if(cntSem) cntSem.textContent=nSem?nSem+' guardado'+(nSem===1?'':'s'):'Sin cierres';
@@ -4043,7 +4043,22 @@ function reabrirCierre(id){
 function eliminarCierre(id){
   if(!confirm('¿Eliminar este cierre?')) return;
   var objetivo=cierres.find(function(c){ return c.id===id; });
-  if(objetivo&&objetivo.ruta==='todas'){
+  if(!objetivo) return;
+  var _ruta=objetivo.ruta||'todas';
+  var _grupo=cierres.filter(function(c){ return c.tipo===objetivo.tipo&&(c.ruta||'todas')===_ruta; });
+  var _masReciente=_grupo.sort(function(a,b){ return (parseInt(b.id)||0)-(parseInt(a.id)||0); })[0];
+  var _esElUltimo=_masReciente&&_masReciente.id===objetivo.id;
+  if(_esElUltimo){
+    // Es el cierre más reciente: su fecha es el límite que usa la caja en curso para saber
+    // desde dónde contar. Si lo borráramos del todo, la caja en curso volvería a sumar esos
+    // días como si nunca se hubieran cerrado. Por eso se oculta del historial nada más —
+    // la caja en curso sigue exactamente igual, solo desaparece de la lista guardada.
+    if(objetivo.ruta==='todas'){
+      cierres.forEach(function(c){ if(c.tipo===objetivo.tipo&&c.hasta===objetivo.hasta) c._ocultoHistorial=true; });
+    } else {
+      objetivo._ocultoHistorial=true;
+    }
+  } else if(objetivo.ruta==='todas'){
     // Si se elimina el cierre de "todas", eliminar también los de las rutas individuales del mismo grupo
     cierres=cierres.filter(function(c){
       return !(c.tipo===objetivo.tipo&&c.hasta===objetivo.hasta);
@@ -4053,7 +4068,7 @@ function eliminarCierre(id){
   }
   guardarDatos();
   renderCierres();
-  if(document.getElementById('modal-hist-cierres').style.display==='flex') abrirHistorialTipo(objetivo?objetivo.tipo:'semana');
+  if(document.getElementById('modal-hist-cierres').style.display==='flex') abrirHistorialTipo(objetivo.tipo);
   toast('✓ Cierre eliminado');
 }
 
@@ -4080,13 +4095,19 @@ function abrirHistorialTipo(tipo){
   var titulo=esSem?'📆 Historial semanal':'🗓 Historial mensual';
   document.getElementById('modal-cierres-titulo').textContent=titulo;
   var lista=document.getElementById('modal-hist-cierres-lista');
-  var filtrados=cierres.filter(function(c){ return c.tipo===tipo&&(c.ruta||'todas')===rFiltro; })
+  var filtrados=cierres.filter(function(c){ return c.tipo===tipo&&(c.ruta||'todas')===rFiltro&&!c._ocultoHistorial; })
     .sort(function(a,b){ return (parseInt(b.id)||0)-(parseInt(a.id)||0); });
+  // Si el cierre más reciente de verdad quedó oculto (se le dio "Eliminar"), ya marca el
+  // límite de la caja en curso — ningún cierre visible más viejo puede ofrecer "Reabrir",
+  // porque reabriría encima de un período que ya no es el actual.
+  var _masRecienteReal=cierres.filter(function(c){ return c.tipo===tipo&&(c.ruta||'todas')===rFiltro; })
+    .sort(function(a,b){ return (parseInt(b.id)||0)-(parseInt(a.id)||0); })[0];
+  var _ultimoOculto=!!(_masRecienteReal&&_masRecienteReal._ocultoHistorial);
   if(!filtrados.length){
     lista.innerHTML='<p style="color:#6b7280;text-align:center;padding:20px">Sin cierres guardados</p>';
   } else {
     lista.innerHTML=filtrados.map(function(c,idx){
-      var esUltimo=idx===0; // el mas reciente (filtrados ya viene ordenado del mas nuevo al mas viejo)
+      var esUltimo=idx===0&&!_ultimoOculto; // el mas reciente (filtrados ya viene ordenado del mas nuevo al mas viejo)
       var uid='cierre-det-'+c.id;
       var label=esSem?'Semana':'Mes';
       // Para cierres mensuales: contar semanas guardadas entre el cierre de mes anterior y este
