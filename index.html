@@ -7799,17 +7799,23 @@ function renderPanelRecolector(userPickedDate){
       var _inyec=inversiones.filter(function(x){return x.fecha===diaStr&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
       return _rec+_inyec-_pres-_renov-_gastos;
     };
-    // Buscar hacia atrás (desde ayer) el último día con base conocida, acumulando los días sin base
+    // Buscar hacia atrás (desde ayer) el último día con base conocida, acumulando los días sin base.
+    // El día donde se encuentra la base conocida es su base de ARRANQUE (la de esa mañana), así
+    // que ese mismo día también hay que agregarlo a la lista para reproducir sus movimientos —
+    // si no, "ayer" se queda con su base de arranque sin sumarle lo que pasó ese día, y hoy
+    // termina heredando la base de ayer en vez de lo que ayer cerró.
     var _cursor=new Date(fecha+'T12:00:00'); _cursor.setDate(_cursor.getDate()-1);
     var _diasFaltantes=[];
     var _baseConocida=0;
     for(var _d=0;_d<=60;_d++){
       var _curStr=_cursor.toISOString().split('T')[0];
       var _curKey=rutaCajaKey+'_'+_curStr;
-      if(bases['_m_'+_curKey]){ _baseConocida=parseInt(bases[_curKey])||0; break; }
-      if(bases['_cf_'+_curKey]!==undefined){ _baseConocida=parseInt(bases['_cf_'+_curKey])||0; break; }
-      if(bases[_curKey]!==undefined){ _baseConocida=parseInt(bases[_curKey])||0; break; }
+      var _tieneBaseConocida=false;
+      if(bases['_m_'+_curKey]){ _baseConocida=parseInt(bases[_curKey])||0; _tieneBaseConocida=true; }
+      else if(bases['_cf_'+_curKey]!==undefined){ _baseConocida=parseInt(bases['_cf_'+_curKey])||0; _tieneBaseConocida=true; }
+      else if(bases[_curKey]!==undefined){ _baseConocida=parseInt(bases[_curKey])||0; _tieneBaseConocida=true; }
       _diasFaltantes.unshift(_curStr);
+      if(_tieneBaseConocida) break;
       _cursor.setDate(_cursor.getDate()-1);
     }
     // Reconstruir hacia adelante día por día (nunca saltar), cacheando cada paso
