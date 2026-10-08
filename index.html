@@ -850,7 +850,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Cuota</div><input type="text" inputmode="numeric" id="corr-cuota" oninput="fmtMoneyInput(this)" placeholder="0" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box"></div>
         <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">N° cuotas</div><input type="number" id="corr-ncuotas" placeholder="0" min="1" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box"></div>
         <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Base renovación</div><input type="text" inputmode="numeric" id="corr-base" oninput="fmtMoneyInput(this)" placeholder="0" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box"></div>
-        <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Tipo</div><select id="corr-tipo" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;background:#fff;box-sizing:border-box"><option value="Diario">Diario</option><option value="Semanal">Semanal</option><option value="Quincenal">Quincenal</option><option value="Mensual">Mensual</option></select></div>
+        <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Tipo</div><select id="corr-tipo" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;background:#fff;box-sizing:border-box"><option value="Diario">Diario</option><option value="Semanal">Semanal</option><option value="Quincenal">Quincenal</option><option value="Bisemanal">Bisemanal</option></select></div>
         <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Fecha de inicio</div><input type="date" id="corr-fecha-inicio" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box"></div>
         <div><div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px">Fecha de creación</div><input type="date" id="corr-fecha-creacion" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box"></div>
       </div>
@@ -1129,7 +1129,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           <button type="button" id="btn-tipo-Diario" onclick="selTipo('Diario')" style="padding:10px 4px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:12px;font-weight:600;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif">Diario</button>
           <button type="button" id="btn-tipo-Semanal" onclick="selTipo('Semanal')" style="padding:10px 4px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:12px;font-weight:600;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif">Semanal</button>
           <button type="button" id="btn-tipo-Quincenal" onclick="selTipo('Quincenal')" style="padding:10px 4px;border:1.5px solid var(--cyan);border-radius:var(--radius);font-size:12px;font-weight:600;background:#f0f9ff;color:#0e7490;cursor:pointer;font-family:'DM Sans',sans-serif">Quincenal</button>
-          <button type="button" id="btn-tipo-Mensual" onclick="selTipo('Mensual')" style="padding:10px 4px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:12px;font-weight:600;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif">Mensual</button>
+          <button type="button" id="btn-tipo-Bisemanal" onclick="selTipo('Bisemanal')" style="padding:10px 4px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:12px;font-weight:600;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif">Bisemanal</button>
         </div>
         <!-- Sub-opciones Diario -->
         <div id="sub-diario" style="display:none;margin-top:8px">
@@ -1154,6 +1154,14 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <button type="button" id="btn-quin-2" onclick="selQuincenas(2)" style="padding:10px;border:1.5px solid var(--cyan);border-radius:var(--radius);font-size:13px;font-weight:600;background:#f0f9ff;color:#0e7490;cursor:pointer;font-family:'DM Sans',sans-serif">2 quincenas</button>
             <button type="button" id="btn-quin-3" onclick="selQuincenas(3)" style="padding:10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-weight:600;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif">3 quincenas</button>
+          </div>
+        </div>
+        <!-- Sub-opciones Bisemanal -->
+        <div id="sub-bisemanal" style="display:none;margin-top:8px">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Seleccione período:</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button type="button" id="btn-bisem-2" onclick="selBisemanas(2)" style="padding:10px;border:1.5px solid var(--cyan);border-radius:var(--radius);font-size:13px;font-weight:600;background:#f0f9ff;color:#0e7490;cursor:pointer;font-family:'DM Sans',sans-serif">2 bisemanas</button>
+            <button type="button" id="btn-bisem-3" onclick="selBisemanas(3)" style="padding:10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-weight:600;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif">3 bisemanas</button>
           </div>
         </div>
       </div>
@@ -1624,7 +1632,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           <label style="flex:1;min-width:70px"><input type="radio" name="ren-tipo" value="Diario" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rtipo-Diario">Diario</div></label>
           <label style="flex:1;min-width:70px"><input type="radio" name="ren-tipo" value="Semanal" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rtipo-Semanal">Semanal</div></label>
           <label style="flex:1;min-width:70px"><input type="radio" name="ren-tipo" value="Quincenal" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rtipo-Quincenal">Quincenal</div></label>
-          <label style="flex:1;min-width:70px"><input type="radio" name="ren-tipo" value="Mensual" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rtipo-Mensual">Mensual</div></label>
+          <label style="flex:1;min-width:70px"><input type="radio" name="ren-tipo" value="Bisemanal" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rtipo-Bisemanal">Bisemanal</div></label>
         </div>
         <!-- Sub opciones Diario -->
         <div id="ren-sub-diario" style="display:none;margin-bottom:10px">
@@ -1646,6 +1654,13 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
           <div style="display:flex;gap:6px">
             <label style="flex:1"><input type="radio" name="ren-quin" value="2" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rquin-2">2 quincenas</div></label>
             <label style="flex:1"><input type="radio" name="ren-quin" value="3" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rquin-3">3 quincenas</div></label>
+          </div>
+        </div>
+        <!-- Sub opciones Bisemanal -->
+        <div id="ren-sub-bisemanal" style="display:none;margin-bottom:10px">
+          <div style="display:flex;gap:6px">
+            <label style="flex:1"><input type="radio" name="ren-bisem" value="2" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rbisem-2">2 bisemanas</div></label>
+            <label style="flex:1"><input type="radio" name="ren-bisem" value="3" onchange="calcRenovar()" style="display:none"><div class="tipo-btn" id="rbisem-3">3 bisemanas</div></label>
           </div>
         </div>
         <!-- Día cobro -->
@@ -4749,10 +4764,11 @@ document.addEventListener('click',function(e){
 
 var _npSemanas=5;
 var _npQuincenas=2;
+var _npBisemanas=2;
 
 function selTipo(tipo){
   document.getElementById('np-tipo-val').value=tipo;
-  ['Diario','Semanal','Quincenal','Mensual'].forEach(function(t){
+  ['Diario','Semanal','Quincenal','Bisemanal'].forEach(function(t){
     var btn=document.getElementById('btn-tipo-'+t);
     if(!btn) return;
     var sel=t===tipo;
@@ -4763,6 +4779,7 @@ function selTipo(tipo){
   document.getElementById('sub-diario').style.display=tipo==='Diario'?'block':'none';
   document.getElementById('sub-semanal').style.display=tipo==='Semanal'?'block':'none';
   document.getElementById('sub-quincenal').style.display=tipo==='Quincenal'?'block':'none';
+  document.getElementById('sub-bisemanal').style.display=tipo==='Bisemanal'?'block':'none';
   if(tipo==='Diario') selCuotasDiario(30);
   calcPreview();
   calcProxFechaPago();
@@ -4832,6 +4849,19 @@ function selQuincenas(n){
   calcProxFechaPago();
 }
 
+function selBisemanas(n){
+  _npBisemanas=n;
+  [2,3].forEach(function(v){
+    var btn=document.getElementById('btn-bisem-'+v);
+    if(!btn) return;
+    btn.style.borderColor=v===n?'var(--cyan)':'var(--border)';
+    btn.style.background=v===n?'#f0f9ff':'#fff';
+    btn.style.color=v===n?'#0e7490':'inherit';
+  });
+  calcPreview();
+  calcProxFechaPago();
+}
+
 function calcProxFechaPago(){
   var proxEl=document.getElementById('np-prox-fecha');
   if(!proxEl) return;
@@ -4852,8 +4882,10 @@ function getCuotasYDias(){
     cuotas=_npSemanas||5; diasPorCuota=7;
   } else if(tipo==='Quincenal'){
     cuotas=_npQuincenas||2; diasPorCuota=15;
+  } else if(tipo==='Bisemanal'){
+    cuotas=_npBisemanas||2; diasPorCuota=14;
   } else {
-    cuotas=1; diasPorCuota=30;
+    cuotas=_npQuincenas||2; diasPorCuota=15;
   }
   return {cuotas:cuotas, diasPorCuota:diasPorCuota, tipo:tipo};
 }
@@ -5127,7 +5159,7 @@ function calcDerived(p){
           }
           _periodosAdicionales=_habiles;
         } else {
-          // Semanal/Quincenal/Mensual: días calendario desde la fecha
+          // Semanal/Quincenal/Bisemanal: días calendario desde la fecha
           var _diasCal=Math.floor((_hoyD2.getTime()-_manualD.getTime())/86400000);
           _periodosAdicionales=Math.floor(_diasCal/(p.diasPorCuota||15));
         }
@@ -5217,7 +5249,7 @@ function getCuotaVencimiento(p, numCuota){
     for(var i=0;i<hops;i++){ dq=_proximaFechaQuincenal(dq); }
     return siguienteDiaHabil(dq);
   } else {
-    // Semanal, Mensual: días calendario desde fechaInicio + saltar fin de semana
+    // Semanal, Bisemanal: días calendario desde fechaInicio + saltar fin de semana
     var d=new Date(fecha);
     d.setDate(d.getDate() + diasPorCuota*(numCuota-1));
     return siguienteDiaHabil(d);
@@ -5739,7 +5771,7 @@ function verDetalle(id){
   var tipo=p.tipo||'Quincenal';
   var n=p.cantidadDeQuincenas||1;
   var diasPagados, _tdias;
-  if(tipo==='Quincenal'||tipo==='Mensual'){
+  if(tipo==='Quincenal'||tipo==='Bisemanal'){
     // Estos tipos se cobran por cuota, no por día — mostrar cuotas pagadas / cuotas totales
     _tdias=n;
     diasPagados=Math.min(n,d.cuotasPagadas);
@@ -5753,6 +5785,7 @@ function verDetalle(id){
   var linea1=tipo;
   var linea2='';
   if(tipo==='Quincenal') linea2=n+(n===1?' quincena':' quincenas');
+  else if(tipo==='Bisemanal') linea2=n+(n===1?' bisemana':' bisemanas');
   else if(tipo==='Semanal') linea2=n+(n===1?' semana':' semanas');
   else if(tipo==='Diario') linea2=_tdias+' días';
   document.getElementById('det-modalidad').innerHTML=linea1+(linea2?'<br><span style="font-size:11px;font-weight:500;color:#6b7280">'+linea2+'</span>':'');
@@ -6390,7 +6423,7 @@ function abrirRenovar(){
     var _baseQuinc=p.proximaFechaPago?parseLocalDate(p.proximaFechaPago):(p._primeraFechaPago?parseLocalDate(p._primeraFechaPago):parseLocalDate(p.fechaInicio));
     proximaFechaRen=siguienteDiaHabil(_proximaFechaQuincenal(_baseQuinc));
   } else {
-    // Semanal, Mensual: próxima fecha = diaOperativo + un intervalo
+    // Semanal, Bisemanal: próxima fecha = diaOperativo + un intervalo
     var hoyBase=parseLocalDate(diaOperativo());
     var firstNew=new Date(hoyBase);
     firstNew.setDate(firstNew.getDate()+p.diasPorCuota);
@@ -6420,6 +6453,10 @@ function abrirRenovar(){
     var qVal=p.cantidadDeQuincenas===3?'3':'2';
     var rq=document.querySelector('input[name="ren-quin"][value="'+qVal+'"]');
     if(rq) rq.checked=true;
+  } else if(tipo==='Bisemanal'){
+    var bVal=p.cantidadDeQuincenas===3?'3':'2';
+    var rb=document.querySelector('input[name="ren-bisem"][value="'+bVal+'"]');
+    if(rb) rb.checked=true;
   }
   calcRenovar();
   goTo('screen-renovar');
@@ -6429,6 +6466,7 @@ function actualizarSubTiposRen(tipo){
   document.getElementById('ren-sub-diario').style.display=tipo==='Diario'?'block':'none';
   document.getElementById('ren-sub-semanal').style.display=tipo==='Semanal'?'block':'none';
   document.getElementById('ren-sub-quincenal').style.display=tipo==='Quincenal'?'block':'none';
+  document.getElementById('ren-sub-bisemanal').style.display=tipo==='Bisemanal'?'block':'none';
   if(tipo==='Diario'){
     var r30=document.querySelector('input[name="ren-dia"][value="30"]');
     if(r30&&!document.querySelector('input[name="ren-dia"]:checked')) r30.checked=true;
@@ -6482,7 +6520,10 @@ function calcRenovar(){
   } else if(tipo==='Quincenal'){
     var quin=document.querySelector('input[name="ren-quin"]:checked');
     cuotas=quin?parseInt(quin.value):2; diasPorCuota=15;
-  } else if(tipo==='Mensual'){cuotas=1;diasPorCuota=30;}
+  } else if(tipo==='Bisemanal'){
+    var bisem=document.querySelector('input[name="ren-bisem"]:checked');
+    cuotas=bisem?parseInt(bisem.value):2; diasPorCuota=14;
+  }
   // Día cobro
   var fechaStr=document.getElementById('ren-fecha').value;
   var diaCobro='';
@@ -6544,6 +6585,7 @@ function confirmarRenovacion(){
   if(tipo==='Diario'){var _dr=document.querySelector('input[name="ren-dia"]:checked');cuotas=_dr?parseInt(_dr.value):30;diasPorCuota=1;}
   else if(tipo==='Semanal'){var _cse=document.getElementById('ren-sem-custom');var _csv=_cse?parseInt(_cse.value)||0:0;if(_csv>0){cuotas=_csv;}else{var sem=document.querySelector('input[name="ren-sem"]:checked');cuotas=sem?parseInt(sem.value):6;}diasPorCuota=7;}
   else if(tipo==='Quincenal'){var quin=document.querySelector('input[name="ren-quin"]:checked');cuotas=quin?parseInt(quin.value):2;diasPorCuota=15;}
+  else if(tipo==='Bisemanal'){var bisem=document.querySelector('input[name="ren-bisem"]:checked');cuotas=bisem?parseInt(bisem.value):2;diasPorCuota=14;}
   var total=Math.round(monto*(1+tasa));
   var intereses=total-monto;
   var digitar=document.getElementById('ren-digitar-check').checked;
@@ -6699,7 +6741,7 @@ function guardarCorreccion(){
   if(tipo==='Diario') p.diasPorCuota=1;
   else if(tipo==='Semanal') p.diasPorCuota=7;
   else if(tipo==='Quincenal') p.diasPorCuota=15;
-  else if(tipo==='Mensual') p.diasPorCuota=30;
+  else if(tipo==='Bisemanal') p.diasPorCuota=14;
   if(fechaInicioCorr) p.fechaInicio=fechaInicioCorr;
   if(fechaCreacionCorr) p._fechaCreacion=fechaCreacionCorr;
   p.fechaUltimaVerificacion=hoyLocal(); // reiniciar contador 60 días al corregir
