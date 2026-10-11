@@ -4461,7 +4461,10 @@ function sincronizarSupabaseFondo(){
   // Nunca sincronizar si hay un guardado en curso
   if(_guardandoEnNube) return;
   var tsLocal=parseInt(localStorage.getItem('fjd_ts')||'0');
-  fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:SUPA_HDR})
+  // cache:'no-store' es la única forma confiable de evitar que el navegador sirva una
+  // respuesta vieja guardada en su caché HTTP — una cabecera por sí sola no lo garantiza,
+  // y un dispositivo que no se usó en días podía quedarse mostrando datos de ese momento.
+  fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:SUPA_HDR,cache:'no-store'})
   .then(function(r){return r.ok?r.json():null;})
   .then(function(rows){
     if(!rows||_guardandoEnNube) return;
@@ -4736,7 +4739,7 @@ setInterval(function(){
 setInterval(function(){
   if(localStorage.getItem('fjd_session')!=='1') return;
   var tsLocal=parseInt(localStorage.getItem('fjd_ts')||'0');
-  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.ts&select=value',{headers:SUPA_HDR})
+  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.ts&select=value',{headers:SUPA_HDR,cache:'no-store'})
   .then(function(r){return r.ok?r.json():null;})
   .then(function(rows){
     if(!rows||!rows[0]) return;
@@ -8371,7 +8374,7 @@ function fechaOffset(dias){
     try{
       var controller=new AbortController();
       var timeout=setTimeout(function(){controller.abort();},15000);
-      var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value&key=neq.fotos',{headers:SUPA_HDR,signal:controller.signal});
+      var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value&key=neq.fotos',{headers:SUPA_HDR,signal:controller.signal,cache:'no-store'});
       clearTimeout(timeout);
       if(r.ok){
         var rows=await r.json();
@@ -8430,7 +8433,7 @@ function fechaOffset(dias){
         if(_msgFix) setTimeout(guardarDatos,800);
         // Cargar fotos por separado (excluidas del query principal para no sobrecargar)
         try{
-          var rFotos=await fetch(SUPA_URL+'/rest/v1/app_data?select=value&key=eq.fotos',{headers:SUPA_HDR});
+          var rFotos=await fetch(SUPA_URL+'/rest/v1/app_data?select=value&key=eq.fotos',{headers:SUPA_HDR,cache:'no-store'});
           if(rFotos.ok){
             var rowsFotos=await rFotos.json();
             if(rowsFotos&&rowsFotos[0]&&rowsFotos[0].value&&typeof rowsFotos[0].value==='object'){
