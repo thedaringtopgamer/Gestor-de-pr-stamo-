@@ -8297,6 +8297,9 @@ function guardarBase(){
     bases['_m_'+rk+'_'+fecha]=1;
     bases['_mi_'+rk+'_'+fecha]=inyecActual;
   }
+  // Corregir un día a mano no sirve de nada si los días SIGUIENTES se quedan con su caché
+  // vieja — hay que invalidarla para que se recalculen en cadena desde este nuevo ancla.
+  _invalidarCajaCacheDesde(fecha,rutaActual==='todas'?null:rk);
   guardarDatos();
   renderPanelRecolector();
   toast('✓ Base guardada: ₡'+fmt(base));
@@ -8343,6 +8346,7 @@ function guardarBaseModal(){
     bases['_m_'+rk+'_'+fecha]=1;
     bases['_mi_'+rk+'_'+fecha]=inyecActual;
   }
+  _invalidarCajaCacheDesde(fecha,rutaActual==='todas'?null:rk);
   guardarDatos();
   renderPanelRecolector();
   cerrarCajaModal();
