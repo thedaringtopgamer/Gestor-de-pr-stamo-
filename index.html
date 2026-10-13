@@ -4461,10 +4461,7 @@ function sincronizarSupabaseFondo(){
   // Nunca sincronizar si hay un guardado en curso
   if(_guardandoEnNube) return;
   var tsLocal=parseInt(localStorage.getItem('fjd_ts')||'0');
-  // cache:'no-store' es la única forma confiable de evitar que el navegador sirva una
-  // respuesta vieja guardada en su caché HTTP — una cabecera por sí sola no lo garantiza,
-  // y un dispositivo que no se usó en días podía quedarse mostrando datos de ese momento.
-  fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:SUPA_HDR,cache:'no-store'})
+  fetch(SUPA_URL+'/rest/v1/app_data?select=key,value',{headers:SUPA_HDR})
   .then(function(r){return r.ok?r.json():null;})
   .then(function(rows){
     if(!rows||_guardandoEnNube) return;
@@ -4484,12 +4481,8 @@ function sincronizarSupabaseFondo(){
       if(row.key==='inversiones'&&Array.isArray(row.value)) inversiones=row.value;
       if(row.key==='cierres'&&Array.isArray(row.value)) cierres=row.value;
       if(row.key==='bases'&&row.value&&typeof row.value==='object'){
-        // La nube siempre gana para cualquier clave que ya tenga — si no, un dispositivo con
-        // caché local vieja (ej. no se abrió en dos días) pisa el valor bueno que otro
-        // dispositivo ya había calculado y subido. El local solo rellena huecos que la
-        // nube todavía no tiene (ej. algo calculado offline que aún no subió).
         var _localCf1={};
-        Object.keys(bases).forEach(function(k){if(k.indexOf('_cf_')===0&&!(k in row.value)) _localCf1[k]=bases[k];});
+        Object.keys(bases).forEach(function(k){if(k.indexOf('_cf_')===0) _localCf1[k]=bases[k];});
         bases=Object.assign({},row.value,_localCf1);
       }
       if(row.key==='salidas'&&row.value&&typeof row.value==='object') salidas=row.value;
@@ -4739,7 +4732,7 @@ setInterval(function(){
 setInterval(function(){
   if(localStorage.getItem('fjd_session')!=='1') return;
   var tsLocal=parseInt(localStorage.getItem('fjd_ts')||'0');
-  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.ts&select=value',{headers:SUPA_HDR,cache:'no-store'})
+  fetch(SUPA_URL+'/rest/v1/app_data?key=eq.ts&select=value',{headers:SUPA_HDR})
   .then(function(r){return r.ok?r.json():null;})
   .then(function(rows){
     if(!rows||!rows[0]) return;
@@ -7848,23 +7841,17 @@ function renderPanelRecolector(userPickedDate){
       var _inyec=inversiones.filter(function(x){return x.fecha===diaStr&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
       return _rec+_inyec-_pres-_renov-_gastos;
     };
-    // Buscar hacia atrás (desde ayer) el último día con base conocida, acumulando los días sin base.
-    // El día donde se encuentra la base conocida es su base de ARRANQUE (la de esa mañana), así
-    // que ese mismo día también hay que agregarlo a la lista para reproducir sus movimientos —
-    // si no, "ayer" se queda con su base de arranque sin sumarle lo que pasó ese día, y hoy
-    // termina heredando la base de ayer en vez de lo que ayer cerró.
+    // Buscar hacia atrás (desde ayer) el último día con base conocida, acumulando los días sin base
     var _cursor=new Date(fecha+'T12:00:00'); _cursor.setDate(_cursor.getDate()-1);
     var _diasFaltantes=[];
     var _baseConocida=0;
     for(var _d=0;_d<=60;_d++){
       var _curStr=_cursor.toISOString().split('T')[0];
       var _curKey=rutaCajaKey+'_'+_curStr;
-      var _tieneBaseConocida=false;
-      if(bases['_m_'+_curKey]){ _baseConocida=parseInt(bases[_curKey])||0; _tieneBaseConocida=true; }
-      else if(bases['_cf_'+_curKey]!==undefined){ _baseConocida=parseInt(bases['_cf_'+_curKey])||0; _tieneBaseConocida=true; }
-      else if(bases[_curKey]!==undefined){ _baseConocida=parseInt(bases[_curKey])||0; _tieneBaseConocida=true; }
+      if(bases['_m_'+_curKey]){ _baseConocida=parseInt(bases[_curKey])||0; break; }
+      if(bases['_cf_'+_curKey]!==undefined){ _baseConocida=parseInt(bases['_cf_'+_curKey])||0; break; }
+      if(bases[_curKey]!==undefined){ _baseConocida=parseInt(bases[_curKey])||0; break; }
       _diasFaltantes.unshift(_curStr);
-      if(_tieneBaseConocida) break;
       _cursor.setDate(_cursor.getDate()-1);
     }
     // Reconstruir hacia adelante día por día (nunca saltar), cacheando cada paso
@@ -8297,9 +8284,6 @@ function guardarBase(){
     bases['_m_'+rk+'_'+fecha]=1;
     bases['_mi_'+rk+'_'+fecha]=inyecActual;
   }
-  // Corregir un día a mano no sirve de nada si los días SIGUIENTES se quedan con su caché
-  // vieja — hay que invalidarla para que se recalculen en cadena desde este nuevo ancla.
-  _invalidarCajaCacheDesde(fecha,rutaActual==='todas'?null:rk);
   guardarDatos();
   renderPanelRecolector();
   toast('✓ Base guardada: ₡'+fmt(base));
@@ -8346,7 +8330,6 @@ function guardarBaseModal(){
     bases['_m_'+rk+'_'+fecha]=1;
     bases['_mi_'+rk+'_'+fecha]=inyecActual;
   }
-  _invalidarCajaCacheDesde(fecha,rutaActual==='todas'?null:rk);
   guardarDatos();
   renderPanelRecolector();
   cerrarCajaModal();
@@ -8378,7 +8361,7 @@ function fechaOffset(dias){
     try{
       var controller=new AbortController();
       var timeout=setTimeout(function(){controller.abort();},15000);
-      var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value&key=neq.fotos',{headers:SUPA_HDR,signal:controller.signal,cache:'no-store'});
+      var r=await fetch(SUPA_URL+'/rest/v1/app_data?select=key,value&key=neq.fotos',{headers:SUPA_HDR,signal:controller.signal});
       clearTimeout(timeout);
       if(r.ok){
         var rows=await r.json();
@@ -8393,10 +8376,8 @@ function fechaOffset(dias){
           if(row.key==='cierres_diarios'&&Array.isArray(row.value)) cierresDiarios=row.value;
           if(row.key==='cajas_cerradas'&&row.value&&typeof row.value==='object') cajasCerradas=row.value;
           if(row.key==='bases'&&row.value&&typeof row.value==='object'){
-            // Misma regla que en la sincronización de fondo: la nube gana si ya tiene la
-            // clave, el local solo rellena lo que la nube no tenga todavía.
             var _localCf2={};
-            Object.keys(bases).forEach(function(k){if(k.indexOf('_cf_')===0&&!(k in row.value)) _localCf2[k]=bases[k];});
+            Object.keys(bases).forEach(function(k){if(k.indexOf('_cf_')===0) _localCf2[k]=bases[k];});
             bases=Object.assign({},row.value,_localCf2);
           }
           if(row.key==='salidas'&&row.value&&typeof row.value==='object') salidas=row.value;
@@ -8437,7 +8418,7 @@ function fechaOffset(dias){
         if(_msgFix) setTimeout(guardarDatos,800);
         // Cargar fotos por separado (excluidas del query principal para no sobrecargar)
         try{
-          var rFotos=await fetch(SUPA_URL+'/rest/v1/app_data?select=value&key=eq.fotos',{headers:SUPA_HDR,cache:'no-store'});
+          var rFotos=await fetch(SUPA_URL+'/rest/v1/app_data?select=value&key=eq.fotos',{headers:SUPA_HDR});
           if(rFotos.ok){
             var rowsFotos=await rFotos.json();
             if(rowsFotos&&rowsFotos[0]&&rowsFotos[0].value&&typeof rowsFotos[0].value==='object'){
