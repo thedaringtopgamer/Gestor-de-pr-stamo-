@@ -6639,8 +6639,11 @@ function confirmarRenovacion(){
     var _anclaPrevia=p._primeraFechaPago?parseLocalDate(p._primeraFechaPago):null;
     var _perteneceAPareja=false;
     if(_anclaPrevia){
-      var _diaAncla=_anclaPrevia.getDate();
-      var _diaParejo=_proximaFechaQuincenal(_anclaPrevia).getDate();
+      // Comparar contra el día ya ajustado por fin de semana (igual que se sugiere la fecha
+      // en abrirRenovar) — si no, cuando la pareja cae domingo y se corre al lunes, el
+      // sistema no reconoce ese lunes como parte de la pareja y la reinicia sin querer.
+      var _diaAncla=siguienteDiaHabil(_anclaPrevia).getDate();
+      var _diaParejo=siguienteDiaHabil(_proximaFechaQuincenal(_anclaPrevia)).getDate();
       _perteneceAPareja=(_diaElegido===_diaAncla||_diaElegido===_diaParejo);
     }
     if(!_perteneceAPareja){ p._primeraFechaPago=fecha; p._primeraFechaPagoCuota=0; }
