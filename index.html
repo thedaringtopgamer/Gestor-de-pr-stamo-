@@ -1710,7 +1710,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         </div>
         <div class="field-group">
           <label>Cobro Administrativo</label>
-          <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric" id="ren-cobro-admin" placeholder="0" oninput="fmtMoneyInput(this);_renCobroEditado=true;" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+          <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric" id="ren-cobro-admin" placeholder="0" oninput="fmtMoneyInput(this);_renCobroEditado=true;calcRenovar();" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
         </div>
         <div>
           <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:500;margin-bottom:4px">Entregar al cliente</div>
