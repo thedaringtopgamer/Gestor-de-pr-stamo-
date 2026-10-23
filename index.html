@@ -3531,6 +3531,13 @@ function _calcCierreDataTodasEnVivo(tipo,hoy){
     var ultimoR=cierresR[0];
     var inicioR=ultimoR?_diasiguienteL(ultimoR.hasta):(tipo==='semana'?_inicioSemana(hoy):_inicioMes(hoy));
     var dR=_calcCierreData(inicioR,hoy,r);
+    // Base de caja: encadenar del cierre anterior de ESTA ruta (igual que saldoInicio) y
+    // recalcular la utilidad de esta ruta con esa base ya encadenada, para que la suma en
+    // "Todas" quede consistente con el número que se muestra.
+    if(ultimoR&&ultimoR.data&&typeof ultimoR.data.baseFin==='number'){
+      dR.baseInicio=ultimoR.data.baseFin;
+      dR.utilidad=dR.baseInicio+dR.recogida-(dR.prestado+dR.entregadoRenov)-dR.totalGastos;
+    }
     // Saldo/clientes de inicio de ESTA ruta: el fin de su propio último cierre, o el caché
     // del arranque de su propio período — igual que hace renderCierres() para una sola ruta.
     var _claveSufR=tipo==='semana'?'semana':'mes';
@@ -3668,6 +3675,11 @@ function renderCierres(){
     dSem.clientesInicio=saldoInicios[_claveClientesSem];
   }
   dSem.clientesFin=_clientesActivosActual(rFiltro);
+  // Base de caja de arranque: encadenar del cierre anterior (con qué CERRÓ esa semana) en vez
+  // de depender de la lectura en vivo del día — mismo patrón que saldoInicio/clientesInicio.
+  if(ultimoSem&&ultimoSem.data&&typeof ultimoSem.data.baseFin==='number'){
+    dSem.baseInicio=ultimoSem.data.baseFin;
+  }
   var elRangoSem=document.getElementById('cierre-semana-rango');
   var elStatsSem=document.getElementById('cierre-semana-stats');
   if(elRangoSem) elRangoSem.textContent=inicioSem+' → '+hoy;
@@ -3699,6 +3711,9 @@ function renderCierres(){
     dMes.clientesInicio=saldoInicios[_claveClientesMes];
   }
   dMes.clientesFin=_clientesActivosActual(rFiltro);
+  if(ultimoMes&&ultimoMes.data&&typeof ultimoMes.data.baseFin==='number'){
+    dMes.baseInicio=ultimoMes.data.baseFin;
+  }
   var elRangoMes=document.getElementById('cierre-mes-rango');
   var elStatsMes=document.getElementById('cierre-mes-stats');
   // Contar semanas cerradas desde inicio del mes actual
@@ -4021,6 +4036,16 @@ function _guardarCierre(tipo,desde,hasta){
       data.clientesInicio=saldoInicios[ruta+'|'+_claveSufijoC+'|'+desde];
       if(typeof data.clientesInicio!=='number') data.clientesInicio=_clientesActivosActual(ruta);
     }
+    // Base de caja de arranque: igual que saldo/clientes, se encadena del cierre anterior (la
+    // base con la que CERRÓ esa semana/mes) en vez de depender de que alguien haya abierto el
+    // Panel Recolector justo ese día — así semana, mes y caja siempre arrancan con el mismo número.
+    if(_prevCierre&&_prevCierre.data&&typeof _prevCierre.data.baseFin==='number'){
+      data.baseInicio=_prevCierre.data.baseFin;
+    }
+    // Recalcular la ganancia ya con los ajustes del lápiz aplicados arriba y con la base
+    // encadenada — así "baseFin" (lo que hereda el próximo período) también queda correcto.
+    data.utilidad=(data.baseInicio||0)+data.recogida-(data.prestado+data.entregadoRenov)-data.totalGastos;
+    data.baseFin=data.utilidad;
     cierres.push({id:(ahora+i).toString(),tipo:tipo,desde:desde,hasta:hasta,nota:nota,data:data,fechaRegistro:hoyLocal(),ruta:ruta});
   });
   // Los ajustes manuales del lápiz son solo para el período en curso; al cerrarlo hay que
