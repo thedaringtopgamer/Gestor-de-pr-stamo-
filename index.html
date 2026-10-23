@@ -3117,6 +3117,15 @@ function _renderMetaDesglose(){
   el.innerHTML=html;
 }
 
+// Solo lectura — nunca escribe en `bases` ni reconstruye nada, así no se puede corromper
+// el sistema de Base del Panel Recolector. Si ese día no tiene una base guardada (manual o
+// ya calculada), devuelve 0 en vez de intentar adivinar, para no arriesgar un número falso.
+function _leerBaseCaja(ruta,fecha){
+  var key=ruta+'_'+fecha;
+  if(bases['_m_'+key]) return parseInt(bases[key])||0;
+  if(bases['_cf_'+key]!==undefined&&bases['_cf_'+key]!==null&&bases['_cf_'+key]!=='') return parseInt(bases['_cf_'+key])||0;
+  return 0;
+}
 function _calcCierreData(desde,hasta,rutaParam){
   var ruta=rutaParam||(rutaInvFiltro||'todas');
   var porRuta=function(p){ return ruta==='todas'||(p.ruta===ruta); };
@@ -3146,11 +3155,15 @@ function _calcCierreData(desde,hasta,rutaParam){
   // Inyecciones de capital en el período
   var invP=inversiones.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===ruta); });
   var totalInyeccion=invP.reduce(function(s,x){ return s+x.monto; },0);
-  // Ganancia = recogida - plata realmente entregada (préstamos nuevos + entregado en renovaciones) - gastos
-  var utilidad=recogida-(prestado+entregadoRenov)-totalGastos;
+  // Ganancia = base de caja con la que arrancó el período + recogida - plata realmente
+  // entregada (préstamos nuevos + entregado en renovaciones) - gastos. Se suma la base para
+  // que el número refleje la plata real que vas a tener en mano, igual que ya hace la Caja
+  // diaria del Panel Recolector — no solo el movimiento del período sin contar con qué arrancó.
+  var baseInicio=_leerBaseCaja(ruta,desde);
+  var utilidad=baseInicio+recogida-(prestado+entregadoRenov)-totalGastos;
   var cobrosAdmP=cobrosAdmin.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
   var totalCobroAdm=cobrosAdmP.reduce(function(s,x){ return s+(x.monto||0); },0);
-  return {recogida:recogida,prestado:prestado,montoRenov:montoRenov,entregadoRenov:entregadoRenov,totalGastos:totalGastos,utilidad:utilidad,totalInyeccion:totalInyeccion,numPrestamos:nuevosP.length,numRenov:renovP.length,totalCobroAdm:totalCobroAdm,idsNuevos:nuevosP.map(function(p){return p.id;})};
+  return {recogida:recogida,prestado:prestado,montoRenov:montoRenov,entregadoRenov:entregadoRenov,totalGastos:totalGastos,utilidad:utilidad,baseInicio:baseInicio,totalInyeccion:totalInyeccion,numPrestamos:nuevosP.length,numRenov:renovP.length,totalCobroAdm:totalCobroAdm,idsNuevos:nuevosP.map(function(p){return p.id;})};
 
 }
 
@@ -3390,11 +3403,13 @@ function _statsHtml(d,tipo,histCierreId,sinLapiz){
   var renovVal=_valConAjuste(tipo,'renov',renovCalc);
   var cobroAdmVal=_valConAjuste(tipo,'cobroadm',cobroAdmCalc);
   var gastosVal=_valConAjuste(tipo,'gastos',gastosCalc);
-  // Ganancia = recogida - (prestado nuevos + entregado en renovaciones) - gastos.
-  // prestadoVal es "nuevos + monto total de renovación" (para mostrar), así que hay que
-  // quitarle montoRenov para dejar solo el préstamo nuevo real — igual que hace _guardarCierre.
+  // Ganancia = base de caja de arranque + recogida - (prestado nuevos + entregado en
+  // renovaciones) - gastos. prestadoVal es "nuevos + monto total de renovación" (para
+  // mostrar), así que hay que quitarle montoRenov para dejar solo el préstamo nuevo real —
+  // igual que hace _guardarCierre. d.baseInicio puede faltar en cierres viejos ya cerrados
+  // antes de este cambio — ahí cuenta como 0, no se inventa un número.
   var prestadoPuroVal=Math.max(0,prestadoVal-(d.montoRenov||0));
-  var utilidad=recogidaVal-prestadoPuroVal-(d.entregadoRenov||0)-gastosVal;
+  var utilidad=(d.baseInicio||0)+recogidaVal-prestadoPuroVal-(d.entregadoRenov||0)-gastosVal;
   var pos=utilidad>=0;
   var periodo=tipo==='mes'?'Mes':'Semana';
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">'
@@ -3402,6 +3417,7 @@ function _statsHtml(d,tipo,histCierreId,sinLapiz){
     +(typeof d.saldoFin==='number'?'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">🏁 Saldo fin</div><div style="font-weight:700;color:#374151">'+_fmtCol(d.saldoFin)+'</div></div>':'')
     +(typeof d.clientesInicio==='number'?'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">📍 Clientes activos inicio</div><div style="font-weight:700;color:#374151">'+d.clientesInicio+'</div></div>':'')
     +(typeof d.clientesFin==='number'?'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">🏁 Clientes activos fin</div><div style="font-weight:700;color:#374151">'+d.clientesFin+'</div></div>':'')
+    +(d.baseInicio?'<div style="background:#f3f4f6;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💵 Base de caja al arrancar</div><div style="font-weight:700;color:#374151">'+_fmtCol(d.baseInicio)+'</div></div>':'')
     +'<div style="background:#f0fdf4;border-radius:8px;padding:8px"><div style="color:#6b7280">💰 Recogida'+_pencilStatL(tipo,'recogida','Recogida',true,recogidaCalc)+'</div><div style="font-weight:700;color:#166534">'+_fmtCol(recogidaVal)+'</div></div>'
     +'<div style="background:#dbeafe;border-radius:8px;padding:8px"><div style="color:#6b7280">📤 Prestado'+_pencilStatL(tipo,'prestado','Prestado',true,prestadoCalc)+'</div><div style="font-weight:700;color:#1e40af">'+_fmtCol(prestadoVal)+'</div></div>'
     +'<div style="background:#f3f4f6;border-radius:8px;overflow:hidden">'
@@ -3526,7 +3542,7 @@ function _calcCierreDataTodasEnVivo(tipo,hoy){
     else { clientesInicioR=saldoInicios[r+'|'+_claveSufRC+'|'+inicioR]; if(typeof clientesInicioR!=='number') clientesInicioR=_clientesActivosActual(r); }
     var gastosR=gastos.filter(function(x){ return x.fecha>=inicioR&&x.fecha<=hoy&&x.ruta===r; });
     if(!acumulado){
-      acumulado={recogida:0,prestado:0,montoRenov:0,entregadoRenov:0,totalGastos:0,utilidad:0,totalInyeccion:0,numPrestamos:0,numRenov:0,totalCobroAdm:0,idsNuevos:[],saldoInicio:0,clientesInicio:0,gastosDetalle:[]};
+      acumulado={recogida:0,prestado:0,montoRenov:0,entregadoRenov:0,totalGastos:0,utilidad:0,totalInyeccion:0,numPrestamos:0,numRenov:0,totalCobroAdm:0,idsNuevos:[],saldoInicio:0,clientesInicio:0,gastosDetalle:[],baseInicio:0};
     }
     acumulado.gastosDetalle=acumulado.gastosDetalle.concat(gastosR);
     acumulado.recogida+=dR.recogida; acumulado.prestado+=dR.prestado; acumulado.montoRenov+=dR.montoRenov;
@@ -3534,6 +3550,7 @@ function _calcCierreDataTodasEnVivo(tipo,hoy){
     acumulado.totalInyeccion+=dR.totalInyeccion; acumulado.numPrestamos+=dR.numPrestamos; acumulado.numRenov+=dR.numRenov;
     acumulado.totalCobroAdm+=dR.totalCobroAdm; acumulado.idsNuevos=acumulado.idsNuevos.concat(dR.idsNuevos||[]);
     acumulado.saldoInicio+=saldoInicioR; acumulado.clientesInicio+=clientesInicioR;
+    acumulado.baseInicio+=(dR.baseInicio||0);
   });
   return acumulado;
 }
