@@ -3126,6 +3126,15 @@ function _leerBaseCaja(ruta,fecha){
   if(bases['_cf_'+key]!==undefined&&bases['_cf_'+key]!==null&&bases['_cf_'+key]!=='') return parseInt(bases['_cf_'+key])||0;
   return 0;
 }
+// Ganancia neta de un cierre YA GUARDADO: el mismo número real de la Base del día siguiente
+// al cierre (con la que arranca ese día en el Panel Recolector) — nunca una fórmula aparte.
+// Justo al cerrar, ese día siguiente todavía no tiene base propia → muestra 0. En cuanto esa
+// base ya exista (aunque sea negativa), salta a ese número exacto, sin tocar el cierre guardado.
+function _utilidadCierreGuardado(c){
+  var d=new Date(c.hasta+'T12:00:00'); d.setDate(d.getDate()+1);
+  var diaSig=d.toISOString().split('T')[0];
+  return _leerBaseCaja(c.ruta||'todas',diaSig);
+}
 function _calcCierreData(desde,hasta,rutaParam){
   var ruta=rutaParam||(rutaInvFiltro||'todas');
   var porRuta=function(p){ return ruta==='todas'||(p.ruta===ruta); };
@@ -3343,76 +3352,30 @@ function _verListaGastosHist(cierreId){
   }
   goTo('screen-nuevos-periodo');
 }
-function _invOverrideKey(tipo,campo){ return tipo+'_'+campo; }
-function _editarStatInv(tipo,campo,label,esMonto,calcActual){
-  if(rolActual!=='admin') return;
-  var keyAdj=_invOverrideKey(tipo,campo);
-  var adj=parseInt(invOverrides[keyAdj])||0;
-  var valorMostrado=Math.max(0,calcActual-adj);
-  var overlay=document.getElementById('modal-overlay');
-  document.getElementById('modal-subtitulo').textContent='Corregir '+label;
-  document.getElementById('modal-mensaje').textContent='Valor actual: '+(esMonto?'₡'+fmt(valorMostrado):valorMostrado)+'. Escriba el valor correcto (vacío = automático). Los cierres o cambios reales que sucedan después se van a seguir sumando desde este valor:';
-  document.getElementById('modal-btn-si').textContent='Guardar';
-  document.getElementById('modal-btn-si').style.background='#2563eb';
-  overlay.style.display='flex';
-  var inp=document.getElementById('_inv_edit_inp');
-  if(!inp){ inp=document.createElement('input'); inp.id='_inv_edit_inp'; inp.autocomplete='off'; inp.style.cssText='width:100%;padding:10px;border:1.5px solid #d1d5db;border-radius:10px;font-size:16px;font-family:\'DM Sans\',sans-serif;outline:none;box-sizing:border-box;margin-top:10px;text-align:center'; document.getElementById('modal-mensaje').after(inp); }
-  inp.inputMode='numeric';
-  inp.style.display='block'; inp.value=valorMostrado; inp.placeholder='0';
-  setTimeout(function(){inp.focus();inp.select();},200);
-  _modalCallback=function(){
-    overlay.style.display='none';
-    document.getElementById('modal-btn-si').style.background='#16a34a';
-    inp.style.display='none';
-    var val=inp.value.trim().replace(/,/g,'');
-    if(val===''){ delete invOverrides[keyAdj]; }
-    else {
-      var quiere=parseInt(val)||0;
-      invOverrides[keyAdj]=calcActual-quiere;
-    }
-    guardarDatos();
-    renderInversion();
-    try{ renderCajas(); }catch(e){}
-  };
-  document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
-}
-function _valConAjuste(tipo,campo,calcActual){
-  var adj=parseInt(invOverrides[_invOverrideKey(tipo,campo)])||0;
-  return Math.max(0,calcActual-adj);
-}
-function _pencilStat(tipo,campo,label,esMonto,calcActual){
-  if(rolActual!=='admin') return '';
-  return '<button onclick="event.stopPropagation();_editarStatInv(\''+tipo+'\',\''+campo+'\',\''+label+'\','+(esMonto?'true':'false')+','+calcActual+')" style="background:none;border:none;font-size:11px;cursor:pointer;padding:0 0 0 4px;vertical-align:middle">✏️</button>';
-}
-function _statsHtml(d,tipo,histCierreId,sinLapiz){
-  // "Todas" es solo un resumen visual en vivo — no se puede corregir nada ahí, esos lapicitos
-  // son para corregir una ruta real específica.
-  var _pencilStatL=sinLapiz?function(){ return ''; }:_pencilStat;
+function _statsHtml(d,tipo,histCierreId,sinLapiz,utilidadOverride){
   // Si viene de un cierre del historial (ya cerrado), las lupitas de Clientes nuevos/Gastos
   // deben mostrar los datos de ESE cierre específico, no los de la semana/mes en curso.
   var _clickNuevos=histCierreId?('_verListaNuevosHist(\''+histCierreId+'\')'):('_verListaNuevos(\''+tipo+'\')');
   var _clickGastos=histCierreId?('_verListaGastosHist(\''+histCierreId+'\')'):('_verListaGastos(\''+tipo+'\')');
-  var prestadoCalc=d.prestado+d.montoRenov;
-  var clientesCalc=d.numPrestamos;
-  var recogidaCalc=d.recogida;
-  var renovCalc=d.numRenov||0;
-  var cobroAdmCalc=d.totalCobroAdm||0;
-  var gastosCalc=d.totalGastos||0;
-  var prestadoVal=_valConAjuste(tipo,'prestado',prestadoCalc);
-  var clientesVal=_valConAjuste(tipo,'clientes',clientesCalc);
-  var recogidaVal=_valConAjuste(tipo,'recogida',recogidaCalc);
-  var renovVal=_valConAjuste(tipo,'renov',renovCalc);
-  var cobroAdmVal=_valConAjuste(tipo,'cobroadm',cobroAdmCalc);
-  var gastosVal=_valConAjuste(tipo,'gastos',gastosCalc);
-  // Ganancia = base de caja de arranque + recogida - (prestado nuevos + entregado en
-  // renovaciones) - cobro administrativo - gastos. prestadoVal es "nuevos + monto total de
-  // renovación" (para mostrar), así que hay que quitarle montoRenov para dejar solo el
-  // préstamo nuevo real — igual que hace _guardarCierre. Se resta el cobro administrativo
-  // porque la Caja diaria también lo resta (esa plata queda apartada, no es efectivo libre).
-  // d.baseInicio puede faltar en cierres viejos ya cerrados antes de este cambio — ahí cuenta
-  // como 0, no se inventa un número.
-  var prestadoPuroVal=Math.max(0,prestadoVal-(d.montoRenov||0));
-  var utilidad=(d.baseInicio||0)+recogidaVal-prestadoPuroVal-(d.entregadoRenov||0)-cobroAdmVal-gastosVal;
+  var prestadoVal=d.prestado+d.montoRenov;
+  var clientesVal=d.numPrestamos;
+  var recogidaVal=d.recogida;
+  var renovVal=d.numRenov||0;
+  var cobroAdmVal=d.totalCobroAdm||0;
+  var gastosVal=d.totalGastos||0;
+  // Ganancia neta de un cierre YA GUARDADO (utilidadOverride, calculada afuera por
+  // _utilidadCierreGuardado) = la base real del día siguiente al cierre, tal cual. En vivo
+  // (período en curso, todavía sin cerrar) se sigue proyectando con la fórmula: base de
+  // arranque + recogida - (prestado nuevos + entregado en renovaciones) - cobro
+  // administrativo - gastos. Se resta el cobro administrativo porque la Caja diaria también
+  // lo resta (esa plata queda apartada, no es efectivo libre).
+  var utilidad;
+  if(typeof utilidadOverride==='number'){
+    utilidad=utilidadOverride;
+  } else {
+    var prestadoPuroVal=Math.max(0,prestadoVal-(d.montoRenov||0));
+    utilidad=(d.baseInicio||0)+recogidaVal-prestadoPuroVal-(d.entregadoRenov||0)-cobroAdmVal-gastosVal;
+  }
   var pos=utilidad>=0;
   var periodo=tipo==='mes'?'Mes':'Semana';
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">'
@@ -3421,17 +3384,17 @@ function _statsHtml(d,tipo,histCierreId,sinLapiz){
     +(typeof d.clientesInicio==='number'?'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">📍 Clientes activos inicio</div><div style="font-weight:700;color:#374151">'+d.clientesInicio+'</div></div>':'')
     +(typeof d.clientesFin==='number'?'<div style="background:#f3f4f6;border-radius:8px;padding:8px"><div style="color:#6b7280">🏁 Clientes activos fin</div><div style="font-weight:700;color:#374151">'+d.clientesFin+'</div></div>':'')
     +(d.baseInicio?'<div style="background:#f3f4f6;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💵 Base de caja al arrancar</div><div style="font-weight:700;color:#374151">'+_fmtCol(d.baseInicio)+'</div></div>':'')
-    +'<div style="background:#f0fdf4;border-radius:8px;padding:8px"><div style="color:#6b7280">💰 Recogida'+_pencilStatL(tipo,'recogida','Recogida',true,recogidaCalc)+'</div><div style="font-weight:700;color:#166534">'+_fmtCol(recogidaVal)+'</div></div>'
-    +'<div style="background:#dbeafe;border-radius:8px;padding:8px"><div style="color:#6b7280">📤 Prestado'+_pencilStatL(tipo,'prestado','Prestado',true,prestadoCalc)+'</div><div style="font-weight:700;color:#1e40af">'+_fmtCol(prestadoVal)+'</div></div>'
+    +'<div style="background:#f0fdf4;border-radius:8px;padding:8px"><div style="color:#6b7280">💰 Recogida</div><div style="font-weight:700;color:#166534">'+_fmtCol(recogidaVal)+'</div></div>'
+    +'<div style="background:#dbeafe;border-radius:8px;padding:8px"><div style="color:#6b7280">📤 Prestado</div><div style="font-weight:700;color:#1e40af">'+_fmtCol(prestadoVal)+'</div></div>'
     +'<div style="background:#f3f4f6;border-radius:8px;overflow:hidden">'
       +'<div style="padding:8px'+(sinLapiz?'':';cursor:pointer')+'"'+(sinLapiz?'':' onclick="'+_clickNuevos+'"')+'>'
-        +'<div style="color:#6b7280">👥 Clientes nuevos'+(sinLapiz?'':' 🔍')+_pencilStatL(tipo,'clientes','Clientes nuevos',false,clientesCalc)+'</div>'
+        +'<div style="color:#6b7280">👥 Clientes nuevos'+(sinLapiz?'':' 🔍')+'</div>'
         +'<div style="font-weight:700;color:#374151">'+clientesVal+'</div>'
       +'</div>'
     +'</div>'
-    +'<div style="background:#fce7f3;border-radius:8px;padding:8px"><div style="color:#6b7280">🔄 Renovaciones'+_pencilStatL(tipo,'renov','Renovaciones',false,renovCalc)+'</div><div style="font-weight:700;color:#9d174d">'+renovVal+'</div></div>'
-    +'<div style="background:'+(cobroAdmVal?'#ede9fe':'#f3f4f6')+';border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.'+_pencilStatL(tipo,'cobroadm','Cobro adm.',true,cobroAdmCalc)+'</div><div style="font-weight:700;color:'+(cobroAdmVal?'#7c3aed':'#9ca3af')+'">'+_fmtCol(cobroAdmVal)+'</div></div>'
-    +'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2'+(sinLapiz?'':';cursor:pointer')+'"'+(sinLapiz?'':' onclick="'+_clickGastos+'"')+'><div style="color:#6b7280">💸 Gastos'+(sinLapiz?'':' 🔍')+_pencilStatL(tipo,'gastos','Gastos',true,gastosCalc)+'</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(gastosVal)+'</div></div>'
+    +'<div style="background:#fce7f3;border-radius:8px;padding:8px"><div style="color:#6b7280">🔄 Renovaciones</div><div style="font-weight:700;color:#9d174d">'+renovVal+'</div></div>'
+    +'<div style="background:'+(cobroAdmVal?'#ede9fe':'#f3f4f6')+';border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:'+(cobroAdmVal?'#7c3aed':'#9ca3af')+'">'+_fmtCol(cobroAdmVal)+'</div></div>'
+    +'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2'+(sinLapiz?'':';cursor:pointer')+'"'+(sinLapiz?'':' onclick="'+_clickGastos+'"')+'><div style="color:#6b7280">💸 Gastos'+(sinLapiz?'':' 🔍')+'</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(gastosVal)+'</div></div>'
     +(d.totalInyeccion?'<div style="background:#e0f2fe;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💉 Capital inyectado</div><div style="font-weight:700;color:#0369a1">+'+_fmtCol(d.totalInyeccion)+'</div></div>':'')
     +'<div style="border-radius:8px;padding:10px;grid-column:span 2;background:'+(pos?'#dcfce7':'#fee2e2')+';border:2px solid '+(pos?'#86efac':'#fca5a5')+'">'
       +'<div style="color:#6b7280;font-size:11px">📊 Ganancia neta</div>'
@@ -3691,8 +3654,8 @@ function renderCierres(){
   window._filtroGastos_semana={desde:inicioSem,hasta:hoy,ruta:rFiltro};
   window._gastosListaTodas_semana=null;
   if(elStatsSem) elStatsSem.innerHTML=_statsHtml(dSem,'semana')
-    +_barMeta(_valConAjuste('semana','prestado',dSem.prestado+dSem.montoRenov),metaSem,'Meta préstamos semana',true)
-    +_barMeta(_valConAjuste('semana','clientes',dSem.numPrestamos),metaSemC,'Meta clientes nuevos semana',false);
+    +_barMeta(dSem.prestado+dSem.montoRenov,metaSem,'Meta préstamos semana',true)
+    +_barMeta(dSem.numPrestamos,metaSemC,'Meta clientes nuevos semana',false);
   var elPorRutaSem=document.getElementById('cierre-semana-porruta');
   if(elPorRutaSem) elPorRutaSem.innerHTML='';
 
@@ -3762,8 +3725,8 @@ function renderCierres(){
   window._filtroGastos_mes={desde:inicioMes,hasta:hoy,ruta:rFiltroMes};
   window._gastosListaTodas_mes=null;
   if(elStatsMes) elStatsMes.innerHTML=_statsHtml(dMes,'mes')
-    +_barMeta(_valConAjuste('mes','prestado',dMes.prestado+dMes.montoRenov),metaPrestamos,'Meta préstamos mes',true)
-    +_barMeta(_valConAjuste('mes','clientes',dMes.numPrestamos),metaClientes,'Meta clientes nuevos mes',false)
+    +_barMeta(dMes.prestado+dMes.montoRenov,metaPrestamos,'Meta préstamos mes',true)
+    +_barMeta(dMes.numPrestamos,metaClientes,'Meta clientes nuevos mes',false)
     +_barMetaTarjetas(activosCartera,metaTarjetas);
   var elPorRutaMes=document.getElementById('cierre-mes-porruta');
   if(elPorRutaMes) elPorRutaMes.innerHTML='';
@@ -3781,7 +3744,7 @@ function renderCierres(){
 }
 
 function _htmlTarjetaCierre(c){
-  var d=c.data; var pos=d.utilidad>=0;
+  var d=c.data; var utilNeta=_utilidadCierreGuardado(c); var pos=utilNeta>=0;
   return '<div class="card" style="margin-bottom:10px">'
     +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
       +'<div>'
@@ -3794,7 +3757,7 @@ function _htmlTarjetaCierre(c){
         +(rolActual==='admin'?'<button style="background:#fee2e2;color:#991b1b;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-family:\'DM Sans\',sans-serif;cursor:pointer" onclick="eliminarCierre(\''+c.id+'\')">✕</button>':'')
       +'</div>'
     +'</div>'
-    +_statsHtml(d,c.tipo,c.id)
+    +_statsHtml(d,c.tipo,c.id,false,utilNeta)
     +'</div>';
 }
 
@@ -3803,7 +3766,8 @@ function imprimirCierre(id){
   if(!c) return;
   var d=c.data;
   var tipo=c.tipo==='semana'?'Cierre Semanal':'Cierre Mensual';
-  var pos=d.utilidad>=0;
+  var utilNeta=_utilidadCierreGuardado(c);
+  var pos=utilNeta>=0;
   var ruta=c.ruta||'todas';
   var row=function(label,value,bg,color){
     return '<div class="row" style="background:'+(bg||'#f9fafb')+'"><span class="label">'+label+'</span><span class="value" style="color:'+(color||'#1f2937')+'">'+value+'</span></div>';
@@ -3865,7 +3829,7 @@ function imprimirCierre(id){
     +row('💼 Cobro administrativo',_fmtCol(d.totalCobroAdm||0))
     +row('💸 Gastos',_fmtCol(d.totalGastos),'#fef9c3','#854d0e')
     +(d.totalInyeccion?row('💉 Capital inyectado','+'+_fmtCol(d.totalInyeccion),'#e0f2fe','#0369a1'):'')
-    +'<div class="total"><span>📊 Ganancia neta</span><span>'+(pos?'+':'')+_fmtCol(d.utilidad)+'</span></div>'
+    +'<div class="total"><span>📊 Ganancia neta</span><span>'+(pos?'+':'')+_fmtCol(utilNeta)+'</span></div>'
     +((metaP||metaC)?('<h3>🎯 Metas del período'+(ruta!=='todas'?' ('+ruta+')':'')+'</h3>'
       +_barraMeta(prestadoTotal,metaP,'Préstamos',true)
       +_barraMeta(d.numPrestamos||0,metaC,'Clientes nuevos',false)):'')
@@ -4011,15 +3975,6 @@ function _guardarCierre(tipo,desde,hasta){
   var ahora=Date.now();
   rutasAGuardar.forEach(function(ruta,i){
     var data=_calcCierreData(desde,hasta,ruta);
-    // Aplicar cualquier corrección manual del lápiz (que solo afectaba la pantalla en vivo)
-    // para que el cierre guarde en el historial el número YA corregido, no el crudo.
-    var _prestadoAjustado=_valConAjuste(tipo,'prestado',data.prestado+data.montoRenov);
-    data.prestado=Math.max(0,_prestadoAjustado-data.montoRenov);
-    data.recogida=_valConAjuste(tipo,'recogida',data.recogida);
-    data.numRenov=_valConAjuste(tipo,'renov',data.numRenov);
-    data.totalCobroAdm=_valConAjuste(tipo,'cobroadm',data.totalCobroAdm);
-    data.totalGastos=_valConAjuste(tipo,'gastos',data.totalGastos);
-    data.numPrestamos=_valConAjuste(tipo,'clientes',data.numPrestamos);
     data.saldoFin=_enCalleActual(ruta);
     data.clientesFin=_clientesActivosActual(ruta);
     // Saldo/clientes de inicio: el fin del cierre anterior de esta ruta, o el caché del arranque de este período
@@ -4051,9 +4006,6 @@ function _guardarCierre(tipo,desde,hasta){
     data.baseFin=data.utilidad;
     cierres.push({id:(ahora+i).toString(),tipo:tipo,desde:desde,hasta:hasta,nota:nota,data:data,fechaRegistro:hoyLocal(),ruta:ruta});
   });
-  // Los ajustes manuales del lápiz son solo para el período en curso; al cerrarlo hay que
-  // limpiarlos todos para que no se le sigan restando al período nuevo que empieza.
-  Object.keys(invOverrides).filter(function(k){ return k.indexOf(tipo+'_')===0; }).forEach(function(k){ delete invOverrides[k]; });
   document.getElementById('modal-confirmar-cierre').style.display='none';
   renderInversion();
   try{ renderCajas(); }catch(e){}
@@ -4068,26 +4020,6 @@ function reabrirCierre(id){
   var objetivo=cierres.find(function(c){ return c.id===id; });
   if(!objetivo) return;
   if(!confirm('¿Reabrir esta '+(objetivo.tipo==='semana'?'semana':'mes')+'? Vas a poder seguir editándola y volver a cerrarla después.')) return;
-  // Recalcular el crudo actual (sin ajustes) para esta misma fecha/ruta, y restaurar el lapicito
-  // como una diferencia, para que "en curso" siga mostrando exactamente lo mismo que estaba
-  // guardado en el cierre (los números ya corregidos), no el cálculo crudo de nuevo.
-  var crudo=_calcCierreData(objetivo.desde,objetivo.hasta,objetivo.ruta);
-  var guardado=objetivo.data||{};
-  var tipo=objetivo.tipo;
-  var _campos=[
-    ['prestado',(crudo.prestado||0)+(crudo.montoRenov||0),(guardado.prestado||0)+(guardado.montoRenov||0)],
-    ['recogida',crudo.recogida||0,guardado.recogida||0],
-    ['renov',crudo.numRenov||0,guardado.numRenov||0],
-    ['cobroadm',crudo.totalCobroAdm||0,guardado.totalCobroAdm||0],
-    ['gastos',crudo.totalGastos||0,guardado.totalGastos||0],
-    ['clientes',crudo.numPrestamos||0,guardado.numPrestamos||0]
-  ];
-  _campos.forEach(function(f){
-    var campo=f[0],crudoVal=f[1],guardadoVal=f[2];
-    var delta=crudoVal-guardadoVal;
-    if(delta!==0) invOverrides[_invOverrideKey(tipo,campo)]=delta;
-    else delete invOverrides[_invOverrideKey(tipo,campo)];
-  });
   if(objetivo.ruta==='todas'){
     cierres=cierres.filter(function(c){
       return !(c.tipo===objetivo.tipo&&c.hasta===objetivo.hasta);
@@ -4098,7 +4030,7 @@ function reabrirCierre(id){
   guardarDatos();
   renderCierres();
   if(document.getElementById('modal-hist-cierres').style.display==='flex') abrirHistorialTipo(objetivo.tipo);
-  toast('✓ '+(objetivo.tipo==='semana'?'Semana':'Mes')+' reabierta — sigue igual que como la cerraste');
+  toast('✓ '+(objetivo.tipo==='semana'?'Semana':'Mes')+' reabierta');
 }
 function eliminarCierre(id){
   if(!confirm('¿Eliminar este cierre?')) return;
@@ -4208,7 +4140,7 @@ function abrirHistorialTipo(tipo){
           +'<span onclick="toggleRenEntry(\''+uid+'\')" style="font-size:14px;color:#9ca3af;cursor:pointer;flex-shrink:0" id="arr-'+uid+'">▶</span>'
         +'</div>'
         +'<div id="'+uid+'" style="display:none;padding-bottom:12px">'
-          +_statsHtml(c.data,c.tipo,c.id)
+          +_statsHtml(c.data,c.tipo,c.id,false,_utilidadCierreGuardado(c))
           +'<div style="display:flex;gap:8px;margin-top:10px">'
             +'<button onclick="imprimirCierre(\''+c.id+'\')" style="background:#dbeafe;color:#1e40af;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🖨 Imprimir</button>'
             +(rolActual==='admin'?((esUltimo
