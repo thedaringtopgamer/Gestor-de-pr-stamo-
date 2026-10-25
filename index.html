@@ -3126,14 +3126,25 @@ function _leerBaseCaja(ruta,fecha){
   if(bases['_cf_'+key]!==undefined&&bases['_cf_'+key]!==null&&bases['_cf_'+key]!=='') return parseInt(bases['_cf_'+key])||0;
   return 0;
 }
-// Ganancia neta de un cierre YA GUARDADO: el mismo número real de la Base del día siguiente
-// al cierre (con la que arranca ese día en el Panel Recolector) — nunca una fórmula aparte.
-// Justo al cerrar, ese día siguiente todavía no tiene base propia → muestra 0. En cuanto esa
-// base ya exista (aunque sea negativa), salta a ese número exacto, sin tocar el cierre guardado.
-function _utilidadCierreGuardado(c){
-  var d=new Date(c.hasta+'T12:00:00'); d.setDate(d.getDate()+1);
-  var diaSig=d.toISOString().split('T')[0];
-  return _leerBaseCaja(c.ruta||'todas',diaSig);
+// Base de arranque de un período (semana/mes) EN CURSO: se mira la Base real del Panel
+// Recolector UNA SOLA VEZ — nunca el mismo día en que cerró el período anterior (ese día no
+// cuenta, no se registra nada todavía), solo a partir de que el día operativo ya es el primer
+// día real del período nuevo. En cuanto esa base ya quedó grabada en el Panel Recolector (sea
+// manual o automática), se cachea en saldoInicios y nunca se vuelve a leer — así el número no
+// se mueve con cada pago/gasto que entre después, solo se le suma/resta desde ahí hasta el
+// próximo cierre, y el número que se guarda al cerrar es siempre el mismo que se venía viendo.
+function _baseInicioPeriodo(ruta,tipo,desde,hoy){
+  var sufijo=tipo==='mes'?'mesB':'semanaB';
+  var clave=ruta+'|'+sufijo+'|'+desde;
+  if(typeof saldoInicios[clave]==='number') return saldoInicios[clave];
+  if(hoy>=desde){
+    var key=ruta+'_'+desde;
+    var conocida=null;
+    if(bases['_m_'+key]) conocida=parseInt(bases[key])||0;
+    else if(bases['_cf_'+key]!==undefined&&bases['_cf_'+key]!==null&&bases['_cf_'+key]!=='') conocida=parseInt(bases['_cf_'+key])||0;
+    if(conocida!==null){ saldoInicios[clave]=conocida; guardarDatos(); return conocida; }
+  }
+  return 0;
 }
 function _calcCierreData(desde,hasta,rutaParam){
   var ruta=rutaParam||(rutaInvFiltro||'todas');
@@ -3352,7 +3363,7 @@ function _verListaGastosHist(cierreId){
   }
   goTo('screen-nuevos-periodo');
 }
-function _statsHtml(d,tipo,histCierreId,sinLapiz,utilidadOverride){
+function _statsHtml(d,tipo,histCierreId,sinLapiz){
   // Si viene de un cierre del historial (ya cerrado), las lupitas de Clientes nuevos/Gastos
   // deben mostrar los datos de ESE cierre específico, no los de la semana/mes en curso.
   var _clickNuevos=histCierreId?('_verListaNuevosHist(\''+histCierreId+'\')'):('_verListaNuevos(\''+tipo+'\')');
@@ -3363,19 +3374,13 @@ function _statsHtml(d,tipo,histCierreId,sinLapiz,utilidadOverride){
   var renovVal=d.numRenov||0;
   var cobroAdmVal=d.totalCobroAdm||0;
   var gastosVal=d.totalGastos||0;
-  // Ganancia neta de un cierre YA GUARDADO (utilidadOverride, calculada afuera por
-  // _utilidadCierreGuardado) = la base real del día siguiente al cierre, tal cual. En vivo
-  // (período en curso, todavía sin cerrar) se sigue proyectando con la fórmula: base de
-  // arranque + recogida - (prestado nuevos + entregado en renovaciones) - cobro
-  // administrativo - gastos. Se resta el cobro administrativo porque la Caja diaria también
-  // lo resta (esa plata queda apartada, no es efectivo libre).
-  var utilidad;
-  if(typeof utilidadOverride==='number'){
-    utilidad=utilidadOverride;
-  } else {
-    var prestadoPuroVal=Math.max(0,prestadoVal-(d.montoRenov||0));
-    utilidad=(d.baseInicio||0)+recogidaVal-prestadoPuroVal-(d.entregadoRenov||0)-cobroAdmVal-gastosVal;
-  }
+  // Ganancia = base de caja de arranque + recogida - (prestado nuevos + entregado en
+  // renovaciones) - cobro administrativo - gastos. Se resta el cobro administrativo porque
+  // la Caja diaria también lo resta (esa plata queda apartada, no es efectivo libre). Para un
+  // cierre ya guardado, d.baseInicio/d.recogida/etc. son los números congelados al cerrar, así
+  // que esto reproduce exactamente la misma Ganancia neta que quedó en el historial.
+  var prestadoPuroVal=Math.max(0,prestadoVal-(d.montoRenov||0));
+  var utilidad=(d.baseInicio||0)+recogidaVal-prestadoPuroVal-(d.entregadoRenov||0)-cobroAdmVal-gastosVal;
   var pos=utilidad>=0;
   var periodo=tipo==='mes'?'Mes':'Semana';
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">'
@@ -3497,13 +3502,11 @@ function _calcCierreDataTodasEnVivo(tipo,hoy){
     var ultimoR=cierresR[0];
     var inicioR=ultimoR?_diasiguienteL(ultimoR.hasta):(tipo==='semana'?_inicioSemana(hoy):_inicioMes(hoy));
     var dR=_calcCierreData(inicioR,hoy,r);
-    // Base de caja: encadenar del cierre anterior de ESTA ruta (igual que saldoInicio) y
-    // recalcular la utilidad de esta ruta con esa base ya encadenada, para que la suma en
-    // "Todas" quede consistente con el número que se muestra.
-    if(ultimoR&&ultimoR.data&&typeof ultimoR.data.baseFin==='number'){
-      dR.baseInicio=ultimoR.data.baseFin;
-      dR.utilidad=dR.baseInicio+dR.recogida-(dR.prestado+dR.entregadoRenov)-dR.totalCobroAdm-dR.totalGastos;
-    }
+    // Base de caja de ESTA ruta: mismo mecanismo de UNA SOLA VEZ (cacheado) que renderCierres,
+    // y recalcular la utilidad de esta ruta con esa base, para que la suma en "Todas" quede
+    // consistente con el número que se muestra en cada ruta por separado.
+    dR.baseInicio=_baseInicioPeriodo(r,tipo,inicioR,hoy);
+    dR.utilidad=dR.baseInicio+dR.recogida-(dR.prestado+dR.entregadoRenov)-dR.totalCobroAdm-dR.totalGastos;
     // Saldo/clientes de inicio de ESTA ruta: el fin de su propio último cierre, o el caché
     // del arranque de su propio período — igual que hace renderCierres() para una sola ruta.
     var _claveSufR=tipo==='semana'?'semana':'mes';
@@ -3641,11 +3644,9 @@ function renderCierres(){
     dSem.clientesInicio=saldoInicios[_claveClientesSem];
   }
   dSem.clientesFin=_clientesActivosActual(rFiltro);
-  // Base de caja de arranque: encadenar del cierre anterior (con qué CERRÓ esa semana) en vez
-  // de depender de la lectura en vivo del día — mismo patrón que saldoInicio/clientesInicio.
-  if(ultimoSem&&ultimoSem.data&&typeof ultimoSem.data.baseFin==='number'){
-    dSem.baseInicio=ultimoSem.data.baseFin;
-  }
+  // Base de caja de arranque: se mira UNA SOLA VEZ (y se cachea) en cuanto el día operativo ya
+  // es el primer día real de esta semana — no el mismo día en que cerró la anterior.
+  dSem.baseInicio=_baseInicioPeriodo(rFiltro,'semana',inicioSem,hoy);
   var elRangoSem=document.getElementById('cierre-semana-rango');
   var elStatsSem=document.getElementById('cierre-semana-stats');
   if(elRangoSem) elRangoSem.textContent=inicioSem+' → '+hoy;
@@ -3677,9 +3678,8 @@ function renderCierres(){
     dMes.clientesInicio=saldoInicios[_claveClientesMes];
   }
   dMes.clientesFin=_clientesActivosActual(rFiltro);
-  if(ultimoMes&&ultimoMes.data&&typeof ultimoMes.data.baseFin==='number'){
-    dMes.baseInicio=ultimoMes.data.baseFin;
-  }
+  // Base de caja de arranque: mismo mecanismo de UNA SOLA VEZ (cacheado) que la semana.
+  dMes.baseInicio=_baseInicioPeriodo(rFiltro,'mes',inicioMes,hoy);
   var elRangoMes=document.getElementById('cierre-mes-rango');
   var elStatsMes=document.getElementById('cierre-mes-stats');
   // Contar semanas cerradas desde inicio del mes actual
@@ -3744,7 +3744,7 @@ function renderCierres(){
 }
 
 function _htmlTarjetaCierre(c){
-  var d=c.data; var utilNeta=_utilidadCierreGuardado(c); var pos=utilNeta>=0;
+  var d=c.data; var pos=d.utilidad>=0;
   return '<div class="card" style="margin-bottom:10px">'
     +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
       +'<div>'
@@ -3757,7 +3757,7 @@ function _htmlTarjetaCierre(c){
         +(rolActual==='admin'?'<button style="background:#fee2e2;color:#991b1b;border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-family:\'DM Sans\',sans-serif;cursor:pointer" onclick="eliminarCierre(\''+c.id+'\')">✕</button>':'')
       +'</div>'
     +'</div>'
-    +_statsHtml(d,c.tipo,c.id,false,utilNeta)
+    +_statsHtml(d,c.tipo,c.id)
     +'</div>';
 }
 
@@ -3766,8 +3766,7 @@ function imprimirCierre(id){
   if(!c) return;
   var d=c.data;
   var tipo=c.tipo==='semana'?'Cierre Semanal':'Cierre Mensual';
-  var utilNeta=_utilidadCierreGuardado(c);
-  var pos=utilNeta>=0;
+  var pos=d.utilidad>=0;
   var ruta=c.ruta||'todas';
   var row=function(label,value,bg,color){
     return '<div class="row" style="background:'+(bg||'#f9fafb')+'"><span class="label">'+label+'</span><span class="value" style="color:'+(color||'#1f2937')+'">'+value+'</span></div>';
@@ -3829,7 +3828,7 @@ function imprimirCierre(id){
     +row('💼 Cobro administrativo',_fmtCol(d.totalCobroAdm||0))
     +row('💸 Gastos',_fmtCol(d.totalGastos),'#fef9c3','#854d0e')
     +(d.totalInyeccion?row('💉 Capital inyectado','+'+_fmtCol(d.totalInyeccion),'#e0f2fe','#0369a1'):'')
-    +'<div class="total"><span>📊 Ganancia neta</span><span>'+(pos?'+':'')+_fmtCol(utilNeta)+'</span></div>'
+    +'<div class="total"><span>📊 Ganancia neta</span><span>'+(pos?'+':'')+_fmtCol(d.utilidad)+'</span></div>'
     +((metaP||metaC)?('<h3>🎯 Metas del período'+(ruta!=='todas'?' ('+ruta+')':'')+'</h3>'
       +_barraMeta(prestadoTotal,metaP,'Préstamos',true)
       +_barraMeta(d.numPrestamos||0,metaC,'Clientes nuevos',false)):'')
@@ -3994,14 +3993,10 @@ function _guardarCierre(tipo,desde,hasta){
       data.clientesInicio=saldoInicios[ruta+'|'+_claveSufijoC+'|'+desde];
       if(typeof data.clientesInicio!=='number') data.clientesInicio=_clientesActivosActual(ruta);
     }
-    // Base de caja de arranque: igual que saldo/clientes, se encadena del cierre anterior (la
-    // base con la que CERRÓ esa semana/mes) en vez de depender de que alguien haya abierto el
-    // Panel Recolector justo ese día — así semana, mes y caja siempre arrancan con el mismo número.
-    if(_prevCierre&&_prevCierre.data&&typeof _prevCierre.data.baseFin==='number'){
-      data.baseInicio=_prevCierre.data.baseFin;
-    }
-    // Recalcular la ganancia ya con los ajustes del lápiz aplicados arriba y con la base
-    // encadenada — así "baseFin" (lo que hereda el próximo período) también queda correcto.
+    // Base de caja de arranque: el mismo número cacheado de UNA SOLA VEZ que se viene mostrando
+    // en "en curso" desde que empezó este período — así lo que se guarda es exactamente lo
+    // mismo que ya se estaba viendo, nunca un número recalculado distinto al cerrar.
+    data.baseInicio=_baseInicioPeriodo(ruta,tipo,desde,hoyLocal());
     data.utilidad=(data.baseInicio||0)+data.recogida-(data.prestado+data.entregadoRenov)-data.totalCobroAdm-data.totalGastos;
     data.baseFin=data.utilidad;
     cierres.push({id:(ahora+i).toString(),tipo:tipo,desde:desde,hasta:hasta,nota:nota,data:data,fechaRegistro:hoyLocal(),ruta:ruta});
@@ -4140,7 +4135,7 @@ function abrirHistorialTipo(tipo){
           +'<span onclick="toggleRenEntry(\''+uid+'\')" style="font-size:14px;color:#9ca3af;cursor:pointer;flex-shrink:0" id="arr-'+uid+'">▶</span>'
         +'</div>'
         +'<div id="'+uid+'" style="display:none;padding-bottom:12px">'
-          +_statsHtml(c.data,c.tipo,c.id,false,_utilidadCierreGuardado(c))
+          +_statsHtml(c.data,c.tipo,c.id)
           +'<div style="display:flex;gap:8px;margin-top:10px">'
             +'<button onclick="imprimirCierre(\''+c.id+'\')" style="background:#dbeafe;color:#1e40af;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🖨 Imprimir</button>'
             +(rolActual==='admin'?((esUltimo
