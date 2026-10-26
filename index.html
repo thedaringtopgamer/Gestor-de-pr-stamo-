@@ -3801,6 +3801,7 @@ function imprimirCierre(id){
   if(typeof d.saldoFin==='number') extra+=row('🏁 Saldo en calle — fin',_fmtCol(d.saldoFin));
   if(typeof d.clientesInicio==='number') extra+=row('📍 Clientes activos — inicio',d.clientesInicio);
   if(typeof d.clientesFin==='number') extra+=row('🏁 Clientes activos — fin',d.clientesFin);
+  if(d.baseInicio) extra+=row('💵 Base de caja al arrancar',_fmtCol(d.baseInicio));
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8">'
     +'<title>Financiera JD — '+tipo+'</title>'
     +'<style>'
