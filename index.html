@@ -885,10 +885,24 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Descripción (opcional)</label>
         <textarea id="doc-extra-desc" rows="2" placeholder="Detalles adicionales..." style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;resize:none;box-sizing:border-box"></textarea>
       </div>
-      <div style="margin-bottom:16px">
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Tipo de documento</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <button type="button" id="btn-docextra-tipo-foto" onclick="selTipoDocExtra('foto')" style="padding:9px 4px;border:1.5px solid #059669;border-radius:8px;font-size:13px;font-weight:700;background:#f0fdf4;color:#059669;cursor:pointer;font-family:'DM Sans',sans-serif">📷 Foto</button>
+          <button type="button" id="btn-docextra-tipo-ubicacion" onclick="selTipoDocExtra('ubicacion')" style="padding:9px 4px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-weight:700;background:#fff;color:#374151;cursor:pointer;font-family:'DM Sans',sans-serif">📍 Ubicación</button>
+        </div>
+      </div>
+      <div id="doc-extra-foto-wrap" style="margin-bottom:16px">
         <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Foto *</label>
         <input type="file" accept="image/*" id="doc-extra-file" onchange="onDocExtraFilePick(this)" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px">
         <img id="doc-extra-preview" style="display:none;width:100%;margin-top:8px;border-radius:8px;max-height:200px;object-fit:cover">
+      </div>
+      <div id="doc-extra-ubic-wrap" style="display:none;margin-bottom:16px">
+        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Coordenadas *</label>
+        <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="doc-extra-coord" placeholder="Ej: 10.0839,-84.2457" oninput="previewCoordDocExtra()" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
+        <div id="doc-extra-coord-link" style="margin-top:6px;display:none">
+          <a id="doc-extra-coord-link-a" href="#" target="_blank" rel="noopener" style="font-size:13px;color:#2563eb;text-decoration:none;display:inline-flex;align-items:center;gap:4px">📍 Ver en Google Maps</a>
+        </div>
       </div>
       <button onclick="guardarDocExtraModal()" style="width:100%;padding:12px;background:#059669;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">💾 Agregar</button>
     </div>
@@ -1083,6 +1097,11 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
             <a id="doc-link-trabajo-a" href="#" target="_blank" style="font-size:13px;color:#2563eb;text-decoration:none;display:inline-flex;align-items:center;gap:4px">📍 Ver en Google Maps</a>
           </div>
         </div>
+      </div>
+      <div class="card">
+        <p style="font-size:13px;font-weight:600;margin-bottom:12px">➕ Documentos extra</p>
+        <div id="docs-extra-lista-creacion" style="margin-bottom:10px"></div>
+        <button type="button" onclick="abrirModalDocExtra()" style="width:100%;padding:11px;border:2px dashed #059669;border-radius:10px;background:#f0fdf4;color:#059669;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">➕ Agregar documento extra</button>
       </div>
       <div class="divider"></div>
       <button class="btn btn-cyan btn-full" style="padding:13px;margin-top:8px" onclick="guardarDocumentos()">Continuar →</button>
@@ -4597,6 +4616,7 @@ function goTo(id){
         else { img.style.display='none'; img.removeAttribute('src'); }
       }
     });
+    _renderDocsExtraCreacion();
   }
   if(id==='screen-nuevo-prestamo'){
     var _h=hoyLocal(); var _hp=_h.split('-');
@@ -4919,6 +4939,8 @@ function guardarPrestamo(){
     existente.coordCasa=clienteTemporal.coordCasa||existente.coordCasa||'';
     existente.coordTrabajo=clienteTemporal.coordTrabajo||existente.coordTrabajo||'';
     existente.fotos=clienteTemporal.fotos||existente.fotos||{};
+    existente.fotosExtra=clienteTemporal.fotosExtra||existente.fotosExtra||[];
+    existente.ubicacionesExtra=clienteTemporal.ubicacionesExtra||existente.ubicacionesExtra||[];
     if(clienteTemporal.notas){
       existente.notas=Object.assign({},existente.notas||{},clienteTemporal.notas);
     }
@@ -4956,6 +4978,8 @@ function guardarPrestamo(){
       coordCasa:clienteTemporal.coordCasa||'',
       coordTrabajo:clienteTemporal.coordTrabajo||'',
       fotos:clienteTemporal.fotos||{},
+      fotosExtra:clienteTemporal.fotosExtra||[],
+      ubicacionesExtra:clienteTemporal.ubicacionesExtra||[],
       montoPrestado:monto,
       tasaInteres:tasaDec,
       cantidadDeQuincenas:cd.cuotas,
@@ -6923,6 +6947,8 @@ function guardarDocumentos(){
   // Partir de fotos ya guardadas en el cliente, no de objeto vacío
   var ex=clienteTemporal._id?prestamos.find(function(x){return x.id===clienteTemporal._id;}):null;
   var fotos=Object.assign({},ex&&ex.fotos?ex.fotos:{});
+  if(!clienteTemporal.fotosExtra) clienteTemporal.fotosExtra=(ex&&ex.fotosExtra)?ex.fotosExtra.slice():[];
+  if(!clienteTemporal.ubicacionesExtra) clienteTemporal.ubicacionesExtra=(ex&&ex.ubicacionesExtra)?ex.ubicacionesExtra.slice():[];
   var clavesTocadas=claves.filter(function(k){
     var el=document.getElementById('doc-'+k);
     return !!_docsNewFotos[k]||!!(el&&el.files&&el.files[0]);
@@ -6931,6 +6957,10 @@ function guardarDocumentos(){
   claves.forEach(function(k){
     if(_docsNewFotos[k]) fotos[k]=_docsNewFotos[k];
   });
+  // Documentos extra (fotos y ubicaciones) agregados durante la creación — igual que hace
+  // guardarDocsCliente() para un cliente ya existente.
+  var _clavesExtraFoto=Object.keys(_docsExtraNuevos);
+  _clavesExtraFoto.forEach(function(k){ fotos[k]=_docsExtraNuevos[k].data; });
   function finalizarDocumentos(){
     var notaCasa=(document.getElementById('doc-nota-foto-casa')||{}).value||'';
     var notaTrabajo=(document.getElementById('doc-nota-foto-trabajo')||{}).value||'';
@@ -6948,6 +6978,14 @@ function guardarDocumentos(){
       clienteTemporal.coordCasa=coordCasa;
       clienteTemporal.coordTrabajo=coordTrabajo;
       clienteTemporal.fotos=fotos;
+      _clavesExtraFoto.forEach(function(k){
+        clienteTemporal.fotosExtra.push({key:k,label:_docsExtraNuevos[k].label,desc:_docsExtraNuevos[k].desc||''});
+        clienteTemporal.fechasDoc=clienteTemporal.fechasDoc||{}; clienteTemporal.fechasDoc[k]=hoyLocal();
+      });
+      Object.keys(_docsExtraUbicNuevos).forEach(function(k){
+        clienteTemporal.ubicacionesExtra.push({key:k,label:_docsExtraUbicNuevos[k].label,desc:_docsExtraUbicNuevos[k].desc||'',valor:_docsExtraUbicNuevos[k].valor});
+        clienteTemporal.fechasDoc=clienteTemporal.fechasDoc||{}; clienteTemporal.fechasDoc[k]=hoyLocal();
+      });
       if(!clienteTemporal.notas) clienteTemporal.notas={};
       clienteTemporal.notas['foto-casa']=notaCasa.trim();
       clienteTemporal.notas['foto-trabajo']=notaTrabajo.trim();
@@ -6957,6 +6995,8 @@ function guardarDocumentos(){
       // todo se queda en el borrador hasta terminar el paso 3.
       if(ex&&!clienteTemporal._reactivarCancelado){
         ex.coordCasa=coordCasa;ex.coordTrabajo=coordTrabajo;ex.fotos=fotos;ex.incompleto='paso2';
+        ex.fotosExtra=clienteTemporal.fotosExtra.slice();
+        ex.ubicacionesExtra=clienteTemporal.ubicacionesExtra.slice();
         if(!ex.notas) ex.notas={};
         ex.notas['foto-casa']=notaCasa.trim();
         ex.notas['foto-trabajo']=notaTrabajo.trim();
@@ -6965,6 +7005,8 @@ function guardarDocumentos(){
         clavesTocadas.forEach(function(k){ ex.fechasDoc[k]=hoyLocal(); });
       }
       _docsNewFotos={};
+      _docsExtraNuevos={};
+      _docsExtraUbicNuevos={};
       if(!clienteTemporal._reactivarCancelado) guardarDatos();
       goTo('screen-nuevo-prestamo');
     });
@@ -7079,6 +7121,7 @@ function verDocsCliente(){
   _docsFechasVerificadas={};
   _docsNewFotos={};
   _docsExtraNuevos={};
+  _docsExtraUbicNuevos={};
   _renderDocsUbicacion();
   _renderDocsFotos();
   goTo('screen-docs-cliente');
@@ -7120,6 +7163,27 @@ function _renderDocsUbicacion(){
           :(fecha?'<div style="font-size:10px;color:'+(vencida?'#dc2626;font-weight:700':'#9ca3af')+';margin-top:3px">'+(vencida?'⚠️ Hay que actualizar — ':'')+'Última actualización: '+_fmtFechaDoc(fecha)+'</div>':''));
     }
     html+='</div>';
+  });
+  // Ubicaciones extra (más allá de casa/trabajo) — ej. un segundo trabajo del cliente
+  var extrasUbic=(p.ubicacionesExtra||[]).concat(Object.keys(_docsExtraUbicNuevos).map(function(k){
+    return {key:k,label:_docsExtraUbicNuevos[k].label,desc:_docsExtraUbicNuevos[k].desc,valor:_docsExtraUbicNuevos[k].valor};
+  }));
+  extrasUbic.forEach(function(ex){
+    var pendienteVerif=!!_docsFechasVerificadas[ex.key];
+    var fecha=pendienteVerif?'':(fechasDoc[ex.key]||(ex.valor?fechaFallback:''));
+    var vencida=!pendienteVerif&&ex.valor&&fecha&&_fechaDocVencida(fecha);
+    html+='<div class="field-group" style="padding:10px;border-radius:10px;border:1.5px solid '+(vencida?'#fca5a5':'var(--border)')+(vencida?';background:#fee2e2;border-left:4px solid #dc2626':'')+'">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+      +'<label style="color:'+(vencida?'#991b1b':'inherit')+'">'+(vencida?'⚠️ ':'')+'📍 '+esc(ex.label)+'</label>'
+      +'<button onclick="quitarDocExtra(\''+ex.key+'\')" style="font-size:12px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0">🗑</button>'
+      +'</div>'
+      +(ex.desc?'<div style="font-size:11px;color:#6b7280;margin-bottom:4px">'+esc(ex.desc)+'</div>':'')
+      +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
+      +(ex.valor?'<a href="https://www.google.com/maps?q='+encodeURIComponent(ex.valor)+'" target="_blank" rel="noopener" style="color:#2563eb;font-size:12px;text-decoration:none;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📍 '+esc(ex.valor)+'</a>':'<span style="font-size:12px;color:var(--text-muted);flex:1">Sin ubicación registrada</span>')
+      +(vencida?'<button onclick="_verificarDocIndividual(\''+ex.key+'\')" style="font-size:11px;color:#fff;font-weight:700;cursor:pointer;background:#16a34a;border:none;border-radius:6px;padding:4px 8px;flex-shrink:0">✓ Verificar</button>':'')
+      +'</div>'
+      +(fecha?'<div style="font-size:10px;color:'+(vencida?'#dc2626;font-weight:700':'#9ca3af')+';margin-top:3px">'+(vencida?'⚠️ Hay que actualizar — ':'')+'Última actualización: '+_fmtFechaDoc(fecha)+'</div>':'')
+      +'</div>';
   });
   html+='</div>';
   document.getElementById('docs-ubicacion-edit').innerHTML=html;
@@ -7195,12 +7259,30 @@ function _renderDocsFotos(){
   document.getElementById('docs-fotos-edit').innerHTML=html;
 }
 
+var _docExtraTipo='foto';
+function selTipoDocExtra(tipo){
+  _docExtraTipo=tipo;
+  document.getElementById('doc-extra-foto-wrap').style.display=tipo==='foto'?'':'none';
+  document.getElementById('doc-extra-ubic-wrap').style.display=tipo==='ubicacion'?'':'none';
+  var bFoto=document.getElementById('btn-docextra-tipo-foto'),bUbic=document.getElementById('btn-docextra-tipo-ubicacion');
+  bFoto.style.background=tipo==='foto'?'#f0fdf4':'#fff'; bFoto.style.color=tipo==='foto'?'#059669':'#374151'; bFoto.style.borderColor=tipo==='foto'?'#059669':'var(--border)';
+  bUbic.style.background=tipo==='ubicacion'?'#f0fdf4':'#fff'; bUbic.style.color=tipo==='ubicacion'?'#059669':'#374151'; bUbic.style.borderColor=tipo==='ubicacion'?'#059669':'var(--border)';
+}
+function previewCoordDocExtra(){
+  var val=document.getElementById('doc-extra-coord').value.trim();
+  var wrap=document.getElementById('doc-extra-coord-link');
+  if(val){ document.getElementById('doc-extra-coord-link-a').href='https://www.google.com/maps?q='+encodeURIComponent(val); wrap.style.display='block'; }
+  else wrap.style.display='none';
+}
 function abrirModalDocExtra(){
   document.getElementById('doc-extra-titulo').value='';
   document.getElementById('doc-extra-desc').value='';
   document.getElementById('doc-extra-file').value='';
   document.getElementById('doc-extra-preview').style.display='none';
+  document.getElementById('doc-extra-coord').value='';
+  document.getElementById('doc-extra-coord-link').style.display='none';
   window._docExtraFileData=null;
+  selTipoDocExtra('foto');
   document.getElementById('modal-doc-extra').style.display='flex';
 }
 function cerrarModalDocExtra(){
@@ -7230,34 +7312,78 @@ function guardarDocExtraModal(){
   var titulo=document.getElementById('doc-extra-titulo').value.trim();
   var desc=document.getElementById('doc-extra-desc').value.trim();
   if(!titulo){toast('⚠ Escribí el nombre del documento');return;}
-  if(!window._docExtraFileData){toast('⚠ Elegí una foto');return;}
   var key='extra-'+Date.now();
+  if(_docExtraTipo==='ubicacion'){
+    var coord=document.getElementById('doc-extra-coord').value.trim();
+    if(!coord){toast('⚠ Ingresá las coordenadas');return;}
+    _docsExtraUbicNuevos[key]={label:titulo,desc:desc,valor:coord};
+    cerrarModalDocExtra();
+    try{ _renderDocsUbicacion(); }catch(e){}
+    try{ _renderDocsExtraCreacion(); }catch(e){}
+    toast('✓ Ubicación agregada — dale a Guardar cambios para confirmarla');
+    return;
+  }
+  if(!window._docExtraFileData){toast('⚠ Elegí una foto');return;}
   _docsExtraNuevos[key]={label:titulo,desc:desc,data:window._docExtraFileData};
   cerrarModalDocExtra();
-  _renderDocsFotos();
+  try{ _renderDocsFotos(); }catch(e){}
+  try{ _renderDocsExtraCreacion(); }catch(e){}
   toast('✓ Documento agregado — dale a Guardar cambios para confirmarlo');
+}
+
+function _renderDocsExtraCreacion(){
+  var cont=document.getElementById('docs-extra-lista-creacion');
+  if(!cont) return;
+  var ex=clienteTemporal._id?prestamos.find(function(x){return x.id===clienteTemporal._id;}):null;
+  var items=((ex&&ex.fotosExtra)||[]).map(function(f){return {tipo:'foto',key:f.key,label:f.label,desc:f.desc};})
+    .concat(Object.keys(_docsExtraNuevos).map(function(k){return {tipo:'foto',key:k,label:_docsExtraNuevos[k].label,desc:_docsExtraNuevos[k].desc};}))
+    .concat(((ex&&ex.ubicacionesExtra)||[]).map(function(u){return {tipo:'ubicacion',key:u.key,label:u.label,desc:u.desc};}))
+    .concat(Object.keys(_docsExtraUbicNuevos).map(function(k){return {tipo:'ubicacion',key:k,label:_docsExtraUbicNuevos[k].label,desc:_docsExtraUbicNuevos[k].desc};}));
+  if(!items.length){ cont.innerHTML='<p style="font-size:12px;color:var(--text-muted);margin:0">Sin documentos extra todavía</p>'; return; }
+  cont.innerHTML=items.map(function(it){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">'
+      +'<div><div style="font-size:13px;font-weight:600">'+(it.tipo==='ubicacion'?'📍 ':'📷 ')+esc(it.label)+'</div>'
+      +(it.desc?'<div style="font-size:11px;color:var(--text-muted)">'+esc(it.desc)+'</div>':'')+'</div>'
+      +'<button onclick="quitarDocExtra(\''+it.key+'\')" style="font-size:12px;color:#dc2626;background:none;border:none;cursor:pointer;padding:4px">🗑</button>'
+      +'</div>';
+  }).join('');
 }
 
 function _verificarDocIndividual(key){
   _docsFechasVerificadas[key]=hoyLocal();
-  if(key==='coord-casa'||key==='coord-trabajo') _renderDocsUbicacion();
+  var p=prestamos.find(function(x){return x.id===currentId;});
+  var esUbicacion=key==='coord-casa'||key==='coord-trabajo'||!!_docsExtraUbicNuevos[key]||(p&&(p.ubicacionesExtra||[]).some(function(u){return u.key===key;}));
+  if(esUbicacion) _renderDocsUbicacion();
   else _renderDocsFotos();
   toast('✓ Verificado — dale a "Guardar cambios" para confirmarlo');
 }
 
 function quitarDocExtra(key){
-  if(_docsExtraNuevos[key]){ delete _docsExtraNuevos[key]; _renderDocsFotos(); return; }
-  var p=prestamos.find(function(x){return x.id===currentId;});
+  if(_docsExtraNuevos[key]){ delete _docsExtraNuevos[key]; try{ _renderDocsFotos(); }catch(e){} try{ _renderDocsExtraCreacion(); }catch(e){} return; }
+  if(_docsExtraUbicNuevos[key]){ delete _docsExtraUbicNuevos[key]; try{ _renderDocsUbicacion(); }catch(e){} try{ _renderDocsExtraCreacion(); }catch(e){} return; }
+  // currentId (pantalla de Documentos del Cliente) y clienteTemporal._id (flujo de creación)
+  // pueden apuntar a clientes distintos — usar el que realmente tenga este documento.
+  var candidatos=[currentId,clienteTemporal&&clienteTemporal._id].filter(Boolean);
+  var p=null;
+  for(var i=0;i<candidatos.length;i++){
+    var cand=prestamos.find(function(x){return x.id===candidatos[i];});
+    if(cand&&((cand.fotosExtra||[]).some(function(e){return e.key===key;})||(cand.ubicacionesExtra||[]).some(function(e){return e.key===key;}))){ p=cand; break; }
+  }
   if(!p) return;
+  var eraFoto=(p.fotosExtra||[]).some(function(ex){return ex.key===key;});
   p.fotosExtra=(p.fotosExtra||[]).filter(function(ex){return ex.key!==key;});
+  p.ubicacionesExtra=(p.ubicacionesExtra||[]).filter(function(ex){return ex.key!==key;});
   if(p.fotos) delete p.fotos[key];
   guardarDatos();
-  _renderDocsFotos();
-  toast('✓ Documento eliminado');
+  try{ _renderDocsFotos(); }catch(e){}
+  try{ _renderDocsUbicacion(); }catch(e){}
+  try{ _renderDocsExtraCreacion(); }catch(e){}
+  toast('✓ '+(eraFoto?'Documento eliminado':'Ubicación eliminada'));
 }
 
 var _docsNewFotos={};
 var _docsExtraNuevos={};
+var _docsExtraUbicNuevos={};
 function onDocsFotoChange(input){
   var k=input.getAttribute('data-key');
   var file=input.files&&input.files[0];
@@ -7306,12 +7432,19 @@ function guardarDocsCliente(){
   Object.keys(_docsExtraNuevos).forEach(function(k){ fotasNuevas[k]=_docsExtraNuevos[k].data; });
   // Cualquier foto que se suba o cambie hoy actualiza su fecha
   Object.keys(fotasNuevas).forEach(function(k){ p.fechasDoc[k]=hoyLocal(); });
+  // Ubicaciones extra nuevas — agregarlas a la lista de ubicacionesExtra del cliente
+  if(!p.ubicacionesExtra) p.ubicacionesExtra=[];
+  Object.keys(_docsExtraUbicNuevos).forEach(function(k){
+    p.ubicacionesExtra.push({key:k,label:_docsExtraUbicNuevos[k].label,desc:_docsExtraUbicNuevos[k].desc||'',valor:_docsExtraUbicNuevos[k].valor});
+    p.fechasDoc[k]=hoyLocal();
+  });
   // Ubicaciones cambiadas (pendientes de "Cambiar") y verificaciones individuales pendientes
   if(_docsCoordPendientes.casa!==undefined){ p.coordCasa=_docsCoordPendientes.casa; p.fechasDoc['coord-casa']=hoyLocal(); }
   if(_docsCoordPendientes.trabajo!==undefined){ p.coordTrabajo=_docsCoordPendientes.trabajo; p.fechasDoc['coord-trabajo']=hoyLocal(); }
   Object.keys(_docsFechasVerificadas).forEach(function(k){ p.fechasDoc[k]=_docsFechasVerificadas[k]; });
   _docsNewFotos={};
   _docsExtraNuevos={};
+  _docsExtraUbicNuevos={};
   _docsCoordPendientes={};
   _docsFechasVerificadas={};
   var clavesNuevas=Object.keys(fotasNuevas).filter(function(k){return fotasNuevas[k]&&fotasNuevas[k].startsWith('data:');});
