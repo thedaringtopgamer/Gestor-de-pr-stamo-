@@ -1417,7 +1417,7 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
         <span style="font-size:13px;color:var(--text-muted);font-weight:500">Fecha:</span>
         <input type="date" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="panel-fecha" onchange="renderPanelRecolector(true)" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
         <span id="panel-fecha-readonly" style="display:none;flex:1;padding:7px 10px;font-size:13px;font-weight:600;color:var(--text)"></span>
-        <button id="btn-recalc-caja" onclick="recalcularCajaDesdeAyer()" title="Si la Caja de hoy no te cuadra, tocá esto para que recalcule desde la base de ayer" style="display:none;background:#16a34a;color:#fff;border:none;border-radius:var(--radius);padding:7px 10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">🔄 Recalcular</button>
+        <button id="btn-recalc-caja" onclick="recalcularCajaDesdeAyer()" title="Si la Caja de hoy no te cuadra, tocá esto — va a recargar la página para traerla al día" style="display:none;background:#16a34a;color:#fff;border:none;border-radius:var(--radius);padding:7px 10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">🔄 Recalcular</button>
         <button id="btn-imprimir-panel" onclick="imprimirPanelRecolector()" style="background:#1e40af;color:#fff;border:none;border-radius:var(--radius);padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">🖨 Imprimir</button>
       </div>
       <div id="_panel-hist-botones-reales" style="display:flex;gap:8px;margin-bottom:14px">
@@ -7685,21 +7685,24 @@ function eliminarRenovacion(renId){
   document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
 }
 
-// Automatiza el truco manual de siempre: mirar la Caja de ayer para que recalcule su base y
-// deje cacheada la base de hoy, y volver a hoy para que la Caja de hoy ya recalcule con esa
-// base fresca. No cambia nada del cálculo en sí — solo hace con un botón lo mismo que ya se
-// hacía a mano cambiando la fecha para atrás y para adelante.
+// Automatiza el truco manual de siempre: entrar a ver el último día real (el de ayer, o el
+// viernes si ayer cayó sábado/domingo) para que recalcule y guarde bien esa cadena de días, y
+// luego recargar la página de verdad — igual que hacía el usuario a mano con F5 — para que
+// arranque con la Base fresca de la nube y vuelva solo a la pantalla de hoy ya corregida. No
+// cambia nada del cálculo ni de cómo se mezclan los datos — solo automatiza esos 2 pasos.
 function recalcularCajaDesdeAyer(){
   var fechaEl=document.getElementById('panel-fecha');
   if(!fechaEl||rolActual!=='admin') return;
   var hoyStr=fechaEl.value||diaOperativo();
   var d=new Date(hoyStr+'T12:00:00'); d.setDate(d.getDate()-1);
-  var ayerStr=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  fechaEl.value=ayerStr;
+  // Si el día anterior cae fin de semana, seguir retrocediendo hasta el último viernes —
+  // igual que hacía el usuario a mano, para no quedarse mirando un día sin movimiento.
+  while(d.getDay()===0||d.getDay()===6){ d.setDate(d.getDate()-1); }
+  var diaStr=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  fechaEl.value=diaStr;
   renderPanelRecolector(true);
-  fechaEl.value=hoyStr;
-  renderPanelRecolector(true);
-  toast('✓ Caja recalculada');
+  toast('⏳ Recargando para traer la Caja al día...');
+  setTimeout(function(){ location.reload(); },400);
 }
 function imprimirPanelRecolector(){
   var cajEl=document.getElementById('panel-sec-caja');
