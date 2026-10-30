@@ -6420,9 +6420,12 @@ function abrirRenovar(){
     var _baseQuinc=p.proximaFechaPago?parseLocalDate(p.proximaFechaPago):(p._primeraFechaPago?parseLocalDate(p._primeraFechaPago):parseLocalDate(p.fechaInicio));
     proximaFechaRen=siguienteDiaHabil(_proximaFechaQuincenal(_baseQuinc));
   } else {
-    // Semanal, Bisemanal: próxima fecha = diaOperativo + un intervalo
-    var hoyBase=parseLocalDate(diaOperativo());
-    var firstNew=new Date(hoyBase);
+    // Semanal, Bisemanal: igual que Quincenal — el día fijo de pago no cambia por renovar
+    // antes de tiempo. La próxima fecha sugerida se basa en la fecha de pago que YA tenía la
+    // tarjeta (+7 o +14 días, según el intervalo), no en "hoy + intervalo" — así el cliente
+    // mantiene siempre su mismo día de la semana, aunque se le renueve de forma anticipada.
+    var _baseSem=p.proximaFechaPago?parseLocalDate(p.proximaFechaPago):(p._primeraFechaPago?parseLocalDate(p._primeraFechaPago):parseLocalDate(p.fechaInicio));
+    var firstNew=new Date(_baseSem);
     firstNew.setDate(firstNew.getDate()+p.diasPorCuota);
     proximaFechaRen=siguienteDiaHabil(firstNew);
   }
