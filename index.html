@@ -4013,11 +4013,6 @@ function _diasHabilesEntre(desde,hasta){
   }
   return n;
 }
-function _finDeMes(fechaStr){
-  var p=fechaStr.split('-');
-  var ultimo=new Date(parseInt(p[0]),parseInt(p[1]),0);
-  return ultimo.getFullYear()+'-'+String(ultimo.getMonth()+1).padStart(2,'0')+'-'+String(ultimo.getDate()).padStart(2,'0');
-}
 function _ultimoDiaHabilHastaHoy(hoy){
   var d=parseLocalDate(hoy);
   while(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()-1);
@@ -4040,22 +4035,7 @@ function _renderRitmoMetasPanel(){
   var hoy=diaOperativo();
   var metaMensualBase=_leerMetaParaRuta(ruta,'prestamos');
   if(!metaMensualBase){ cont.innerHTML=''; return; }
-  function _bloqueRitmo(tipo){
-    var ultimoC=cierres.filter(function(c){ return c.tipo===tipo&&(c.ruta||'todas')===ruta; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); })[0];
-    var desde=ultimoC?_diaSigniente(ultimoC.hasta):(tipo==='semana'?_inicioSemana(hoy):_inicioMes(hoy));
-    var finPeriodo;
-    if(tipo==='mes'){ finPeriodo=_finDeMes(desde); }
-    else { var _d=parseLocalDate(desde); _d.setDate(_d.getDate()+6); finPeriodo=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0'); }
-    var metaTotal=tipo==='semana'?Math.round(metaMensualBase/4):metaMensualBase;
-    var dCalc=_calcCierreData(desde,hoy,ruta);
-    var prestadoAcum=dCalc.prestado+(dCalc.montoRenov||0);
-    var diasHabilesTotal=_diasHabilesEntre(desde,finPeriodo);
-    var metaDiaria=diasHabilesTotal>0?metaTotal/diasHabilesTotal:0;
-    var hastaHabil=_ultimoDiaHabilHastaHoy(hoy);
-    var diasTranscurridos=hastaHabil>=desde?_diasHabilesEntre(desde,hastaHabil):0;
-    var metaAcumulada=metaDiaria*diasTranscurridos;
-    var diferencia=prestadoAcum-metaAcumulada;
-    var pct=metaTotal>0?(prestadoAcum/metaTotal*100):0;
+  function _htmlAnillo(tipo,pct,diferencia){
     var atrasado=diferencia<0;
     var color=atrasado?'#dc2626':'#eab308';
     var etiqueta=(atrasado?'🔴 Atrasado ':'🟡 Adelantado ')+_fmtCol(Math.round(Math.abs(diferencia)));
@@ -4065,7 +4045,43 @@ function _renderRitmoMetasPanel(){
       +'<div style="font-size:10px;color:#6b7280;margin-top:2px;font-weight:600">'+(tipo==='semana'?'Semana':'Mes')+'</div>'
       +'</div>';
   }
-  cont.innerHTML=_bloqueRitmo('semana')+_bloqueRitmo('mes');
+  // Modelo: el mes siempre se piensa como 4 semanas de 5 días hábiles (lunes a viernes) cada
+  // una — igual que ya hace el resto del sistema con "meta semana = meta mensual/4" — en vez
+  // de contar los días hábiles reales del calendario (que varían de mes a mes y desalinean
+  // todo). "Semanas ya cerradas este mes" marca en cuál de esas 4 semanas vamos.
+  var ultimoMesC=cierres.filter(function(c){ return c.tipo==='mes'&&(c.ruta||'todas')===ruta; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); })[0];
+  var inicioMes=ultimoMesC?_diaSigniente(ultimoMesC.hasta):_inicioMes(hoy);
+  var metaTotalMes=metaMensualBase;
+  var numSemanasCerradas=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===ruta&&c.hasta>=inicioMes; }).length;
+
+  var ultimoSemC=cierres.filter(function(c){ return c.tipo==='semana'&&(c.ruta||'todas')===ruta; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); })[0];
+  var inicioSem=ultimoSemC?_diaSigniente(ultimoSemC.hasta):_inicioSemana(hoy);
+  var hastaHabil=_ultimoDiaHabilHastaHoy(hoy);
+  var diasTranscurridosEstaSemana=Math.min(5,hastaHabil>=inicioSem?_diasHabilesEntre(inicioSem,hastaHabil):0);
+
+  // ---- Semana: su meta NO es un número fijo (mensual/4) — es lo que falta para llegar a la
+  // meta del mes hasta esta semana incluida, con el adelanto/atraso real de las semanas
+  // anteriores ya adentro (si una semana rindió de más, a la próxima le toca menos; si rindió
+  // de menos, a la próxima le toca más para emparejar). ----
+  var _dAntesSem=parseLocalDate(inicioSem); _dAntesSem.setDate(_dAntesSem.getDate()-1);
+  var diaAntesSem=_dAntesSem.getFullYear()+'-'+String(_dAntesSem.getMonth()+1).padStart(2,'0')+'-'+String(_dAntesSem.getDate()).padStart(2,'0');
+  var prestadoAntesDeSemana=(function(){ var d=_calcCierreData(inicioMes,diaAntesSem,ruta); return d.prestado+(d.montoRenov||0); })();
+  var metaSemanaDinamica=Math.max(0,metaTotalMes*(numSemanasCerradas+1)/4-prestadoAntesDeSemana);
+  var metaDiariaEstaSemana=metaSemanaDinamica/5;
+  var metaAcumuladaEstaSemana=metaDiariaEstaSemana*diasTranscurridosEstaSemana;
+  var prestadoEstaSemana=(function(){ var d=_calcCierreData(inicioSem,hoy,ruta); return d.prestado+(d.montoRenov||0); })();
+  var diferenciaSemana=prestadoEstaSemana-metaAcumuladaEstaSemana;
+  var pctSemana=metaSemanaDinamica>0?(prestadoEstaSemana/metaSemanaDinamica*100):0;
+
+  // ---- Mes: ritmo parejo de todo el mes (sin ajustar por semana) — esto es lo que de verdad
+  // manda, independiente de cómo se reparta semana a semana. ----
+  var diasTranscurridosMes=Math.min(20,numSemanasCerradas*5+diasTranscurridosEstaSemana);
+  var metaAcumuladaMes=(metaTotalMes/20)*diasTranscurridosMes;
+  var prestadoMes=(function(){ var d=_calcCierreData(inicioMes,hoy,ruta); return d.prestado+(d.montoRenov||0); })();
+  var diferenciaMes=prestadoMes-metaAcumuladaMes;
+  var pctMes=metaTotalMes>0?(prestadoMes/metaTotalMes*100):0;
+
+  cont.innerHTML=_htmlAnillo('semana',pctSemana,diferenciaSemana)+_htmlAnillo('mes',pctMes,diferenciaMes);
 }
 
 function _guardarCierre(tipo,desde,hasta){
