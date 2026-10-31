@@ -3518,6 +3518,21 @@ function _barMeta(actual,meta,etiqueta,esDinero,ocultarPct,diferenciaRitmo){
     +'</div>'
     +'</div>';
 }
+// Barras de meta (préstamos y clientes) de un cierre YA GUARDADO, usando la meta y el ritmo
+// que quedaron congelados al cerrarlo (o el respaldo de siempre si es un cierre viejo que no
+// los tiene). Se usa en el historial en pantalla, sin necesidad de imprimir ni reabrir nada.
+function _barsMetaHistorial(c){
+  var d=c.data;
+  var ruta=c.ruta||'todas';
+  var metaPBase=typeof d.metaPrestamosBase==='number'?d.metaPrestamosBase:_leerMetaParaRuta(ruta,'prestamos');
+  var metaCBase=typeof d.metaClientesBase==='number'?d.metaClientesBase:_leerMetaParaRuta(ruta,'clientes');
+  var metaP=typeof d.metaUsadaPrestamos==='number'?d.metaUsadaPrestamos:(c.tipo==='semana'?Math.round(metaPBase/4):metaPBase);
+  var metaC=typeof d.metaUsadaClientes==='number'?d.metaUsadaClientes:(c.tipo==='semana'?Math.round(metaCBase/4):metaCBase);
+  var prestadoTotal=d.prestado+(d.montoRenov||0);
+  var etiquetaPeriodo=c.tipo==='semana'?'semana':'mes';
+  return _barMeta(prestadoTotal,metaP,'Meta préstamos '+etiquetaPeriodo,true,false,d.diferenciaRitmoPrestamos)
+    +_barMeta(d.numPrestamos||0,metaC,'Meta clientes nuevos '+etiquetaPeriodo,false,true,d.diferenciaRitmoClientes);
+}
 
 // "Todas" ya no tiene ciclo propio de cierre — es la suma en vivo de lo que cada ruta real
 // tiene AHORA MISMO en su propia semana/mes en curso (cada una calculada desde su propia
@@ -4270,6 +4285,7 @@ function abrirHistorialTipo(tipo){
         +'</div>'
         +'<div id="'+uid+'" style="display:none;padding-bottom:12px">'
           +_statsHtml(c.data,c.tipo,c.id)
+          +_barsMetaHistorial(c)
           +'<div style="display:flex;gap:8px;margin-top:10px">'
             +'<button onclick="imprimirCierre(\''+c.id+'\')" style="background:#dbeafe;color:#1e40af;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer">🖨 Imprimir</button>'
             +(rolActual==='admin'?((esUltimo
