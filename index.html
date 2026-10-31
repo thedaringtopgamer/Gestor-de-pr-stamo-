@@ -3561,6 +3561,9 @@ function renderCierres(){
   var hoy=hoyLocal();
   var rFiltro=rutaInvFiltro||'todas';
   var esTodas=rFiltro==='todas';
+  // Mismo ritmo de meta (atrasado/adelantado) que ya se ve en el Panel Recolector, para que
+  // acá, junto a la barra de meta, también se vea de una vez si se va al día o no.
+  var _ritmo=_calcRitmoMetaPrestamos(rFiltro);
 
   // "Todas" es solo un resumen visual en vivo: sin cerrar semana/mes, sin historial propio.
   var btnSem=document.getElementById('btn-cerrar-semana');
@@ -3681,6 +3684,7 @@ function renderCierres(){
   window._gastosListaTodas_semana=null;
   if(elStatsSem) elStatsSem.innerHTML=_statsHtml(dSem,'semana')
     +_barMeta(dSem.prestado+dSem.montoRenov,metaSem,'Meta préstamos semana',true)
+    +(_ritmo?'<div style="text-align:center;font-size:11px;margin:-4px 0 8px">'+_etiquetaRitmo(_ritmo.diferenciaSemana)+'</div>':'')
     +_barMeta(dSem.numPrestamos,metaSemC,'Meta clientes nuevos semana',false);
   var elPorRutaSem=document.getElementById('cierre-semana-porruta');
   if(elPorRutaSem) elPorRutaSem.innerHTML='';
@@ -3751,6 +3755,7 @@ function renderCierres(){
   window._gastosListaTodas_mes=null;
   if(elStatsMes) elStatsMes.innerHTML=_statsHtml(dMes,'mes')
     +_barMeta(dMes.prestado+dMes.montoRenov,metaPrestamos,'Meta préstamos mes',true)
+    +(_ritmo?'<div style="text-align:center;font-size:11px;margin:-4px 0 8px">'+_etiquetaRitmo(_ritmo.diferenciaMes)+'</div>':'')
     +_barMeta(dMes.numPrestamos,metaClientes,'Meta clientes nuevos mes',false)
     +_barMetaTarjetas(activosCartera,metaTarjetas);
   var elPorRutaMes=document.getElementById('cierre-mes-porruta');
@@ -4028,23 +4033,13 @@ function _svgAnilloRitmo(pct,color,textoCentro){
     +'<text x="50" y="57" text-anchor="middle" font-size="20" font-weight="800" fill="'+color+'">'+textoCentro+'</text>'
     +'</svg>';
 }
-function _renderRitmoMetasPanel(){
-  var cont=document.getElementById('panel-ritmo-metas');
-  if(!cont) return;
-  var ruta=rutaActual||'todas';
+// Calcula el ritmo de meta de préstamos de una ruta (compartido entre el Panel Recolector y
+// la pantalla de Cajas, para que los dos muestren siempre el mismo número). Devuelve null si
+// esa ruta no tiene meta de préstamos configurada.
+function _calcRitmoMetaPrestamos(ruta){
   var hoy=diaOperativo();
   var metaMensualBase=_leerMetaParaRuta(ruta,'prestamos');
-  if(!metaMensualBase){ cont.innerHTML=''; return; }
-  function _htmlAnillo(tipo,pct,diferencia){
-    var atrasado=diferencia<0;
-    var color=atrasado?'#dc2626':'#eab308';
-    var etiqueta=(atrasado?'🔴 Atrasado ':'🟡 Adelantado ')+_fmtCol(Math.round(Math.abs(diferencia)));
-    return '<div style="text-align:center">'
-      +'<div style="font-size:10px;font-weight:700;color:'+color+';margin-bottom:4px;white-space:nowrap">'+etiqueta+'</div>'
-      +_svgAnilloRitmo(pct,color,Math.round(pct)+'%')
-      +'<div style="font-size:10px;color:#6b7280;margin-top:2px;font-weight:600">'+(tipo==='semana'?'Semana':'Mes')+'</div>'
-      +'</div>';
-  }
+  if(!metaMensualBase) return null;
   // Modelo: el mes siempre se piensa como 4 semanas de 5 días hábiles (lunes a viernes) cada
   // una — igual que ya hace el resto del sistema con "meta semana = meta mensual/4" — en vez
   // de contar los días hábiles reales del calendario (que varían de mes a mes y desalinean
@@ -4081,7 +4076,30 @@ function _renderRitmoMetasPanel(){
   var diferenciaMes=prestadoMes-metaAcumuladaMes;
   var pctMes=metaTotalMes>0?(prestadoMes/metaTotalMes*100):0;
 
-  cont.innerHTML=_htmlAnillo('semana',pctSemana,diferenciaSemana)+_htmlAnillo('mes',pctMes,diferenciaMes);
+  return {pctSemana:pctSemana,diferenciaSemana:diferenciaSemana,pctMes:pctMes,diferenciaMes:diferenciaMes};
+}
+function _etiquetaRitmo(diferencia){
+  var atrasado=diferencia<0;
+  var color=atrasado?'#dc2626':'#eab308';
+  return '<span style="color:'+color+';font-weight:700">'+(atrasado?'🔴 Atrasado ':'🟡 Adelantado ')+_fmtCol(Math.round(Math.abs(diferencia)))+'</span>';
+}
+function _renderRitmoMetasPanel(){
+  var cont=document.getElementById('panel-ritmo-metas');
+  if(!cont) return;
+  var ruta=rutaActual||'todas';
+  var r=_calcRitmoMetaPrestamos(ruta);
+  if(!r){ cont.innerHTML=''; return; }
+  function _htmlAnillo(tipo,pct,diferencia){
+    var atrasado=diferencia<0;
+    var color=atrasado?'#dc2626':'#eab308';
+    var etiqueta=(atrasado?'🔴 Atrasado ':'🟡 Adelantado ')+_fmtCol(Math.round(Math.abs(diferencia)));
+    return '<div style="text-align:center">'
+      +'<div style="font-size:10px;font-weight:700;color:'+color+';margin-bottom:4px;white-space:nowrap">'+etiqueta+'</div>'
+      +_svgAnilloRitmo(pct,color,Math.round(pct)+'%')
+      +'<div style="font-size:10px;color:#6b7280;margin-top:2px;font-weight:600">'+(tipo==='semana'?'Semana':'Mes')+'</div>'
+      +'</div>';
+  }
+  cont.innerHTML=_htmlAnillo('semana',r.pctSemana,r.diferenciaSemana)+_htmlAnillo('mes',r.pctMes,r.diferenciaMes);
 }
 
 function _guardarCierre(tipo,desde,hasta){
