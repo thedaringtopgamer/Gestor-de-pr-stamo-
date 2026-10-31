@@ -3563,7 +3563,8 @@ function renderCierres(){
   var esTodas=rFiltro==='todas';
   // Mismo ritmo de meta (atrasado/adelantado) que ya se ve en el Panel Recolector, para que
   // acá, junto a la barra de meta, también se vea de una vez si se va al día o no.
-  var _ritmo=_calcRitmoMetaPrestamos(rFiltro);
+  var _ritmo=_calcRitmoMeta(rFiltro,'prestamos');
+  var _ritmoClientes=_calcRitmoMeta(rFiltro,'clientes');
 
   // "Todas" es solo un resumen visual en vivo: sin cerrar semana/mes, sin historial propio.
   var btnSem=document.getElementById('btn-cerrar-semana');
@@ -3684,7 +3685,7 @@ function renderCierres(){
   window._gastosListaTodas_semana=null;
   if(elStatsSem) elStatsSem.innerHTML=_statsHtml(dSem,'semana')
     +_barMeta(dSem.prestado+dSem.montoRenov,_ritmo?_ritmo.metaSemanaDinamica:metaSem,'Meta préstamos semana',true)
-    +_barMeta(dSem.numPrestamos,metaSemC,'Meta clientes nuevos semana',false);
+    +_barMeta(dSem.numPrestamos,_ritmoClientes?_ritmoClientes.metaSemanaDinamica:metaSemC,'Meta clientes nuevos semana',false);
   var elPorRutaSem=document.getElementById('cierre-semana-porruta');
   if(elPorRutaSem) elPorRutaSem.innerHTML='';
 
@@ -4032,12 +4033,17 @@ function _svgAnilloRitmo(pct,color,textoCentro){
     +'</svg>';
 }
 // Calcula el ritmo de meta de préstamos de una ruta (compartido entre el Panel Recolector y
-// la pantalla de Cajas, para que los dos muestren siempre el mismo número). Devuelve null si
-// esa ruta no tiene meta de préstamos configurada.
-function _calcRitmoMetaPrestamos(ruta){
+// la pantalla de Cajas, para que los dos muestren siempre el mismo número). sufijo es
+// 'prestamos' (monto prestado) o 'clientes' (clientes nuevos). Devuelve null si esa ruta no
+// tiene esa meta configurada.
+function _calcRitmoMeta(ruta,sufijo){
   var hoy=diaOperativo();
-  var metaMensualBase=_leerMetaParaRuta(ruta,'prestamos');
+  var metaMensualBase=_leerMetaParaRuta(ruta,sufijo);
   if(!metaMensualBase) return null;
+  function _valorAcumulado(desde,hasta){
+    var d=_calcCierreData(desde,hasta,ruta);
+    return sufijo==='clientes'?d.numPrestamos:(d.prestado+(d.montoRenov||0));
+  }
   // Modelo: el mes siempre se piensa como 4 semanas de 5 días hábiles (lunes a viernes) cada
   // una — igual que ya hace el resto del sistema con "meta semana = meta mensual/4" — en vez
   // de contar los días hábiles reales del calendario (que varían de mes a mes y desalinean
@@ -4058,11 +4064,11 @@ function _calcRitmoMetaPrestamos(ruta){
   // de menos, a la próxima le toca más para emparejar). ----
   var _dAntesSem=parseLocalDate(inicioSem); _dAntesSem.setDate(_dAntesSem.getDate()-1);
   var diaAntesSem=_dAntesSem.getFullYear()+'-'+String(_dAntesSem.getMonth()+1).padStart(2,'0')+'-'+String(_dAntesSem.getDate()).padStart(2,'0');
-  var prestadoAntesDeSemana=(function(){ var d=_calcCierreData(inicioMes,diaAntesSem,ruta); return d.prestado+(d.montoRenov||0); })();
+  var prestadoAntesDeSemana=_valorAcumulado(inicioMes,diaAntesSem);
   var metaSemanaDinamica=Math.max(0,metaTotalMes*(numSemanasCerradas+1)/4-prestadoAntesDeSemana);
   var metaDiariaEstaSemana=metaSemanaDinamica/5;
   var metaAcumuladaEstaSemana=metaDiariaEstaSemana*diasTranscurridosEstaSemana;
-  var prestadoEstaSemana=(function(){ var d=_calcCierreData(inicioSem,hoy,ruta); return d.prestado+(d.montoRenov||0); })();
+  var prestadoEstaSemana=_valorAcumulado(inicioSem,hoy);
   var diferenciaSemana=prestadoEstaSemana-metaAcumuladaEstaSemana;
   var pctSemana=metaSemanaDinamica>0?(prestadoEstaSemana/metaSemanaDinamica*100):0;
 
@@ -4070,12 +4076,13 @@ function _calcRitmoMetaPrestamos(ruta){
   // manda, independiente de cómo se reparta semana a semana. ----
   var diasTranscurridosMes=Math.min(20,numSemanasCerradas*5+diasTranscurridosEstaSemana);
   var metaAcumuladaMes=(metaTotalMes/20)*diasTranscurridosMes;
-  var prestadoMes=(function(){ var d=_calcCierreData(inicioMes,hoy,ruta); return d.prestado+(d.montoRenov||0); })();
+  var prestadoMes=_valorAcumulado(inicioMes,hoy);
   var diferenciaMes=prestadoMes-metaAcumuladaMes;
   var pctMes=metaTotalMes>0?(prestadoMes/metaTotalMes*100):0;
 
   return {pctSemana:pctSemana,diferenciaSemana:diferenciaSemana,pctMes:pctMes,diferenciaMes:diferenciaMes,metaSemanaDinamica:Math.round(metaSemanaDinamica)};
 }
+function _calcRitmoMetaPrestamos(ruta){ return _calcRitmoMeta(ruta,'prestamos'); }
 // Anillo + etiqueta de ritmo, compartido entre el Panel Recolector y Cajas — así se ve
 // exactamente igual en los dos lados.
 function _htmlAnilloRitmo(tipo,pct,diferencia){
