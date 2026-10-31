@@ -6325,6 +6325,18 @@ function toggleRenEntry(uid){
   var arr=document.getElementById('arr-'+uid);
   if(!el) return;
   var open=el.style.display==='block';
+  // En el Historial de cierres (semana/mes), que se comporte como acordeón: al abrir uno,
+  // se cierra el que estuviera abierto — para no dejar varios desplegados a la vez. El resto
+  // de usos de este mismo toggle (movimientos del cliente) sigue igual, cada uno independiente.
+  if(!open&&uid.indexOf('cierre-det-')===0){
+    document.querySelectorAll('[id^="cierre-det-"]').forEach(function(otro){
+      if(otro.id!==uid&&otro.style.display==='block'){
+        otro.style.display='none';
+        var otroArr=document.getElementById('arr-'+otro.id);
+        if(otroArr) otroArr.textContent='▶';
+      }
+    });
+  }
   el.style.display=open?'none':'block';
   if(arr) arr.textContent=open?'▶':'▼';
 }
