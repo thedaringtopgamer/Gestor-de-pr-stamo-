@@ -3794,19 +3794,11 @@ function imprimirCierre(id){
   var row=function(label,value,bg,color){
     return '<div class="row" style="background:'+(bg||'#f9fafb')+'"><span class="label">'+label+'</span><span class="value" style="color:'+(color||'#1f2937')+'">'+value+'</span></div>';
   };
-  // Metas propias de la ruta de este cierre (con el mismo fallback a "todas" que usa el resto
-  // del sistema), no las de la ruta que esté seleccionada ahora mismo en pantalla.
-  var _claveRuta=ruta==='todas'?'todas':ruta.toLowerCase().replace(/\s+/g,'_');
-  function _leerMetaRuta(sufijo){
-    if(ruta!=='todas'&&metas['fjd_meta_'+sufijo+'_'+_claveRuta+'_propio']){
-      return parseInt(metas['fjd_meta_'+sufijo+'_'+_claveRuta])||0;
-    }
-    var val=parseInt(metas['fjd_meta_'+sufijo+'_'+_claveRuta])||0;
-    if(!val&&ruta!=='todas') val=parseInt(metas['fjd_meta_'+sufijo+'_todas'])||0;
-    return val;
-  }
-  var metaPBase=_leerMetaRuta('prestamos');
-  var metaCBase=_leerMetaRuta('clientes');
+  // Metas tal como estaban congeladas al momento de cerrar — no las que estén configuradas
+  // ahora mismo, que pueden haber cambiado después del cierre. Los cierres guardados antes de
+  // este cambio no tienen la meta congelada, ahí se usa la meta actual como respaldo.
+  var metaPBase=typeof d.metaPrestamosBase==='number'?d.metaPrestamosBase:_leerMetaParaRuta(ruta,'prestamos');
+  var metaCBase=typeof d.metaClientesBase==='number'?d.metaClientesBase:_leerMetaParaRuta(ruta,'clientes');
   var metaP=c.tipo==='semana'?Math.round(metaPBase/4):metaPBase;
   var metaC=c.tipo==='semana'?Math.round(metaCBase/4):metaCBase;
   var prestadoTotal=d.prestado+(d.montoRenov||0);
@@ -3991,6 +3983,19 @@ function _clientesActivosActual(ruta){
   }).length;
 }
 
+// Meta de una ruta específica para un sufijo dado ('prestamos'/'clientes'/'tarjetas'), con el
+// mismo fallback a "todas" que usa el resto del sistema. Compartida entre _guardarCierre()
+// (para congelar la meta tal como estaba al cerrar) e imprimirCierre() (como respaldo para
+// cierres viejos guardados antes de este cambio, que no tienen la meta congelada).
+function _leerMetaParaRuta(ruta,sufijo){
+  var _claveRuta=ruta==='todas'?'todas':ruta.toLowerCase().replace(/\s+/g,'_');
+  if(ruta!=='todas'&&metas['fjd_meta_'+sufijo+'_'+_claveRuta+'_propio']){
+    return parseInt(metas['fjd_meta_'+sufijo+'_'+_claveRuta])||0;
+  }
+  var val=parseInt(metas['fjd_meta_'+sufijo+'_'+_claveRuta])||0;
+  if(!val&&ruta!=='todas') val=parseInt(metas['fjd_meta_'+sufijo+'_todas'])||0;
+  return val;
+}
 function _guardarCierre(tipo,desde,hasta){
   var nota=document.getElementById('confirmar-cierre-nota').value.trim();
   var rutaActiva=rutaInvFiltro||'todas';
@@ -4023,6 +4028,11 @@ function _guardarCierre(tipo,desde,hasta){
     data.baseInicio=_baseInicioPeriodo(ruta,tipo,desde,hoyLocal());
     data.utilidad=(data.baseInicio||0)+data.recogida-(data.prestado+data.entregadoRenov)-data.totalCobroAdm-data.totalGastos;
     data.baseFin=data.utilidad;
+    // Congelar las metas tal como estaban al momento de cerrar — así al imprimir el
+    // historial, más adelante, sale la meta con la que de verdad se cerró, no la que esté
+    // configurada en ese momento (que puede haber cambiado después).
+    data.metaPrestamosBase=_leerMetaParaRuta(ruta,'prestamos');
+    data.metaClientesBase=_leerMetaParaRuta(ruta,'clientes');
     cierres.push({id:(ahora+i).toString(),tipo:tipo,desde:desde,hasta:hasta,nota:nota,data:data,fechaRegistro:hoyLocal(),ruta:ruta});
   });
   document.getElementById('modal-confirmar-cierre').style.display='none';
