@@ -1412,6 +1412,8 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       </div>
     </div>
     <div class="section">
+      <!-- Ritmo de la meta de préstamos: en vivo, mes y semana -->
+      <div id="panel-ritmo-metas" style="display:flex;gap:18px;justify-content:center;margin-bottom:14px"></div>
       <!-- Fecha y acciones -->
       <div id="_panel-fecha-wrap" style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <span style="font-size:13px;color:var(--text-muted);font-weight:500">Fecha:</span>
@@ -3996,6 +3998,76 @@ function _leerMetaParaRuta(ruta,sufijo){
   if(!val&&ruta!=='todas') val=parseInt(metas['fjd_meta_'+sufijo+'_todas'])||0;
   return val;
 }
+
+// ---- Ritmo de meta (Panel Recolector): compara lo prestado en el período contra lo que
+// "debería" llevarse hasta HOY repartiendo la meta en días hábiles (lunes a viernes) ----
+function _diasHabilesEntre(desde,hasta){
+  if(desde>hasta) return 0;
+  var d=parseLocalDate(desde);
+  var fin=parseLocalDate(hasta);
+  var n=0;
+  while(d<=fin){
+    var dow=d.getDay();
+    if(dow!==0&&dow!==6) n++;
+    d.setDate(d.getDate()+1);
+  }
+  return n;
+}
+function _finDeMes(fechaStr){
+  var p=fechaStr.split('-');
+  var ultimo=new Date(parseInt(p[0]),parseInt(p[1]),0);
+  return ultimo.getFullYear()+'-'+String(ultimo.getMonth()+1).padStart(2,'0')+'-'+String(ultimo.getDate()).padStart(2,'0');
+}
+function _ultimoDiaHabilHastaHoy(hoy){
+  var d=parseLocalDate(hoy);
+  while(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()-1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function _svgAnilloRitmo(pct,color,textoCentro){
+  var r=40,c=2*Math.PI*r;
+  var pctClamp=Math.max(0,Math.min(100,pct));
+  var offset=c*(1-pctClamp/100);
+  return '<svg viewBox="0 0 100 100" width="72" height="72">'
+    +'<circle cx="50" cy="50" r="'+r+'" fill="none" stroke="#e5e7eb" stroke-width="10"/>'
+    +'<circle cx="50" cy="50" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="10" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+offset.toFixed(1)+'" stroke-linecap="round" transform="rotate(-90 50 50)"/>'
+    +'<text x="50" y="57" text-anchor="middle" font-size="20" font-weight="800" fill="'+color+'">'+textoCentro+'</text>'
+    +'</svg>';
+}
+function _renderRitmoMetasPanel(){
+  var cont=document.getElementById('panel-ritmo-metas');
+  if(!cont) return;
+  var ruta=rutaActual||'todas';
+  var hoy=diaOperativo();
+  var metaMensualBase=_leerMetaParaRuta(ruta,'prestamos');
+  if(!metaMensualBase){ cont.innerHTML=''; return; }
+  function _bloqueRitmo(tipo){
+    var ultimoC=cierres.filter(function(c){ return c.tipo===tipo&&(c.ruta||'todas')===ruta; }).sort(function(a,b){ return b.hasta.localeCompare(a.hasta); })[0];
+    var desde=ultimoC?_diaSigniente(ultimoC.hasta):(tipo==='semana'?_inicioSemana(hoy):_inicioMes(hoy));
+    var finPeriodo;
+    if(tipo==='mes'){ finPeriodo=_finDeMes(desde); }
+    else { var _d=parseLocalDate(desde); _d.setDate(_d.getDate()+6); finPeriodo=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0'); }
+    var metaTotal=tipo==='semana'?Math.round(metaMensualBase/4):metaMensualBase;
+    var dCalc=_calcCierreData(desde,hoy,ruta);
+    var prestadoAcum=dCalc.prestado+(dCalc.montoRenov||0);
+    var diasHabilesTotal=_diasHabilesEntre(desde,finPeriodo);
+    var metaDiaria=diasHabilesTotal>0?metaTotal/diasHabilesTotal:0;
+    var hastaHabil=_ultimoDiaHabilHastaHoy(hoy);
+    var diasTranscurridos=hastaHabil>=desde?_diasHabilesEntre(desde,hastaHabil):0;
+    var metaAcumulada=metaDiaria*diasTranscurridos;
+    var diferencia=prestadoAcum-metaAcumulada;
+    var pct=metaTotal>0?(prestadoAcum/metaTotal*100):0;
+    var atrasado=diferencia<0;
+    var color=atrasado?'#dc2626':'#eab308';
+    var etiqueta=(atrasado?'🔴 Atrasado ':'🟡 Adelantado ')+_fmtCol(Math.round(Math.abs(diferencia)));
+    return '<div style="text-align:center">'
+      +'<div style="font-size:10px;font-weight:700;color:'+color+';margin-bottom:4px;white-space:nowrap">'+etiqueta+'</div>'
+      +_svgAnilloRitmo(pct,color,Math.round(pct)+'%')
+      +'<div style="font-size:10px;color:#6b7280;margin-top:2px;font-weight:600">'+(tipo==='semana'?'Semana':'Mes')+'</div>'
+      +'</div>';
+  }
+  cont.innerHTML=_bloqueRitmo('semana')+_bloqueRitmo('mes');
+}
+
 function _guardarCierre(tipo,desde,hasta){
   var nota=document.getElementById('confirmar-cierre-nota').value.trim();
   var rutaActiva=rutaInvFiltro||'todas';
@@ -7816,6 +7888,7 @@ function renderPanelRecolector(userPickedDate){
   // Persistir ruta actual del panel para restaurarla al recargar
   sessionStorage.setItem('fjd_panel_ruta',rutaActual||'todas');
   localStorage.setItem('fjd_panel_ruta',rutaActual||'todas');
+  try{ _renderRitmoMetasPanel(); }catch(e){}
 
   // Préstamos visibles según ruta actual
   var prestamosRuta=prestamosVisibles();
