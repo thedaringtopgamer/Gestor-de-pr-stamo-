@@ -1412,8 +1412,6 @@ document.write('<style>#app,#login-screen,#ruta-selector{display:none}</style>')
       </div>
     </div>
     <div class="section">
-      <!-- Ritmo de la meta de préstamos: en vivo, mes y semana -->
-      <div id="panel-ritmo-metas" style="display:flex;gap:18px;justify-content:center;margin-bottom:14px"></div>
       <!-- Fecha y acciones -->
       <div id="_panel-fecha-wrap" style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <span style="font-size:13px;color:var(--text-muted);font-weight:500">Fecha:</span>
@@ -3496,18 +3494,24 @@ function _barMetaTarjetas(activos,meta){
     +'</div>';
 }
 
-function _barMeta(actual,meta,etiqueta,esDinero,ocultarPct){
+function _barMeta(actual,meta,etiqueta,esDinero,ocultarPct,diferenciaRitmo){
   if(!meta) return '';
   var pct=Math.min(Math.round(actual/meta*100),100);
-  var ok=actual>=meta;
-  var color=ok?'#16a34a':'#dc2626';
-  var bgBar=ok?'#dcfce7':'#fee2e2';
+  var conRitmo=typeof diferenciaRitmo==='number';
+  // Con ritmo: rojo si va atrasado, amarillo si va al día o adelantado (igual que el resto
+  // del sistema). Sin ritmo (ej. la vista "Todas"): verde/rojo según si ya llegó a la meta.
+  var atrasado=conRitmo?diferenciaRitmo<0:!(actual>=meta);
+  var color=conRitmo?(atrasado?'#dc2626':'#eab308'):(atrasado?'#dc2626':'#16a34a');
   var fmtActual=esDinero?_fmtCol(actual):actual;
   var fmtMeta=esDinero?_fmtCol(meta):meta;
+  var parentesis;
+  if(ocultarPct) parentesis='';
+  else if(conRitmo) parentesis=' ('+(atrasado?'atrasado '+_fmtCol(Math.round(Math.abs(diferenciaRitmo))):'+'+_fmtCol(Math.round(diferenciaRitmo)))+')';
+  else parentesis=' ('+pct+'%)';
   return '<div style="margin-top:10px">'
-    +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;font-size:11px;margin-bottom:4px">'
       +'<span style="font-weight:700;color:#374151">🎯 '+etiqueta+'</span>'
-      +'<span style="font-weight:800;color:'+color+'">'+(ok?'✅ ':'🔴 ')+fmtActual+' / '+fmtMeta+(ocultarPct?'':' ('+pct+'%)')+'</span>'
+      +'<span style="font-weight:800;color:'+color+'">'+(atrasado?'🔴 ':(conRitmo?'🟡 ':'✅ '))+fmtActual+' / '+fmtMeta+parentesis+'</span>'
     +'</div>'
     +'<div style="background:#e5e7eb;border-radius:99px;height:8px">'
       +'<div style="background:'+color+';border-radius:99px;height:8px;width:'+pct+'%;transition:width 0.3s"></div>'
@@ -3684,8 +3688,8 @@ function renderCierres(){
   window._filtroGastos_semana={desde:inicioSem,hasta:hoy,ruta:rFiltro};
   window._gastosListaTodas_semana=null;
   if(elStatsSem) elStatsSem.innerHTML=_statsHtml(dSem,'semana')
-    +_barMeta(dSem.prestado+dSem.montoRenov,_ritmo?_ritmo.metaSemanaDinamica:metaSem,'Meta préstamos semana',true)
-    +_barMeta(dSem.numPrestamos,_ritmoClientes?_ritmoClientes.metaSemanaDinamica:metaSemC,'Meta clientes nuevos semana',false,true);
+    +_barMeta(dSem.prestado+dSem.montoRenov,_ritmo?_ritmo.metaSemanaDinamica:metaSem,'Meta préstamos semana',true,false,_ritmo?_ritmo.diferenciaSemana:undefined)
+    +_barMeta(dSem.numPrestamos,_ritmoClientes?_ritmoClientes.metaSemanaDinamica:metaSemC,'Meta clientes nuevos semana',false,true,_ritmoClientes?_ritmoClientes.diferenciaSemana:undefined);
   var elPorRutaSem=document.getElementById('cierre-semana-porruta');
   if(elPorRutaSem) elPorRutaSem.innerHTML='';
 
@@ -3754,8 +3758,8 @@ function renderCierres(){
   window._filtroGastos_mes={desde:inicioMes,hasta:hoy,ruta:rFiltroMes};
   window._gastosListaTodas_mes=null;
   if(elStatsMes) elStatsMes.innerHTML=_statsHtml(dMes,'mes')
-    +_barMeta(dMes.prestado+dMes.montoRenov,metaPrestamos,'Meta préstamos mes',true)
-    +_barMeta(dMes.numPrestamos,metaClientes,'Meta clientes nuevos mes',false,true)
+    +_barMeta(dMes.prestado+dMes.montoRenov,metaPrestamos,'Meta préstamos mes',true,false,_ritmo?_ritmo.diferenciaMes:undefined)
+    +_barMeta(dMes.numPrestamos,metaClientes,'Meta clientes nuevos mes',false,true,_ritmoClientes?_ritmoClientes.diferenciaMes:undefined)
     +_barMetaTarjetas(activosCartera,metaTarjetas);
   var elPorRutaMes=document.getElementById('cierre-mes-porruta');
   if(elPorRutaMes) elPorRutaMes.innerHTML='';
@@ -4022,18 +4026,8 @@ function _ultimoDiaHabilHastaHoy(hoy){
   while(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()-1);
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
-function _svgAnilloRitmo(pct,color,textoCentro){
-  var r=40,c=2*Math.PI*r;
-  var pctClamp=Math.max(0,Math.min(100,pct));
-  var offset=c*(1-pctClamp/100);
-  return '<svg viewBox="0 0 100 100" width="72" height="72">'
-    +'<circle cx="50" cy="50" r="'+r+'" fill="none" stroke="#e5e7eb" stroke-width="10"/>'
-    +'<circle cx="50" cy="50" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="10" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+offset.toFixed(1)+'" stroke-linecap="round" transform="rotate(-90 50 50)"/>'
-    +'<text x="50" y="57" text-anchor="middle" font-size="20" font-weight="800" fill="'+color+'">'+textoCentro+'</text>'
-    +'</svg>';
-}
-// Calcula el ritmo de meta de préstamos de una ruta (compartido entre el Panel Recolector y
-// la pantalla de Cajas, para que los dos muestren siempre el mismo número). sufijo es
+// Calcula el ritmo de meta (compartido por toda la pantalla de Cajas, para que todas las
+// barras muestren siempre el mismo número). sufijo es
 // 'prestamos' (monto prestado) o 'clientes' (clientes nuevos). Devuelve null si esa ruta no
 // tiene esa meta configurada.
 function _calcRitmoMeta(ruta,sufijo){
@@ -4081,27 +4075,6 @@ function _calcRitmoMeta(ruta,sufijo){
   var pctMes=metaTotalMes>0?(prestadoMes/metaTotalMes*100):0;
 
   return {pctSemana:pctSemana,diferenciaSemana:diferenciaSemana,pctMes:pctMes,diferenciaMes:diferenciaMes,metaSemanaDinamica:Math.round(metaSemanaDinamica)};
-}
-function _calcRitmoMetaPrestamos(ruta){ return _calcRitmoMeta(ruta,'prestamos'); }
-// Anillo + etiqueta de ritmo, compartido entre el Panel Recolector y Cajas — así se ve
-// exactamente igual en los dos lados.
-function _htmlAnilloRitmo(tipo,pct,diferencia){
-  var atrasado=diferencia<0;
-  var color=atrasado?'#dc2626':'#eab308';
-  var etiqueta=(atrasado?'🔴 Atrasado ':'🟡 Adelantado ')+_fmtCol(Math.round(Math.abs(diferencia)));
-  return '<div style="text-align:center">'
-    +'<div style="font-size:10px;font-weight:700;color:'+color+';margin-bottom:4px;white-space:nowrap">'+etiqueta+'</div>'
-    +_svgAnilloRitmo(pct,color,Math.round(pct)+'%')
-    +'<div style="font-size:10px;color:#6b7280;margin-top:2px;font-weight:600">'+(tipo==='semana'?'Semana':'Mes')+'</div>'
-    +'</div>';
-}
-function _renderRitmoMetasPanel(){
-  var cont=document.getElementById('panel-ritmo-metas');
-  if(!cont) return;
-  var ruta=rutaActual||'todas';
-  var r=_calcRitmoMetaPrestamos(ruta);
-  if(!r){ cont.innerHTML=''; return; }
-  cont.innerHTML=_htmlAnilloRitmo('semana',r.pctSemana,r.diferenciaSemana)+_htmlAnilloRitmo('mes',r.pctMes,r.diferenciaMes);
 }
 
 function _guardarCierre(tipo,desde,hasta){
@@ -7924,7 +7897,6 @@ function renderPanelRecolector(userPickedDate){
   // Persistir ruta actual del panel para restaurarla al recargar
   sessionStorage.setItem('fjd_panel_ruta',rutaActual||'todas');
   localStorage.setItem('fjd_panel_ruta',rutaActual||'todas');
-  try{ _renderRitmoMetasPanel(); }catch(e){}
 
   // Préstamos visibles según ruta actual
   var prestamosRuta=prestamosVisibles();
