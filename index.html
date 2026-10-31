@@ -3809,17 +3809,21 @@ function imprimirCierre(id){
   // este cambio no tienen la meta congelada, ahí se usa la meta actual como respaldo.
   var metaPBase=typeof d.metaPrestamosBase==='number'?d.metaPrestamosBase:_leerMetaParaRuta(ruta,'prestamos');
   var metaCBase=typeof d.metaClientesBase==='number'?d.metaClientesBase:_leerMetaParaRuta(ruta,'clientes');
-  var metaP=c.tipo==='semana'?Math.round(metaPBase/4):metaPBase;
-  var metaC=c.tipo==='semana'?Math.round(metaCBase/4):metaCBase;
+  // La meta "usada de verdad" (dinámica si es semana) y el ritmo quedan congelados desde que
+  // se cerró — si el cierre es viejo y no los tiene, se cae al cálculo fijo de siempre.
+  var metaP=typeof d.metaUsadaPrestamos==='number'?d.metaUsadaPrestamos:(c.tipo==='semana'?Math.round(metaPBase/4):metaPBase);
+  var metaC=typeof d.metaUsadaClientes==='number'?d.metaUsadaClientes:(c.tipo==='semana'?Math.round(metaCBase/4):metaCBase);
   var prestadoTotal=d.prestado+(d.montoRenov||0);
-  var _barraMeta=function(actual,meta,etiqueta,esDinero){
+  var _barraMeta=function(actual,meta,etiqueta,esDinero,diferenciaRitmo){
     if(!meta) return '';
     var pct=Math.min(Math.round(actual/meta*100),100);
-    var ok=actual>=meta;
-    var color=ok?'#166534':'#991b1b';
+    var conRitmo=typeof diferenciaRitmo==='number';
+    var atrasado=conRitmo?diferenciaRitmo<0:!(actual>=meta);
+    var color=conRitmo?(atrasado?'#991b1b':'#92400e'):(atrasado?'#991b1b':'#166534');
     var fA=esDinero?_fmtCol(actual):actual;
     var fM=esDinero?_fmtCol(meta):meta;
-    return '<div class="row" style="background:#f9fafb"><span class="label">🎯 '+etiqueta+'</span><span class="value" style="color:'+color+'">'+(ok?'✅ ':'🔴 ')+fA+' / '+fM+' ('+pct+'%)</span></div>';
+    var parentesis=conRitmo?' ('+(atrasado?'-':'+')+_fmtCol(Math.round(Math.abs(diferenciaRitmo)))+')':' ('+pct+'%)';
+    return '<div class="row" style="background:#f9fafb"><span class="label">🎯 '+etiqueta+'</span><span class="value" style="color:'+color+'">'+(atrasado?'🔴 ':(conRitmo?'🟡 ':'✅ '))+fA+' / '+fM+parentesis+'</span></div>';
   };
   var extra='';
   if(typeof d.saldoInicio==='number') extra+=row('📍 Saldo en calle — inicio',_fmtCol(d.saldoInicio));
@@ -3856,8 +3860,8 @@ function imprimirCierre(id){
     +(d.totalInyeccion?row('💉 Capital inyectado','+'+_fmtCol(d.totalInyeccion),'#e0f2fe','#0369a1'):'')
     +'<div class="total"><span>📊 Ganancia neta</span><span>'+(pos?'+':'')+_fmtCol(d.utilidad)+'</span></div>'
     +((metaP||metaC)?('<h3>🎯 Metas del período'+(ruta!=='todas'?' ('+ruta+')':'')+'</h3>'
-      +_barraMeta(prestadoTotal,metaP,'Préstamos',true)
-      +_barraMeta(d.numPrestamos||0,metaC,'Clientes nuevos',false)):'')
+      +_barraMeta(prestadoTotal,metaP,'Préstamos',true,d.diferenciaRitmoPrestamos)
+      +_barraMeta(d.numPrestamos||0,metaC,'Clientes nuevos',false,d.diferenciaRitmoClientes)):'')
     +'<div class="footer">'
     +'<p>Generado por Financiera JD — '+c.fechaRegistro+'</p>'
     +'<p style="margin-top:4px">Este documento es de uso interno y confidencial.</p>'
@@ -4114,6 +4118,21 @@ function _guardarCierre(tipo,desde,hasta){
     // configurada en ese momento (que puede haber cambiado después).
     data.metaPrestamosBase=_leerMetaParaRuta(ruta,'prestamos');
     data.metaClientesBase=_leerMetaParaRuta(ruta,'clientes');
+    // Congelar también el ritmo (meta usada de verdad — dinámica si es semana — y cuánto
+    // iba atrasado/adelantado) tal como estaba JUSTO antes de cerrar, calculado con el mismo
+    // estado de cierres que ya se venía mostrando en vivo — para que el historial impreso
+    // más adelante muestre siempre lo mismo que se vio al momento de cerrar, nunca un
+    // recálculo con datos de después.
+    var _ritmoP=_calcRitmoMeta(ruta,'prestamos');
+    var _ritmoC=_calcRitmoMeta(ruta,'clientes');
+    if(_ritmoP){
+      data.metaUsadaPrestamos=tipo==='semana'?_ritmoP.metaSemanaDinamica:data.metaPrestamosBase;
+      data.diferenciaRitmoPrestamos=tipo==='semana'?_ritmoP.diferenciaSemana:_ritmoP.diferenciaMes;
+    }
+    if(_ritmoC){
+      data.metaUsadaClientes=tipo==='semana'?_ritmoC.metaSemanaDinamica:data.metaClientesBase;
+      data.diferenciaRitmoClientes=tipo==='semana'?_ritmoC.diferenciaSemana:_ritmoC.diferenciaMes;
+    }
     cierres.push({id:(ahora+i).toString(),tipo:tipo,desde:desde,hasta:hasta,nota:nota,data:data,fechaRegistro:hoyLocal(),ruta:ruta});
   });
   document.getElementById('modal-confirmar-cierre').style.display='none';
