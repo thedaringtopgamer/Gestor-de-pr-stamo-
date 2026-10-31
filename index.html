@@ -3506,7 +3506,7 @@ function _barMeta(actual,meta,etiqueta,esDinero,ocultarPct,diferenciaRitmo){
   var fmtMeta=esDinero?_fmtCol(meta):meta;
   var parentesis;
   if(ocultarPct) parentesis='';
-  else if(conRitmo) parentesis=' ('+(atrasado?'atrasado '+_fmtCol(Math.round(Math.abs(diferenciaRitmo))):'+'+_fmtCol(Math.round(diferenciaRitmo)))+')';
+  else if(conRitmo) parentesis=' ('+(atrasado?'-':'+')+_fmtCol(Math.round(Math.abs(diferenciaRitmo)))+')';
   else parentesis=' ('+pct+'%)';
   return '<div style="margin-top:10px">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;font-size:11px;margin-bottom:4px">'
