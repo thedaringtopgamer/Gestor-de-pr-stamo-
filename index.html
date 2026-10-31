@@ -3682,9 +3682,8 @@ function renderCierres(){
   window._rangoNuevos_semana=inicioSem+' → '+hoy;
   window._filtroGastos_semana={desde:inicioSem,hasta:hoy,ruta:rFiltro};
   window._gastosListaTodas_semana=null;
-  if(elStatsSem) elStatsSem.innerHTML=(_ritmo?'<div style="display:flex;justify-content:center;margin-bottom:10px">'+_htmlAnilloRitmo('semana',_ritmo.pctSemana,_ritmo.diferenciaSemana)+'</div>':'')
-    +_statsHtml(dSem,'semana')
-    +_barMeta(dSem.prestado+dSem.montoRenov,metaSem,'Meta préstamos semana',true)
+  if(elStatsSem) elStatsSem.innerHTML=_statsHtml(dSem,'semana')
+    +_barMeta(dSem.prestado+dSem.montoRenov,_ritmo?_ritmo.metaSemanaDinamica:metaSem,'Meta préstamos semana',true)
     +_barMeta(dSem.numPrestamos,metaSemC,'Meta clientes nuevos semana',false);
   var elPorRutaSem=document.getElementById('cierre-semana-porruta');
   if(elPorRutaSem) elPorRutaSem.innerHTML='';
@@ -3753,8 +3752,7 @@ function renderCierres(){
   window._rangoNuevos_mes=inicioMes+' → '+hoy;
   window._filtroGastos_mes={desde:inicioMes,hasta:hoy,ruta:rFiltroMes};
   window._gastosListaTodas_mes=null;
-  if(elStatsMes) elStatsMes.innerHTML=(_ritmo?'<div style="display:flex;justify-content:center;margin-bottom:10px">'+_htmlAnilloRitmo('mes',_ritmo.pctMes,_ritmo.diferenciaMes)+'</div>':'')
-    +_statsHtml(dMes,'mes')
+  if(elStatsMes) elStatsMes.innerHTML=_statsHtml(dMes,'mes')
     +_barMeta(dMes.prestado+dMes.montoRenov,metaPrestamos,'Meta préstamos mes',true)
     +_barMeta(dMes.numPrestamos,metaClientes,'Meta clientes nuevos mes',false)
     +_barMetaTarjetas(activosCartera,metaTarjetas);
@@ -4076,7 +4074,7 @@ function _calcRitmoMetaPrestamos(ruta){
   var diferenciaMes=prestadoMes-metaAcumuladaMes;
   var pctMes=metaTotalMes>0?(prestadoMes/metaTotalMes*100):0;
 
-  return {pctSemana:pctSemana,diferenciaSemana:diferenciaSemana,pctMes:pctMes,diferenciaMes:diferenciaMes};
+  return {pctSemana:pctSemana,diferenciaSemana:diferenciaSemana,pctMes:pctMes,diferenciaMes:diferenciaMes,metaSemanaDinamica:Math.round(metaSemanaDinamica)};
 }
 // Anillo + etiqueta de ritmo, compartido entre el Panel Recolector y Cajas — así se ve
 // exactamente igual en los dos lados.
