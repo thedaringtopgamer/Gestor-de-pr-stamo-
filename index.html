@@ -3496,7 +3496,7 @@ function _barMetaTarjetas(activos,meta){
     +'</div>';
 }
 
-function _barMeta(actual,meta,etiqueta,esDinero){
+function _barMeta(actual,meta,etiqueta,esDinero,ocultarPct){
   if(!meta) return '';
   var pct=Math.min(Math.round(actual/meta*100),100);
   var ok=actual>=meta;
@@ -3507,7 +3507,7 @@ function _barMeta(actual,meta,etiqueta,esDinero){
   return '<div style="margin-top:10px">'
     +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">'
       +'<span style="font-weight:700;color:#374151">🎯 '+etiqueta+'</span>'
-      +'<span style="font-weight:800;color:'+color+'">'+(ok?'✅ ':'🔴 ')+fmtActual+' / '+fmtMeta+' ('+pct+'%)</span>'
+      +'<span style="font-weight:800;color:'+color+'">'+(ok?'✅ ':'🔴 ')+fmtActual+' / '+fmtMeta+(ocultarPct?'':' ('+pct+'%)')+'</span>'
     +'</div>'
     +'<div style="background:#e5e7eb;border-radius:99px;height:8px">'
       +'<div style="background:'+color+';border-radius:99px;height:8px;width:'+pct+'%;transition:width 0.3s"></div>'
@@ -3613,10 +3613,10 @@ function renderCierres(){
     var elStatsMesT=document.getElementById('cierre-mes-stats');
     if(elStatsSemT) elStatsSemT.innerHTML=_statsHtml(dSemT,'semana',null,true)
       +_barMeta(dSemT.prestado+dSemT.montoRenov,metaSemTodas,'Meta préstamos semana',true)
-      +_barMeta(dSemT.numPrestamos,metaSemCTodas,'Meta clientes nuevos semana',false);
+      +_barMeta(dSemT.numPrestamos,metaSemCTodas,'Meta clientes nuevos semana',false,true);
     if(elStatsMesT) elStatsMesT.innerHTML=_statsHtml(dMesT,'mes',null,true)
       +_barMeta(dMesT.prestado+dMesT.montoRenov,metaPTodas,'Meta préstamos mes',true)
-      +_barMeta(dMesT.numPrestamos,metaCTodas,'Meta clientes nuevos mes',false)
+      +_barMeta(dMesT.numPrestamos,metaCTodas,'Meta clientes nuevos mes',false,true)
       +_barMetaTarjetas(dMesT.clientesFin,metaTTodas);
     var elPorRutaSemT=document.getElementById('cierre-semana-porruta'); if(elPorRutaSemT) elPorRutaSemT.innerHTML='';
     var elPorRutaMesT=document.getElementById('cierre-mes-porruta'); if(elPorRutaMesT) elPorRutaMesT.innerHTML='';
@@ -3685,7 +3685,7 @@ function renderCierres(){
   window._gastosListaTodas_semana=null;
   if(elStatsSem) elStatsSem.innerHTML=_statsHtml(dSem,'semana')
     +_barMeta(dSem.prestado+dSem.montoRenov,_ritmo?_ritmo.metaSemanaDinamica:metaSem,'Meta préstamos semana',true)
-    +_barMeta(dSem.numPrestamos,_ritmoClientes?_ritmoClientes.metaSemanaDinamica:metaSemC,'Meta clientes nuevos semana',false);
+    +_barMeta(dSem.numPrestamos,_ritmoClientes?_ritmoClientes.metaSemanaDinamica:metaSemC,'Meta clientes nuevos semana',false,true);
   var elPorRutaSem=document.getElementById('cierre-semana-porruta');
   if(elPorRutaSem) elPorRutaSem.innerHTML='';
 
@@ -3755,7 +3755,7 @@ function renderCierres(){
   window._gastosListaTodas_mes=null;
   if(elStatsMes) elStatsMes.innerHTML=_statsHtml(dMes,'mes')
     +_barMeta(dMes.prestado+dMes.montoRenov,metaPrestamos,'Meta préstamos mes',true)
-    +_barMeta(dMes.numPrestamos,metaClientes,'Meta clientes nuevos mes',false)
+    +_barMeta(dMes.numPrestamos,metaClientes,'Meta clientes nuevos mes',false,true)
     +_barMetaTarjetas(activosCartera,metaTarjetas);
   var elPorRutaMes=document.getElementById('cierre-mes-porruta');
   if(elPorRutaMes) elPorRutaMes.innerHTML='';
