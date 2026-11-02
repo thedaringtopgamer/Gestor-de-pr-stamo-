@@ -7859,6 +7859,13 @@ function _aplicarRecalculoCajaPendiente(){
     var datos=JSON.parse(pend);
     var fechaEl=document.getElementById('panel-fecha');
     if(!fechaEl) return;
+    // Mirar nada más no alcanza si ya había quedado guardada en la nube una base vieja
+    // calculada mal (ej. por otro teléfono con datos incompletos) — hay que borrar esa caché
+    // calculada (nunca la que se puso a mano) desde el día de atrás en adelante, para obligar
+    // a que se recalcule de cero con los datos frescos que se acaban de traer.
+    var _dAntes=new Date(datos.diaStr+'T12:00:00'); _dAntes.setDate(_dAntes.getDate()-1);
+    var _diaAntesStr=_dAntes.getFullYear()+'-'+String(_dAntes.getMonth()+1).padStart(2,'0')+'-'+String(_dAntes.getDate()).padStart(2,'0');
+    _invalidarCajaCacheDesde(_diaAntesStr,rutaActual||'todas');
     fechaEl.value=datos.diaStr;
     renderPanelRecolector(true);
     fechaEl.value=datos.hoyStr;
