@@ -2211,6 +2211,7 @@ function mostrarApp(){
   } else {
     goTo('screen-cobros');
   }
+  try{ _aplicarRecalculoCajaPendiente(); }catch(e){}
 }
 
 // Cierre forzado por admin: borra ruta fija, vuelve a selección
@@ -7826,11 +7827,15 @@ function eliminarRenovacion(renId){
   document.getElementById('modal-btn-si').onclick=function(){_modalCallback&&_modalCallback();};
 }
 
-// Automatiza el truco manual de siempre: entrar a ver el último día real (el de ayer, o el
-// viernes si ayer cayó sábado/domingo) para que recalcule y guarde bien esa cadena de días, y
-// luego recargar la página de verdad — igual que hacía el usuario a mano con F5 — para que
-// arranque con la Base fresca de la nube y vuelva solo a la pantalla de hoy ya corregida. No
-// cambia nada del cálculo ni de cómo se mezclan los datos — solo automatiza esos 2 pasos.
+// Automatiza el truco manual de siempre: recargar la página de verdad (para que arranque con
+// la Base fresca de la nube, igual que hacía el usuario a mano con F5) y, YA con esos datos
+// frescos, entrar a ver el último día real (el de ayer, o el viernes si ayer cayó fin de
+// semana) para que recalcule y guarde bien esa cadena de días, y volver a hoy ya corregido.
+// Importante: el "vistazo atrás" tiene que pasar DESPUÉS de recargar, no antes — si se hace
+// antes, usa los datos viejos que esa pestaña ya tenía en memoria (no los frescos de la nube)
+// y puede terminar guardando un número malo. Por eso esto solo deja la intención guardada
+// (en sessionStorage, que sobrevive la recarga) y _aplicarRecalculoCajaPendiente() la ejecuta
+// una vez que la app ya recargó y tiene los datos frescos.
 function recalcularCajaDesdeAyer(){
   var fechaEl=document.getElementById('panel-fecha');
   if(!fechaEl||rolActual!=='admin') return;
@@ -7840,10 +7845,26 @@ function recalcularCajaDesdeAyer(){
   // igual que hacía el usuario a mano, para no quedarse mirando un día sin movimiento.
   while(d.getDay()===0||d.getDay()===6){ d.setDate(d.getDate()-1); }
   var diaStr=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  fechaEl.value=diaStr;
-  renderPanelRecolector(true);
+  sessionStorage.setItem('fjd_recalc_caja_pendiente',JSON.stringify({diaStr:diaStr,hoyStr:hoyStr}));
   toast('⏳ Recargando para traer la Caja al día...');
-  setTimeout(function(){ location.reload(); },400);
+  setTimeout(function(){ location.reload(); },300);
+}
+// Ejecuta el "vistazo atrás y vuelta a hoy" que dejó pendiente recalcularCajaDesdeAyer(), ya
+// con los datos frescos que acaba de traer la recarga. Se llama al final de mostrarApp().
+function _aplicarRecalculoCajaPendiente(){
+  var pend=sessionStorage.getItem('fjd_recalc_caja_pendiente');
+  if(!pend) return;
+  sessionStorage.removeItem('fjd_recalc_caja_pendiente');
+  try{
+    var datos=JSON.parse(pend);
+    var fechaEl=document.getElementById('panel-fecha');
+    if(!fechaEl) return;
+    fechaEl.value=datos.diaStr;
+    renderPanelRecolector(true);
+    fechaEl.value=datos.hoyStr;
+    renderPanelRecolector(true);
+    toast('✓ Caja recalculada');
+  }catch(e){}
 }
 function imprimirPanelRecolector(){
   var cajEl=document.getElementById('panel-sec-caja');
