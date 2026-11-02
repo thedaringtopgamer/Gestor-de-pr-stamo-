@@ -5351,6 +5351,24 @@ function _proximaFechaQuincenal(d){
   if(targetDay>ultimoDiaMes) targetDay=ultimoDiaMes;
   return new Date(targetYear, targetMonth, targetDay, 12, 0, 0);
 }
+// p.proximaFechaPago puede venir corrida por fin de semana (ej. domingo 1 -> lunes 2). Si esa
+// fecha corrida se usara tal cual para calcular la siguiente, la pareja de días se correría
+// para siempre (2/17 en vez de 1/16). Esto reconstruye la fecha SIN el corrimiento (el día
+// real de la pareja — 1 o 16), usando el ancla (_primeraFechaPago) para saber cuál de los dos
+// días de la pareja es, así la pareja se mantiene fija aunque el pago haya caído en fin de
+// semana.
+function _fechaQuincSinShift(p,fechaStr){
+  var pf=parseLocalDate(fechaStr);
+  if(!p._primeraFechaPago) return pf;
+  var ancla=parseLocalDate(p._primeraFechaPago);
+  var diaAnclaRaw=ancla.getDate();
+  var diaParejoRaw=_proximaFechaQuincenal(ancla).getDate();
+  var candA=new Date(pf.getFullYear(),pf.getMonth(),diaAnclaRaw,12,0,0);
+  var candB=new Date(pf.getFullYear(),pf.getMonth(),diaParejoRaw,12,0,0);
+  if(siguienteDiaHabil(candA).getDate()===pf.getDate()) return candA;
+  if(siguienteDiaHabil(candB).getDate()===pf.getDate()) return candB;
+  return pf;
+}
 function getCuotaVencimiento(p, numCuota){
   var fecha = parseLocalDate(p.fechaInicio);
   var tipo = p.tipo||'Quincenal';
@@ -6554,8 +6572,10 @@ function abrirRenovar(){
     proximaFechaRen=siguienteDiaHabil(manana);
   } else if(tipoActual==='Quincenal'){
     // La pareja de días no cambia por renovar antes de tiempo — la próxima fecha sugerida
-    // es la pareja de la fecha de pago que ya tenía la tarjeta, no "hoy + 15 días".
-    var _baseQuinc=p.proximaFechaPago?parseLocalDate(p.proximaFechaPago):(p._primeraFechaPago?parseLocalDate(p._primeraFechaPago):parseLocalDate(p.fechaInicio));
+    // es la pareja de la fecha de pago que ya tenía la tarjeta, no "hoy + 15 días". Si esa
+    // fecha quedó corrida por fin de semana, primero hay que des-correrla (si no, la pareja
+    // se corre para siempre — ej. 1/16 pasaría a 2/17).
+    var _baseQuinc=p.proximaFechaPago?_fechaQuincSinShift(p,p.proximaFechaPago):(p._primeraFechaPago?parseLocalDate(p._primeraFechaPago):parseLocalDate(p.fechaInicio));
     proximaFechaRen=siguienteDiaHabil(_proximaFechaQuincenal(_baseQuinc));
   } else {
     // Semanal, Bisemanal: igual que Quincenal — el día fijo de pago no cambia por renovar
