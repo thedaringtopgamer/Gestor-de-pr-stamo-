@@ -8113,16 +8113,26 @@ function renderPanelRecolector(userPickedDate){
       var _inyec=inversiones.filter(function(x){return x.fecha===diaStr&&(rutaActual==='todas'||!x.ruta||x.ruta==='todas'||x.ruta===rutaActual);}).reduce(function(s,x){return s+x.monto;},0);
       return _rec+_inyec-_pres-_renov-_gastos;
     };
-    // Buscar hacia atrás (desde ayer) el último día con base conocida, acumulando los días sin base
+    // Buscar hacia atrás (desde ayer) el último día con base conocida, acumulando los días sin base.
+    // _cf_ ya es el total de CAJA con que cerró ese día (listo para ser la base del siguiente,
+    // no hay que sumarle nada más). _m_ y el formato viejo, en cambio, son la base con la que
+    // ARRANCÓ ese día — todavía hay que sumarle los movimientos de ese mismo día antes de
+    // pasarla al siguiente, así que ese día también entra en _diasFaltantes.
     var _cursor=new Date(fecha+'T12:00:00'); _cursor.setDate(_cursor.getDate()-1);
     var _diasFaltantes=[];
     var _baseConocida=0;
     for(var _d=0;_d<=60;_d++){
       var _curStr=_cursor.toISOString().split('T')[0];
       var _curKey=rutaCajaKey+'_'+_curStr;
-      if(bases['_m_'+_curKey]){ _baseConocida=parseInt(bases[_curKey])||0; break; }
-      if(bases['_cf_'+_curKey]!==undefined){ _baseConocida=parseInt(bases['_cf_'+_curKey])||0; break; }
-      if(bases[_curKey]!==undefined){ _baseConocida=parseInt(bases[_curKey])||0; break; }
+      if(bases['_cf_'+_curKey]!==undefined&&bases['_cf_'+_curKey]!==null&&bases['_cf_'+_curKey]!==''){
+        _baseConocida=parseInt(bases['_cf_'+_curKey])||0;
+        break;
+      }
+      if(bases['_m_'+_curKey]||bases[_curKey]!==undefined){
+        _baseConocida=parseInt(bases[_curKey])||0;
+        _diasFaltantes.unshift(_curStr);
+        break;
+      }
       _diasFaltantes.unshift(_curStr);
       _cursor.setDate(_cursor.getDate()-1);
     }
