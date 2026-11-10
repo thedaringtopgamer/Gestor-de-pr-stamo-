@@ -3206,7 +3206,10 @@ function _calcCierreData(desde,hasta,rutaParam){
   var cobrosAdmP=cobrosAdmin.filter(function(x){ return x.fecha>=desde&&x.fecha<=hasta&&(ruta==='todas'||idsPorRuta.indexOf(x.id_prestamo)>=0); });
   var totalCobroAdm=cobrosAdmP.reduce(function(s,x){ return s+(x.monto||0); },0);
   var utilidad=baseInicio+recogida-(prestado+entregadoRenov)-totalCobroAdm-totalGastos;
-  return {recogida:recogida,prestado:prestado,montoRenov:montoRenov,entregadoRenov:entregadoRenov,totalGastos:totalGastos,utilidad:utilidad,baseInicio:baseInicio,totalInyeccion:totalInyeccion,numPrestamos:nuevosP.length,numRenov:renovP.length,totalCobroAdm:totalCobroAdm,idsNuevos:nuevosP.map(function(p){return p.id;})};
+  // Solo los que de verdad recibieron plata (montoEntregado>0) — ni los de 0, ni los
+  // negativos (esos fueron el cliente ENTREGÁNDONOS plata a nosotros, no al revés).
+  var idsEntregadosRenov=renovP.filter(function(x){ return (x.montoEntregado||0)>0; }).map(function(x){ return x.id; });
+  return {recogida:recogida,prestado:prestado,montoRenov:montoRenov,entregadoRenov:entregadoRenov,totalGastos:totalGastos,utilidad:utilidad,baseInicio:baseInicio,totalInyeccion:totalInyeccion,numPrestamos:nuevosP.length,numRenov:renovP.length,totalCobroAdm:totalCobroAdm,idsNuevos:nuevosP.map(function(p){return p.id;}),idsEntregadosRenov:idsEntregadosRenov};
 
 }
 
@@ -3385,11 +3388,52 @@ function _verListaGastosHist(cierreId){
   }
   goTo('screen-nuevos-periodo');
 }
+// Fila de la lista de "Entregado en renovación" — compartida entre la vista en vivo y la
+// del historial, ambas reciben el mismo arreglo de renovaciones ya filtrado.
+function _htmlFilaEntregadoRenov(rv){
+  if(!rv) return '';
+  var fi=(rv.fecha||'').split('-');
+  var fd=fi.length===3?fi[2]+'/'+fi[1]+'/'+fi[0]:rv.fecha;
+  var p=prestamos.find(function(x){return x.id===rv.id_prestamo;});
+  return '<div'+(p?' onclick="verDetalle(\''+p.id+'\')"':'')+' style="background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:4px solid #fb923c'+(p?';cursor:pointer':'')+'">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+    +'<div style="font-size:15px;font-weight:700;color:#1e293b">'+esc(rv.cliente||'')+'</div>'
+    +'<div style="font-size:15px;font-weight:800;color:#9a3412">₡'+fmt(rv.montoEntregado||0)+'</div>'
+    +'</div>'
+    +'<div style="font-size:12px;color:#9ca3af">📅 '+fd+' · '+esc(rv.tipo||'')+(p&&p.ruta&&p.ruta!=='todas'?' · 📍 '+esc(p.ruta):'')+'</div>'
+    +'</div>';
+}
+function _verListaEntregados(tipo){
+  var ids=window['_idsEntregados_'+tipo]||[];
+  var rango=window['_rangoNuevos_'+tipo]||'';
+  var lista_rv=ids.map(function(id){return renovaciones.find(function(x){return x.id===id;});}).filter(Boolean);
+  document.getElementById('nuevos-periodo-titulo').textContent='💸 Entregado en renovación — '+(tipo==='semana'?'Semana':'Mes');
+  document.getElementById('nuevos-periodo-rango').textContent=rango+' ('+lista_rv.length+' cliente'+(lista_rv.length!==1?'s':'')+')';
+  var lista=document.getElementById('nuevos-periodo-lista');
+  lista.innerHTML=lista_rv.length
+    ?lista_rv.map(_htmlFilaEntregadoRenov).join('')
+    :'<p style="color:#6b7280;font-size:14px;text-align:center;margin-top:40px">Nadie recibió efectivo en renovaciones este período.</p>';
+  goTo('screen-nuevos-periodo');
+}
+function _verListaEntregadosHist(cierreId){
+  var c=cierres.find(function(x){return x.id===cierreId;});
+  if(!c) return;
+  var ids=(c.data&&c.data.idsEntregadosRenov)||[];
+  var lista_rv=ids.map(function(id){return renovaciones.find(function(x){return x.id===id;});}).filter(Boolean);
+  document.getElementById('nuevos-periodo-titulo').textContent='💸 Entregado en renovación — '+(c.tipo==='semana'?'Semana':'Mes');
+  document.getElementById('nuevos-periodo-rango').textContent=(c.desde+' → '+c.hasta)+' ('+lista_rv.length+' cliente'+(lista_rv.length!==1?'s':'')+')';
+  var lista=document.getElementById('nuevos-periodo-lista');
+  lista.innerHTML=lista_rv.length
+    ?lista_rv.map(_htmlFilaEntregadoRenov).join('')
+    :'<p style="color:#6b7280;font-size:14px;text-align:center;margin-top:40px">Nadie recibió efectivo en renovaciones este período.</p>';
+  goTo('screen-nuevos-periodo');
+}
 function _statsHtml(d,tipo,histCierreId,sinLapiz){
   // Si viene de un cierre del historial (ya cerrado), las lupitas de Clientes nuevos/Gastos
   // deben mostrar los datos de ESE cierre específico, no los de la semana/mes en curso.
   var _clickNuevos=histCierreId?('_verListaNuevosHist(\''+histCierreId+'\')'):('_verListaNuevos(\''+tipo+'\')');
   var _clickGastos=histCierreId?('_verListaGastosHist(\''+histCierreId+'\')'):('_verListaGastos(\''+tipo+'\')');
+  var _clickEntregado=histCierreId?('_verListaEntregadosHist(\''+histCierreId+'\')'):('_verListaEntregados(\''+tipo+'\')');
   var prestadoVal=d.prestado+d.montoRenov;
   var clientesVal=d.numPrestamos;
   var recogidaVal=d.recogida;
@@ -3421,7 +3465,7 @@ function _statsHtml(d,tipo,histCierreId,sinLapiz){
     +'</div>'
     +'<div style="background:#fce7f3;border-radius:8px;padding:8px"><div style="color:#6b7280">🔄 Renovaciones</div><div style="font-weight:700;color:#9d174d">'+renovVal+'</div></div>'
     +'<div style="background:'+(cobroAdmVal?'#ede9fe':'#f3f4f6')+';border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:'+(cobroAdmVal?'#7c3aed':'#9ca3af')+'">'+_fmtCol(cobroAdmVal)+'</div></div>'
-    +'<div style="background:#fff7ed;border-radius:8px;padding:8px"><div style="color:#6b7280">💸 Entregado renov.</div><div style="font-weight:700;color:'+((d.entregadoRenov||0)<0?'#dc2626':'#9a3412')+'">'+((d.entregadoRenov||0)<0?'-':'')+_fmtCol(Math.abs(d.entregadoRenov||0))+'</div></div>'
+    +'<div style="background:#fff7ed;border-radius:8px;padding:8px'+(sinLapiz?'':';cursor:pointer')+'"'+(sinLapiz?'':' onclick="'+_clickEntregado+'"')+'><div style="color:#6b7280">💸 Entregado renov.'+(sinLapiz?'':' 🔍')+'</div><div style="font-weight:700;color:'+((d.entregadoRenov||0)<0?'#dc2626':'#9a3412')+'">'+((d.entregadoRenov||0)<0?'-':'')+_fmtCol(Math.abs(d.entregadoRenov||0))+'</div></div>'
     +'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2'+(sinLapiz?'':';cursor:pointer')+'"'+(sinLapiz?'':' onclick="'+_clickGastos+'"')+'><div style="color:#6b7280">💸 Gastos'+(sinLapiz?'':' 🔍')+'</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(gastosVal)+'</div></div>'
     +(d.totalInyeccion?'<div style="background:#e0f2fe;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💉 Capital inyectado</div><div style="font-weight:700;color:#0369a1">+'+_fmtCol(d.totalInyeccion)+'</div></div>':'')
     +'<div style="border-radius:8px;padding:10px;grid-column:span 2;background:'+(pos?'#dcfce7':'#fee2e2')+';border:2px solid '+(pos?'#86efac':'#fca5a5')+'">'
@@ -3562,13 +3606,14 @@ function _calcCierreDataTodasEnVivo(tipo,hoy){
     else { clientesInicioR=saldoInicios[r+'|'+_claveSufRC+'|'+inicioR]; if(typeof clientesInicioR!=='number') clientesInicioR=_clientesActivosActual(r); }
     var gastosR=gastos.filter(function(x){ return x.fecha>=inicioR&&x.fecha<=hoy&&x.ruta===r; });
     if(!acumulado){
-      acumulado={recogida:0,prestado:0,montoRenov:0,entregadoRenov:0,totalGastos:0,utilidad:0,totalInyeccion:0,numPrestamos:0,numRenov:0,totalCobroAdm:0,idsNuevos:[],saldoInicio:0,clientesInicio:0,gastosDetalle:[],baseInicio:0};
+      acumulado={recogida:0,prestado:0,montoRenov:0,entregadoRenov:0,totalGastos:0,utilidad:0,totalInyeccion:0,numPrestamos:0,numRenov:0,totalCobroAdm:0,idsNuevos:[],idsEntregadosRenov:[],saldoInicio:0,clientesInicio:0,gastosDetalle:[],baseInicio:0};
     }
     acumulado.gastosDetalle=acumulado.gastosDetalle.concat(gastosR);
     acumulado.recogida+=dR.recogida; acumulado.prestado+=dR.prestado; acumulado.montoRenov+=dR.montoRenov;
     acumulado.entregadoRenov+=dR.entregadoRenov; acumulado.totalGastos+=dR.totalGastos; acumulado.utilidad+=dR.utilidad;
     acumulado.totalInyeccion+=dR.totalInyeccion; acumulado.numPrestamos+=dR.numPrestamos; acumulado.numRenov+=dR.numRenov;
     acumulado.totalCobroAdm+=dR.totalCobroAdm; acumulado.idsNuevos=acumulado.idsNuevos.concat(dR.idsNuevos||[]);
+    acumulado.idsEntregadosRenov=acumulado.idsEntregadosRenov.concat(dR.idsEntregadosRenov||[]);
     acumulado.saldoInicio+=saldoInicioR; acumulado.clientesInicio+=clientesInicioR;
     acumulado.baseInicio+=(dR.baseInicio||0);
   });
@@ -3605,9 +3650,11 @@ function renderCierres(){
     if(elRangoMesT) elRangoMesT.textContent='Suma en vivo de todas las rutas (cada una en su propio ciclo)';
     window._idsNuevos_semana=dSemT.idsNuevos||[];
     window._rangoNuevos_semana='Todas las rutas';
+    window._idsEntregados_semana=dSemT.idsEntregadosRenov||[];
     window._gastosListaTodas_semana=dSemT.gastosDetalle||[];
     window._idsNuevos_mes=dMesT.idsNuevos||[];
     window._rangoNuevos_mes='Todas las rutas';
+    window._idsEntregados_mes=dMesT.idsEntregadosRenov||[];
     window._gastosListaTodas_mes=dMesT.gastosDetalle||[];
     // Metas de "Todas" = suma en vivo de la meta propia de cada ruta real (con su mismo
     // fallback a la meta "todas" si esa ruta no tiene una propia puesta).
@@ -3700,6 +3747,7 @@ function renderCierres(){
   if(elRangoSem) elRangoSem.textContent=inicioSem+' → '+hoy;
   window._idsNuevos_semana=dSem.idsNuevos||[];
   window._rangoNuevos_semana=inicioSem+' → '+hoy;
+  window._idsEntregados_semana=dSem.idsEntregadosRenov||[];
   window._filtroGastos_semana={desde:inicioSem,hasta:hoy,ruta:rFiltro};
   window._gastosListaTodas_semana=null;
   if(elStatsSem) elStatsSem.innerHTML=_statsHtml(dSem,'semana')
@@ -3770,6 +3818,7 @@ function renderCierres(){
   }).length;
   window._idsNuevos_mes=dMes.idsNuevos||[];
   window._rangoNuevos_mes=inicioMes+' → '+hoy;
+  window._idsEntregados_mes=dMes.idsEntregadosRenov||[];
   window._filtroGastos_mes={desde:inicioMes,hasta:hoy,ruta:rFiltroMes};
   window._gastosListaTodas_mes=null;
   if(elStatsMes) elStatsMes.innerHTML=_statsHtml(dMes,'mes')
