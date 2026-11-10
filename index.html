@@ -3209,7 +3209,11 @@ function _calcCierreData(desde,hasta,rutaParam){
   // Solo los que de verdad recibieron plata (montoEntregado>0) — ni los de 0, ni los
   // negativos (esos fueron el cliente ENTREGÁNDONOS plata a nosotros, no al revés).
   var idsEntregadosRenov=renovP.filter(function(x){ return (x.montoEntregado||0)>0; }).map(function(x){ return x.id; });
-  return {recogida:recogida,prestado:prestado,montoRenov:montoRenov,entregadoRenov:entregadoRenov,totalGastos:totalGastos,utilidad:utilidad,baseInicio:baseInicio,totalInyeccion:totalInyeccion,numPrestamos:nuevosP.length,numRenov:renovP.length,totalCobroAdm:totalCobroAdm,idsNuevos:nuevosP.map(function(p){return p.id;}),idsEntregadosRenov:idsEntregadosRenov};
+  // entregadoRenovMostrar es SOLO para la tarjeta/lupita: la plata que de verdad se entregó,
+  // sin que un negativo (cliente pagando diferencia) se la reste. entregadoRenov (con negativos
+  // incluidos) sigue intacto para Ganancia neta, que tiene que cuadrar con la Caja real.
+  var entregadoRenovMostrar=renovP.reduce(function(s,x){ return s+Math.max(x.montoEntregado||0,0); },0);
+  return {recogida:recogida,prestado:prestado,montoRenov:montoRenov,entregadoRenov:entregadoRenov,entregadoRenovMostrar:entregadoRenovMostrar,totalGastos:totalGastos,utilidad:utilidad,baseInicio:baseInicio,totalInyeccion:totalInyeccion,numPrestamos:nuevosP.length,numRenov:renovP.length,totalCobroAdm:totalCobroAdm,idsNuevos:nuevosP.map(function(p){return p.id;}),idsEntregadosRenov:idsEntregadosRenov};
 
 }
 
@@ -3465,7 +3469,7 @@ function _statsHtml(d,tipo,histCierreId,sinLapiz){
     +'</div>'
     +'<div style="background:#fce7f3;border-radius:8px;padding:8px"><div style="color:#6b7280">🔄 Renovaciones</div><div style="font-weight:700;color:#9d174d">'+renovVal+'</div></div>'
     +'<div style="background:'+(cobroAdmVal?'#ede9fe':'#f3f4f6')+';border-radius:8px;padding:8px"><div style="color:#6b7280">💼 Cobro adm.</div><div style="font-weight:700;color:'+(cobroAdmVal?'#7c3aed':'#9ca3af')+'">'+_fmtCol(cobroAdmVal)+'</div></div>'
-    +'<div style="background:#fff7ed;border-radius:8px;padding:8px'+(sinLapiz?'':';cursor:pointer')+'"'+(sinLapiz?'':' onclick="'+_clickEntregado+'"')+'><div style="color:#6b7280">💸 Entregado renov.'+(sinLapiz?'':' 🔍')+'</div><div style="font-weight:700;color:'+((d.entregadoRenov||0)<0?'#dc2626':'#9a3412')+'">'+((d.entregadoRenov||0)<0?'-':'')+_fmtCol(Math.abs(d.entregadoRenov||0))+'</div></div>'
+    +'<div style="background:#fff7ed;border-radius:8px;padding:8px'+(sinLapiz?'':';cursor:pointer')+'"'+(sinLapiz?'':' onclick="'+_clickEntregado+'"')+'><div style="color:#6b7280">💸 Entregado renov.'+(sinLapiz?'':' 🔍')+'</div><div style="font-weight:700;color:#9a3412">'+_fmtCol(d.entregadoRenovMostrar||0)+'</div></div>'
     +'<div style="background:#fef9c3;border-radius:8px;padding:8px;grid-column:span 2'+(sinLapiz?'':';cursor:pointer')+'"'+(sinLapiz?'':' onclick="'+_clickGastos+'"')+'><div style="color:#6b7280">💸 Gastos'+(sinLapiz?'':' 🔍')+'</div><div style="font-weight:700;color:#854d0e">'+_fmtCol(gastosVal)+'</div></div>'
     +(d.totalInyeccion?'<div style="background:#e0f2fe;border-radius:8px;padding:8px;grid-column:span 2"><div style="color:#6b7280">💉 Capital inyectado</div><div style="font-weight:700;color:#0369a1">+'+_fmtCol(d.totalInyeccion)+'</div></div>':'')
     +'<div style="border-radius:8px;padding:10px;grid-column:span 2;background:'+(pos?'#dcfce7':'#fee2e2')+';border:2px solid '+(pos?'#86efac':'#fca5a5')+'">'
@@ -3606,11 +3610,11 @@ function _calcCierreDataTodasEnVivo(tipo,hoy){
     else { clientesInicioR=saldoInicios[r+'|'+_claveSufRC+'|'+inicioR]; if(typeof clientesInicioR!=='number') clientesInicioR=_clientesActivosActual(r); }
     var gastosR=gastos.filter(function(x){ return x.fecha>=inicioR&&x.fecha<=hoy&&x.ruta===r; });
     if(!acumulado){
-      acumulado={recogida:0,prestado:0,montoRenov:0,entregadoRenov:0,totalGastos:0,utilidad:0,totalInyeccion:0,numPrestamos:0,numRenov:0,totalCobroAdm:0,idsNuevos:[],idsEntregadosRenov:[],saldoInicio:0,clientesInicio:0,gastosDetalle:[],baseInicio:0};
+      acumulado={recogida:0,prestado:0,montoRenov:0,entregadoRenov:0,entregadoRenovMostrar:0,totalGastos:0,utilidad:0,totalInyeccion:0,numPrestamos:0,numRenov:0,totalCobroAdm:0,idsNuevos:[],idsEntregadosRenov:[],saldoInicio:0,clientesInicio:0,gastosDetalle:[],baseInicio:0};
     }
     acumulado.gastosDetalle=acumulado.gastosDetalle.concat(gastosR);
     acumulado.recogida+=dR.recogida; acumulado.prestado+=dR.prestado; acumulado.montoRenov+=dR.montoRenov;
-    acumulado.entregadoRenov+=dR.entregadoRenov; acumulado.totalGastos+=dR.totalGastos; acumulado.utilidad+=dR.utilidad;
+    acumulado.entregadoRenov+=dR.entregadoRenov; acumulado.entregadoRenovMostrar+=(dR.entregadoRenovMostrar||0); acumulado.totalGastos+=dR.totalGastos; acumulado.utilidad+=dR.utilidad;
     acumulado.totalInyeccion+=dR.totalInyeccion; acumulado.numPrestamos+=dR.numPrestamos; acumulado.numRenov+=dR.numRenov;
     acumulado.totalCobroAdm+=dR.totalCobroAdm; acumulado.idsNuevos=acumulado.idsNuevos.concat(dR.idsNuevos||[]);
     acumulado.idsEntregadosRenov=acumulado.idsEntregadosRenov.concat(dR.idsEntregadosRenov||[]);
