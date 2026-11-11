@@ -4764,6 +4764,19 @@ function _guardarPantalla(id){
   }
 }
 
+// En móvil el navbar es position:fixed (no reserva espacio propio), así que el .screen
+// necesita un padding-top que coincida con su altura real. El CSS asume una sola línea
+// (52px), pero un título largo (ej. "Entregado en renovación — Semana") se parte en 2
+// líneas y el navbar crece — sin esto, el navbar queda tapando el contenido de arriba.
+function _ajustarPaddingNavbar(){
+  if(window.innerWidth>=768) return;
+  var activo=document.querySelector('.screen.active');
+  if(!activo) return;
+  var nav=activo.querySelector('.navbar');
+  if(!nav) return;
+  activo.style.paddingTop=nav.offsetHeight+'px';
+}
+window.addEventListener('resize',_ajustarPaddingNavbar);
 function goTo(id){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.getElementById(id).classList.add('active');
@@ -4811,6 +4824,7 @@ function goTo(id){
       document.getElementById('np-cliente-display').textContent=clienteTemporal.nombre+(clienteTemporal.subruta?' · '+clienteTemporal.subruta:'');
     }
   }
+  _ajustarPaddingNavbar();
 }
 
 function goBack(){
@@ -4847,6 +4861,7 @@ function goBack(){
     }
   }
   if(prev==='screen-home') updateHome();
+  _ajustarPaddingNavbar();
 }
 
 function toggleMenu(){
