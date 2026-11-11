@@ -3923,6 +3923,7 @@ function imprimirCierre(id){
     +row('📤 Prestado (nuevos + renovaciones)',_fmtCol(prestadoTotal),'#fef2f2','#991b1b')
     +row('👥 Clientes nuevos',d.numPrestamos||0)
     +row('🔄 Renovaciones',d.numRenov||0)
+    +row('💸 Entregado en renovación',_fmtCol(d.entregadoRenovMostrar||0))
     +row('💼 Cobro administrativo',_fmtCol(d.totalCobroAdm||0))
     +row('💸 Gastos',_fmtCol(d.totalGastos),'#fef9c3','#854d0e')
     +(d.totalInyeccion?row('💉 Capital inyectado','+'+_fmtCol(d.totalInyeccion),'#e0f2fe','#0369a1'):'')
